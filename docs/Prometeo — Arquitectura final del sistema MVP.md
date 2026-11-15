@@ -273,9 +273,8 @@ Pendientes que condicionan el plazo: código y pack de demo reales, umbrales/sen
 ## 13. Fuentes
 
 - [Casos de uso vigentes](<Prometeo — Documento de casos de uso.md>).
-- [Decisiones simplificadas para el hack](<Prometeo — Arquitectura simplificada para hack.md>).
-- [Diseño inicial AWS y rutas](<Prometeo — Arquitectura del MVP en AWS.md>).
-- [Plan inicial de desarrollo](<Prometeo — Plan de desarrollo para agente (monorepo).md>).
+- [Decisiones del hack (recorte de 8 h)](<Prometeo — Decisiones del hack.md>).
+- [Plan de desarrollo vigente (8 h)](PLAN.md).
 - [AWS: permisos de logs Lambda](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html).
 - [AWS: métricas automáticas Lambda](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html).
 - [AWS: configuración SQS/Lambda](https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html).

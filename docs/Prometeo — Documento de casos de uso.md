@@ -664,7 +664,7 @@ Prometeo también detecta qué datos del corpus sirven para entrenar un modelo d
 
 ## 11. Escenario completo: hábitat y llamas en microgravedad
 
-Este recorrido une los casos de uso en una historia de 15 minutos y es el guion de la demo. Los niveles de la tabla son ilustrativos: los reales salen del corpus.
+Este recorrido une los casos de uso en una historia de 15 minutos y es el guion de la demo. Los niveles de la tabla del paso 4 son los esperados con los datos reales de PSI; el resto del recorrido (pasos 1, 5 y 7) describe el producto completo, no el recorte de 8 h.
 
 **Persona.** Ana, ingeniera de sistemas de soporte vital, diseña el módulo habitable de una base lunar. Necesita justificar ante su equipo la atmósfera de cabina y los materiales del interior frente al riesgo de incendio.
 
@@ -672,19 +672,17 @@ Este recorrido une los casos de uso en una historia de 15 minutos y es el guion 
 
 **2. Explora (CU-10 a CU-13).** La lente generada pone oxígeno contra presión como mapa por defecto y ofrece los escenarios "base lunar", "estación orbital" y "traje". Ana ve que casi todos los estudios se agrupan cerca de 21 % de O₂ y 1 atm. Pide la síntesis de los cinco documentos más relevantes y abre la cita de un valor de presión que le parece raro.
 
-**3. Describe su propuesta (CU-15).** Elige el escenario "base lunar" y lo ajusta: 25 % de O₂, 0.5 atm, flujo de ventilación bajo, revestimiento de Nomex. Agrupa las variables en tres partes: atmósfera, ventilación y revestimiento.
+**3. Describe su propuesta (CU-15).** Elige el escenario "lunar base" del reto: 30 % de O₂, 10.2 psi (≈ 0.69 atm) y revestimiento de PMMA.
 
-**4. Obtiene el mapa de evidencia (CU-16).**
+**4. Obtiene el mapa de evidencia (CU-16).** Los niveles son los de `docs/PLAN.md` §2 y los calcula el motor sobre los datos reales de PSI (partición: combustibles sólidos).
 
-| Parte de la propuesta | Condición | Nivel (ilustrativo) | Qué lo explica |
+| Parte de la propuesta | Condición | Nivel esperado | Qué lo explica |
 | --- | --- | --- | --- |
-| Atmósfera | 25 % O₂ | Extrapolable | Estudios a 21 % y 30 % con tendencia clara entre ambos |
-| Atmósfera | 0.5 atm | Evidencia escasa | Un solo estudio cercano, de baja confianza |
-| Ventilación | Flujo bajo | Refutado | Varios estudios muestran propagación sostenida con flujo bajo |
-| Revestimiento | Nomex a 25 % O₂ | Respaldado | Dos estudios cercanos sin propagación |
-| Revestimiento | Nomex a 0.5 atm | Sin estudiar | Ningún estudio combina ese material con baja presión |
+| Atmósfera | 30 % O₂ | *Near, not covered* o *Not studied* (según `closeness_reach·σ`) | El O₂ máximo probado en sólidos es 22.2 % (BASS-II, PSI-25): el escenario queda 7.8 puntos por encima |
+| Atmósfera | 0.69 atm (10.2 psi) | *Not studied* | 0 de 268 pruebas de sólidos registran presión |
+| Revestimiento | PMMA | *Studied* | PMMA aparece en pruebas de más de una investigación de sólidos (BASS, BASS-II, SAFFIRE-II) |
 
-Un hueco declarado aparece junto a la fila de presión: un autor pide estudiar materiales a presión reducida.
+Prometeo no dice si el material arde o no: dice qué condiciones están estudiadas y cuáles no. Las condiciones de 30 % de O₂ o más sí aparecen en pruebas de gases y gotas líquidas, que no son comparables con sólidos; el informe lo señala como contexto.
 
 **5. Ajusta (CU-17 y CU-19).** Ana escribe "¿y si el flujo fuera moderado?". La ventilación pasa de refutado a respaldado. Guarda las dos variantes y las compara.
 

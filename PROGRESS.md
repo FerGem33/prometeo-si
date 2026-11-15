@@ -7,8 +7,8 @@
 
 | Campo | Valor |
 |---|---|
-| Hora 0 (inicio del reloj) | _pendiente_ |
-| Tarea en curso | — |
+| Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
+| Tarea en curso | T00 (Claude · laptop ferlr) |
 | Último commit verificado | — |
 | Siguiente paso exacto | Empezar T00 (ver `docs/PLAN.md` §4). |
 | URL pública (CloudFront) | _sin desplegar_ |
@@ -32,7 +32,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 | ID | Tarea | Prioridad | Estado | Agente / persona | Commit | Nota |
 |---|---|---|---|---|---|---|
-| T00 | Repo y docs | P0 | pendiente | | | |
+| T00 | Repo y docs | P0 | en curso | Claude · ferlr | | |
 | T01 | Datos en el repo | P0 | pendiente | | | |
 | T02 | Scaffold + `00_check.sh` | P0 | pendiente | | | |
 | T03 | Pack de demo | P0 | pendiente | | | |
