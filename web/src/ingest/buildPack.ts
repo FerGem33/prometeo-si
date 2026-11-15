@@ -777,37 +777,92 @@ export function buildPackFromDocs(
     const existingSourceIds = new Set(demoPack.sources.map((s) => s.id));
     const existingRecordIds = new Set(demoPack.records.map((r) => r.id));
 
-    // Resolve study collisions
+    // Resolve study collisions and track renames
+    const studyRenameMap = new Map<string, string>();
     for (const study of customStudies) {
+      const origId = study.id;
       if (existingStudyIds.has(study.id)) {
-        study.id = `custom_${study.id}`;
+        let finalId = `custom_${study.id}`;
+        let counter = 1;
+        while (existingStudyIds.has(finalId)) {
+          finalId = `custom_${study.id}_${counter++}`;
+        }
+        studyRenameMap.set(origId, finalId);
+        study.id = finalId;
       }
       existingStudyIds.add(study.id);
     }
 
-    // Resolve source collisions
+    // Resolve source collisions and track renames
+    const sourceRenameMap = new Map<string, string>();
     for (const source of customSources) {
+      const origId = source.id;
       if (existingSourceIds.has(source.id)) {
-        source.id = `custom_${source.id}`;
+        let finalId = `custom_${source.id}`;
+        let counter = 1;
+        while (existingSourceIds.has(finalId)) {
+          finalId = `custom_${source.id}_${counter++}`;
+        }
+        sourceRenameMap.set(origId, finalId);
+        source.id = finalId;
+      }
+      if (studyRenameMap.has(source.study)) {
+        source.study = studyRenameMap.get(source.study)!;
       }
       existingSourceIds.add(source.id);
+    }
+
+    // Propagate source renames to customMappingTables
+    for (const mappingTable of customMappingTables) {
+      if (sourceRenameMap.has(mappingTable.source)) {
+        mappingTable.source = sourceRenameMap.get(mappingTable.source)!;
+      }
     }
 
     // Resolve record collisions & align study/source references
     for (const record of customRecords) {
       if (existingRecordIds.has(record.id)) {
-        record.id = `custom_${record.id}`;
+        let finalId = `custom_${record.id}`;
+        let counter = 1;
+        while (existingRecordIds.has(finalId)) {
+          finalId = `custom_${record.id}_${counter++}`;
+        }
+        record.id = finalId;
+      }
+      if (studyRenameMap.has(record.study)) {
+        record.study = studyRenameMap.get(record.study)!;
+      }
+      if (sourceRenameMap.has(record.source.id)) {
+        record.source = {
+          ...record.source,
+          id: sourceRenameMap.get(record.source.id)!,
+        };
       }
       existingRecordIds.add(record.id);
     }
 
-    // Combine Schema Variables: preserve all demo variables + append novel custom variables
-    const combinedVariables: Variable[] = [...demoPack.schema.variables];
+    // Combine Schema Variables: deep-clone demo variables to prevent mutating caller's demoPack
+    const combinedVariables: Variable[] = demoPack.schema.variables.map((v) => {
+      if (v.type === "num") {
+        return {
+          ...v,
+          range: [v.range[0], v.range[1]] as Range,
+          display_units: v.display_units ? v.display_units.map((d) => ({ ...d })) : undefined,
+          risk: v.risk ? { ...v.risk } : undefined,
+        };
+      } else {
+        return { ...v };
+      }
+    });
     const demoVarIds = new Set(demoPack.schema.variables.map((v) => v.id));
 
     for (const cv of schemaVariables) {
       if (!demoVarIds.has(cv.id)) {
-        combinedVariables.push(cv);
+        combinedVariables.push(
+          cv.type === "num"
+            ? { ...cv, range: [cv.range[0], cv.range[1]] as Range }
+            : { ...cv }
+        );
         demoVarIds.add(cv.id);
       } else {
         // Expand range for matching numeric variable if needed

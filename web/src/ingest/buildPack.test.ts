@@ -8,6 +8,7 @@ import {
   graph,
   rank,
   type Lens,
+  type NumVariable,
   type Pack,
 } from "../engine";
 import { summarizeOutcomes } from "../report/ml-card";
@@ -566,5 +567,156 @@ describe("buildPackFromDocs", () => {
     const res1 = buildPackFromDocs([numOnlyDoc], vars1, { scope: "uploaded" });
     expect(res1.pack.records).toHaveLength(1);
     expect(res1.suggestedScenario.values.temperature).toBe(25);
+  });
+
+  it("propagates ID collision renames across sources, records, and mapping tables, and avoids mutating demoPack schema variables", () => {
+    // Construct a demoPack with an existing source "colliding-doc", study "study-colliding-doc", and variable "temp" with range [20, 30]
+    const demoPack: Pack = {
+      contract: "prometeo.pack/1",
+      meta: {
+        id: "demo",
+        title: "Demo Pack",
+        created_at: "2026-11-14",
+        source_note: "demo",
+        stats: { studies: 1, records: 1, tests: 1, campaigns: 0, sources: 1, flagged: 0, publications: 0, documents: 1 },
+      },
+      schema: {
+        variables: [
+          {
+            id: "temp",
+            label: "Temperature",
+            unit: "°C",
+            type: "num",
+            sigma: 1,
+            range: [20, 30],
+          },
+        ],
+        thresholds: { grade_a: 1.0, tolerance: 0.25, closeness_reach: 3 },
+      },
+      sources: [
+        {
+          id: "colliding-doc",
+          kind: "table",
+          name: "demo_file.csv",
+          study: "study-colliding-doc",
+          sha256: "aaaa",
+          used: true,
+        },
+      ],
+      studies: [
+        {
+          id: "study-colliding-doc",
+          short: "Demo Study",
+          title: "Demo Study Title",
+          summary: { objective: null, subjects: [], conditions: null, variables: ["temp"], instruments: null },
+          attributes: {},
+          related: [],
+          links: [],
+          counts: { records: 1, tests: 1, publications: 0, documents: 1 },
+        },
+      ],
+      records: [
+        {
+          id: "rec-1",
+          study: "study-colliding-doc",
+          label: "Row 1",
+          values: { temp: [25, 25] },
+          kind: "test",
+          source: { id: "colliding-doc", row: 1 },
+          confidence: "table",
+          quote: null,
+          flags: [],
+        },
+      ],
+      claims: [],
+    };
+
+    const demoMapping: Mapping = {
+      tables: [
+        {
+          source: "colliding-doc",
+          columns: [{ column: "Temp", variable: "temp", unit: "°C", status: "approved" }],
+          constants: {},
+        },
+      ],
+      synonyms: {},
+      approved_by: "demo",
+      approved_at: "2026-11-14",
+    };
+
+    // Uploaded doc that has colliding id "colliding-doc" and expands temp range to [10, 50]
+    const collidingDoc: UploadedDoc = {
+      id: "colliding-doc",
+      name: "colliding.csv",
+      kind: "table",
+      mediaType: "text/csv",
+      bytes: 100,
+      sha256: "bbbb",
+      status: "done",
+      uploadedAt: "2026-11-15T10:00:00Z",
+      table: {
+        headers: ["Temp"],
+        columns: [
+          {
+            name: "Temp",
+            label: "Temp",
+            unit: "°C",
+            type: "numeric",
+            nonEmptyCount: 2,
+            numericCount: 2,
+            min: 10,
+            max: 50,
+            median: 30,
+            sampleCells: [{ row: 1, raw: "10" }],
+          },
+        ],
+        rows: [
+          { row: 1, values: ["10"] },
+          { row: 2, values: ["50"] },
+        ],
+      },
+    };
+
+    const vars = extractVariablesFromDocs([collidingDoc]);
+    // Snapshot demo variable before combine
+    const originalDemoRange = [...(demoPack.schema.variables[0] as NumVariable).range];
+
+    const { pack, mapping } = buildPackFromDocs([collidingDoc], vars, {
+      scope: "combine",
+      demoPack,
+      demoMapping,
+    });
+
+    // 1. Verify demoPack.schema.variables[0].range is NOT mutated
+    expect((demoPack.schema.variables[0] as NumVariable).range).toEqual(originalDemoRange);
+    expect(originalDemoRange).toEqual([20, 30]);
+
+    // 2. Verify combined pack expanded range
+    const combinedTemp = pack.schema.variables.find((v) => v.id === "temp") as NumVariable;
+    expect(combinedTemp.range).toEqual([10, 50]);
+
+    // 3. Verify renaming propagation:
+    // colliding study & source were renamed to custom_
+    const customStudy = pack.studies.find((s) => s.id !== "study-colliding-doc");
+    expect(customStudy).toBeDefined();
+    expect(customStudy?.id).toBe("custom_study-colliding-doc");
+
+    const customSource = pack.sources.find((s) => s.id !== "colliding-doc");
+    expect(customSource).toBeDefined();
+    expect(customSource?.id).toBe("custom_colliding-doc");
+    expect(customSource?.study).toBe("custom_study-colliding-doc");
+
+    // Check mapping table has renamed source
+    const customMappingTable = mapping.tables.find((t) => t.source !== "colliding-doc");
+    expect(customMappingTable).toBeDefined();
+    expect(customMappingTable?.source).toBe("custom_colliding-doc");
+
+    // Check custom records have renamed source.id and study
+    const newRecords = pack.records.filter((r) => r.id !== "rec-1");
+    expect(newRecords.length).toBe(2);
+    for (const r of newRecords) {
+      expect(r.study).toBe("custom_study-colliding-doc");
+      expect(r.source.id).toBe("custom_colliding-doc");
+    }
   });
 });
