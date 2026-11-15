@@ -3,7 +3,7 @@ import type { EvidenceLevel, Finding, Lens, OverallEvidence, Pack, Scenario, Var
 import { partitionOf, pool } from "../engine";
 import { num, partitionName, partitionPhrase, plural, rangeText, scenarioValueText, studyShort, varOf } from "./format";
 import type { NumVariable } from "../engine";
-import { t, tx, lazy, many } from "../i18n";
+import { t, tx, lazy } from "../i18n";
 
 export const LEVELS: Record<EvidenceLevel, { label: string; icon: string; def: string }> = lazy({
   studied: { label: tx("Studied"), icon: "●", def: tx("The value is inside the tested range and records from at least the minimum number of studies cover it.") },
@@ -20,19 +20,6 @@ const OVERALL: Record<OverallEvidence["level"], string> = {
 };
 /** Overall evidence in words; `unit` is the noun the corpus uses for its unit of study. */
 export const overallText = (level: OverallEvidence["level"], unit: string = t("study")): string => t(OVERALL[level], unit);
-
-const VERDICT: Record<OverallEvidence["level"], string> = {
-  strong: tx("Grade A is reached by {0} of {1} {2}: a comparable record lies close to the scenario and no variable is missing."),
-  partial: tx("No {3} is graded A. Grade B is reached by {0} of {1} {2}: inside the tested range, with missing variables or a larger distance."),
-  scarce: tx("No {3} is graded better than C. Comparable records exist in {0} of {1} {2}, all outside the tested range of this scenario."),
-  none: tx("None of the {1} {2} has records comparable with this scenario."),
-};
-/** The overall level as one plain sentence, from the grade counts alone. It states coverage; it never predicts an outcome. */
-export function verdictText(overall: OverallEvidence, unit: string = t("study")): string {
-  const c = overall.counts;
-  const n = overall.level === "strong" ? c.A : overall.level === "partial" ? c.B : c.C;
-  return t(VERDICT[overall.level], n, c.A + c.B + c.C + c.D, many(unit), unit);
-}
 
 export const FINDING_LEVEL: Record<Finding["level"], string> = lazy({
   attention: tx("Attention"),
