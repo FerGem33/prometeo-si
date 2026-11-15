@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T12 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
+| Tarea en curso | T13 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
 | Último commit verificado | T10: 2bda497; T11 pruebas locales en este commit |
-| Siguiente paso exacto | T12: ficha descriptiva de outcomes sin combinar columnas heterogéneas; registrar limitación de criterios de idoneidad ML y después seguir T13 según plan |
+| Siguiente paso exacto | T13: implementar comparación seleccionable de dos estudios con valores, unidades, citas y etiquetas; verificar y guardar captura. Mantener pendiente el deploy web del dueño y revisión visual pública para cerrar T08/T11/T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -48,8 +48,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
-| T12 | Ficha de datos para ML | P2 | en curso | Codex · stringbuilder | este commit | Resúmenes por fuente/columna/kind; no combinar outcomes heterogéneos |
-| T13 | Comparar 2 estudios | P2 | pendiente | | | |
+| T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | (este commit) | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
+| T13 | Comparar 2 estudios | P2 | en curso | Codex · stringbuilder | (inicio en este commit) | Comparación lado a lado con unidades, citas y etiquetas; pendiente captura de verificación. |
 | T14 | Prueba agnóstica | P3 | pendiente | | | |
 | T15 | Aceptación y entrega | P0 | pendiente | | | |
 
@@ -68,6 +68,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 20:01 CST · Codex · T12 y comienzo T13
+- Hecho: T12 agrega ficha determinista de resultados aprobados por mapping, agrupados por estudio, fuente, columna literal y tipo. Presenta denominadores, datos completos, cobertura de unidades declaradas, frecuencias textuales y candidatos de filas exactas repetidas entre fuentes. Todos los registros candidatos permanecen incluidos.
+- Límite para revisión final: no hay en el contrato una definición de target/clase ni umbrales de idoneidad ML. La UI llama descriptivas a las frecuencias y no emite un veredicto de aptitud; el equipo debe definir criterios antes de usarla para elegir un modelo.
+- Verificado: Vitest 35/35, build de producción, `scripts/check_agnostic.sh` y `git diff --check` OK. Un primer assertion de orden en una prueba nueva falló; corregido para validar ambos tipos sin asumir orden y la corrida final pasó.
+- Siguiente paso exacto: T13, comparación lado a lado de dos estudios con unidades, citas y etiquetas; guardar captura. El deploy final web y la inspección pública continúan a cargo del dueño antes de cerrar T08/T11/T15.
 
 ### 2026-11-14 19:41 CST · Codex · T11 lista para deploy del dueño
 - Hecho: barra /ask con sugerencias de lens, validación de respuesta, chips que enfocan controles editables; Analysis con fuentes, debounce 800 ms, cancelación de solicitudes obsoletas y timeout 20 s; plantilla explícita ante error.
