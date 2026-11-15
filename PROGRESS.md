@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **T35 y continuación local · stringbuilder.** T32 cerrada por revisión delegada; T33 cargas/DELETE comprobadas en AWS real. T34 espera permisos del administrador; dueño pide continuar localmente y dejar AWS para después. |
+| Tarea en curso | **Cierre local T36 y retoma AWS · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. Dueño autoriza volver a AWS después de pruebas; comprobar de nuevo permisos T34 antes de crear/habilitar worker. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Continuar localmente T35 → T37 → T38 → T36 con aprobación delegada concreta para ebullición. AWS después por instrucción del dueño: aplicar permisos T34, validar condición IAM, seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). Activar T35 solo después; no repetir smokes exitosos sin cambios. |
+| Siguiente paso exacto | Retomar AWS: comprobar permisos T34, validar condición IAM y seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). T35/originales suman15rutas JWT al aplicarse, luego prueba de aprobación/extracción. Pendientes locales: publicación autenticada T37 y persistencia de revisión T36; no se marcan completas por tener CLI. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -65,7 +65,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
-| T36 | Correcciones y relaciones declaradas | fase 2 · C | pendiente | | | Requiere borrador extraído; conservar original, autor y cita; pendientes APIs y pantalla |
+| T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (local) | stringbuilder | esta entrega | CLI versionada de correcciones/conflictos/claims, 7 pruebas; originales GET firmados300s con ownership/páginas, 10 pruebas. Borrador real51registros preparado sin corregir datos. Faltan APIs persistentes, publicación corregida y pantalla; docs/T36_REVISION_LOCAL.md |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | esta entrega | CSV y datacard conectados al modal; demo y bundle T37 pasan con mismo código, D4 determinista y QA Chrome desktop/móvil. Deploy pospuesto; selector/editor de objetivo y criterios sigue en T27. docs/T38_DATASET_EXPORT.md |
 
 ## Aceptación final (T15)
@@ -99,6 +99,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T36 revisión local y acceso a originales
+- CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.
+- Claims exigen literal PDF verificado e identidad de estudio revisada; el respaldo semántico es una declaración del revisor. Siete pruebas pasan, incluidas citas falsas, variantes, tipos, versiones y cambios de parseado. Preparación real sobre el subset T37:51registros,0conflictos; ninguna corrección ni claim científico aplicado.
+- Ruta original_url preparada: propiedad antes de firma, subida completa, prefijo exacto, GET300s, página PDF validada y fragmento#page. Diez pruebas nuevas de API pasan; preflight/deploy con dobles comprueba11/12/14/15rutas según flags. API total148 pasan. No está desplegada aún; README T36 identifica persistencia/API/pantallas/puente de publicación pendientes.
+- El dueño inicialmente pidió AWS después y luego autorizó retomarlo al cerrar lo local. Mantener límites/perfil/modelo; volver a comprobar IAM antes de crear worker, sin saltar simulación exigida por relevo.
+- Verificación final local:148 API,40 pipeline (10+10+8+5+7),106 web con bundle y6 helper Cognito pasan. validate_pack del demo y del subset pasa; check_agnostic/diff-check pasan. Build pasa con aviso de chunk629kB; demo sin cambios. Solo se preparó el estado de revisión real, sin correcciones científicas ni llamadas de modelo nuevas.
 
 ### 2026-11-15 · T38 exportación y criterios D4
 - Implementado CSV con unidades/DOI/group_id, originales/correcciones y resultados fuente separados; datacard con versiones/hashes, conversiones, rechazos, licencias desconocidas explícitas y criterios D4. Registros excluidos/citas PDF no verificadas nunca se exportan.

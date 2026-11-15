@@ -216,12 +216,13 @@ def handle(event):
                 return 204, deletions().delete_document(uid, document[1], document[2])
             documents = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents', path)
             completed = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/complete', path)
+            original = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/url', path)
             jobs = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/jobs', path)
             resume = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/ingest/resume', path)
-            if documents or completed or jobs or resume:
+            if documents or completed or original or jobs or resume:
                 # Authenticate/authorize before gate/configuration or signing.
                 repository = store()
-                pid = (documents or completed or jobs or resume)[1]
+                pid = (documents or completed or original or jobs or resume)[1]
                 repository.get(uid, pid)
                 try:
                     from .upload_tickets import service
@@ -229,6 +230,8 @@ def handle(event):
                     from upload_tickets import service
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 uploads = service(repository)
+                if original and method == 'POST':
+                    return 200, uploads.original_url(uid, pid, original[2], body(event))
                 if jobs and method == 'GET':
                     return 200, uploads.jobs(uid, pid)
                 if resume and method == 'POST':

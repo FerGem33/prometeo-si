@@ -1,5 +1,13 @@
 # Qué falta para cerrar la parte AWS y backend
 
+**Actualización del relevo 15-nov:** T32 cerrada con D7 y aprobación delegada PDF;
+T33 cargas/DELETE verificadas con19checks reales. T35 tiene API de revisión local,
+T37 constructor y subset de ebullición verificados, T38 exportación local terminada,
+T36 revisión CLI y originales preparados. T34 espera política de operador y
+simulador IAM; el dueño volvió a autorizar retomar AWS tras las pruebas locales.
+Estado vigente y pendientes exactos: PROGRESS.md. La tabla siguiente conserva
+la foto previa al relevo, no evidencia del estado actual.
+
 Estado al 15-nov, después del despliegue acotado T33. El responsable técnico
 puede preparar API, procesamiento, permisos y despliegues desde esta laptop;
 el equipo de interfaz construye/conecta las pantallas. La infraestructura base
