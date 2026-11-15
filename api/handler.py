@@ -109,7 +109,12 @@ DESIGN_SYSTEM = (
     '"highlightedVariables": ["var_id_1"], '
     '"variableGroups": [{"id": "grp1", "label": "Group Label", "variables": ["var_id_1"]}], '
     '"defaultAxes": ["numeric_var_x", "numeric_var_y"], '
-    '"hideMlCard": false, "rationale": "Explanation for choices"}. '
+    '"hideMlCard": false, "rationale": "Explanation for choices", '
+    '"modules": [{"id": "case-input", "type": "scenario_input", "title": "Module title", '
+    '"description": "What the module does for the purpose", "variables": ["var_id_1"], "limit": 5}]}. '
+    'The instruction is the purpose of the paper; choose modules that serve it. '
+    'Module types: scenario_input, classification, key_papers, case_notes, free_chat. '
+    'Modules never state values, risks or predictions. '
     'Only use section IDs from: graphical_abstract, map, heat, gaps, graph, data_methods. '
     'Only use variable IDs that exist in the submitted variables. defaultAxes must contain 0 to 2 numeric variable IDs.'
 )
@@ -117,6 +122,31 @@ DESIGN_SYSTEM = (
 ALLOWED_SECTIONS = ('graphical_abstract', 'map', 'heat', 'gaps', 'graph', 'data_methods')
 ALLOWED_LAYOUTS = ('grouped', 'list', 'grid')
 ALLOWED_DENSITIES = ('editorial', 'compact')
+ALLOWED_MODULES = ('scenario_input', 'classification', 'key_papers', 'case_notes', 'free_chat')
+
+
+def sanitize_modules(raw, valid_var_ids):
+    """Keeps well-formed modules of known types; the web client validates them again against its schemas."""
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for i, m in enumerate(raw[:8]):
+        if not isinstance(m, dict) or m.get('type') not in ALLOWED_MODULES:
+            continue
+        title = m.get('title')
+        if not isinstance(title, str) or not title.strip():
+            continue
+        item = {
+            'id': str(m.get('id') or f"{m['type']}-{i + 1}")[:60],
+            'type': m['type'],
+            'title': title.strip()[:120],
+            'description': str(m.get('description', ''))[:600].strip(),
+            'variables': [v for v in m.get('variables', []) if isinstance(v, str) and v in valid_var_ids] if isinstance(m.get('variables'), list) else [],
+        }
+        if isinstance(m.get('limit'), int) and not isinstance(m.get('limit'), bool) and 1 <= m['limit'] <= 20:
+            item['limit'] = m['limit']
+        out.append(item)
+    return out
 
 
 def validate_propose_request(data):
@@ -347,6 +377,7 @@ def sanitize_design_blueprint(output, submitted_variables):
         'defaultAxes': default_axes,
         'hideMlCard': hide_ml,
         'rationale': rationale,
+        'modules': sanitize_modules(output.get('modules'), valid_var_ids),
     }
 
 

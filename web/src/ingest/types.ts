@@ -107,6 +107,9 @@ export interface ExtractedVariable {
   include: boolean;
   citations: VariableCitation[];
   groupId?: string;
+  /** Deterministic relevance score (ingest/variableScore.ts) and its readable components. */
+  score?: number;
+  reasons?: string[];
 }
 
 export interface VariableProposalRemote {
@@ -164,6 +167,12 @@ export interface UiBlueprint {
   hideMlCard?: boolean;
   hideStudyCompare?: boolean;
   rationale: string;
+  /** What the user wants the paper for; drives the generated modules. */
+  purpose?: string;
+  /** Declarative interface modules generated from the purpose (ingest/modules.ts). */
+  modules?: import("./modules").ModuleSpec[];
+  /** Modules proposed by /design that failed validation and were dropped. */
+  rejectedModules?: string[];
 }
 
 export interface DocStoreEntry {

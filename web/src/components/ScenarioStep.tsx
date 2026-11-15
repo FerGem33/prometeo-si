@@ -1,19 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { Lens, Pack, Scenario } from "../engine";
-import { evidenceLevels } from "../engine";
 import {
   compileUiBlueprint,
   buildLensFromBlueprint,
   suggestDesignPrompts,
 } from "../ingest/blueprint";
 import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
-import { detectNasaCorpus } from "../ingest/nasaDetect";
-import { NasaApparatus } from "./NasaApparatus";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
 import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
 import { filesFromDrop } from "../ingest/folderDrop";
 import { compatibleUnits, groupVariables } from "../ingest/variableView";
+import { scoreVariables } from "../ingest/variableScore";
 import { applyConversion, getConversion } from "../ingest/buildPack";
 import {
   createDocStore,
@@ -36,9 +34,7 @@ import type {
 import { newId } from "../report/storage";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
-import { NumField } from "./NumField";
 import { Prefs } from "./Prefs";
-import { LevelTag } from "./ScenarioPanel";
 import { useData, type Mapping } from "./ctx";
 import { t } from "../i18n";
 
@@ -271,10 +267,17 @@ export function ScenarioStep({
     });
   }, [baseVariables, customVarState]);
 
-  // Live compiled UI blueprint
+  // Deterministic relevance score (spec §3.2): ordered with reasons; a variable without provenance is dropped.
+  const deferredPurpose = useDeferredValue(instruction);
+  const scoredVariables = useMemo(
+    () => scoreVariables(variables, { docs: scope === "demo" ? [] : docs, purpose: deferredPurpose, pack }),
+    [variables, docs, scope, deferredPurpose, pack],
+  );
+
+  // Live compiled UI blueprint (purpose -> modules)
   const compiledBlueprint = useMemo(() => {
-    return compileUiBlueprint(instruction, docs, variables, presetFlags, remoteDesign);
-  }, [instruction, docs, variables, presetFlags, remoteDesign]);
+    return compileUiBlueprint(deferredPurpose, docs, scoredVariables, presetFlags, remoteDesign);
+  }, [deferredPurpose, docs, scoredVariables, presetFlags, remoteDesign]);
   const blueprint = useMemo<UiBlueprint>(() => {
     if (!sectionOverride) return compiledBlueprint;
     const known = new Set(compiledBlueprint.sectionOrder);
@@ -286,15 +289,6 @@ export function ScenarioStep({
   const suggestions = useMemo(() => {
     return suggestDesignPrompts(docs, variables);
   }, [docs, variables]);
-
-  // Evidence levels for the variables
-  const levels = useMemo(() => {
-    try {
-      return evidenceLevels(pack, lens, scenario);
-    } catch {
-      return [];
-    }
-  }, [pack, lens, scenario]);
 
   // File ingestion handler
   const addFiles = async (list: FileList | File[] | null) => {
@@ -566,13 +560,6 @@ export function ScenarioStep({
     });
   };
 
-  const setVariableValue = (id: string, val: number | string) => {
-    onChange({
-      ...scenario,
-      values: { ...scenario.values, [id]: val },
-    });
-  };
-
   const setVariableLabel = (id: string, newLabel: string) => {
     setCustomVarState((prev) => ({
       ...prev,
@@ -581,16 +568,11 @@ export function ScenarioStep({
   };
 
   const readyDocs = docs.filter((d) => d.status === "done");
-  // Isometric apparatus while loading, only when the uploaded documents are space research.
-  const nasaDocs = useMemo(() => {
-    const d = detectNasaCorpus(readyDocs, []);
-    return d.isNasa && d.apparatus ? { apparatus: d.apparatus, matched: d.matched } : null;
-  }, [docs]); // eslint-disable-line react-hooks/exhaustive-deps
   const hasOnlyFailedDocs = scope !== "demo" && docs.length > 0 && readyDocs.length === 0;
 
   // Draft submission
   const handleSubmit = () => {
-    const activeVars = variables.filter((v) => v.include);
+    const activeVars = scoredVariables.filter((v) => v.include);
     const activeVarIds = new Set(activeVars.map((v) => v.id));
     const isCustom = scope !== "demo" && readyDocs.length > 0;
 
@@ -665,16 +647,11 @@ export function ScenarioStep({
   const includedCount = variables.filter((v) => v.include).length + extras.length;
   const last = step === SCENARIO_STEPS.length - 1;
 
-  // Render variable row helper
+  // Render variable row helper: selection only, with the score and its reasons (no values in this step).
   const renderVarRow = (v: ExtractedVariable) => {
-    const x = scenario.values[v.id];
-    const lv = levels.find((l) => l.variable === v.id);
     const citation = v.citations?.[0];
     const isIncluded = v.include;
-
-    const min = v.min !== undefined ? v.min : 0;
-    const max = v.max !== undefined && v.max > min ? v.max : min + 100;
-    const numVal = typeof x === "number" ? x : (v.median ?? (min + max) / 2);
+    const docsCited = new Set(v.citations.map((c) => c.docId)).size;
 
     return (
       <li key={v.id} className={`vrow ${!isIncluded ? "vrow-excluded" : ""}`}>
@@ -695,11 +672,16 @@ export function ScenarioStep({
             onChange={(e) => setVariableLabel(v.id, e.target.value)}
           />
           {v.unit && <small>{v.unit}</small>}
-          {lv && <LevelTag level={lv.level} />}
+          {v.score !== undefined && (
+            <span className="vscore" title={t("Relevance score, 0–100 (computed locally, see Methods)")}>
+              {t("Score {0}", v.score)}
+            </span>
+          )}
           {citation && (
             <span className="citation-badge" title={citation.quote}>
               {citation.docName}
               {citation.page ? ` · ${t("Page {0}", citation.page)}` : citation.row ? ` · ${t("Row {0}", citation.row)}` : ""}
+              {docsCited > 1 ? ` · ${t("+{0} more", docsCited - 1)}` : ""}
             </span>
           )}
           <button
@@ -711,68 +693,37 @@ export function ScenarioStep({
           </button>
         </div>
 
+        {v.reasons && v.reasons.length > 0 && <p className="vreasons">{v.reasons.join(" · ")}</p>}
+        {v.type === "numeric" && v.min !== undefined && v.max !== undefined && (
+          <div className="cond-ctl">
+            <span className="alt">
+              {t("Range in the documents: {0}–{1}", Number(v.min.toPrecision(4)), Number(v.max.toPrecision(4)))} {v.unit ?? ""}
+            </span>
+            {v.unit && compatibleUnits(v.unit).length > 0 && (
+              <span className="unit-view">
+                <select
+                  aria-label={t("Display unit for {0}", v.label)}
+                  value={displayUnits[v.id] ?? ""}
+                  onChange={(e) => setDisplayUnits((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                >
+                  <option value="">{t("Show in…")}</option>
+                  {compatibleUnits(v.unit).map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+                {displayUnits[v.id] && (
+                  <output>
+                    = {[v.min, v.max].map((x) => Number(applyConversion(x, getConversion(v.unit, displayUnits[v.id])).toPrecision(4))).join("–")} {displayUnits[v.id]}
+                  </output>
+                )}
+              </span>
+            )}
+          </div>
+        )}
         {citation?.quote && (
           <span className="citation-quote">“{citation.quote}”</span>
-        )}
-
-        {isIncluded && (
-          v.type === "numeric" ? (
-            <div className="cond-ctl">
-              <input
-                type="range"
-                aria-label={v.label}
-                min={min}
-                max={max}
-                step={(max - min) / 100 || 1}
-                value={numVal}
-                onChange={(e) => setVariableValue(v.id, Number(e.target.value))}
-              />
-              <NumField
-                label={t("{0} value", v.label)}
-                min={min}
-                max={max}
-                step={(max - min) / 100 || 1}
-                value={numVal}
-                onCommit={(n) => setVariableValue(v.id, n)}
-              />
-              {v.unit && <span className="alt">{v.unit}</span>}
-              {v.unit && compatibleUnits(v.unit).length > 0 && (
-                <span className="unit-view">
-                  <select
-                    aria-label={t("Display unit for {0}", v.label)}
-                    value={displayUnits[v.id] ?? ""}
-                    onChange={(e) => setDisplayUnits((prev) => ({ ...prev, [v.id]: e.target.value }))}
-                  >
-                    <option value="">{t("Show in…")}</option>
-                    {compatibleUnits(v.unit).map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                  {displayUnits[v.id] && (
-                    <output>
-                      = {Number(applyConversion(numVal, getConversion(v.unit, displayUnits[v.id])).toPrecision(4))} {displayUnits[v.id]}
-                    </output>
-                  )}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="cond-ctl">
-              <select
-                aria-label={v.label}
-                value={typeof x === "string" ? x : (v.mode ?? v.categories?.[0] ?? "")}
-                onChange={(e) => setVariableValue(v.id, e.target.value)}
-              >
-                {(v.categories ?? []).map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )
         )}
       </li>
     );
@@ -1019,8 +970,6 @@ export function ScenarioStep({
               </ul>
             )}
 
-            {nasaDocs && <NasaApparatus apparatus={nasaDocs.apparatus} matched={nasaDocs.matched} compact />}
-
             {/* Optional Bedrock /propose AI enrichment button */}
             {docs.some((d) => d.status === "done") && (
               <div className="ai-propose-bar">
@@ -1050,9 +999,9 @@ export function ScenarioStep({
         {/* STEP 2: INTERFACE DESIGN */}
         {SCENARIO_STEPS[step] === "Interface design" && (
           <section className="step-panel">
-            <h1>{t("Design your analysis interface")}</h1>
+            <h1>{t("What is this paper for?")}</h1>
             <p className="step-lede">
-              {t("Describe how you want the dashboard structured, or select focus presets below. Prometeo compiles an interface blueprint tailored to your corpus.")}
+              {t("State the purpose of the paper. From the purpose and your documents, Prometeo proposes the relevant variables and generates the interface modules of the report. Focus presets below are secondary adjustments.")}
             </p>
 
             <div className="corpus-summary-badge">
@@ -1060,7 +1009,7 @@ export function ScenarioStep({
             </div>
 
             <label htmlFor="instruction" className="fieldlbl">
-              {t("Interface instructions")}
+              {t("Purpose")} <small>{t("(required)")}</small>
             </label>
             <textarea
               ref={instructionRef}
@@ -1070,8 +1019,11 @@ export function ScenarioStep({
               maxLength={4000}
               value={instruction}
               onChange={(e) => handleInstructionChange(e.target.value)}
-              placeholder={t("e.g. Highlight key parameters, compare studies, and prioritize gap analysis")}
+              placeholder={lens.purpose_example ?? ""}
+              required
+              aria-required="true"
             />
+            {!instruction.trim() && <p className="hint">{t("Write the purpose to continue.")}</p>}
 
             {/* Variables that can be inserted into the instruction */}
             {variables.length > 0 && (
@@ -1224,9 +1176,9 @@ export function ScenarioStep({
         {/* STEP 3: VARIABLES */}
         {SCENARIO_STEPS[step] === "Variables" && (
           <section className="step-panel">
-            <h1>{t("Review and adjust extracted variables")}</h1>
+            <h1>{t("Select the variables")}</h1>
             <p className="step-lede">
-              {t("Toggle variables to include in the evaluation, verify source citations, and set scenario values. A variable left out is not compared.")}
+              {t("Variables are ordered by a deterministic relevance score computed from your documents and your purpose; the reasons are shown under each one. Select the ones to include. No value is set here: you describe your case in the report.")}
             </p>
 
             {variables.length === 0 && extras.length === 0 && (
@@ -1244,7 +1196,7 @@ export function ScenarioStep({
               aria-label={t("Filter variables by name or unit")}
             />
             {(() => {
-              const groups = groupVariables(variables, blueprint, varQuery, t("Other variables"));
+              const groups = groupVariables(scoredVariables, blueprint, varQuery, t("Other variables"));
               const listClass = blueprint.variablesLayout === "grid" ? "vlayout-grid" : "vlist";
               if (varQuery.trim() && groups.length === 0) return <p className="empty">{t("No variable matches “{0}”.", varQuery.trim())}</p>;
               return (
@@ -1280,19 +1232,7 @@ export function ScenarioStep({
                       </button>
                     </div>
                     <div className="cond-ctl">
-                      <input
-                        type="text"
-                        className="xval"
-                        aria-label={t("{0} value", e.name)}
-                        maxLength={40}
-                        value={e.value}
-                        onChange={(ev) =>
-                          onExtras(
-                            extras.map((o) => (o.id === e.id ? { ...o, value: ev.target.value } : o))
-                          )
-                        }
-                      />
-                      <span className="alt">{t(EXTRA_BASIS)}</span>
+                      <span className="alt">{e.type === "categorical" ? t("Categorical") : t("Numeric")} · {t(EXTRA_BASIS)}</span>
                     </div>
                   </li>
                 ))}
@@ -1308,6 +1248,7 @@ export function ScenarioStep({
                   if (v && !v.include) toggleVariableInclude(id);
                 }}
                 onAdd={(e) => onExtras([...extras, e])}
+                define
               />
             </div>
           </section>
@@ -1327,7 +1268,7 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
-              disabled={step === 0 && hasOnlyFailedDocs}
+              disabled={(step === 0 && hasOnlyFailedDocs) || (SCENARIO_STEPS[step] === "Interface design" && !instruction.trim())}
               onClick={() => setStep(step + 1)}
             >
               {t("Continue")}

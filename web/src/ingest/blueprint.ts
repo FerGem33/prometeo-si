@@ -15,6 +15,7 @@ import type {
   UiBlueprint,
   UploadedDoc,
 } from "./types";
+import { generateModules, validateModules } from "./modules";
 
 // ============================================================================
 // Constants & Allowlists
@@ -514,7 +515,17 @@ export function compileUiBlueprint(
       .slice(0, 2)
       .join(" & ")} with ${density} density based on directives.`;
 
+  // H. Purpose-driven modules: /design may propose them; each one is validated and invalid ones are dropped.
+  const included = vars.filter((v) => v.include);
+  const includedIds = new Set(included.map((v) => v.id));
+  const remoteModules = remoteBlueprint?.modules !== undefined ? validateModules(remoteBlueprint.modules, includedIds) : null;
+  if (remoteModules?.rejected.length) console.warn("Prometeo: /design modules rejected", remoteModules.rejected);
+  const modules = remoteModules?.modules.length ? remoteModules.modules : generateModules(instr, included);
+
   return {
+    purpose: instr.trim(),
+    modules,
+    rejectedModules: remoteModules?.rejected ?? [],
     title,
     kicker,
     variablesLayout,

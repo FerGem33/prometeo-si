@@ -8,7 +8,7 @@ import { overallText, levelBasis, whyText } from "../report/text";
 import { doiOf, num, scenarioValueText, studyShort, varOf } from "../report/format";
 import { explainStudy, valueWithUnit } from "../report/ranking";
 import { t, many } from "../i18n";
-import { NasaApparatus, ReferenceScenarios, type NasaInfo } from "./NasaApparatus";
+import { ReferenceScenarios, type NasaInfo } from "./NasaApparatus";
 
 const GRADES: Grade[] = ["A", "B", "C", "D"];
 
@@ -172,14 +172,6 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
       </p>
 
       {nasa?.scenarios && <ReferenceScenarios scenarios={nasa.scenarios} />}
-      {nasa && (
-        <div className="ga-nasa">
-          <NasaApparatus {...nasa} compact />
-          <p className="ga-nasa-cov">
-            <b>{t("Empirical coverage.")}</b> {t("{0} comparable tests; overall evidence is {1}.", comparable.toLocaleString("en-US"), overallText(overall.level, unit))}
-          </p>
-        </div>
-      )}
 
       <div className="ga-grid">
         <section className="ga-a" aria-label={t("Scenario against the tested range")}>

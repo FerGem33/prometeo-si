@@ -54,6 +54,7 @@
     "Suspect value": "Valor sospechoso",
     "A companion column holds an implausible value (possible transcription error in the source table).": "Una columna asociada contiene un valor inverosímil (posible error de transcripción en la tabla de origen).",
     "Value taken from a table note": "Valor tomado de una nota de la tabla",
-    "Pressure (~1 atm) is taken from a note in the table, not from a per-test column.": "La presión (~1 atm) se toma de una nota de la tabla, no de una columna por prueba."
+    "Pressure (~1 atm) is taken from a note in the table, not from a per-test column.": "La presión (~1 atm) se toma de una nota de la tabla, no de una columna por prueba.",
+    "Make informed decisions about fire safety in a lunar habitat, with respect to flames in microgravity": "Tomar decisiones informadas sobre seguridad contra incendios en un hábitat lunar, respecto a llamas en microgravedad"
   }
 }

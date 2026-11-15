@@ -36,6 +36,7 @@ export function localizeData(data: Data, locale: CorpusLocale | null): Data {
     ...lens,
     title: tr(lens.title),
     kicker: tr(lens.kicker),
+    purpose_example: tr(lens.purpose_example),
     subject: tr(lens.subject),
     unit_of_study: tr(lens.unit_of_study),
     byline: tr(lens.byline),

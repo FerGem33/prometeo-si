@@ -43,6 +43,8 @@ import type { Lang } from "./i18n";
 import { loadLocale, localizeData } from "./i18n/localize";
 import type { CorpusLocale } from "./i18n/localize";
 import { Prefs } from "./components/Prefs";
+import { CaseModules } from "./components/CaseModules";
+import { DocSummaries } from "./components/DocSummaries";
 
 const STAGE_HASHES = ["", "#scenario", "#processing", "#report", "#workspace"];
 
@@ -114,6 +116,8 @@ function Flow({ data }: { data: Data }) {
   const initial = useMemo(() => readUrl(pack, lens, window.location.search), [pack, lens]);
   const [activeCustomDraft, setActiveCustomDraft] = useState<EvaluationDraft | null>(null);
   const [pendingDraft, setPendingDraft] = useState<EvaluationDraft | null>(null);
+  // Purpose and modules of a wizard run on the reference pack (custom corpora carry them in their draft).
+  const [demoBlueprint, setDemoBlueprint] = useState<UiBlueprint | null>(null);
   const [scenario, setScenario] = useState<Scenario>(initial.scenario);
   const [axes, setAxes] = useState<Axes>(initial.axes);
   const [goal, setGoal] = useState("");
@@ -179,6 +183,7 @@ function Flow({ data }: { data: Data }) {
         onStart={(presetScenario) => {
           if (presetScenario) {
             setActiveCustomDraft(null);
+            setDemoBlueprint(null);
             setPendingDraft(null);
             setScenario(presetScenario);
             setAxes(defaultAxesFrom(pack, lens));
@@ -189,6 +194,7 @@ function Flow({ data }: { data: Data }) {
         }}
         onDemo={() => {
           setActiveCustomDraft(null);
+          setDemoBlueprint(null);
           setPendingDraft(null);
           const initialDemo = readUrl(pack, lens, "");
           setScenario(initialDemo.scenario);
@@ -239,6 +245,8 @@ function Flow({ data }: { data: Data }) {
           } else {
             setActiveCustomDraft(null);
             setPendingDraft(null);
+            setDemoBlueprint(draft.blueprint);
+            if (draft.instruction) setGoal(draft.instruction);
             setScenario(draft.scenario);
             setExtras(draft.extras ?? []);
             go("processing");
@@ -288,6 +296,7 @@ function Flow({ data }: { data: Data }) {
           isCustomCorpus={Boolean(activeCustomDraft?.isCustomCorpus)}
           customDraft={activeCustomDraft?.isCustomCorpus ? activeCustomDraft : null}
           referenceLens={lens}
+          caseBlueprint={activeCustomDraft?.isCustomCorpus ? activeCustomDraft.blueprint : demoBlueprint}
           scenario={scenario}
           setScenario={setScenario}
           extras={extras}
@@ -298,6 +307,7 @@ function Flow({ data }: { data: Data }) {
           projectId={projectId}
           onHome={() => {
             setActiveCustomDraft(null);
+            setDemoBlueprint(null);
             setPendingDraft(null);
             const resetDemo = readUrl(pack, lens, "");
             setScenario(resetDemo.scenario);
@@ -336,6 +346,7 @@ function Report({
   isCustomCorpus,
   customDraft,
   referenceLens,
+  caseBlueprint,
   scenario,
   setScenario,
   extras,
@@ -355,6 +366,7 @@ function Report({
   isCustomCorpus?: boolean;
   customDraft?: EvaluationDraft | null;
   referenceLens?: Lens;
+  caseBlueprint?: UiBlueprint | null;
   scenario: Scenario;
   setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void;
   extras: Extra[];
@@ -513,6 +525,24 @@ function Report({
             <EvidenceCard overall={r.overall} ranking={r.ranking} levels={r.levels} comparable={r.n} />
             <KeyFindings findings={r.finds} />
           </div>
+
+          {caseBlueprint?.modules?.length ? (
+            <CaseModules
+              modules={caseBlueprint.modules}
+              purpose={caseBlueprint.purpose}
+              scenario={scenario}
+              setScenario={setScenario}
+              extras={extras}
+              setExtras={setExtras}
+              levels={r.levels}
+              ranking={r.ranking}
+              isCustomCorpus={isCustomCorpus}
+            />
+          ) : null}
+
+          <Fold title={t("Summaries by document")} hint={t("{0} documents · template text with sources", pack.studies.length)}>
+            <DocSummaries />
+          </Fold>
 
           <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
             <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} isCustomCorpus={isCustomCorpus} nasa={nasa} />

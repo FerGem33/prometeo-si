@@ -242,6 +242,14 @@ function inVarUnit(raw: string, unit: string | undefined, v: NumVariable): numbe
   return Math.round(applyConversion(n, conv) * 1e6) / 1e6;
 }
 
+// Questions that ask for an outcome or a verdict. Prometeo compares conditions; it answers with evidence levels instead.
+const PREDICTION = /\b(is it safe|safe|unsafe|danger\w*|hazard\w*|will (it|this|that|the \w+) (burn|ignite|fail|work|explode|catch)|would (it|this) (burn|ignite|fail)|predict\w*|burns?|ignites?|explodes?|fails?|risk of|es seguro|seguro|peligros\w*|arder[áa]?|arde|prender[áa]?|explotar[áa]?|fallar[áa]?|predec\w*)\b/i;
+
+/** True when the question asks for a prediction or a safety verdict rather than for the evidence. */
+export function isPredictionQuestion(question: string): boolean {
+  return PREDICTION.test(question);
+}
+
 /**
  * Read-only questions over the records of the pack (max, min, mean, count; studies under a numeric condition).
  * Deterministic: every answer lists the records it was computed from so the interface can open their sources.

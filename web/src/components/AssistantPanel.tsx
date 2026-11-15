@@ -143,7 +143,7 @@ const STAT_TEXT: Record<string, string> = { max: tx("Maximum"), min: tx("Minimum
 const SHOWN = 12;
 
 /** A read-only answer computed in the browser from pack.records; every record it used opens its source. */
-function LocalAnswerView({ answer }: { answer: LocalAnswer }) {
+export function LocalAnswerView({ answer }: { answer: LocalAnswer }) {
   const { pack } = useData();
   const v = pack.schema.variables.find((x) => x.id === answer.variable);
   const label = v?.label ?? answer.variable;

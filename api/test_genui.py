@@ -373,3 +373,19 @@ def test_propose_accepts_batch_of_30_and_rejects_31():
     h.validate_propose_request({'documents': [doc(i) for i in range(30)]})
     with pytest.raises(ValueError):
         h.validate_propose_request({'documents': [doc(i) for i in range(31)]})
+
+
+def test_design_modules_are_sanitized():
+    variables = [{'id': 'o2', 'type': 'numeric'}, {'id': 'material', 'type': 'categorical'}]
+    out = h.sanitize_design_blueprint({'modules': [
+        {'id': 'c', 'type': 'scenario_input', 'title': 'Your case', 'variables': ['o2', 'ghost']},
+        {'type': 'unknown', 'title': 'x'},
+        {'type': 'key_papers', 'title': 'Papers', 'limit': 50},
+        {'type': 'free_chat', 'title': ' '},
+        'not a dict',
+    ]}, variables)
+    assert out['modules'] == [
+        {'id': 'c', 'type': 'scenario_input', 'title': 'Your case', 'description': '', 'variables': ['o2']},
+        {'id': 'key_papers-3', 'type': 'key_papers', 'title': 'Papers', 'description': '', 'variables': []},
+    ]
+    assert h.sanitize_design_blueprint({}, variables)['modules'] == []
