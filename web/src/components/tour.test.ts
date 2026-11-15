@@ -1,35 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { TOUR_STEPS } from "./JudgeTour";
-import type { TourContext } from "./JudgeTour";
+import { TOUR_STEPS, tourContext, tourStartScenario } from "./JudgeTour";
+import { habitatScenario } from "./HabitatFigure";
 import type { Lens, Pack } from "../engine";
 
 const pack = JSON.parse(readFileSync("public/demo/pack.json", "utf-8")) as Pack;
 const lens = JSON.parse(readFileSync("public/demo/lens.json", "utf-8")) as Lens;
-const preset = lens.presets.find((p) => p.id === lens.default_preset)!;
-const ctx: TourContext = {
-  tests: (pack.meta.stats.tests ?? 0).toLocaleString("en-US"),
-  studies: pack.studies.length,
-  unit: lens.unit_of_study ?? "study",
-  units: `${lens.unit_of_study ?? "study"}s`,
-  sources: pack.meta.stats.sources ?? pack.sources.length,
-  subject: lens.subject ?? "tests",
-  presetLabel: preset.label,
-  presetBlurb: preset.blurb,
-  question: lens.questions?.[0] ?? "",
-};
-
-const ORDER = ["cover", "scenario", "processing", "report", "dossier"];
+const ctx = tourContext(pack, lens);
+const control = (c: (typeof TOUR_STEPS)[number]["click"]) => (typeof c === "function" ? c(ctx) : c ?? "");
 
 describe("JudgeTour", () => {
-  it("walks the application in the order a presentation follows", () => {
-    const stages = TOUR_STEPS.map((s) => s.stage);
-    for (const st of ORDER) expect(stages).toContain(st);
-    const pos = stages.map((s) => ORDER.indexOf(s));
-    expect(pos).toEqual([...pos].sort((a, b) => a - b));
+  it("follows the order of the pitch: cover, product, report, live case, sources, question, export, scope, close", () => {
+    expect(TOUR_STEPS.map((s) => s.stage)).toEqual(["cover", "processing", "report", "report", "report", "report", "dossier", "report", "report"]);
+    expect(TOUR_STEPS.at(-1)!.target).toContain(".keys");
   });
 
-  it("gives every stop a title, a pitch, a takeaway and an element to outline", () => {
+  it("gives every stop a name, a title, a pitch, a takeaway and an element to outline", () => {
     for (const step of TOUR_STEPS) {
       expect(step.name).toBeTruthy();
       expect(step.title).toBeTruthy();
@@ -39,12 +25,28 @@ describe("JudgeTour", () => {
     }
   });
 
-  it("takes the numbers of the corpus from the pack, not from its own text", () => {
-    const first = TOUR_STEPS[0].pitch(ctx);
-    expect(first).toContain(ctx.tests);
-    expect(first).toContain(String(ctx.studies));
-    expect(first).toContain(String(ctx.sources));
-    expect(TOUR_STEPS.find((s) => s.stage === "scenario")!.pitch(ctx)).toContain(preset.blurb);
+  // The pitch quotes these results; they must come from the engine on the real pack, not from the text of the tour.
+  it("states the results of the engine that the pitch quotes", () => {
+    expect(ctx.hook).toMatch(/not recorded in any of the 268 comparable tests/);
+    expect(ctx.levels).toMatch(/30 %: Near, not covered/);
+    expect(ctx.levels).toMatch(/10\.2 psi\): Not studied/);
+    expect(ctx.levels).toMatch(/PMMA: Studied/);
+    expect(ctx.firstVar).toBe("oxygen concentration");
+    const [first, , report, scenario, , question] = TOUR_STEPS;
+    expect(first.pitch(ctx)).toContain(String(ctx.studies));
+    expect(first.pitch(ctx)).toContain(String(ctx.sources));
+    expect(first.pitch(ctx)).toContain(ctx.hook);
+    expect(report.pitch(ctx)).toContain(ctx.baseBlurb);
+    expect(scenario.pitch(ctx)).toContain(ctx.levels);
+    expect(question.pitch(ctx)).toContain(lens.questions![0]);
+  });
+
+  it("opens the report on another setting and then loads the reference case, so the change is visible", () => {
+    expect(ctx.baseId).toBeTruthy();
+    expect(ctx.baseId).not.toBe(lens.default_preset);
+    expect(tourStartScenario(lens)).toEqual(habitatScenario(lens, ctx.baseId));
+    expect(control(TOUR_STEPS[2].click)).toContain(`"${ctx.baseId}"`);
+    expect(control(TOUR_STEPS[3].click)).toContain(`"${lens.default_preset}"`);
   });
 
   it("compares conditions and never predicts an outcome", () => {
@@ -52,7 +54,8 @@ describe("JudgeTour", () => {
     expect(text).not.toMatch(/\b(safe|safety|burns?|ignites?|hallucinat\w*)\b/i);
   });
 
-  it("undoes the demo action of a stop when the tour leaves it", () => {
-    for (const step of TOUR_STEPS) if (step.click) expect(step.leave).toBeTruthy();
+  it("closes on departure the panels a stop opens", () => {
+    for (const step of TOUR_STEPS)
+      if (step.target === ".prov" || control(step.click).includes(".fold-head")) expect(step.leave).toBeTruthy();
   });
 });

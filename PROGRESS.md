@@ -100,6 +100,34 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · rama frontend · recorrido guiado alineado con el pitch (`docs/pitch.pdf`)
+- El tour sigue ahora el guion de 3 min y el recorrido de la §4 del pitch, en 9 paradas:
+  1. Problema (portada).
+  2. Prometeo (pantalla de procesamiento).
+  3. Informe, que abre con otro preset de la lente (estación espacial).
+  4. Escenario: hace clic en el preset por defecto (base lunar) y el informe se recalcula a la vista.
+  5. Fuentes: abre `PSI-25_Experimental table_BASS-II.csv`, fila 2, DOI 10.60555/4qc4-de67.
+  6. Pregunta: escribe `lens.questions[0]` sin enviarla; el presentador pulsa *Apply question* en vivo.
+  7. Exportación (dossier).
+  8. Cualquier área: abre Methods y señala la nota de reproducibilidad.
+  9. Cierre en Key findings.
+- Los textos del tour toman del motor (`tourContext`) el primer hallazgo y los niveles del preset por defecto; ya no hay cifras escritas a mano. `tour.test.ts` comprueba con el pack real lo que cita el pitch: 0 de 268 registran presión, O₂ 30 % *Near, not covered*, presión *Not studied*, PMMA *Studied*.
+- Cambios de soporte:
+  - `data-preset` en los chips de `HabitatPanel`;
+  - `id="methods"` en el pliegue de Methods;
+  - `onStart` del tour recibe el escenario inicial.
+- Verificado:
+  - tsc, 113 tests web y build;
+  - `check_agnostic.sh`;
+  - recorrido en Chrome headless a 1912×857, 1280×640 y 1536×730 (equivalentes a zoom de 150 % y 125 % en 1080p) y 390×844 en español, sin errores de consola;
+  - en el build, la llegada al informe tarda unos 1.1 s.
+- Pendiente del pitch, sin pantalla en la app:
+  - el paso 5 (versiones / "qué cambió");
+  - el paso 6 (cambio en vivo al dominio de ebullición);
+  - la carga de documentos propios, que el guion menciona en 2:15 y que el Workspace declara como no construida.
+
+  El tour no los muestra.
+
 ### 2026-11-15 · rama frontend · recorrido guiado para el jurado rehecho
 - Antes: modal centrado con fondo oscurecido y desenfoque que tapaba la pantalla, texto en EB Garamond de 13 px y datos erróneos (base lunar "24 % O₂ / 0.70 atm", "telemetría en vivo", "zero AI hallucination").
 - Ahora (`components/JudgeTour.tsx`, `styles/tour.css`): panel acoplado abajo, o en columna a la derecha a partir de 1600 px, que reserva su espacio en la página, así que no tapa nada. Cada parada marca con un contorno el elemento del que habla y lo desplaza a la vista. 8 paradas (Problema, Caso, Motor, Respuesta, Cobertura, Fuentes, Asistente, Exportación); por decisión del dueño solo se nombra la parada actual (sin lista de pasos ni leyenda del contorno), con texto grande y sin cursiva. Se maneja con ← →, PageUp/PageDown (control de presentaciones) y Esc.

@@ -180,53 +180,42 @@ export const SHOWCASE: Record<string, string> = {
   "Compact pressurized cabin with high structural polymer shielding": "Cabina presurizada compacta con blindaje estructural de polímero",
   "Fast-ingress rapid-traverse architecture with low convective ventilation.": "Arquitectura de acceso y recorrido rápidos, con baja ventilación convectiva.",
 
-  // ---- guided tour
+  // ---- guided tour (stops follow the order of the pitch)
   Problem: "Problema",
-  Case: "Caso",
-  Engine: "Motor",
-  Answer: "Respuesta",
-  Coverage: "Cobertura",
-  Assistant: "Asistente",
+  Report: "Informe",
+  Scenario: "Escenario",
   Export: "Exportación",
-  "Decades of experiments, scattered across tables": "Décadas de experimentos, dispersos en tablas",
-  "The example corpus holds {0} {1} from {2} {3}, spread over {4} source tables, each with its own columns and units. Checking one new scenario against all of them means reading every paper and converting every value by hand.":
-    "El corpus de ejemplo reúne {0} {1} de {2} {3}, repartidas en {4} tablas de origen, cada una con sus propias columnas y unidades. Contrastar un escenario nuevo con todas ellas obliga a leer cada artículo y a convertir cada valor a mano.",
-  "Prometeo turns that scattered record into one comparable, cited corpus.":
-    "Prometeo convierte ese registro disperso en un único corpus comparable y citado.",
-  "State the case in four steps": "Plantear el caso en cuatro pasos",
-  "Documents to compare against, the question in plain words, a starting setting and the variables with their values. The tour has loaded the setting “{0}”: {1}":
-    "Los documentos con los que comparar, la pregunta en palabras sencillas, un entorno de partida y las variables con sus valores. El recorrido ha cargado el entorno “{0}”: {1}",
-  "Every condition that enters the comparison is explicit and editable.":
-    "Cada condición que entra en la comparación es explícita y editable.",
-  "A deterministic engine computes the evidence": "Un motor determinista calcula la evidencia",
-  "Values are converted to one canonical unit, tests are split into partitions that are never compared with each other, and each of the {0} {1} receives a distance in standard deviations and a grade from A to D. The same inputs always produce the same report.":
-    "Los valores se convierten a una unidad canónica, las pruebas se separan en particiones que nunca se comparan entre sí y {cada uno|cada una} de {los|las} {0} {1} recibe una distancia en desviaciones estándar y una nota de A a D. Las mismas entradas producen siempre el mismo informe.",
-  "Levels, grades and findings are computed, not generated: they can be audited and reproduced.":
-    "Los niveles, las notas y los hallazgos se calculan, no se generan: se pueden auditar y reproducir.",
-  "What has been studied, condition by condition": "Qué se ha estudiado, condición por condición",
-  "Each condition of the scenario receives one level: Studied, Near, not covered, Not studied or Scarce evidence, always written in words and never shown by color alone. Key findings state the largest gaps, each with its sources.":
-    "Cada condición del escenario recibe un nivel: Estudiado, Cercano, no cubierto, No estudiado o Evidencia escasa, siempre escrito en palabras y nunca indicado solo con color. Los hallazgos clave enuncian los huecos más grandes, cada uno con sus fuentes.",
-  "Prometeo compares conditions with the record; it does not predict outcomes. A gap is reported as a gap.":
-    "Prometeo compara condiciones con lo registrado; no predice resultados. Un hueco se informa como hueco.",
-  "Where the evidence is, and where nobody has looked": "Dónde está la evidencia y dónde nadie ha mirado",
-  "The graphical abstract places the scenario inside the range in which each variable was tested and shows how close the nearest {0} comes. Tests that do not record a variable are kept apart; they are never given a value.":
-    "El resumen gráfico sitúa el escenario dentro del rango en que se probó cada variable y muestra cuánto se acerca {el|la} {0} más {cercano|cercana}. Las pruebas que no registran una variable se mantienen aparte; nunca se les asigna un valor.",
-  "Blank regions point to the experiment that would close the gap.": "Las regiones vacías señalan el experimento que cerraría el hueco.",
-  "Every value leads back to its source": "Cada valor lleva a su fuente",
-  "Any underlined value opens its source: the file, the row, the original value and unit, the conversion applied, the DOI and the SHA-256 of the table. The tour has just opened one.":
-    "Cualquier valor subrayado abre su fuente: el archivo, la fila, el valor y la unidad originales, la conversión aplicada, el DOI y el SHA-256 de la tabla. El recorrido acaba de abrir una.",
-  "Any number in the report can be checked against the original record in one click.":
-    "Cualquier número del informe se puede contrastar con el registro original en un clic.",
-  "Questions in plain language, checked before they are shown": "Preguntas en lenguaje natural, verificadas antes de mostrarse",
-  "A question such as “{0}” is translated into scenario values that are validated before they are applied. The written analysis keeps only sentences that match, word for word, a finding computed by the engine, each with its sources. If the service fails, a template text is shown and labeled as such.":
-    "Una pregunta como “{0}” se traduce en valores del escenario que se validan antes de aplicarse. El análisis redactado conserva solo las frases que coinciden, palabra por palabra, con un hallazgo calculado por el motor, cada una con sus fuentes. Si el servicio falla, se muestra un texto de plantilla marcado como tal.",
-  "The AI helps to ask and to explain; it never sets a level, a grade or a finding.":
-    "La IA ayuda a preguntar y a explicar; nunca fija un nivel, una nota ni un hallazgo.",
+  "Any field": "Cualquier área",
+  Closing: "Cierre",
+  "A simple question, an answer spread over the literature": "Una pregunta sencilla, una respuesta repartida en la literatura",
+  "{0}: {1} Before designing it, a researcher needs to know what has been tested under those conditions. The answer is spread over {2} {3} and {4} data tables, each with its own columns and units.": "{0}: {1} Antes de diseñar algo así, un investigador necesita saber qué se ha probado en esas condiciones. La respuesta está repartida en {2} {3} y {4} tablas de datos, cada una con sus propias columnas y unidades.",
+  "Read side by side, they show something uncomfortable: {0}": "Leídas en conjunto, muestran algo incómodo: {0}",
+  "Finding that gap by hand means reading every paper and converting every value.": "Encontrar ese hueco a mano obliga a leer cada artículo y a convertir cada valor.",
+  "All that literature, turned into one verifiable paper": "Toda esa literatura, convertida en un solo paper verificable",
+  "Prometeo is a tool for the research community. It reads the {0} source tables, converts every value to one canonical unit, keeps comparable {1} together and computes, with a deterministic engine, what has been studied and what has not. The same inputs always produce the same report.": "Prometeo es una herramienta para la comunidad científica. Lee las {0} tablas de origen, convierte cada valor a una unidad canónica, agrupa {1} comparables entre sí y calcula, con un motor determinista, qué se ha estudiado y qué no. Las mismas entradas producen siempre el mismo informe.",
+  "Levels, grades and findings are computed, not generated: they can be audited and reproduced.": "Los niveles, las notas y los hallazgos se calculan, no se generan: se pueden auditar y reproducir.",
+  "The format a researcher already reads": "El formato que un investigador ya lee",
+  "An abstract, key findings, numbered figures and tables, methods and references, read in layers from the top down.": "Resumen, hallazgos clave, figuras y tablas numeradas, métodos y referencias, que se leen por capas de arriba abajo.",
+  "The tour opens it first on a familiar setting, “{0}”: {1}": "El recorrido lo abre primero con un entorno conocido, “{0}”: {1}",
+  "There is no new interface to learn: it reads like a paper, from the key findings down.": "No hay una interfaz nueva que aprender: se lee como un paper, de los hallazgos clave hacia abajo.",
+  "Load the case, and the whole report is recomputed": "Se carga el caso y todo el informe se recalcula",
+  "The tour has loaded “{0}”, and every level, figure and finding has been recomputed in the browser: {1}. Panel a shows why: each value against the range that the comparable tests cover.": "El recorrido ha cargado “{0}” y cada nivel, figura y hallazgo se ha recalculado en el navegador: {1}. El panel a muestra por qué: cada valor frente al rango que cubren las pruebas comparables.",
+  "Prometeo does not predict outcomes: it states what the record supports and what it does not.": "Prometeo no predice resultados: dice qué respalda lo registrado y qué no.",
+  "Every number leads back to its source": "Cada número lleva a su fuente",
+  "The tour has opened the record behind the level of {0}: the file, the row, the original value and unit, the conversion applied, the DOI and the SHA-256 of the table. Any underlined value in the report opens its record the same way.": "El recorrido ha abierto el registro que respalda el nivel de {0}: el archivo, la fila, el valor y la unidad originales, la conversión aplicada, el DOI y el SHA-256 de la tabla. Cualquier valor subrayado del informe abre su registro de la misma forma.",
+  "Nothing appears without a source: any number can be checked in one click.": "Nada aparece sin fuente: cualquier número se puede comprobar en un clic.",
+  "Ask in plain language; the engine still decides": "Se pregunta en lenguaje natural; decide el motor",
+  "The tour has typed a suggested question: “{0}”. Apply question sends it to the model live. The model only turns the words into scenario values, which are validated before use; the engine recomputes the levels, and the written analysis keeps only sentences that match a computed finding, each with its sources. If the service fails, a template text is shown and labeled as such.": "El recorrido ha escrito una pregunta sugerida: “{0}”. Aplicar pregunta la envía al modelo en vivo. El modelo solo convierte las palabras en valores del escenario, que se validan antes de usarse; el motor recalcula los niveles y el análisis redactado conserva solo las frases que coinciden con un hallazgo calculado, cada una con sus fuentes. Si el servicio falla, se muestra un texto de plantilla marcado como tal.",
+  "The AI translates and writes; it never sets a level, a grade or a finding.": "La IA traduce y redacta; nunca fija un nivel, una nota ni un hallazgo.",
   "A dossier and datasets ready for review": "Un dossier y conjuntos de datos listos para revisión",
-  "The report goes out as PDF or Markdown. The harmonized records go out as CSV with units, DOI and a study group for leakage-free splits, together with a datacard that lists conversions, rejected columns and what was not assessed.":
-    "El informe sale en PDF o Markdown. Los registros armonizados salen en CSV con unidades, DOI y un grupo por estudio para particiones sin fuga de datos, junto con una ficha de datos que enumera conversiones, columnas rechazadas y lo que no se evaluó.",
-  "The same corpus serves a design review and a machine-learning dataset, with its provenance intact.":
-    "El mismo corpus sirve para una revisión de diseño y para un conjunto de datos de aprendizaje automático, con su procedencia intacta.",
+  "The report goes out as PDF or Markdown. The harmonized records go out as CSV with units, DOI and a study group for leakage-free splits, together with a datacard that lists conversions, rejected columns and what was not assessed.": "El informe sale en PDF o Markdown. Los registros armonizados salen en CSV con unidades, DOI y un grupo por estudio para particiones sin fuga de datos, junto con una ficha de datos que enumera conversiones, columnas rechazadas y lo que no se evaluó.",
+  "The same corpus serves a design review and a machine-learning dataset, with its provenance intact.": "El mismo corpus sirve para una revisión de diseño y para un conjunto de datos de aprendizaje automático, con su procedencia intacta.",
+  "Nothing in the engine is written for this field": "Nada en el motor está escrito para esta área",
+  "Variables, units, partitions and level rules come from two files that describe the corpus: the evidence pack and its lens. The engine that computes levels, grades and findings contains no vocabulary of any field; an automated check enforces it, and the same engine has run unchanged on a second corpus from another field.": "Las variables, las unidades, las particiones y las reglas de los niveles vienen de dos archivos que describen el corpus: el paquete de evidencia y su lente. El motor que calcula niveles, notas y hallazgos no contiene vocabulario de ningún área; una comprobación automática lo garantiza, y el mismo motor ya se ha ejecutado sin cambios sobre un segundo corpus de otra área.",
+  "Another field needs a new pack and lens, not a new engine.": "Otra área necesita un nuevo paquete y una nueva lente, no un nuevo motor.",
+  "Start from the gap": "Empezar por el hueco",
+  "Back to the key findings: the largest gaps come first, each with its sources. Reading dozens of papers to find a gap takes weeks; with Prometeo, a researcher starts from the gap.": "De vuelta a los hallazgos clave: los huecos más grandes van primero, cada uno con sus fuentes. Leer decenas de artículos para encontrar un hueco toma semanas; con Prometeo, el investigador empieza por el hueco.",
+  "One living, verifiable paper: what has been studied, what has not, and where every number comes from.": "Un solo paper vivo y verificable: qué se ha estudiado, qué no y de dónde sale cada número.",
   "Guided tour": "Recorrido guiado",
   "· for judges": "· para el jurado",
   "Guided tour of Prometeo": "Recorrido guiado de Prometeo",

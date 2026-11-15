@@ -26,7 +26,6 @@ import { EvidenceCard } from "./components/EvidenceCard";
 import { ReadingGuide } from "./components/ReadingGuide";
 import { ExtraTag } from "./components/ExtraVars";
 import { JudgeTour } from "./components/JudgeTour";
-import { habitatScenario } from "./components/HabitatFigure";
 import "./styles/tour.css";
 import { abstractText, overallText } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
@@ -195,8 +194,8 @@ function Flow({ data }: { data: Data }) {
     <>
       {screen}
       <JudgeTour
-        onStart={() => {
-          setScenario(habitatScenario(lens, lens.default_preset));
+        onStart={(s) => {
+          setScenario(s);
           setExtras([]);
         }}
         onNavigate={go}
@@ -452,7 +451,7 @@ function Report({
             <SourcesTable n={3} />
             <SourcesRanked n={4} ranking={r.ranking} closeness={r.close} scenario={scenario} />
           </Fold>
-          <Fold title={t("Methods")} hint={t("Table 6 · partitions, distance, grades, levels and unit conversions")}>
+          <Fold id="methods" title={t("Methods")} hint={t("Table 6 · partitions, distance, grades, levels and unit conversions")}>
             <div className="row">
               <div className="body">
                 <Methods tableN={6} />

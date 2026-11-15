@@ -65,6 +65,7 @@ export function HabitatPanel({ scenario, onChange }: { scenario: Scenario; onCha
               key={p.id}
               type="button"
               className="chip"
+              data-preset={p.id}
               aria-pressed={preset === p.id}
               title={t("{0} Source: {1}.", p.blurb, p.source)}
               onClick={() => onChange(habitatScenario(lens, p.id))}
