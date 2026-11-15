@@ -8,16 +8,18 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T02 (Claude · laptop ferlr) |
-| Último commit verificado | T01 |
-| Siguiente paso exacto | T02: scaffold de web/ (Vite+React+TS+Vitest), api/, infra/, scripts/check_agnostic.sh |
+| Tarea en curso | T03 (Claude · laptop ferlr) |
+| Último commit verificado | T02 |
+| Siguiente paso exacto | T03: pipeline/build_pack.py reutilizando SPECS de pipeline/legacy/construir_corpus.py |
 | URL pública (CloudFront) | _sin desplegar_ |
 | API (`API_URL`) | _sin desplegar_ |
 | `MODEL_ID` confirmado | _pendiente (infra/00_check.sh)_ |
 
 ## Bloqueos
 
-_Ninguno._ (Formato: `- [hora] descripción — quién puede resolverlo`.)
+- [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
+
+(Formato: `- [hora] descripción — quién puede resolverlo`.)
 
 ## Prerrequisitos humanos
 
@@ -34,8 +36,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 |---|---|---|---|---|---|---|
 | T00 | Repo y docs | P0 | hecha | Claude · ferlr | (este commit) | Duplicado borrado, prototipos a archive/, decisiones y escenario real escritos |
 | T01 | Datos en el repo | P0 | hecha | Claude · ferlr | (este commit) | 24 investigaciones de combustión, 22 CSV; data/ = 632 KB (meta sin listados de archivos ni contactos) |
-| T02 | Scaffold + `00_check.sh` | P0 | en curso | Claude · ferlr |  |  |
-| T03 | Pack de demo | P0 | pendiente | | | |
+| T02 | Scaffold + `00_check.sh` | P0 | hecha | Claude · ferlr | (este commit) | build, test y check_agnostic en verde. Falta que un humano corra infra/00_check.sh y anote MODEL_ID (esta laptop no tiene perfil prometeo) |
+| T03 | Pack de demo | P0 | en curso | Claude · ferlr |  |  |
 | T04 | Motor + vectores | P0 | pendiente | | | |
 | T05 | Esqueleto del informe | P0 | pendiente | | | |
 | T06 | Escenario y figuras | P0 | pendiente | | | |
