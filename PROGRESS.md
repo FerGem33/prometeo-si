@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Relevo AWS · stringbuilder.** T32 revisión delegada terminada. Corpus ebullición regenerado y 23 hashes coinciden. Preparación local pasa; AWS SSO GetRoleCredentials devuelve 503 incluso tras renovar login. T33 DELETE/smoke y T34 despliegue real esperan acceso; continuar tareas locales independientes. |
+| Tarea en curso | **T35 y continuación local · stringbuilder.** T32 cerrada por revisión delegada; T33 cargas/DELETE comprobadas en AWS real. T34 espera permisos del administrador; dueño pide continuar localmente y dejar AWS para después. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Seguir **`docs/RELEVO_LAPTOP_AWS.md`** en orden: 0 preparación y corpus; 1 API con DELETE y CORS solo CloudFront; 2 smoke T33 `--cleanup` (Daniel con contraseñas A/B); 3 desplegar el worker; 4 lote de 10 + corrupto y DLQ; 5 (en paralelo) tabla precargada de los PDF de T32 para que Daniel la firme. |
+| Siguiente paso exacto | Continuar localmente T35 → T37 → T38 → T36 con aprobación delegada concreta para ebullición. AWS después por instrucción del dueño: aplicar permisos T34, validar condición IAM, seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). Activar T35 solo después; no repetir smokes exitosos sin cambios. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18 está hecha. T21–T29 corresponden al equipo de interfaz. T32 sigue en curso por revisión D7/PDF. D3 aprobada por el dueño (20 MB/60 páginas/30 documentos); faltan implementación/verificación de cargas. T31 hecha.
+- D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy; no se intentó crear recursos. Dueño pidió continuar localmente y AWS después.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -61,7 +61,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | hecha | Claude · ferlr; Claude · Daniel | esta entrega | Dueño aprobó §5 completo el 15-nov y se añadió §5.10 (exportación para ML → T38). D1–D5, D7, D8 y D10 cerradas; ver `docs/DECISIONES_CIERRE.md` |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | hecha | laptop AWS · stringbuilder | esta entrega | D7 aprobada por dueño; revisión PDF aprobada por delegación con hashes: 12 contextuales/3 excluidos, 0 añadidos a tablas. Métrica D7: 154/172 asignación; 148/172 conjunta (86,05%). No equivale a precisión científica. `docs/T32_PDF_DECISIONES.md` |
-| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder; Claude · Daniel | `4268b90` + esta entrega | A/B real pasa (verificación del plan). Cargas/complete/jobs/resume desplegados. DELETE de proyecto y documento implementado con tombstone, borrado S3 acotado y transacción de cupo (11 pruebas con dobles), **sin desplegar**. Smoke con `--cleanup` listo. Falta: desplegar y smoke real (RELEVO §1–2). Regenerar la lente al editar sigue pendiente (llega con T35/T37) |
+| T33 | Cuenta y proyectos | fase 2 · C | hecha (verificación relevo) | stringbuilder; Claude · Daniel | esta entrega | A/B previo y 19 comprobaciones reales de cargas/DELETE pasan; 11 rutas JWT desplegadas y recursos reutilizados. Recibo docs/t33-upload-smoke-2026-11-15.json. Edición de intención procesada/lente y pantallas siguen en T35/T37/interfaz; no se declara completo ese recorrido |
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
 | T37 | Publicación y segundo dominio | fase 2 · C | pendiente | | | Corpus de ebullición regenerado: 23/23 hashes coinciden con manifiesto. Aprobación concreta del esquema delegada por el dueño; aún no aplicada a una propuesta de ese corpus |
@@ -99,6 +99,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Cierre del smoke T33; T34 pendiente de permisos
+- `infra/20_api.sh` y `deploy_projects.py --uploads --apply --contract-approved` terminaron0. API ve5oqmsyie, Lambda prometeo-hack-api y rol existentes conservados; 11 rutas JWT. CORS solo CloudFront; DELETE permitido.
+- `/ask` HTTP200: o2=25,p=0.5,material=Nomex. `/analysis` HTTP200, mode=ai, tres frases citadas, dropped=0. OPTIONS HTTP204, allow-origin CloudFront, métodos DELETE/GET/OPTIONS/PATCH/POST. Dos invocaciones reales de regresión al modelo D6; no son extracción de corpus.
+- Smoke con CSV PSI-87 real y dos sesiones SRP: **19/19 comprobaciones pasan**: create/reserve/repeat201; PUT200; overwrite412; complete/repeat200; hash409; list/jobs200; todos los accesos ajenos404; DELETE propio documento/proyecto204; GET borrado404. Recibo saneado en docs/t33-upload-smoke-2026-11-15.json. El SHA observado es null porque el consumidor sigue sin desplegar, no se afirma verificado por worker. El proyecto temporal fue limpiado vía API.
+- Paquete worker Linux arm64/Python3.12 generado en /tmp/prometeo-worker-949f729.zip. IAM devolvió AccessDenied para GetRole sobre prometeo-hack-worker-role y SimulateCustomPolicy. La primera simulación del documento completo superó límite de2000caracteres; la sentencia aislada pasó ese límite pero fue denegada por IAM. No se creó ni habilitó worker/mapping; cero llamadas de lote. Dueño pidió **continuar localmente; AWS después**.
 
 ### 2026-11-15 · T35 backend local y recuperación de acceso AWS
 - Implementadas GET/PATCH/approve de esquema con versiones inmutables, hash de fuentes/artefacto, control de revisión, edición que revoca aprobación y despacho recuperable a SQS. Extracción tabular determinista con leases, citas por celda, conversiones y rechazos/conflictos conservados; no publica el pack.
