@@ -10,6 +10,7 @@ import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
 import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
+import type { CaseState, DashboardSpec, VariableScore } from "../genui/types";
 import { filesFromDrop } from "../ingest/folderDrop";
 import { compatibleUnits, groupVariables } from "../ingest/variableView";
 import { applyConversion, getConversion } from "../ingest/buildPack";
@@ -76,6 +77,11 @@ export interface EvaluationDraft {
   scenario: Scenario;
   extras: Extra[];
   isCustomCorpus: boolean;
+  /** Purpose-driven GenUI (spec 2026-11-15-genui-dashboard-por-proposito). */
+  purpose?: string;
+  scores?: VariableScore[];
+  dashboard?: DashboardSpec;
+  caseState?: CaseState;
 }
 
 export interface ScenarioStepProps {

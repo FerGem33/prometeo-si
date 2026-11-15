@@ -70,6 +70,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (interfaz/datos) | stringbuilder | `08be856` + esta entrega | Backend listo: pack privado v2/lente v3 con 51 registros/2 estudios/3 fuentes, 2 contextos PDF y 1 gap; variantes/intención/ask/analysis/síntesis IA pasan. Restan pantallas y revisión científica del resto del corpus. |
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (pantalla pendiente) | stringbuilder | `08be856` + esta entrega | Backend listo: correcciones/conflictos/claims auditados, gap literal publicado, original PDF SHA/página 11 cotejado y revisión delegada explícita. Cambio de valor preservado se prueba con fixture; la prueba real previa confirmó el mismo valor sin inventar una corrección. Falta pantalla. |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha | stringbuilder | `777fb81` + esta entrega | Publicada en CloudFront tras policy consolidada; invalidación Completed y QA real desktop/móvil. CSV/datacard de 268 registros, SHA coincide, demo intacta y análisis IA200. Selector/editor de objetivo sigue en T27; docs/T38_DATASET_EXPORT.md |
+| T39 | Dashboard GenUI guiado por propósito: ranking determinista de variables, módulos por prompt, caso ≤10 variables, chat lateral (spec `docs/superpowers/specs/2026-11-15-genui-dashboard-por-proposito-design.md`) | fase 2 · C | en curso | laptop Daniel (orquestador + agentes) | — | F0: contratos `web/src/genui/types.ts` y stubs |
 
 ## Aceptación final (T15)
 
