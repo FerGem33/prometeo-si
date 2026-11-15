@@ -190,16 +190,31 @@ def handle(event):
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
             documents = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents', path)
-            if documents and method == 'POST':
+            completed = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/complete', path)
+            jobs = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/jobs', path)
+            resume = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/ingest/resume', path)
+            if documents or completed or jobs or resume:
                 # Authenticate/authorize before gate/configuration or signing.
                 repository = store()
-                repository.get(uid, documents[1])
+                pid = (documents or completed or jobs or resume)[1]
+                repository.get(uid, pid)
                 try:
                     from .upload_tickets import service
                 except ImportError:
                     from upload_tickets import service
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
-                return 201, service(repository).reserve(uid, documents[1], body(event), headers.get('idempotency-key'))
+                uploads = service(repository)
+                if jobs and method == 'GET':
+                    return 200, uploads.jobs(uid, pid)
+                if resume and method == 'POST':
+                    return 202, uploads.resume(uid, pid)
+                if completed and method == 'POST':
+                    return 200, uploads.complete(uid, pid, completed[2], body(event))
+                if documents and method == 'POST':
+                    return 201, uploads.reserve(uid, pid, body(event), headers.get('idempotency-key'))
+                if documents and method == 'GET':
+                    return 200, uploads.list(uid, pid, event.get('queryStringParameters') or {})
+                fail(405, 'method_not_allowed', 'Document method not available')
             match = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})', path)
             if not match:
                 fail(404, 'not_found', 'Project route not found')

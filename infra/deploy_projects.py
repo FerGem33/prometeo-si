@@ -4,16 +4,23 @@ AWS operations use AWS CLI, not SDK. No resource deletion or replacement.
 Run infra/20_api.sh first to package api/projects.py. See docs/T33_API_PROYECTOS.md.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import re
 
 
 def aws(*args):
     command = ['aws', *args, '--profile', 'prometeo', '--region', 'us-east-1', '--no-cli-pager', '--output', 'json']
-    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    if result.returncode:
+        # Do not dump the command or environment payload; show the service error code.
+        match = re.search(r'\((\w+)\) when calling', result.stderr)
+        code = match[1] if match else 'CLIError'
+        raise RuntimeError(f'AWS {args[0]} {args[1]} failed ({code}); exit {result.returncode}')
     return json.loads(result.stdout) if result.stdout.strip() else {}
 
 
@@ -39,6 +46,12 @@ def configure(root, env, call=aws):
     config = call('lambda', 'get-function-configuration', '--function-name', function)
     if config['Role'] != role:
         raise ValueError('Lambda role differs from outputs')
+    upload_env = documents['projects-env-merge.json']
+    if upload_env.get('UPLOADS_ENABLED') == 'true':
+        call('s3api', 'put-bucket-cors', '--bucket', upload_env['CORPUS_BUCKET'],
+             '--cors-configuration', json.dumps({'CORSRules': [{'AllowedOrigins': [env['CF_URL']],
+                 'AllowedMethods': ['PUT'], 'AllowedHeaders': ['content-type', 'if-none-match',
+                 'x-amz-checksum-sha256', 'x-amz-server-side-encryption'], 'MaxAgeSeconds': 300}]}))
     integrations = call('apigatewayv2', 'get-integrations', '--api-id', api_id).get('Items', [])
     matches = [i for i in integrations if i.get('IntegrationUri') == function and i.get('PayloadFormatVersion') == '2.0']
     if len(matches) != 1:
@@ -81,8 +94,13 @@ def configure(root, env, call=aws):
     policy = call('lambda', 'get-policy', '--function-name', function)
     statements = json.loads(policy['Policy'])['Statement']
     stage = '$default'
-    for method, suffix in (('GET', 'projects'), ('POST', 'projects'), ('GET', 'projects/*'), ('PATCH', 'projects/*')):
-        sid = 'prometeo-projects-' + method.lower() + ('-item' if suffix.endswith('*') else '-list')
+    for route in documents['projects-routes.json']:
+        method, path = route['RouteKey'].split(' ', 1)
+        suffix = path.lstrip('/').replace('{id}', '*').replace('{doc_id}', '*')
+        if suffix in ('projects', 'projects/*'):
+            sid = 'prometeo-projects-' + method.lower() + ('-item' if suffix.endswith('*') else '-list')
+        else:
+            sid = 'prometeo-documents-' + hashlib.sha256(route['RouteKey'].encode()).hexdigest()[:16]
         source = f'arn:aws:execute-api:us-east-1:352818909129:{api_id}/{stage}/{method}/{suffix}'
         old = next((s for s in statements if s.get('Sid') == sid), None)
         if old:
@@ -112,9 +130,10 @@ def main():
     parser.add_argument('--output-dir', required=True)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--contract-approved', action='store_true', help='Only after actual T30 approval is recorded')
+    parser.add_argument('--uploads', action='store_true', help='Enable upload/complete stage after D3 approval')
     args = parser.parse_args()
     subprocess.run([sys.executable, '-I', str(Path(__file__).with_name('prepare_projects.py')),
-                    '--output-dir', args.output_dir], check=True)
+                    '--output-dir', args.output_dir, *(['--uploads'] if args.uploads else [])], check=True)
     if not args.apply:
         print('Prepare only: no AWS calls. Review artifacts and T30 before --apply.')
         return

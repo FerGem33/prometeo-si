@@ -19,6 +19,10 @@ T33 sigue en curso por cargas D3 y gestión completa de proyectos.
 Para obtener esas sesiones y ejecutar A/B: [herramienta Cognito local](../tools/cognito/README.md).
 Para conocer lo que falta de infraestructura y backend: [estado AWS/backend](../docs/ESTADO_AWS_BACKEND.md).
 
+Etapas siguientes: [cargas y bloqueo CORS](../docs/T33_CARGAS_PREPARACION.md),
+[worker local y empaquetado](../docs/T34_WORKER_PREPARACION.md) y
+[revisiones humanas al final](../docs/REVISION_FINAL_PENDIENTE.md).
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net

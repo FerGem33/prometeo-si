@@ -1,5 +1,26 @@
 # T33: permisos pendientes para desplegar
 
+## Bloqueo actual: CORS para cargas
+
+El intento `deploy_projects.py --uploads` fue rechazado con AccessDenied al
+ejecutar s3api put-bucket-cors (exit 254). No habilitó rutas/variables de cargas.
+La política versionada añade esta declaración, que debe agregarse a la política
+inline existente sin eliminar declaraciones anteriores ni duplicar Sid:
+
+```json
+{
+  "Sid": "ConfigureOnlyCorpusUploadCors",
+  "Effect": "Allow",
+  "Action": ["s3:GetBucketCORS", "s3:PutBucketCORS"],
+  "Resource": "arn:aws:s3:::prometeo-hack-corpus-352818909129"
+}
+```
+
+Reprovisionar permission set en la cuenta y renovar SSO. Esta es una acción
+administrativa para desplegar, no una aprobación de datos científicos.
+
+## Historial del permiso de Lambda
+
 **Actualización:** el dueño añadió permisos y renovó SSO; se completó el
 despliegue acotado de drafts. El bloqueo descrito abajo es histórico. Los
 waiters se corrigieron para usar GetFunctionConfiguration, sin ampliar acceso

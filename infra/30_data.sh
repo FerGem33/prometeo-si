@@ -54,7 +54,7 @@ from pathlib import Path
 root, origin = Path(sys.argv[1]), sys.argv[2]
 # El navegador sube directo a S3 con URL prefirmada (PUT). Las lecturas se abren en otra pestaña y no necesitan CORS.
 (root / "cors.json").write_text(json.dumps({"CORSRules": [{"AllowedOrigins": [origin], "AllowedMethods": ["PUT"],
-    "AllowedHeaders": ["content-type", "x-amz-checksum-sha256", "x-amz-server-side-encryption"], "MaxAgeSeconds": 300}]}))
+    "AllowedHeaders": ["content-type", "if-none-match", "x-amz-checksum-sha256", "x-amz-server-side-encryption"], "MaxAgeSeconds": 300}]}))
 (root / "lifecycle.json").write_text(json.dumps({"Rules": [{"ID": "abort-incomplete-uploads", "Status": "Enabled",
     "Filter": {"Prefix": ""}, "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 1}}]}))
 PY
@@ -75,7 +75,8 @@ fi
 DLQ_ARN=$(aws sqs get-queue-attributes --queue-url "$DLQ_URL" --attribute-names QueueArn --query Attributes.QueueArn --output text)
 
 QUEUE="${PROJECT}-ingest"
-# Visibilidad 960 s: mayor que el timeout del worker (900 s, T34), para que un mensaje en curso no se entregue dos veces.
+# Visibilidad 960 s: permite timeout de worker <=160 s con margen de 6x.
+# T34 prepara timeout 120 s; comprobar valor real antes de asociar consumidor.
 "$PYTHON" -I - "$TMP" "$DLQ_ARN" <<'PY'
 import json, sys
 from pathlib import Path

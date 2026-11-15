@@ -147,3 +147,127 @@ def test_actual_sdk_signs_type_length_and_expiry_without_network(upload):
     assert query['X-Amz-Expires'] == ['300']
     assert 'content-length' in query['X-Amz-SignedHeaders'][0]
     assert 'content-type' in query['X-Amz-SignedHeaders'][0]
+    assert 'if-none-match' in query['X-Amz-SignedHeaders'][0]
+    assert ticket['upload']['headers']['if-none-match'] == '*'
+
+
+class CompleteRepository(Repository):
+    def transact_write_items(self, TransactItems):
+        if '#documents' in TransactItems[0]['Update']['ExpressionAttributeNames']:
+            return super().transact_write_items(TransactItems)
+        decode = TypeDeserializer().deserialize
+        item = {k: decode(v) for k, v in TransactItems[1]['Put']['Item'].items()}
+        old = self.items[item['PK'], item['SK']]
+        if old.get('expected_sha256') or self.race:
+            raise ClientError({'Error': {'Code': 'TransactionCanceledException'}}, 'TransactWriteItems')
+        self.items[item['PK'], item['SK']] = item
+        self.parent['status'] = 'processing'
+        self.parent['revision'] += 1
+
+    def update_item(self, Key, **kwargs):
+        self.items[Key['PK'], Key['SK']]['dispatch_pending'] = False
+
+    def query(self, **kwargs):
+        return {'Items': list(self.items.values())}
+
+
+class UploadedS3(S3):
+    def head_object(self, **kwargs):
+        return {'ContentLength': 20, 'ContentType': 'text/csv', 'ETag': 'object-etag'}
+
+
+class Queue:
+    def __init__(self):
+        self.messages = []
+        self.fail = False
+
+    def send_message(self, **kwargs):
+        if self.fail:
+            raise RuntimeError('Queue unavailable')
+        self.messages.append(json.loads(kwargs['MessageBody']))
+
+
+@pytest.fixture
+def completed_upload():
+    repo, queue, s3 = CompleteRepository(), Queue(), UploadedS3()
+    service = UploadTickets(repo, repo, repo, s3, 'bucket-test', Limits(100, 10, 2), queue, 'queue-url')
+    ticket = service.reserve('owner', 'prj_test', DATA)
+    return service, repo, queue, ticket['doc_id']
+
+
+def test_complete_and_replay_do_not_trust_hash_or_duplicate_queue(completed_upload):
+    service, repo, queue, did = completed_upload
+    result = service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    assert result['sha256'] is None and result['stage'] == 'parse'
+    assert len(queue.messages) == 1 and repo.parent['status'] == 'processing'
+    assert service.complete('owner', 'prj_test', did, {'sha256': 'a'*64}) == result
+    assert len(queue.messages) == 1
+    with pytest.raises(ApiError) as e:
+        service.complete('owner', 'prj_test', did, {'sha256': 'b'*64})
+    assert e.value.status == 409
+
+
+def test_queue_failure_keeps_durable_pending_and_retry_sends(completed_upload):
+    service, repo, queue, did = completed_upload
+    queue.fail = True
+    with pytest.raises(RuntimeError):
+        service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    assert service.get('prj_test', did)['dispatch_pending'] is True
+    queue.fail = False
+    service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    assert len(queue.messages) == 1 and service.get('prj_test', did)['dispatch_pending'] is False
+
+
+def test_complete_owner_and_metadata_checks(completed_upload, monkeypatch):
+    service, _, queue, did = completed_upload
+    with pytest.raises(ApiError) as e:
+        service.complete('intruder', 'prj_test', did, {'sha256': 'a'*64})
+    assert e.value.status == 404
+    monkeypatch.setattr(service.s3, 'head_object', lambda **kw: {'ContentLength': 21, 'ContentType': 'text/csv', 'ETag': 'e'})
+    with pytest.raises(ApiError) as e:
+        service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    assert e.value.status == 409 and not queue.messages
+
+
+def test_complete_missing_object_and_invalid_hash(completed_upload, monkeypatch):
+    service, _, _, did = completed_upload
+    with pytest.raises(ApiError) as e:
+        service.complete('owner', 'prj_test', did, {'sha256': 'bad'})
+    assert e.value.status == 400
+    def missing(**kwargs):
+        raise ClientError({'Error': {'Code': 'NoSuchKey'}}, 'HeadObject')
+    monkeypatch.setattr(service.s3, 'head_object', missing)
+    with pytest.raises(ApiError) as e:
+        service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    assert e.value.status == 409
+
+
+def test_list_projection_hides_pending_hash_and_internal_keys(completed_upload):
+    service, _, _, _ = completed_upload
+    result = service.list('owner', 'prj_test', {})
+    assert len(result['items']) == 1
+    assert not {'object_key', 'upload_request', 'PK', 'SK'} & result['items'][0].keys()
+    with pytest.raises(ApiError) as e:
+        service.list('intruder', 'prj_test', {})
+    assert e.value.status == 404
+
+
+def test_jobs_resume_only_unfinished_completed_uploads(completed_upload):
+    service, repo, queue, did = completed_upload
+    service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    jobs = service.jobs('owner', 'prj_test')
+    assert jobs['totals']['queued'] == 1 and jobs['jobs'][0]['stage'] == 'parse'
+    assert service.resume('owner', 'prj_test') == {'reenqueued': 1}
+    assert len(queue.messages) == 2
+    repo.items['P#prj_test', 'D#'+did]['status'] = 'done'
+    assert service.resume('owner', 'prj_test') == {'reenqueued': 0}
+
+
+def test_expired_worker_lease_can_resume_but_active_cannot(completed_upload):
+    service, repo, _, did = completed_upload
+    service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    item = repo.items['P#prj_test', 'D#'+did]
+    item.update(status='running', worker_until=9999999999)
+    assert service.resume('owner', 'prj_test')['reenqueued'] == 0
+    item['worker_until'] = 0
+    assert service.resume('owner', 'prj_test')['reenqueued'] == 1

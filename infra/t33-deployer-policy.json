@@ -2,6 +2,12 @@
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "ConfigureOnlyCorpusUploadCors",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketCORS", "s3:PutBucketCORS"],
+      "Resource": "arn:aws:s3:::prometeo-hack-corpus-352818909129"
+    },
+    {
       "Sid": "ReadAndDeployExistingApiLambda",
       "Effect": "Allow",
       "Action": ["lambda:GetFunctionConfiguration", "lambda:UpdateFunctionConfiguration", "lambda:UpdateFunctionCode", "lambda:GetPolicy", "lambda:AddPermission"],

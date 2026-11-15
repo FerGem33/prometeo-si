@@ -5,6 +5,11 @@
 conservan el contexto revisado. La carga continúa deshabilitada hasta completar
 integridad, confirmación y procesamiento verificables; no es tope de gasto.
 
+**Avance posterior:** implementados localmente complete, listado, jobs y resume,
+y worker hasta propuesta. Intento de despliegue de cargas detenido antes de
+habilitar variables/rutas por AccessDenied en s3:PutBucketCORS. La versión
+desplegada sigue siendo la API de drafts verificada. Ver detalles actuales abajo.
+
 ## Alcance implementado localmente
 
 `api/upload_tickets.py` reserva un documento y genera una URL PUT S3 privada
@@ -19,11 +24,19 @@ solicitudes simultáneas o sobrescribir una edición. Reintento con misma
 Idempotency-Key y cuerpo reutiliza doc_id sin consumir otro cupo; otro cuerpo
 da 409. Un conflicto concurrente da 409 y permite reintentar; no inventa éxito.
 
-El URL firma tipo y ContentLength, sin poner el nombre del archivo en la ruta.
+El URL firma tipo, ContentLength e If-None-Match: *, sin poner el nombre del archivo en la ruta.
 El cliente debe enviar los bytes exactos con Content-Type indicado. El navegador
 calcula Content-Length; no debe intentar fijarlo desde JS. Esta compatibilidad
 aún requiere prueba real navegador/S3. Una URL puede caducar antes si vence la
 sesión que la firmó. No registrar URLs prefirmadas en logs/repositorio.
+
+`complete` comprueba existencia, bytes y Content-Type con HEAD; registra el hash
+declarado en un campo interno y deja sha256 público null hasta que el worker
+compare los bytes reales. Registra transición y envío pendiente en transacción;
+si SQS falla, repetir complete o resume reintenta el envío. Duplicados de entrega
+son posibles tras un fallo entre envío y checkpoint: el worker usa lease/cache.
+Listados/paginación, jobs y resume verifican propietario; resume omite cargas
+sin confirmar, trabajos terminados y leases aún activos.
 
 ## Gate D3 y estado del despliegue
 
@@ -48,17 +61,18 @@ status queued; no es confirmación ni evidencia de extracción.
 
 ## Lo que falta antes de habilitar
 
-1. Aprobación explícita D3 y del resto del contrato relevante. Registro en
-   PROGRESS, no inferirla de mensajes de continuidad.
-2. `complete`, listado de documentos, confirmación de tipo/tamaño reales y hash
-   comprobado; detección de duplicados. No aceptar SHA del cliente como prueba.
-3. Integridad ante reemplazo de un objeto después de confirmar: las URLs PUT
-   pueden reutilizarse hasta expirar. Diseñar/validar fuente inmutable o
-   verificación de hash antes de cada extracción; una cita no basta para hash.
+1. D3 está aprobada. Mantener revisión de contrato/datos consolidada en
+   `REVISION_FINAL_PENDIENTE.md`, sin aprobación automática de esquemas/datos.
+2. Desplegar/probar complete y listado; hash verificado y duplicados se
+   implementan en worker. No aceptar SHA del cliente como prueba de integridad.
+3. PUT firmado IfNoneMatch impide sobrescritura, por comprobar en S3 real;
+   no borrar una clave mientras su URL siga vigente. Worker usa ETag/hash real
+   para verificar el original antes de parsear.
 4. Control de páginas PDF y contenido real en parser/worker antes de Bedrock.
    El ticket solo valida la declaración de bytes/tipo, no interpreta archivos.
-5. Encolado durable y reintentos (SQS estándar no es atómico con DynamoDB),
-   worker idempotente y estados por documento. No se encola nada en esta entrega.
+5. Verificar encolado durable/reintentos reales y desplegar el worker. Código
+   local usa checkpoints, lease y respuestas persistentes; no se encoló nada
+   ni se hizo una invocación Bedrock desde este avance.
 6. Permisos mínimos de actualización/transacción DynamoDB y PUT S3 al prefijo
    raw, rutas JWT de documentos, configuración de límites y CORS necesarios.
 7. Pruebas reales: URL firmada en navegador/S3, expiración/tamaño/tipo,
@@ -97,7 +111,33 @@ Fuentes consultadas 15-nov-2026:
 api/.venv/bin/python -m pytest api/ -q
 ```
 
-85 pruebas API pasan: incluye dobles de reservas/transacciones, aislamiento,
+99 pruebas API/worker pasan con el entorno de `T34_WORKER_PREPARACION.md`: incluye dobles de reservas/transacciones, aislamiento,
 límites y carrera por último cupo, repetición/conflicto y estados. También SDK
 S3 real generando firma sin red con credenciales ficticias solo de test para
 comprobar headers y caducidad. No prueba enforcement S3 ni transacciones AWS.
+
+## Despliegue y smoke pendientes de CORS
+
+El script `infra/deploy_projects.py --uploads` agrega las rutas JWT de tickets,
+complete/listado/jobs/resume y permisos de ejecución de tabla, prefijo raw y
+SendMessage de la cola existente. Antes de habilitar variables aplica CORS PUT
+con if-none-match; AWS rechazó ese paso con AccessDenied (exit 254). Falta añadir
+s3:GetBucketCORS/s3:PutBucketCORS para el bucket concreto al permission set.
+
+Después de actualizarlo, probar primero con el dueño y una fuente real:
+
+```bash
+source infra/config.env
+source infra/outputs.env
+bash infra/20_api.sh
+python3.12 -I infra/deploy_projects.py --output-dir /tmp/nueva-config-uploads \
+  --uploads --apply --contract-approved
+# Dos sesiones SRP; no se imprimen tokens ni URL prefirmada.
+node tools/cognito/cli.mjs uploads /ruta/real/al/original.csv
+```
+
+Smoke preparado en `api/check_uploads_live.py`: PUT 200, sobrescritura 412,
+complete/repetición 200, hash distinto 409, aislamiento 404 y listados/jobs 200.
+Todavía no ejecutado. Deja un proyecto y un original para limpieza del dueño;
+no elimina archivos. Solo probar el procesamiento completo cuando el consumidor
+T34 esté empaquetado, desplegado y configurado de forma verificada.

@@ -64,6 +64,10 @@ class AWS:
             assert p['Statement'][0]['Resource'] == self.env['DATA_TABLE_ARN']
         elif action == 'update-api':
             assert json.loads(opts['--cors-configuration'])['AllowOrigins'] == [self.env['CF_URL']]
+        elif action == 'put-bucket-cors':
+            cors = json.loads(opts['--cors-configuration'])
+            assert 'if-none-match' in cors['CORSRules'][0]['AllowedHeaders']
+            assert cors['CORSRules'][0]['AllowedMethods'] == ['PUT']
         else:
             raise AssertionError('Unexpected operation ' + action)
         return {}
@@ -140,3 +144,22 @@ def test_refuses_unexpected_route_integration(config):
     with pytest.raises(ValueError, match='project route differs'):
         deploy_projects.configure(root, env, aws)
     assert not aws.writes
+
+
+def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypatch):
+    root, env, aws = config
+    values = {'CORPUS_BUCKET': 'prometeo-hack-corpus-352818909129',
+              'INGEST_QUEUE_ARN': 'arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest',
+              'INGEST_QUEUE_URL': 'https://sqs.us-east-1.amazonaws.com/352818909129/prometeo-hack-ingest'}
+    for k, v in values.items():
+        monkeypatch.setenv(k, v)
+    output = root/'uploads'
+    monkeypatch.setattr(sys, 'argv', ['prepare', '--output-dir', str(output), '--uploads'])
+    prepare_projects.main()
+    deploy_projects.configure(output, env, aws)
+    deploy_projects.configure(output, env, aws)
+    assert len(aws.routes) == 9 and len(aws.authorizers) == 1 and len(aws.statements) == 9
+    assert aws.variables['UPLOADS_ENABLED'] == 'true'
+    assert json.loads(aws.variables['UPLOAD_LIMITS_JSON'])['max_bytes'] == 20000000
+    policy = json.loads((output/'projects-policy.json').read_text())
+    assert all(s['Resource'] != '*' for s in policy['Statement'])
