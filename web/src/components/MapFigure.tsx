@@ -10,7 +10,7 @@ const L = 64;
 const R = 16;
 const T = 14;
 const PLOT_H = 300;
-const STRIP_H = 64;
+const STRIP_H = 82;
 const H = T + PLOT_H + 26 + STRIP_H + 44;
 
 function ticks(lo: number, hi: number, n = 8): number[] {
@@ -177,17 +177,18 @@ export function MapFigure({
         </g>
         <rect className="plot-bg" x={L} y={T} width={W - L - R} height={PLOT_H} onClick={pick} />
         <rect x={L} y={stripTop} width={W - L - R} height={STRIP_H} fill="none" stroke="var(--rule)" strokeDasharray="3 3" />
-        <text className="lab" x={L + 6} y={stripTop + 12}>
+        <line x1={L} x2={W - R} y1={stripTop + 22} y2={stripTop + 22} stroke="var(--rule-2)" strokeWidth="1" />
+        {sx !== null && sy !== null && <rect className="hood" x={X(sx - tolX)} y={Y(sy + tolY)} width={X(sx + tolX) - X(sx - tolX)} height={Y(sy - tolY) - Y(sy + tolY)} />}
+        {sx !== null && <rect className="hood" x={X(sx - tolX)} y={stripTop + 22} width={X(sx + tolX) - X(sx - tolX)} height={STRIP_H - 22} />}
+        <text className="lab strip-lab" x={L + 8} y={stripTop + 15}>
           {vy.label} not recorded: {xOnly.length} tests, placed by {vx.label} only
         </text>
-        {sx !== null && sy !== null && <rect className="hood" x={X(sx - tolX)} y={Y(sy + tolY)} width={X(sx + tolX) - X(sx - tolX)} height={Y(sy - tolY) - Y(sy + tolY)} />}
-        {sx !== null && <rect className="hood" x={X(sx - tolX)} y={stripTop} width={X(sx + tolX) - X(sx - tolX)} height={STRIP_H} />}
         <g>
           {both.map((r, i) => (
             <Mark key={r.id} shape={shapeOf(r)} own={own(r)} x={X(mid(r, vx.id)!) + jit(i, 1) * 5} y={Y(mid(r, vy.id)!) + jit(i, 2) * 5} onClick={() => open(r.id)} title={title(r)} />
           ))}
           {xOnly.map((r, i) => (
-            <Mark key={r.id} shape={shapeOf(r)} own={own(r)} x={X(mid(r, vx.id)!) + jit(i, 3) * 6} y={stripTop + 22 + (jit(i, 4) + 0.5) * (STRIP_H - 30)} onClick={() => open(r.id)} title={title(r)} />
+            <Mark key={r.id} shape={shapeOf(r)} own={own(r)} x={X(mid(r, vx.id)!) + jit(i, 3) * 6} y={stripTop + 34 + (jit(i, 4) + 0.5) * (STRIP_H - 44)} onClick={() => open(r.id)} title={title(r)} />
           ))}
         </g>
         <g className="ax">

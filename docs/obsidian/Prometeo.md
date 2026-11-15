@@ -6,13 +6,15 @@ tags:
   - module
   - documentation
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
 status: stable
 language: "typescript | python"
 source_files:
   - "web/src/components/ScenarioPanel.tsx"
   - "web/src/components/AssistantPanel.tsx"
   - "api/handler.py"
+  - "pipeline/review_extract.py"
+  - "api/ingest_propose.py"
 related:
   - "[[trabajo-diario/2026-11-14]]"
 ---
@@ -30,15 +32,38 @@ Informe interactivo que compara un escenario propuesto con registros de experime
 ## Especificación técnica
 
 - En pantallas de 600 px o menos, los controles pasan de una tabla de cuatro columnas a filas apiladas; los encabezados siguen disponibles para tecnologías de asistencia.
-- Las solicitudes de escenario se validan contra el esquema. Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción o propagación reciben una respuesta fija de alcance no admitido.
+- Las solicitudes de escenario se validan contra el esquema. El prompt de `/ask` incluye el mapeo explícito de gravedad (`0.17 g` → variable `g`, valor `0.17`, unidad `g`). Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción, propagación o búsqueda de condiciones experimentales cercanas reciben una respuesta fija de alcance no admitido. Las sugerencias de `/ask` deben solicitar cambios de escenario, no consultas de ranking o recuperación de estudios.
 - Cada oración del análisis debe referir un hallazgo y sus fuentes aprobadas; ante un error de API se conserva la plantilla determinista.
 - El informe no requiere cuenta ni guarda escenarios en el servidor.
 
 ## Validación y pruebas
 
-- `npm test --prefix web`: 35 pruebas aprobadas.
+- `npm test --prefix web`: 54 pruebas aprobadas.
 - `npm run build --prefix web`: compilación TypeScript y Vite aprobada.
-- `api/.venv/bin/python -m pytest api/`: 27 pruebas aprobadas.
+- `api/.venv/bin/python -m pytest api/`: 39 pruebas aprobadas.
 - `scripts/check_agnostic.sh`: aprobado.
+- API publicada en Haiku 4.5 con Anthropic SDK 2.8.0. D6 cerrada por el dueño el 15-nov: se conserva Haiku 4.5 y se descarta la migración a 5.5.
 - Revisión pública: CloudFront en Chrome incógnito, viewport responsive 400 × 899, preguntas de escenario y de contenido, favicon HTTP 200 y vista de impresión de 16 páginas.
-- El despliegue desde otra laptop sigue pendiente como verificación externa de aceptación.
+- T16 publicó API y web desde otra laptop con los recursos existentes; el punto 9 de aceptación quedó verificado.
+
+## T32: revisión y extracción fuera de línea
+
+El flujo local `pipeline/ingest.py` → `api/ingest_propose.py` → `pipeline/review_extract.py`
+conserva propuestas sin aprobar hasta una decisión explícita del operador. La extracción
+conserva citas, unidades, conversiones y procedencia; los candidatos de artículos siguen
+pendientes de soporte semántico. No publica ni modifica el pack de demo.
+
+Interfaces y ejemplos: [pipeline/README.md](../../pipeline/README.md). Evidencia real y
+limitaciones: [T32_EVALUACION.md](../T32_EVALUACION.md). D7 y D3 siguen abiertas.
+
+Pruebas T32 y regresiones: 64 API/pipeline con Python 3.12 (incluyen dobles), 54 web,
+`check_agnostic.sh` y `validate_pack.py` pasan. Las llamadas reales se cuentan por separado
+en el informe; no prueban por sí solas precisión científica ni aprobación humana.
+
+## T18: datos reproducibles
+
+`collect_data.py --salida` y `build_pack.py --data-dir/--output-dir` dejan filtrar una descarga
+local y regenerar los tres artefactos en una carpeta temporal. La verificación actual produjo
+24 estudios, 1986 registros, 22 fuentes; el pack validó e igualó byte por byte los tres archivos
+publicados. D9 mantiene los originales fuera de Git. Instrucciones y límites en
+[pipeline/README.md](../../pipeline/README.md#t18-regenerar-el-pack-desde-una-descarga-local-sin-tocar-el-publicado).

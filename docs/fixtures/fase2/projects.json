@@ -1,0 +1,21 @@
+{
+ "items": [
+  {
+   "id": "prj_demo",
+   "name": "Solid fuel flammability",
+   "intent": "Which combinations of oxygen, pressure, flow and material have been studied for a habitat cabin?",
+   "status": "awaiting_review",
+   "counts": {
+    "documents": 1,
+    "records": 129,
+    "variables": 4,
+    "conflicts_open": 0
+   },
+   "pack_version": null,
+   "lens_version": null,
+   "created_at": "2026-11-15T06:00:00Z",
+   "updated_at": "2026-11-15T06:05:00Z"
+  }
+ ],
+ "next_cursor": null
+}

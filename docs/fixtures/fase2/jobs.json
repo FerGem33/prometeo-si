@@ -1,0 +1,19 @@
+{
+ "project_status": "awaiting_review",
+ "jobs": [
+  {
+   "doc_id": "doc_bass2_table",
+   "name": "PSI-25_Experimental table_BASS-II.csv",
+   "stage": "verify",
+   "status": "done",
+   "updated_at": "2026-11-15T06:05:00Z"
+  }
+ ],
+ "totals": {
+  "queued": 0,
+  "running": 0,
+  "done": 1,
+  "failed": 0,
+  "skipped": 0
+ }
+}

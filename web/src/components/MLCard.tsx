@@ -35,8 +35,20 @@ export function MLCard() {
                   <tr key={`${summary.study}/${summary.sourceId}/${summary.kind}/${summary.column}`}>
                     <td>{study?.short ?? summary.study}<br /><small>{source?.name ?? summary.sourceId}<br />{summary.kind}</small></td>
                     <td>{summary.column}{summary.unit ? ` (${summary.unit})` : ""}</td>
-                    <td><RecordLinks records={summary.observed} label={`${summary.observed.length} / ${summary.denominator} observed`} /><RecordLinks records={summary.missingRecords} label={`${summary.missing} missing`} /></td>
-                    <td>{summary.inputTotal ? <><RecordLinks records={summary.inputCompleteRecords} label={`${summary.inputComplete} / ${summary.inputTotal} complete`} />approved inputs present</> : "—"}</td>
+                    <td>
+                      <RecordLinks records={summary.observed} label={`${summary.observed.length} / ${summary.denominator} observed`} />
+                      <RecordLinks records={summary.missingRecords} label={`${summary.missing} missing`} />
+                    </td>
+                    <td>
+                      {summary.inputTotal ? (
+                        <>
+                          <RecordLinks records={summary.inputCompleteRecords} label={`${summary.inputComplete} / ${summary.inputTotal} complete`} />
+                          <small className="ml-subnote">approved inputs present</small>
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td><RecordLinks records={summary.records} label={`${summary.unitsSpecified} / ${summary.unitsTotal} mapped inputs`} /></td>
                     <td>{summary.duplicateCandidates.length ? <RecordLinks records={summary.duplicateCandidates} label={`${summary.duplicateCandidates.length} candidate rows`} /> : "0"}</td>
                     <td>

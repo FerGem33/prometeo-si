@@ -1,9 +1,12 @@
 # API · T09
 
 Lambda Python 3.12, HTTP API payload v2; entrypoint `handler.handler`.
-El modelo viene de MODEL_ID. SDK oficial `AnthropicBedrock`, versión 0.75.0
-fijada por compatibilidad del protocolo Bedrock con Haiku 4.5.
-Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v0.75.0
+El modelo viene de `MODEL_ID` en `infra/config.env`: el dueño aprobó conservar
+`us.anthropic.claude-haiku-4-5-20251001-v1:0` (D6, 15-nov). No se requiere
+habilitar Haiku 5.5. `BEDROCK_MODEL_ID` puede usarse en comandos manuales;
+la aplicación y los scripts de deploy leen `MODEL_ID`.
+SDK oficial `AnthropicBedrock`, versión 2.8.0, para el Messages API de Bedrock.
+Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v2.8.0
 
 ## Contratos
 
@@ -44,6 +47,25 @@ El despliegue debe incluir `pack.json` desde web/public/demo/pack.json junto con
 handler.py, verify.py y las dependencias para Linux; no copiar el venv de macOS.
 Mantener el pack de API sincronizado con el de web cuando cambien datos/esquema.
 
-Verificado 2026-11-14: 26 tests, /ask y /analysis por SDK real responden 200;
-analysis devuelve mode=ai y el hecho 0/268 con fuentes PSI reales. Esta prueba
-local todavía no verifica Lambda/API Gateway ni la UI desplegada.
+La verificación local de /ask y /analysis usa `api/smoke.py`; las llamadas son
+reales y facturables. La validación desplegada se registra en `PROGRESS.md`.
+
+## Cambios de la fase 2
+
+Contrato completo en `docs/CONTRATOS_FASE2.md` §4.
+
+- `/ask`: el modelo devuelve `{"conditions":[{"variable","value","unit"}]}` y el código convierte unidades con
+  `display_units` del esquema (psi, kPa). Los elementos inválidos se descartan; si no queda ninguno, `unsupported`.
+  `502` solo cuando falla la llamada al modelo. Petición con `"version": 2` → la respuesta incluye `notes`.
+  Sin `version` la respuesta es idéntica a la anterior.
+- `/analysis`: oración para `tested_elsewhere`; `above_tested` y `below_tested` incluyen el valor extremo; ambos se
+  cotejan contra el pack. `api/events/analysis_lunar.json` es la petición real del preset lunar.
+- 38 pruebas. No se ha probado contra Bedrock desde esta laptop (sin perfil `prometeo`).
+
+## Avance del bloque C (T33)
+
+La API de proyectos draft y la configuración para revisión están documentadas
+en [`docs/T33_API_PROYECTOS.md`](../docs/T33_API_PROYECTOS.md). Ya están
+desplegadas en su alcance de drafts, con registro/login SRP y A/B real verificados.
+La guía incluye pruebas locales y pendientes
+para autenticación, integración y aprobación T30/D3.

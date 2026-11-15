@@ -1,0 +1,17 @@
+{
+ "items": [
+  {
+   "id": "doc_bass2_table",
+   "name": "PSI-25_Experimental table_BASS-II.csv",
+   "kind": "table",
+   "media_type": "text/csv",
+   "bytes": 16590,
+   "sha256": "71e792bf6b5fb5ea620c5dd70fbbac05515992e12aefcf5dff47312caa48c042",
+   "rows": 129,
+   "stage": "verify",
+   "status": "done",
+   "uploaded_at": "2026-11-15T06:00:00Z"
+  }
+ ],
+ "next_cursor": null
+}

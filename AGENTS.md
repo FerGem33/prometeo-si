@@ -24,6 +24,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
    - "Siguiente paso exacto";
    - URL y `MODEL_ID` si cambiaron.
 3. `git add -A && git commit -m "T0x: <qué>" && git push`.
+   - **Nunca agregues coautoría ni firmas de agente al commit:** nada de `Co-Authored-By`, `Generated with`, ni menciones al agente o al modelo en el mensaje. El autor es la persona dueña de la laptop. Aplica también a descripciones de PR.
 4. Sigue con la siguiente tarea. No pidas confirmación entre tareas salvo que haya un bloqueo real.
 
 ## 3. Si se va a acabar el uso de la cuenta o la sesión
@@ -68,6 +69,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 - **Vectores de prueba:** `web/src/engine/golden.test.ts` usa datos reales. Si un vector falla, el motor está mal o el pack cambió. Investiga antes de tocar el vector, y si lo cambias, explica por qué en el commit.
 - **Python:** 3.12. En `pipeline/` solo librería estándar. Ejecutar scripts que leen datos con `python3 -I`.
 - **Bedrock:** SDK oficial `anthropic` (`AnthropicBedrock`) y modelo desde `MODEL_ID`. Nunca escribas el ID de modelo en el código. No inventes la API del SDK: consulta su documentación.
+- **Modelo aprobado (D6, 15-nov):** todas las tareas futuras de API, pipeline, extracción y despliegue usarán `us.anthropic.claude-haiku-4-5-20251001-v1:0`, definido en `infra/config.env`. Conservarlo al actualizar SDK, prompts o infraestructura. No migrar a Haiku 5.5 ni a otro modelo sin una nueva instrucción explícita del dueño. La falta de acceso a 5.5 no es un bloqueo del proyecto.
 - **Validación:** toda salida de la IA se valida contra el esquema antes de usarse. El texto del usuario va delimitado como dato.
 - **Tareas pequeñas:** nada de refactors fuera de la tarea en curso.
 
@@ -93,7 +95,8 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 - **Permisos:**
   - la Lambda usa un rol con `AWSLambdaBasicExecutionRole` (logs permitidos) + `bedrock:InvokeModel` acotado;
   - sin `AdministratorAccess` ni comodines.
-- No crees recursos fuera del alcance de `docs/PLAN.md`: ni Cognito, ni SQS, ni DynamoDB en estas 8 h.
+- Solo se crean los recursos que nombra un script de `infra/` aprobado en `docs/PLAN_FASE2.md`. Desde el 15-nov el equipo autorizó Cognito, SQS, DynamoDB y el bucket de corpus del bloque C (`infra/30_data.sh`). Cualquier otro servicio nuevo necesita que una persona lo apruebe antes.
+- Los permisos nuevos se agregan acotados al recurso concreto (ARN de la tabla, de la cola, del bucket con prefijo); nunca `*`.
 - Antes de borrar o reemplazar un recurso, confirma con una persona.
 
 ## 9. Comandos
@@ -106,6 +109,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 | Comprobar AWS | `infra/00_check.sh` |
 | Desplegar web | `infra/deploy_web.sh` |
 | Desplegar API | `infra/20_api.sh` |
+| Recursos de datos del bloque C | `infra/30_data.sh` |
 
 ## 10. Documentos
 

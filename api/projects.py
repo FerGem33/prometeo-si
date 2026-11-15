@@ -1,0 +1,215 @@
+"""T33 local project routes. Trust only a configured API Gateway JWT authorizer.
+
+Not activated by infra/20_api.sh yet. Never decode a caller-supplied JWT here.
+"""
+import base64
+import hashlib
+import json
+import math
+import os
+import re
+import time
+import uuid
+from datetime import datetime, timezone
+from functools import lru_cache
+
+
+class ApiError(Exception):
+    def __init__(self, status, code, message, details=None):
+        self.status, self.code, self.message = status, code, message
+        self.details = details
+
+
+def fail(status, code, message, details=None):
+    raise ApiError(status, code, message, details)
+
+
+def identity(event):
+    issuer = os.environ.get('COGNITO_ISSUER')
+    audience = os.environ.get('USER_POOL_CLIENT_ID')
+    if not issuer or not audience:
+        fail(503, 'not_configured', 'Project authentication is not configured')
+    try:
+        claims = event['requestContext']['authorizer']['jwt']['claims']
+        uid = claims['sub']
+        expires = float(claims['exp'])
+        if (not isinstance(uid, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', uid)
+                or claims.get('iss') != issuer or claims.get('aud') != audience
+                or claims.get('token_use') != 'id' or not math.isfinite(expires) or expires <= time.time()):
+            raise ValueError()
+    except (KeyError, TypeError, ValueError, OverflowError):
+        fail(401, 'unauthenticated', 'A valid session is required')
+    return uid
+
+
+def body(event):
+    try:
+        raw = event.get('body', '')
+        if not isinstance(raw, str) or len(raw) > 64000:
+            raise ValueError()
+        if event.get('isBase64Encoded'):
+            raw = base64.b64decode(raw, validate=True).decode('utf-8')
+        if len(raw.encode('utf-8')) > 16000:
+            raise ValueError()
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError()
+        return data
+    except (ValueError, TypeError, UnicodeError):
+        fail(400, 'invalid_request', 'Expected a JSON object within 16000 bytes')
+
+
+def fields(data, create=False):
+    if (not data or set(data) - {'name', 'intent'}
+            or (create and set(data) != {'name', 'intent'})):
+        fail(400, 'invalid_request', 'Expected name and intent')
+    result = {}
+    for key, value in data.items():
+        if not isinstance(value, str) or not 1 <= len(value.strip()) <= (200 if key == 'name' else 4000):
+            fail(400, 'invalid_request', 'Invalid ' + key)
+        result[key] = value.strip()
+    return result
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat(timespec='microseconds').replace('+00:00', 'Z')
+
+
+PUBLIC = ('id', 'name', 'intent', 'status', 'counts', 'pack_version',
+          'lens_version', 'created_at', 'updated_at')
+
+
+def project(item):
+    result = {k: item[k] for k in PUBLIC}
+    result['counts'] = {k: int(v) for k, v in result['counts'].items()}
+    for key in ('pack_version', 'lens_version'):
+        if result[key] is not None:
+            result[key] = int(result[key])
+    return result
+
+
+class Projects:
+    def __init__(self, table):
+        self.table = table
+
+    def get(self, uid, pid):
+        item = self.table.get_item(Key={'PK': 'U#' + uid, 'SK': 'P#' + pid}, ConsistentRead=True).get('Item')
+        if not item:
+            fail(404, 'not_found', 'Project not found')
+        return item
+
+    def create(self, uid, data, key=None):
+        data = fields(data, create=True)
+        if key is not None and (not isinstance(key, str) or not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', key)):
+            fail(400, 'invalid_request', 'Invalid Idempotency-Key')
+        pid = 'prj_' + (hashlib.sha256((uid + '\0' + key).encode()).hexdigest() if key else uuid.uuid4().hex)
+        now = stamp()
+        item = {'PK': 'U#' + uid, 'SK': 'P#' + pid, 'id': pid, **data,
+                'status': 'draft', 'counts': dict.fromkeys(('documents', 'records', 'variables', 'conflicts_open'), 0),
+                'pack_version': None, 'lens_version': None, 'created_at': now, 'updated_at': now,
+                'revision': 1, 'create_request': data}
+        try:
+            self.table.put_item(Item=item, ConditionExpression='attribute_not_exists(PK)')
+        except Exception as exc:
+            if not conditional(exc):
+                raise
+            old = self.get(uid, pid)
+            if not key or old.get('create_request') != data:
+                fail(409, 'conflict', 'Idempotency-Key was used for another request')
+            return project(old)
+        return project(item)
+
+    def list(self, uid, query):
+        from boto3.dynamodb.conditions import Key
+        if set(query) - {'cursor', 'limit'}:
+            fail(400, 'invalid_request', 'Unknown query parameter')
+        try:
+            limit = int(query.get('limit', '20'))
+            if not 1 <= limit <= 100:
+                raise ValueError()
+            args = {'KeyConditionExpression': Key('PK').eq('U#' + uid) & Key('SK').begins_with('P#'),
+                    'Limit': limit, 'ConsistentRead': True}
+            if 'cursor' in query:
+                cursor = query['cursor']
+                if not isinstance(cursor, str) or len(cursor) > 1024:
+                    raise ValueError()
+                key = json.loads(base64.b64decode(cursor, altchars=b'-_', validate=True))
+                if (not isinstance(key, dict) or set(key) != {'PK', 'SK'} or key['PK'] != 'U#' + uid
+                        or not isinstance(key['SK'], str) or not re.fullmatch(r'P#prj_[a-f0-9]{32,64}', key['SK'])):
+                    raise ValueError()
+                args['ExclusiveStartKey'] = key
+        except (ValueError, TypeError, UnicodeError):
+            fail(400, 'invalid_request', 'Invalid pagination')
+        result = self.table.query(**args)
+        last = result.get('LastEvaluatedKey')
+        return {'items': [project(i) for i in result.get('Items', [])],
+                'next_cursor': base64.urlsafe_b64encode(json.dumps(last).encode()).decode() if last else None}
+
+    def patch(self, uid, pid, data):
+        data = fields(data)
+        item = self.get(uid, pid)
+        if all(item[k] == v for k, v in data.items()):
+            return project(item)
+        # Draft-only until lens regeneration and ingestion are implemented.
+        if item['status'] != 'draft' or item['counts']['documents'] != 0:
+            fail(409, 'conflict', 'Only empty draft projects can be edited in this release')
+        old_revision = item['revision']
+        item.update(data)
+        item['revision'] = old_revision + 1
+        item['updated_at'] = stamp()
+        try:
+            self.table.put_item(Item=item, ConditionExpression='revision = :rev',
+                                ExpressionAttributeValues={':rev': old_revision})
+        except Exception as exc:
+            if not conditional(exc):
+                raise
+            fail(409, 'conflict', 'Project changed; reload before editing')
+        return project(item)
+
+
+def conditional(exc):
+    return getattr(exc, 'response', {}).get('Error', {}).get('Code') == 'ConditionalCheckFailedException'
+
+
+@lru_cache(maxsize=1)
+def store():
+    import boto3
+    return Projects(boto3.resource('dynamodb').Table(os.environ['DATA_TABLE']))
+
+
+def handle(event):
+    try:
+        uid = identity(event)
+        path = event.get('rawPath', '')
+        method = event['requestContext']['http']['method']
+        if path == '/projects':
+            if method == 'GET':
+                return 200, store().list(uid, event.get('queryStringParameters') or {})
+            if method == 'POST':
+                headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+                return 201, store().create(uid, body(event), headers.get('idempotency-key'))
+        else:
+            documents = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents', path)
+            if documents and method == 'POST':
+                # Authenticate/authorize before gate/configuration or signing.
+                repository = store()
+                repository.get(uid, documents[1])
+                try:
+                    from .upload_tickets import service
+                except ImportError:
+                    from upload_tickets import service
+                headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+                return 201, service(repository).reserve(uid, documents[1], body(event), headers.get('idempotency-key'))
+            match = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})', path)
+            if not match:
+                fail(404, 'not_found', 'Project route not found')
+            if method == 'GET':
+                return 200, project(store().get(uid, match[1]))
+            if method == 'PATCH':
+                return 200, store().patch(uid, match[1], body(event))
+        fail(405, 'method_not_allowed', 'Method not available in this release')
+    except ApiError as exc:
+        return exc.status, {'error': {'code': exc.code, 'message': exc.message,
+                                   **({'details': exc.details} if exc.details is not None else {})}}
+    except Exception:
+        return 500, {'error': {'code': 'internal', 'message': 'Project service unavailable'}}
