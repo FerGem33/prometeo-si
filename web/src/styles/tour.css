@@ -1,12 +1,12 @@
 /* Guided tour. A panel docked to the bottom of the window (to the right on wide screens) that reserves its own
    space, so the page stays visible and usable. Same identity as report.css: paper, ink, one accent, no shadows. */
-:root { --tour-w: 440px; }
+:root { --tour-w: calc(440 * var(--fz)); }
 
 /* ---------- launcher ---------- */
 .tour-launch {
   position: fixed; right: 20px; bottom: 20px; z-index: 50;
   display: inline-flex; align-items: center; gap: 10px;
-  font: 500 14.5px/1.2 var(--sans); color: var(--ink);
+  font: 500 calc(14.5 * var(--fz))/1.2 var(--sans); color: var(--ink);
   background: var(--paper); border: 1.5px solid var(--ink); border-radius: 2px;
   padding: 10px 16px; cursor: pointer;
 }
@@ -14,7 +14,7 @@
 .tour-launch:hover { border-color: var(--accent); }
 .tour-launch-mark {
   display: inline-grid; place-items: center; width: 22px; height: 22px;
-  background: var(--accent-fill); color: var(--on-accent); border-radius: 2px; font-size: 10px;
+  background: var(--accent-fill); color: var(--on-accent); border-radius: 2px; font-size: calc(10 * var(--fz));
 }
 body:has(.prov) .tour-launch { display: none; }
 
@@ -36,31 +36,31 @@ body:has(.prov) .tour-launch { display: none; }
 /* Only the current stop is named; there is no list of all stops. */
 .tour-top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .tour-kicker {
-  margin: 0; font: 600 14px/1.2 var(--sans-c);
+  margin: 0; font: 600 calc(14 * var(--fz))/1.2 var(--sans-c);
   letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
 }
 .tour-close {
-  font: 500 14.5px/1 var(--sans); color: var(--ink-2); white-space: nowrap;
+  font: 500 calc(14.5 * var(--fz))/1 var(--sans); color: var(--ink-2); white-space: nowrap;
   background: none; border: 1px solid var(--rule); border-radius: 2px; padding: 8px 12px; cursor: pointer;
 }
 .tour-close:hover { color: var(--ink); border-color: var(--ink-3); }
-.tour-close span { font-size: 18px; margin-left: 4px; }
+.tour-close span { font-size: calc(18 * var(--fz)); margin-left: 4px; }
 
 .tour-main { grid-area: main; min-width: 0; }
-.tour-title { margin: 0 0 10px; font: 600 30px/1.2 var(--serif); color: var(--ink); }
+.tour-title { margin: 0 0 10px; font: 600 calc(30 * var(--fz))/1.2 var(--serif); color: var(--ink); }
 .tour-title:focus { outline: none; }
-.tour-pitch { margin: 0; max-width: 72ch; font: 400 18px/1.6 var(--sans); color: var(--ink); }
+.tour-pitch { margin: 0; max-width: 72ch; font: 400 calc(18 * var(--fz))/1.6 var(--sans); color: var(--ink); }
 
 .tour-takeaway { grid-area: take; align-self: start; border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; margin-top: 6px; }
 .tour-takeaway b {
-  display: block; margin-bottom: 6px; font: 600 13px/1.2 var(--sans-c);
+  display: block; margin-bottom: 6px; font: 600 calc(13 * var(--fz))/1.2 var(--sans-c);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
 }
-.tour-takeaway p { margin: 0; font: 500 18px/1.5 var(--sans); color: var(--ink); }
+.tour-takeaway p { margin: 0; font: 500 calc(18 * var(--fz))/1.5 var(--sans); color: var(--ink); }
 
 .tour-nav { grid-area: nav; display: flex; gap: 10px; }
 .tour-btn {
-  font: 600 16px/1.2 var(--sans); color: var(--ink);
+  font: 600 calc(16 * var(--fz))/1.2 var(--sans); color: var(--ink);
   background: var(--surface-control, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
   padding: 11px 16px; cursor: pointer;
 }
@@ -68,7 +68,7 @@ body:has(.prov) .tour-launch { display: none; }
 .tour-btn.primary { flex: 1; background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .tour-btn.primary:hover { border-color: var(--ink); }
 .tour-btn:disabled { opacity: .45; cursor: default; }
-.tour-keys { grid-area: keys; margin: 0; font: 400 13.5px/1.4 var(--sans); color: var(--ink-3); }
+.tour-keys { grid-area: keys; margin: 0; font: 400 calc(13.5 * var(--fz))/1.4 var(--sans); color: var(--ink-3); }
 
 .tour-launch:focus-visible, .tour-close:focus-visible, .tour-btn:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
@@ -100,7 +100,7 @@ html[data-tour] .prov { bottom: calc(var(--tour-h, 0px) + 16px); max-height: cal
   .tour-top { padding-bottom: 14px; border-bottom: 1px solid var(--rule-2); }
 
   html[data-tour] body { padding-bottom: 0; padding-right: var(--tour-w); }
-  html[data-tour] .page { width: min(1440px, calc(100vw - var(--tour-w) - 40px)); }
+  html[data-tour] .page { width: min(calc(1440 * var(--fz)), calc(100vw - var(--tour-w) - 40px)); }
   html[data-tour] .dossier-overlay { bottom: 0; right: var(--tour-w); }
   html[data-tour] .prov { bottom: 16px; right: calc(var(--tour-w) + 16px); max-height: 70vh; }
   html[data-tour] .cols > .rail { max-height: calc(100vh - 24px); }
@@ -113,13 +113,13 @@ html[data-tour] .prov { bottom: calc(var(--tour-h, 0px) + 16px); max-height: cal
     grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "take" "nav";
     grid-template-rows: none; padding: 10px 16px 0; gap: 10px;
   }
-  .tour-kicker { font-size: 13px; }
-  .tour-close { padding: 7px 10px; font-size: 14px; }
-  .tour-title { font-size: 22px; margin-bottom: 6px; }
-  .tour-pitch { font-size: 16px; line-height: 1.55; }
-  .tour-takeaway p { font-size: 16px; }
+  .tour-kicker { font-size: calc(13 * var(--fz)); }
+  .tour-close { padding: 7px 10px; font-size: calc(14 * var(--fz)); }
+  .tour-title { font-size: calc(22 * var(--fz)); margin-bottom: 6px; }
+  .tour-pitch { font-size: calc(16 * var(--fz)); line-height: 1.55; }
+  .tour-takeaway p { font-size: calc(16 * var(--fz)); }
   .tour-nav { position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 14px; border-top: 1px solid var(--rule-2); }
-  .tour-btn { font-size: 15px; }
+  .tour-btn { font-size: calc(15 * var(--fz)); }
   .tour-keys { display: none; }
   .tour-launch { right: 12px; bottom: 12px; }
 }

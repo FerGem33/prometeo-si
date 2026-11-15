@@ -1,5 +1,5 @@
-.changes, .parts, .varsave, .varcmp { margin: 14px 0; font-family: var(--sans); font-size: 13px; }
-.changes h3, .parts h3, .varsave h3, .varcmp h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; margin: 0 0 6px; }
+.changes, .parts, .varsave, .varcmp { margin: 14px 0; font-family: var(--sans); font-size: calc(13 * var(--fz)); }
+.changes h3, .parts h3, .varsave h3, .varcmp h3 { font-size: calc(12 * var(--fz)); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; margin: 0 0 6px; }
 .changes ul, .parts ul, .varlist, .varfind ul { margin: 0; padding-left: 18px; }
 .changes .arrow { display: inline-block; min-width: 1em; color: var(--accent); font-weight: 600; }
 .part { border: 1px solid var(--rule); border-radius: 2px; margin: 8px 0; padding: 6px 10px; }

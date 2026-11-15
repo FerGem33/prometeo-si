@@ -21,7 +21,20 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: "./",
     // The API only allows the CloudFront origin. In development the browser talks to /api and the dev server forwards the call.
-    server: api ? { proxy: { "/api": { target: api, changeOrigin: true, rewrite: (p: string) => p.replace(/^\/api/, "") } } } : {},
+    // Cookies are dropped: the API does not use them, and the cookies a browser keeps for localhost (other dev projects) can
+    // exceed the API Gateway 10 KB header limit, which answers 431 Request Header Fields Too Large.
+    server: api
+      ? {
+          proxy: {
+            "/api": {
+              target: api,
+              changeOrigin: true,
+              rewrite: (p: string) => p.replace(/^\/api/, ""),
+              configure: (proxy) => proxy.on("proxyReq", (req) => req.removeHeader("cookie")),
+            },
+          },
+        }
+      : {},
     test: { environment: "node", include: ["src/**/*.test.ts"] },
   };
 });
