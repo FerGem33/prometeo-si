@@ -366,6 +366,71 @@ describe("compileUiBlueprint", () => {
     const bpOne = compileUiBlueprint("Overview", batteryDocs, oneNumVars);
     expect(bpOne.defaultAxes).toEqual(["spec_capacity"]);
   });
+
+  it("prioritizes gaps before graph and does not falsely match map on 'gap map'", () => {
+    const blueprint = compileUiBlueprint(
+      "Prioritize gap map and graph",
+      batteryDocs,
+      batteryVars
+    );
+
+    // Section order should place gaps and graph first, not map
+    expect(blueprint.sectionOrder.slice(0, 2)).toEqual(["gaps", "graph"]);
+    // map should appear later in unprioritized sections
+    const mapIndex = blueprint.sectionOrder.indexOf("map");
+    const gapsIndex = blueprint.sectionOrder.indexOf("gaps");
+    const graphIndex = blueprint.sectionOrder.indexOf("graph");
+    expect(gapsIndex).toBeLessThan(graphIndex);
+    expect(graphIndex).toBeLessThan(mapIndex);
+  });
+
+  it("does not falsely promote variable 'rate' from the word 'Generate', but promotes single-char 'p' when mentioned", () => {
+    const varsWithRateAndP: ExtractedVariable[] = [
+      {
+        id: "temperature",
+        label: "Temperature",
+        type: "numeric",
+        unit: "K",
+        include: true,
+        citations: [],
+      },
+      {
+        id: "rate",
+        label: "Reaction Rate",
+        type: "numeric",
+        unit: "mol/s",
+        include: true,
+        citations: [],
+      },
+      {
+        id: "p",
+        label: "Pressure",
+        type: "numeric",
+        unit: "atm",
+        include: true,
+        citations: [],
+      },
+    ];
+
+    // "Generate a compact view" contains "rate" inside "Generate"
+    const bpGenerate = compileUiBlueprint(
+      "Generate a compact view",
+      batteryDocs,
+      varsWithRateAndP
+    );
+    // rate should NOT be promoted as the first highlighted variable or first default axis
+    expect(bpGenerate.highlightedVariables[0]).not.toBe("rate");
+    expect(bpGenerate.defaultAxes[0]).not.toBe("rate");
+
+    // Single-char variable 'p' explicitly mentioned should be promoted
+    const bpP = compileUiBlueprint(
+      "Focus on p and temperature",
+      batteryDocs,
+      varsWithRateAndP
+    );
+    expect(bpP.highlightedVariables.slice(0, 2)).toEqual(["p", "temperature"]);
+    expect(bpP.defaultAxes.slice(0, 2)).toEqual(["p", "temperature"]);
+  });
 });
 
 describe("buildLensFromBlueprint", () => {

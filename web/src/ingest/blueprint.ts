@@ -76,8 +76,8 @@ const SECTION_PATTERNS: { id: ReportSectionId; patterns: (string | RegExp)[] }[]
       /\bmapa\s+conceptual\b/i,
       /\blandscape\b/i,
       // Standalone "mapa" or "map" not followed by "de brechas" or "de calor"
-      /\bmapa(?!\s+de\s+(brechas|calor))\b/i,
-      /\bmap(?!\s+(map|of\s+gaps))\b/i,
+      /\bmapa(?!\s+de\s+(?:brechas|calor))\b/i,
+      /(?<!\b(?:gap|heat)\s+)\bmap\b(?!\s+(?:map|of\s+gaps))/i,
     ],
   },
   {
@@ -161,6 +161,26 @@ export function suggestDesignPrompts(
   ];
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Matches an exact word/identifier in text respecting word boundaries.
+ * Prevents false positives like matching "rate" inside "Generate", while
+ * allowing single-character variable identifiers like "p".
+ */
+function findWordMatchIndex(text: string, needle: string): number {
+  const trimmed = needle.trim();
+  if (!trimmed) return -1;
+  const escaped = escapeRegex(trimmed);
+  const leading = /^[a-z0-9_]/i.test(trimmed) ? "(?<=^|[^a-z0-9_])" : "";
+  const trailing = /[a-z0-9_]$/i.test(trimmed) ? "(?=$|[^a-z0-9_])" : "";
+  const regex = new RegExp(`${leading}${escaped}${trailing}`, "i");
+  const match = regex.exec(text);
+  return match ? match.index : -1;
+}
+
 // ============================================================================
 // 2. Bilingual ES/EN UiBlueprint Compiler
 // ============================================================================
@@ -190,15 +210,14 @@ export function compileUiBlueprint(
   const mentionedVars: { variable: ExtractedVariable; index: number }[] = [];
 
   for (const v of vars) {
-    const idLower = v.id.toLowerCase();
-    const labelLower = v.label.toLowerCase();
-    const labelClean = v.label.replace(/\([^)]*\)/g, "").trim().toLowerCase();
+    const id = v.id;
+    const label = v.label;
+    const labelClean = v.label.replace(/\([^)]*\)/g, "").trim();
 
     let earliestIdx = -1;
 
     const checkAndRecord = (needle: string) => {
-      if (needle.length < 2) return;
-      const idx = lower.indexOf(needle);
+      const idx = findWordMatchIndex(instr, needle);
       if (idx !== -1) {
         if (earliestIdx === -1 || idx < earliestIdx) {
           earliestIdx = idx;
@@ -206,8 +225,8 @@ export function compileUiBlueprint(
       }
     };
 
-    checkAndRecord(idLower);
-    checkAndRecord(labelLower);
+    checkAndRecord(id);
+    checkAndRecord(label);
     checkAndRecord(labelClean);
 
     if (earliestIdx !== -1) {
