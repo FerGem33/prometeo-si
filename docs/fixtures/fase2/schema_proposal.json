@@ -1,0 +1,272 @@
+{
+ "version": 1,
+ "status": "proposed",
+ "variables": [
+  {
+   "id": "o2",
+   "label": "Oxygen concentration",
+   "type": "num",
+   "status": "proposed",
+   "merged_from": [],
+   "evidence": [
+    {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 2,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    }
+   ],
+   "records": 129,
+   "unit": "%",
+   "sigma": 5,
+   "range": [
+    0,
+    100
+   ]
+  },
+  {
+   "id": "flow",
+   "label": "Forced flow velocity",
+   "type": "num",
+   "status": "flagged",
+   "merged_from": [],
+   "evidence": [],
+   "records": 0,
+   "unit": "cm/s",
+   "sigma": 10,
+   "range": [
+    0,
+    100
+   ]
+  },
+  {
+   "id": "material",
+   "label": "Fuel / material",
+   "type": "cat",
+   "status": "proposed",
+   "merged_from": [],
+   "evidence": [
+    {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 2,
+     "column": "Fuel Sample Material",
+     "text": "100 micron PMMA film   2 cm wide"
+    }
+   ],
+   "records": 129
+  },
+  {
+   "id": "phase",
+   "label": "Fuel phase",
+   "type": "cat",
+   "status": "proposed",
+   "merged_from": [],
+   "evidence": [],
+   "records": 129,
+   "role": "partition"
+  },
+  {
+   "id": "g",
+   "label": "Gravity level",
+   "type": "num",
+   "status": "proposed",
+   "merged_from": [],
+   "evidence": [],
+   "records": 129,
+   "unit": "g",
+   "sigma": 0.05,
+   "range": [
+    0,
+    1
+   ]
+  }
+ ],
+ "columns": [
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "PI",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Test #",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Date",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "GMT",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Sample #",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Fuel Sample Material",
+   "variable": "material",
+   "unit": null,
+   "convert": null,
+   "status": "proposed",
+   "sample": [
+    "100 micron PMMA film   2 cm wide",
+    "200 micron PMMA film   2 cm wide",
+    "100 micron film   2 cm wide",
+    "300 micron PMMA film   2 cm wide",
+    "200 micron  2 cm wide"
+   ]
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Flow restrictor",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Fan display",
+   "variable": "flow",
+   "unit": null,
+   "convert": null,
+   "status": "flagged",
+   "note": "Fan setting (voltage / steps), not cm/s: left unconverted.",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Air display",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Radiometer gain   (1000   250   50   10)",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Total Frames Shot",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Calibrated  initial O2 % by vol",
+   "variable": "o2",
+   "unit": "%",
+   "convert": null,
+   "status": "proposed",
+   "sample": [
+    "22.2",
+    "21",
+    "15",
+    "17.3",
+    "17.5"
+   ]
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Calibrated final O2 % by vol",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "note": "Used only to flag implausible values; not a scenario variable.",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Initial CO2 % by vol",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Final CO2 % by vol",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Initial CO (ppm)",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "column": "Final CO (ppm)",
+   "variable": null,
+   "unit": null,
+   "convert": null,
+   "status": "rejected",
+   "sample": []
+  }
+ ],
+ "constants": [
+  {
+   "doc_id": "doc_bass2_table",
+   "variable": "phase",
+   "value": "solid",
+   "note": "Table constant: not a column of the file."
+  },
+  {
+   "doc_id": "doc_bass2_table",
+   "variable": "g",
+   "value": [
+    0,
+    0
+   ],
+   "note": "Table constant: not a column of the file."
+  }
+ ]
+}

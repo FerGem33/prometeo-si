@@ -1,14 +1,58 @@
 # Despliegue y relevo de Prometeo
 
+Para implementar el backend/worker del bloque C, integrar las pantallas y
+preparar el despliegue final de la arquitectura, seguir la
+[guía de integración y entrega](../docs/GUIA_INTEGRACION_DEPLOY_FINAL.md).
+T31 ya creó los recursos base; el despliegue completo requiere terminar T33–T37.
+
+T33 dispone de un [avance de despliegue de proyectos](../docs/T33_API_PROYECTOS.md):
+`python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy`
+prepara configuración sin llamadas AWS. La aplicación es explícita, requiere
+aprobación T30 registrada; el alcance de drafts ya se verificó con dos usuarios reales.
+No implementa cargas ni despliega worker.
+
+El 15-nov se aplicó el alcance de proyectos vacíos con autorización del dueño:
+API y cuatro rutas JWT desplegadas, 401 sin sesión/token inválido y CORS 204
+comprobados. Registro, confirmación, login SRP y aislamiento A/B real pasaron;
+T33 sigue en curso por cargas D3 y gestión completa de proyectos.
+
+Para obtener esas sesiones y ejecutar A/B: [herramienta Cognito local](../tools/cognito/README.md).
+Para conocer lo que falta de infraestructura y backend: [estado AWS/backend](../docs/ESTADO_AWS_BACKEND.md).
+
+Etapas siguientes: [cargas y bloqueo CORS](../docs/T33_CARGAS_PREPARACION.md),
+[worker local y empaquetado](../docs/T34_WORKER_PREPARACION.md) y
+[revisiones humanas al final](../docs/REVISION_FINAL_PENDIENTE.md).
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net
 
-El 2026-11-14 se comprobó CloudFront `Deployed` y HTTPS HTTP 200.
-Está publicado el informe de T05–T07. Falta verificar visualmente la página:
-la herramienta de navegador del agente no estuvo disponible. T08 sigue en
-curso hasta completar esa verificación. La API ya está desplegada y Bedrock verificado; la integración UI T11 está
-implementada en el repo, pendiente de deploy final por el dueño.
+La web y la API están publicadas. T08, T11, T15, T16, T17 y T19 constan como
+hechas en `PROGRESS.md`, que conserva la evidencia y el estado vivo del relevo.
+
+## Modelo obligatorio para futuras tareas (D6)
+
+Usar **Claude Haiku 4.5** con el perfil
+`us.anthropic.claude-haiku-4-5-20251001-v1:0`, definido en `infra/config.env`.
+Esta decisión aplica a API, pipeline, extracción, pruebas reales y despliegues.
+Actualizar prompts, SDK o infraestructura no autoriza cambiar el modelo.
+Una migración requiere una nueva instrucción explícita del dueño; no se debe
+solicitar acceso a Haiku 5.5 como requisito para continuar el proyecto.
+
+Desde la raíz del repositorio:
+
+```bash
+export AWS_PROFILE=prometeo
+source infra/config.env
+source infra/outputs.env
+```
+
+Los scripts y la aplicación leen `MODEL_ID`. Si un comando manual usa
+`BEDROCK_MODEL_ID`, asignarlo desde la misma configuración:
+
+```bash
+export BEDROCK_MODEL_ID="$MODEL_ID"
+```
 
 ## Qué se comparte y qué se configura por persona
 
@@ -172,9 +216,10 @@ export VITE_API_URL="$API_URL"
 npm run dev --prefix web
 ```
 
-CORS admite CF_URL y, por defecto, http://localhost:5173 y http://127.0.0.1:5173
-(variable `EXTRA_ORIGINS` de `infra/20_api.sh`, usada por Gateway y por el handler).
-Antes del cierre/entrega, quitar localhost: `EXTRA_ORIGINS= bash infra/20_api.sh`.
+CORS admite solo CF_URL por defecto. Para probar la web local contra la API,
+pedir localhost de forma explícita (variable `EXTRA_ORIGINS`, usada por Gateway y por el handler):
+`EXTRA_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 bash infra/20_api.sh`.
+El despliegue final se corre sin `EXTRA_ORIGINS` (decisión en `docs/DECISIONES_CIERRE.md` §6).
 
 Verificación T11 tras el deploy final: usar la sugerencia de 25% O₂, 0.5 atm
 y Nomex; comprobar escenario actualizado, chips editables, frases con fuentes
@@ -217,3 +262,7 @@ Verificado el 2026-11-14: /ask HTTP 200 en 7.876 s; /analysis HTTP 200 en
 0.904 s, mode=ai y fuentes reales. Falta T11 en la web pública. El primer
 intento de T10 se interrumpió al leer una política vacía; se corrigió y la
 reejecución reutilizó los recursos creados sin duplicación.
+
+## Bloque C: recursos de datos
+
+`infra/30_data.sh` crea, si faltan, la tabla DynamoDB, el bucket privado del corpus, la cola de procesamiento con su DLQ y el user pool de Cognito con su cliente web. Es idempotente y nunca borra ni reemplaza. No modifica la Lambda ni su rol. Guion y verificación: `docs/PLAN_FASE2.md` §8.

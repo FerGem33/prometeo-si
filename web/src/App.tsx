@@ -14,6 +14,9 @@ import { Provenance } from "./components/Provenance";
 import { Cover } from "./components/Cover";
 import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
+import { ProcessingStep } from "./components/ProcessingStep";
+import { ChamberFigure } from "./components/ChamberFigure";
+import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
 import { KnowledgeGraph } from "./components/KnowledgeGraph";
@@ -22,6 +25,8 @@ import { Fold } from "./components/Fold";
 import { EvidenceCard } from "./components/EvidenceCard";
 import { ReadingGuide } from "./components/ReadingGuide";
 import { ExtraTag } from "./components/ExtraVars";
+import { JudgeTour } from "./components/JudgeTour";
+import "./styles/tour.css";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
@@ -46,8 +51,18 @@ export function App() {
   useEffect(() => {
     load().then(setData, (e) => setError(String(e)));
   }, []);
-  if (error) return <article className="page"><p className="abstract">The evidence pack could not be loaded ({error}).</p></article>;
-  if (!data) return <article className="page"><p className="abstract">Loading the evidence pack…</p></article>;
+  if (error)
+    return (
+      <article className="page">
+        <p className="abstract">The evidence pack could not be loaded ({error}).</p>
+      </article>
+    );
+  if (!data)
+    return (
+      <article className="page">
+        <p className="abstract">Loading the evidence pack…</p>
+      </article>
+    );
   return (
     <DataCtx.Provider value={data}>
       <Flow data={data} />
@@ -55,7 +70,7 @@ export function App() {
   );
 }
 
-/** Cover -> scenario form -> report. The stage lives in the URL hash so Back works and a shared link opens the report. */
+/** Cover -> scenario form -> processing chamber -> report. The stage lives in the URL hash so Back works and a shared link opens the report. */
 function Flow({ data }: { data: Data }) {
   const { pack, lens } = data;
   const initial = useMemo(() => readUrl(pack, lens, window.location.search), [pack, lens]);
@@ -64,6 +79,8 @@ function Flow({ data }: { data: Data }) {
   const [goal, setGoal] = useState("");
   const [extras, setExtras] = useState<Extra[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [fileCount, setFileCount] = useState(0);
+  const [dossierTrigger, setDossierTrigger] = useState(false);
   const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
 
   useEffect(() => {
@@ -84,19 +101,132 @@ function Flow({ data }: { data: Data }) {
   const go = (next: Stage) => {
     window.location.hash = next === "cover" ? "" : next;
   };
-  if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} onWorkspace={() => go("workspace")} />;
-  if (stage === "workspace") return <Workspace onBack={() => go("cover")} onOpen={(p, e) => { setGoal(p.intent); if (e) { setScenario(e.scenario); setAxes(e.axes); setExtras(e.extras ?? []); } setProjectId(p.id); go("report"); }} />;
-  if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
-  return <Report data={data} scenario={scenario} setScenario={setScenario} extras={extras} setExtras={setExtras} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} />;
+
+  let screen: React.ReactNode = null;
+  if (stage === "cover") {
+    screen = (
+      <Cover
+        onStart={(presetScenario) => {
+          if (presetScenario) setScenario(presetScenario);
+          go("scenario");
+        }}
+        onDemo={() => go("report")}
+        onWorkspace={() => go("workspace")}
+      />
+    );
+  } else if (stage === "workspace") {
+    screen = (
+      <Workspace
+        onBack={() => go("cover")}
+        onOpen={(p, e) => {
+          setGoal(p.intent);
+          if (e) {
+            setScenario(e.scenario);
+            setAxes(e.axes);
+            setExtras(e.extras ?? []);
+          }
+          setProjectId(p.id);
+          go("report");
+        }}
+      />
+    );
+  } else if (stage === "scenario") {
+    screen = (
+      <ScenarioStep
+        scenario={scenario}
+        onChange={setScenario}
+        extras={extras}
+        onExtras={setExtras}
+        goal={goal}
+        onGoal={setGoal}
+        onBack={() => go("cover")}
+        onRun={(count) => {
+          setFileCount(count ?? 0);
+          go("processing");
+        }}
+      />
+    );
+  } else if (stage === "processing") {
+    screen = <ProcessingStep fileCount={fileCount} onBack={() => go("scenario")} onComplete={() => go("report")} />;
+  } else {
+    screen = (
+      <Report
+        data={data}
+        scenario={scenario}
+        setScenario={setScenario}
+        extras={extras}
+        setExtras={setExtras}
+        axes={axes}
+        setAxes={setAxes}
+        goal={goal}
+        projectId={projectId}
+        onHome={() => go("cover")}
+        onEdit={() => go("scenario")}
+        onWorkspace={() => go("workspace")}
+        initialDossierOpen={dossierTrigger}
+        onDossierConsumed={() => setDossierTrigger(false)}
+      />
+    );
+  }
+
+  return (
+    <>
+      {screen}
+      <JudgeTour
+        currentStage={stage}
+        onNavigate={go}
+        onOpenDossier={() => {
+          setDossierTrigger(true);
+          go("report");
+        }}
+      />
+    </>
+  );
 }
 
-function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace }: {
-  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; extras: Extra[]; setExtras: (e: Extra[]) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void;
+function Report({
+  data,
+  scenario,
+  setScenario,
+  extras,
+  setExtras,
+  axes,
+  setAxes,
+  goal,
+  projectId,
+  onHome,
+  onEdit,
+  onWorkspace,
+  initialDossierOpen,
+  onDossierConsumed,
+}: {
+  data: Data;
+  scenario: Scenario;
+  setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void;
+  extras: Extra[];
+  setExtras: (e: Extra[]) => void;
+  axes: Axes;
+  setAxes: (a: Axes) => void;
+  goal: string;
+  projectId: string | null;
+  onHome: () => void;
+  onEdit: () => void;
+  onWorkspace: () => void;
+  initialDossierOpen?: boolean;
+  onDossierConsumed?: () => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [dossierOpen, setDossierOpen] = useState(false);
   const openProv = useCallback((id: string) => setProv(id), []);
+
+  useEffect(() => {
+    if (initialDossierOpen) {
+      setDossierOpen(true);
+      onDossierConsumed?.();
+    }
+  }, [initialDossierOpen, onDossierConsumed]);
 
   const r = useMemo(() => {
     const part = partitionOf(pack, scenario);
@@ -138,7 +268,15 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
           <span>{lens.kicker ?? "Scenario assessment"}</span>
           <span className="verify">{summary}</span>
           <span className="sep" />
-          <SaveExploration packId={pack.meta.id} scenario={scenario} axes={axes} extras={extras} goal={goal} projectId={projectId} summary={summary} />
+          <SaveExploration
+            packId={pack.meta.id}
+            scenario={scenario}
+            axes={axes}
+            extras={extras}
+            goal={goal}
+            projectId={projectId}
+            summary={summary}
+          />
           <button type="button" className="chip noprint" onClick={onEdit}>
             Edit scenario
           </button>
@@ -147,6 +285,9 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
           </button>
           <button type="button" className="chip noprint" onClick={onHome}>
             Start
+          </button>
+          <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
+            Dossier &amp; export
           </button>
           <button type="button" className="chip noprint" onClick={() => window.print()}>
             Export PDF
@@ -295,6 +436,12 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
             <div className="row">
               <div className="body">
                 <Methods tableN={6} />
+                <details className="noprint">
+                  <summary>Isometric apparatus diagram · ISS CIR / BASS Microgravity Combustion Chamber</summary>
+                  <div className="methods-chamber-wrap">
+                    <ChamberFigure interactive />
+                  </div>
+                </details>
               </div>
               <aside className="side">
                 <p>
@@ -318,6 +465,16 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
         </footer>
       </article>
       {prov && <Provenance id={prov} onClose={() => setProv(null)} />}
+      {dossierOpen && (
+        <DossierModal
+          scenario={scenario}
+          goal={goal}
+          overall={r.overall}
+          ranking={r.ranking}
+          findings={r.finds}
+          onClose={() => setDossierOpen(false)}
+        />
+      )}
     </ProvCtx.Provider>
   );
 }

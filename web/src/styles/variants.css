@@ -1,11 +1,11 @@
 .changes, .parts, .varsave, .varcmp { margin: 14px 0; font-family: var(--sans); font-size: 13px; }
 .changes h3, .parts h3, .varsave h3, .varcmp h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; margin: 0 0 6px; }
 .changes ul, .parts ul, .varlist, .varfind ul { margin: 0; padding-left: 18px; }
-.changes .arrow { display: inline-block; min-width: 1em; color: #A3271B; font-weight: 600; }
-.part { border: 1px solid #6b6a66; border-radius: 2px; margin: 8px 0; padding: 6px 10px; }
-.part legend input, .part li select, .varsave form input, .varcmp select { font: inherit; border: 1px solid #6b6a66; border-radius: 2px; padding: 2px 6px; background: transparent; color: inherit; }
+.changes .arrow { display: inline-block; min-width: 1em; color: var(--accent); font-weight: 600; }
+.part { border: 1px solid var(--rule); border-radius: 2px; margin: 8px 0; padding: 6px 10px; }
+.part legend input, .part li select, .varsave form input, .varcmp select { font: inherit; border: 1px solid var(--rule); border-radius: 2px; padding: 2px 6px; background: transparent; color: inherit; }
 .part li select { margin-left: 8px; }
-.notice { border-left: 3px solid #A3271B; padding-left: 8px; margin: 8px 0; }
+.notice { border-left: 3px solid var(--accent); padding-left: 8px; margin: 8px 0; }
 .varfind { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 10px; }
 @media (max-width: 700px) { .varfind { grid-template-columns: 1fr; } }
 @media print { .variants, .changes { display: none; } }

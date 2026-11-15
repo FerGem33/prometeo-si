@@ -1,0 +1,61 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConfigureOnlyCorpusUploadCors",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketCORS", "s3:PutBucketCORS"],
+      "Resource": "arn:aws:s3:::prometeo-hack-corpus-352818909129"
+    },
+    {
+      "Sid": "ReadAndDeployExistingApiLambda",
+      "Effect": "Allow",
+      "Action": ["lambda:GetFunctionConfiguration", "lambda:UpdateFunctionConfiguration", "lambda:UpdateFunctionCode", "lambda:GetPolicy", "lambda:AddPermission"],
+      "Resource": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-api"
+    },
+    {
+      "Sid": "InspectAndConfigureExistingApiRole",
+      "Effect": "Allow",
+      "Action": ["iam:GetRole", "iam:PutRolePolicy"],
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role"
+    },
+    {
+      "Sid": "AttachOnlyBasicLoggingPolicy",
+      "Effect": "Allow",
+      "Action": "iam:AttachRolePolicy",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role",
+      "Condition": {"ArnEquals": {"iam:PolicyARN": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}}
+    },
+    {
+      "Sid": "PassOnlyExistingApiRoleToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role",
+      "Condition": {"StringEquals": {"iam:PassedToService": "lambda.amazonaws.com"}}
+    },
+    {
+      "Sid": "ReadApprovedModelProfile",
+      "Effect": "Allow",
+      "Action": "bedrock:GetInferenceProfile",
+      "Resource": "arn:aws:bedrock:us-east-1:352818909129:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    },
+    {
+      "Sid": "ReadExistingApiConfiguration",
+      "Effect": "Allow",
+      "Action": "apigateway:GET",
+      "Resource": ["arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/integrations", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/authorizers", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/stages/$default"]
+    },
+    {
+      "Sid": "CreateProjectRoutesAndAuthorizer",
+      "Effect": "Allow",
+      "Action": "apigateway:POST",
+      "Resource": ["arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/authorizers"]
+    },
+    {
+      "Sid": "UpdateExistingApiAndRoutes",
+      "Effect": "Allow",
+      "Action": "apigateway:PATCH",
+      "Resource": ["arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes/*", "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/stages/$default"]
+    }
+  ]
+}

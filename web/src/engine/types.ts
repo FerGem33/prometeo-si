@@ -140,6 +140,10 @@ export type Lens = {
   groups?: { id: string; label: string; studies: string[] }[];
   partition_labels?: Record<string, string>;
   outcome_columns_note?: string;
+  /** named parts of a proposal: each groups variables; the weakest variable sets the level of the part */
+  parts?: { id: string; label: string; variables: string[] }[];
+  /** study attributes whose shared values become edges of the knowledge graph */
+  graph?: { attributes?: string[] };
 };
 
 export type Scenario = {

@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- TEMP preview sheet for the isometric figures; not part of the app. -->
+<html lang="en">
+  <head><meta charset="utf-8" /><title>iso preview</title>
+    <style>body { margin: 0; padding: 16px; } #grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; } #grid h3 { font: 12px sans-serif; margin: 0 0 4px; color: #aaa; }</style>
+  </head>
+  <body>
+    <div id="grid"></div>
+    <script type="module">
+      import "/src/styles/report.css"; import "/src/styles/app.css"; import "/src/styles/flow.css";
+      import React from "react"; import { createRoot } from "react-dom/client";
+      import { HabitatFigure } from "/src/components/HabitatFigure.tsx";
+      const q = new URLSearchParams(location.search);
+      const only = q.get("only");
+      const keys = ["moon_base", "spacecraft", "station", "rover", "suit", "custom"].filter((k) => !only || k === only);
+      const grid = document.getElementById("grid");
+      if (only) grid.style.gridTemplateColumns = "1fr";
+      if (q.get("small")) grid.style.gridTemplateColumns = "repeat(6, 135px)";
+      for (const k of keys) {
+        const d = document.createElement("div");
+        d.innerHTML = `<h3>${k}</h3><div class="slot"></div>`;
+        grid.append(d);
+        d.querySelector(".slot").style.cssText = "--x:1";
+        createRoot(d.querySelector(".slot")).render(React.createElement("div", { className: "choice-fig-wrap", style: { display: "block" } }, React.createElement(HabitatFigure, { name: k, size: "xl", className: "preview-fill" })));
+      }
+      const st = document.createElement("style"); st.textContent = ".preview-fill{max-width:none!important}"; document.head.append(st);
+    </script>
+  </body>
+</html>
