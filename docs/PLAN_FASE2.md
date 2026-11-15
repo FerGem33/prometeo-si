@@ -288,10 +288,11 @@ Antes de construir encima las pantallas del bloque C:
 
 ### 9.4 Aprobaciones delegadas
 
-Daniel Sun registró en `DECISIONES_CIERRE.md` §8 que el agente de la laptop AWS aplica sus propias recomendaciones en la revisión de PDF (T32) y en el esquema del corpus de ebullición (T35/T37), y lo firmó como dueño.
-Mientras el dueño del repositorio no lo confirme, esas aprobaciones cuentan como **recomendaciones del agente**:
-- se pueden usar para avanzar el código y las pruebas;
-- el informe y el pitch no las presentan como revisión humana ni experta.
+Daniel Sun registró en `DECISIONES_CIERRE.md` §8 que el agente de la laptop AWS aplica sus propias recomendaciones en la revisión de PDF (T32) y en el esquema del corpus de ebullición (T35/T37).
+**El dueño del repositorio la confirmó el 15-nov.** Las aprobaciones son válidas con las condiciones de §8:
+- criterio conservador;
+- cada aprobación marcada como "aprobación delegada, sin revisión humana línea por línea", con hashes;
+- el informe y el pitch no la presentan como revisión experta.
 
 ### 9.5 Ruta corta, si hay una fecha cerca
 

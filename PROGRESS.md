@@ -23,7 +23,6 @@
 
 - [15-nov] **No publicar la web todavía.** La interfaz nueva entró a `main` y tiene puntos que chocan con las reglas: la llama crece en "Ignition", hay textos del dominio escritos a mano y el CSS usa gradientes y sombras. Detalle en `docs/PLAN_FASE2.md` §9.2 — equipo de interfaz y una persona que lo apruebe.
 - [15-nov] La interfaz duplica en `web/src/report/` lógica que ya existe en el motor (grafo, diferencias, variantes y espacio de trabajo). Hay que unificarla antes de las pantallas del bloque C (`docs/PLAN_FASE2.md` §9.3) — equipo de interfaz.
-- [15-nov] Las aprobaciones delegadas de `DECISIONES_CIERRE.md` §8 cuentan como recomendaciones del agente hasta que el dueño del repositorio las confirme (§9.4) — dueño.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 

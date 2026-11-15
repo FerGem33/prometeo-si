@@ -163,5 +163,6 @@ Condiciones de la delegación:
 | Campo | Valor |
 |---|---|
 | Dueño | Daniel Sun |
+| Confirmación del dueño del repositorio | 2026-11-15: confirma la delegación del §8 |
 | Fecha | 2026-11-15 |
 | Forma | Autorización en la conversación de trabajo; firma opcional aquí: |
