@@ -8,8 +8,8 @@ revisión humana. No se infieren aprobaciones de mensajes de continuidad. El 15-
 
 | Revisión | Evidencia concreta | Resultado que debe registrar una persona |
 |---|---|---|
-| Soporte semántico y alcance de los PDF (T32) | Candidatos y rechazos de `T32_EVALUACION.md`; artefactos en `/tmp/prometeo-t32/` de la laptop AWS; parser nuevo en `T34_WORKER_PREPARACION.md` | Firmar `T32_PDF_DECISIONES.md` (la prepara un agente en la laptop AWS, `RELEVO_LAPTOP_AWS.md` §5): la cita respalda valor, unidad y experimentos. No propagar presión a todas las filas sin evidencia |
-| Fuente, esquema y versiones (T35/T37) | Propuesta conjunta, cuando el worker la genere | Aprobación explícita de la versión, vinculada a hashes; nunca la emite el modelo |
+| Soporte semántico y alcance de los PDF (T32) | Candidatos y rechazos de `T32_EVALUACION.md`; artefactos en `/tmp/prometeo-t32/` de la laptop AWS | **Delegada al agente de la laptop AWS** (`DECISIONES_CIERRE.md` §8): aplica `T32_PDF_DECISIONES.md` con criterio conservador y la marca como aprobación delegada |
+| Fuente, esquema y versiones (T35/T37) | Propuesta conjunta, cuando el worker la genere | **Delegada al agente** para el corpus de ebullición (§8): aprobación vinculada a hashes, marcada como delegada; el modelo nunca aprueba |
 
 ## Cerradas el 2026-11-15 (Daniel Sun)
 

@@ -118,14 +118,15 @@ Registrar en `PROGRESS.md`:
 
 Con eso **T34 queda hecha**. No reenviar mensajes de la DLQ de forma automática.
 
-## 5. T32: revisión semántica de los PDF (agente + Daniel)
+## 5. T32: revisión semántica de los PDF (aprobación delegada al agente, `DECISIONES_CIERRE.md` §8)
 
 Un agente prepara `docs/T32_PDF_DECISIONES.md`, precargada igual que `D7_DECISIONES.md`, a partir de
 `/tmp/prometeo-t32/papers-real/*/response.json` y del texto de cada página citada. La tabla cubre:
 - los 15 candidatos verificados textualmente, con valor, unidad, página, cita y si la cita respalda la población de pruebas;
 - el PDF `20120015928`: Poppler no le encontró texto, pero pypdf sí; comparar y decidir.
 
-Daniel la firma. Luego recalcular la métrica de T32 sin las 55 columnas rechazadas por ambos (D7, regla A) y cerrar T32.
+El agente aplica sus recomendaciones por delegación del dueño, con criterio conservador y registro honesto (§8).
+Luego recalcula la métrica de T32 sin las 55 columnas rechazadas por ambos (D7, regla A) y cierra T32.
 **Si `/tmp/prometeo-t32/` ya no existe**, repetir `api/evaluate_papers.py` (`T32_EVALUACION.md` §Reproducir);
 cuesta unas 4 llamadas.
 

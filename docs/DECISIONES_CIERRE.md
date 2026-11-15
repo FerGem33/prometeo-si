@@ -134,12 +134,29 @@ Así un deploy olvidadizo no deja producción abierta a localhost.
 - **D5:** "supported/refuted" no entran al motor por ahora. Se mantienen los cuatro niveles de cobertura.
 - **D8:** de `nasa2genui` solo se traen piezas concretas (figuras), sin migrar a Next.js. Lo ejecuta el equipo de interfaz.
 
-## 8. Lo que queda para la laptop con AWS
+## 8. Aprobación delegada al agente de la laptop con AWS
 
-- **T32, revisión semántica de los PDF:** un agente prepara allí una tabla precargada con los 15 candidatos verificados textualmente
-  y el PDF sin texto (`20120015928`, que con el parser nuevo sí da texto: comparar). El dueño la firma, igual que D7.
-- **Aprobación de versiones de esquema:** solo cuando el worker genere propuestas reales (T35/T37). Siempre la hace
-  una persona.
+**Decisión del dueño (Daniel Sun, 15-nov):** para que el trabajo siga sin pausas, el agente de la laptop con AWS
+aplica sus propias recomendaciones en dos revisiones:
+
+1. **T32, revisión semántica de los PDF.** El agente prepara `docs/T32_PDF_DECISIONES.md` con:
+   - los 15 candidatos verificados textualmente;
+   - el PDF `20120015928` (Poppler no encontró texto; pypdf sí).
+
+   Después aplica las recomendaciones.
+2. **Aprobación de versiones de esquema del corpus de ebullición** (T35/T37), necesaria para extraer y publicar
+   el pack del segundo dominio.
+
+Condiciones de la delegación:
+- **Criterio conservador.** Un valor solo se acepta si la cita literal respalda a la vez valor, unidad y
+  población de pruebas. Ante cualquier duda, se rechaza o se excluye. Nunca se propaga un valor de un artículo a
+  filas de tablas sin evidencia explícita.
+- **Registro honesto.** Cada aprobación se marca como "Aprobado por delegación del dueño (15-nov); recomendación del
+  agente, sin revisión humana línea por línea", con fecha, versión y hashes. Ni el informe ni el pitch la presentan
+  como revisión experta.
+- **Reversible.** El dueño puede revisar después cualquier fila. Si cambia una decisión, se regenera el pack.
+- **Fuera de la delegación:** borrar o reemplazar recursos de AWS, crear servicios nuevos, superar el tope de
+  costos (§5) y cambiar decisiones ya cerradas en este documento.
 
 ## Firma
 
