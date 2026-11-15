@@ -10,14 +10,14 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T08 (Codex · laptop stringbuilder) |
 | Último commit verificado | T07 |
-| Siguiente paso exacto | T08: esperar CloudFront Deployed, verificar HTTP 200 y abrir https://dursf4nho4zl6.cloudfront.net; después T09 |
-| URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (publicada; verificación pendiente) |
+| Siguiente paso exacto | T08: abrir y verificar visualmente https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200 confirmados); equipo integra cambios, dueño publica al final siguiendo infra/README.md |
+| URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | _sin desplegar_ |
 | `MODEL_ID` confirmado | _pendiente (infra/00_check.sh)_ |
 
 ## Bloqueos
 
-- Sesión actual: perfil `prometeo` operativo (STS), identidad root; permisos de servicios y Bedrock todavía no verificados. El bloqueo de ferlr siguiente es histórico y no aplica a esta laptop.
+- Sesión actual: perfil `prometeo` operativo (STS), identidad root; operaciones de despliegue S3/CloudFront verificadas; Bedrock todavía no verificado. El bloqueo de ferlr siguiente es histórico y no aplica a esta laptop.
 
 - [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
 
@@ -44,7 +44,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T05 | Esqueleto del informe | P0 | hecha | Claude · ferlr | (este commit) | Informe React llenado desde pack/lens/mapping: Key findings, abstract por plantilla, Tables 1–4, Methods, References. Captura docs/screens/t05_report.png |
 | T06 | Escenario y figuras | P0 | hecha | Claude · ferlr | (este commit) | Panel de escenario (sliders, selector, presets), Fig. 1 mapa, Fig. 2 cercanía, Fig. 3 huecos, niveles con icono+texto. Preset lunar: O₂ Near/not covered, presión Not studied, PMMA Studied. ~42 ms por paso de slider |
 | T07 | Procedencia, PDF y URL | P0 | hecha | Claude · ferlr | (este commit) | Panel de procedencia (archivo, fila, valor original, conversión, DOI, SHA-256), Export PDF (9 páginas A4, docs/screens/t07_export.pdf), escenario en la URL. Sin desbordes a 400 px |
-| T08 | Infra web (CloudFront) | P0 | en curso | Codex · stringbuilder | este commit | Scripts y despliegue ejecutados; repetición reutiliza IDs; CloudFront InProgress y verificación pública pendiente |
+| T08 | Infra web (CloudFront) | P0 | en curso | Codex · stringbuilder | este commit | Scripts y despliegue ejecutados; repetición reutiliza IDs; CloudFront Deployed y HTTP 200; revisión visual pendiente |
 | T09 | Lambda `/ask` y `/analysis` | P1 | pendiente | | | |
 | T10 | Infra API | P1 | pendiente | | | |
 | T11 | UI de preguntas y análisis | P1 | pendiente | | | |
@@ -68,6 +68,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 · Codex · guía de relevo y deploy final
+- Estado remoto: CloudFront Deployed y curl HTTPS HTTP/2 200 confirmados; despliegue base en 3b53e4d.
+- Documentación: infra/README.md detalla contribución del equipo sin deploy, autenticación individual, archivos env compartidos, publicación final por el dueño, verificación y recuperación.
+- Configuración: se reutilizan infra/config.env e infra/outputs.env versionados y sin secretos; no hace falta duplicarlos en un .env raíz.
+- Verificación de esta entrega: 22/22 tests web, build, check_agnostic y validate_pack OK; git diff --check OK. Prueba API: `No module named pytest` con Python 3.14; no aprobada.
+- Alcance de esta entrega: documentación; no se volvió a publicar ni se cambiaron recursos AWS. La publicación final queda a cargo del dueño cuando integre los cambios del equipo.
+- Pendiente real: comprobación visual (herramienta de navegador indisponible); T08 no se marca hecha solo por HTTP 200. API/Bedrock y T15 siguen pendientes.
+
 
 ### 2026-11-14 19:20 CST · Codex · stringbuilder
 - Hecho: T08 implementada y ejecutada con perfil prometeo. S3 privado, OAC y CloudFront; IDs y URL en infra/outputs.env. Inicio registrado en 765643f.
