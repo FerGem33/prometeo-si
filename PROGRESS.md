@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T03 (Claude · laptop ferlr) |
-| Último commit verificado | T02 |
-| Siguiente paso exacto | T03: pipeline/build_pack.py reutilizando SPECS de pipeline/legacy/construir_corpus.py |
+| Tarea en curso | T04 (Claude · laptop ferlr) |
+| Último commit verificado | T03 |
+| Siguiente paso exacto | T04: motor en web/src/engine con vectores de la guía §6.6 y §6.7 (pack completo) |
 | URL pública (CloudFront) | _sin desplegar_ |
 | API (`API_URL`) | _sin desplegar_ |
 | `MODEL_ID` confirmado | _pendiente (infra/00_check.sh)_ |
@@ -37,8 +37,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T00 | Repo y docs | P0 | hecha | Claude · ferlr | (este commit) | Duplicado borrado, prototipos a archive/, decisiones y escenario real escritos |
 | T01 | Datos en el repo | P0 | hecha | Claude · ferlr | (este commit) | 24 investigaciones de combustión, 22 CSV; data/ = 632 KB (meta sin listados de archivos ni contactos) |
 | T02 | Scaffold + `00_check.sh` | P0 | hecha | Claude · ferlr | (este commit) | build, test y check_agnostic en verde. Falta que un humano corra infra/00_check.sh y anote MODEL_ID (esta laptop no tiene perfil prometeo) |
-| T03 | Pack de demo | P0 | en curso | Claude · ferlr |  |  |
-| T04 | Motor + vectores | P0 | pendiente | | | |
+| T03 | Pack de demo | P0 | hecha | Claude · ferlr | (este commit) | Ruta rápida: SPECS del corpus del compañero. Pack completo: 24 estudios, 1,986 registros (1,889 pruebas + 97 campañas), 22 fuentes, 147 con bandera. g=0 solo en investigaciones de microgravedad (5 son de tierra) |
+| T04 | Motor + vectores | P0 | en curso | Claude · ferlr |  |  |
 | T05 | Esqueleto del informe | P0 | pendiente | | | |
 | T06 | Escenario y figuras | P0 | pendiente | | | |
 | T07 | Procedencia, PDF y URL | P0 | pendiente | | | |
