@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T17 bloqueada por acceso Bedrock a Haiku 5.5; T16 y T19 hechas |
+| Tarea en curso | Ninguna. Bloque A cerrado salvo T18 (espera D9). D6 (Haiku 5.5) espera acceso al modelo en la cuenta AWS. |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | Resolver el 403 de Bedrock para `us.anthropic.claude-haiku-5-5`; después validar el modelo con SDK 2.8.0 y cerrar T17/D6. |
+| Siguiente paso exacto | Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: decisiones D1–D3 y D9 de `docs/PLAN_FASE2.md` §4; habilitar Haiku 5.5 en Bedrock si se quiere cerrar D6. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (operativo con SDK 2.8.0); Haiku 5.5 devolvió 403 en esta cuenta |
@@ -54,7 +54,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
 | T15 | Aceptación y entrega | P0 | hecha | Codex · stringbuilder | `55c18ed`, `07231c3` | Puntos 1–9 aceptados; T16 verificó el deploy desde otro equipo y la reutilización de recursos. |
 | T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | hecha | Codex · laptop actual | `07231c3` | API/web publicados; bucket, distribución, Lambda, rol y API existentes conservaron sus IDs; hash público/local `index-Ben2isQ8.js`. |
-| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | bloqueada | Codex · laptop actual | `0813d37` | `/ask` pasa con Haiku 4.5 y SDK 2.8.0; D6 requiere Haiku 5.5, denegado con 403 para esta cuenta. |
+| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | hecha | Claude · ferlr; Codex · stringbuilder | `3720861`, `0813d37` | Verificación de T17 cumplida en la URL pública con Haiku 4.5 y SDK 2.8.0 (revisión independiente del 15-nov 00:10). La migración a Haiku 5.5 es la decisión D6, aparte: 403 de acceso en esta cuenta. |
 | T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
 | T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
@@ -85,10 +85,18 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
-### 2026-11-14 23:33 CST · Codex · recuperación del relevo Fase 2
-- **Inicio:** `git fetch` y `git pull --rebase` confirmaron que `main` coincide con `origin/main` en `3720861`; no había cambios versionados locales. Se conserva `tools/datos_psi/` fuera de Git según D9.
-- **Tarea en curso:** T16. T17 y T19 tienen código y pruebas locales, pero esperan despliegue y validación con Bedrock real.
-- **Siguiente paso exacto:** cargar `AWS_PROFILE=prometeo`, `infra/config.env` y `infra/outputs.env`; correr primero las pruebas de §7 y después `infra/20_api.sh` y `infra/deploy_web.sh`. Confirmar que no se crean recursos y ejecutar los cuatro casos `/ask` más `/analysis`.
+### 2026-11-15 00:15 CST · Claude · ferlr · revisión independiente del relevo de Codex
+- **Comprobado contra la URL pública (sin perfil AWS):** `/ask` con `"30% oxygen, 10.2 psi, PMMA"` → 200, `p: 0.6941`; con `"…PMMA at 0.17 g"` → 200 con `g: 0.17`; las cuatro sugerencias de `lens.questions` → 200 con todas sus variables; pregunta de ignición → `unsupported`. Con `version: 2`: `"70.3 kPa, cotton fabric"` → `p: 0.6938` y nota `unknown_category`; `"900 cm/s flow"` → nota `out_of_range`. `/analysis` con `analysis_lunar.json` → `mode: ai`, 3 oraciones con fuente, `dropped: 0`.
+- **Web:** CloudFront sirve `lens.json` con `parts` y la sugerencia corregida. El bundle sigue siendo `index-Ben2isQ8.js`: es correcto, el código nuevo del motor aún no lo usa ninguna pantalla.
+- **Local:** web 54/54, API 39/39, `check_agnostic.sh` OK. Los tres commits de Codex no llevan coautoría.
+- **Correcciones de registro:** T17 pasa a `hecha` (su verificación se cumple; lo bloqueado es D6, la migración de modelo). Bitácora reordenada, la más reciente arriba.
+- **Detalles menores encontrados (no bloquean):** (1) con `"500 mmHg"` el modelo convirtió él mismo a atm y devolvió `p: 0.66` (500/760 = 0.658): el valor es correcto pero redondeado; para que lo convierta el código hay que agregar mmHg, bar y torr a `display_units` del esquema, lo que exige regenerar el pack (depende de D9). (2) `"40% humidity"` se omitió sin nota `unknown_variable`: el modelo no listó la condición. (3) `/analysis` eligió 3 de las 5 oraciones posibles y dejó fuera las de `tested_elsewhere`.
+- **No verificado desde aquí:** el 403 de Haiku 5.5 y que los scripts no crearon recursos; es lo que reporta Codex.
+
+### 2026-11-15 00:00 CST · Codex · registro del relevo
+- **Commit:** `0813d37` (`T17: retain gravity in scenario requests`), incluye el ejemplo de gravedad en `ASK_SYSTEM`, la regresión, SDK 2.8.0 y actualización de la documentación.
+- **Estado:** `main` y `origin/main` se sincronizarán con este registro. T16/T15 y T19 están hechas; T17/D6 sigue bloqueada por el 403 de acceso Haiku 5.5.
+- **Siguiente paso exacto:** una vez habilitado Haiku 5.5 en la cuenta, desplegarlo con `infra/20_api.sh` y repetir las verificaciones de §7. La API actual permanece operativa con Haiku 4.5.
 
 ### 2026-11-14 23:56 CST · Codex · cierre T16/T19 y bloqueo de acceso Haiku 5.5
 - **T16/T15:** STS autenticó el perfil `prometeo`. Preflight confirmó bucket, CloudFront `Deployed`, Lambda, rol, API y perfil Bedrock existentes. `infra/20_api.sh` y `infra/deploy_web.sh` reutilizaron los IDs; invalidación `I10YEYBHUBAGG1RHJVA56BX425` terminó `Completed`. CloudFront devolvió HTTP 200 y sirvió el mismo `index-Ben2isQ8.js` que generó el deploy. Punto 9 y T15 quedan hechos.
@@ -98,10 +106,10 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **T19:** `/analysis` con `analysis_lunar.json` respondió HTTP 200, `mode: ai`, tres oraciones con fuentes y `dropped: 0`.
 - **Siguiente paso exacto:** el dueño habilita el modelo Haiku 5.5 para la cuenta AWS; después repetir `/ask`, `/analysis` y cerrar T17/D6. No se crearon recursos y `tools/datos_psi/` permanece local.
 
-### 2026-11-15 00:00 CST · Codex · registro del relevo
-- **Commit:** `0813d37` (`T17: retain gravity in scenario requests`), incluye el ejemplo de gravedad en `ASK_SYSTEM`, la regresión, SDK 2.8.0 y actualización de la documentación.
-- **Estado:** `main` y `origin/main` se sincronizarán con este registro. T16/T15 y T19 están hechas; T17/D6 sigue bloqueada por el 403 de acceso Haiku 5.5.
-- **Siguiente paso exacto:** una vez habilitado Haiku 5.5 en la cuenta, desplegarlo con `infra/20_api.sh` y repetir las verificaciones de §7. La API actual permanece operativa con Haiku 4.5.
+### 2026-11-14 23:33 CST · Codex · recuperación del relevo Fase 2
+- **Inicio:** `git fetch` y `git pull --rebase` confirmaron que `main` coincide con `origin/main` en `3720861`; no había cambios versionados locales. Se conserva `tools/datos_psi/` fuera de Git según D9.
+- **Tarea en curso:** T16. T17 y T19 tienen código y pruebas locales, pero esperan despliegue y validación con Bedrock real.
+- **Siguiente paso exacto:** cargar `AWS_PROFILE=prometeo`, `infra/config.env` y `infra/outputs.env`; correr primero las pruebas de §7 y después `infra/20_api.sh` y `infra/deploy_web.sh`. Confirmar que no se crean recursos y ejecutar los cuatro casos `/ask` más `/analysis`.
 
 ### 2026-11-14 23:20 CST · Claude · ferlr · fase 2 sin AWS: motor, API en código y contratos
 - **Decisión del dueño:** la fusión de `frontend` la hace su equipo; no está en este plan. Motor, API, infra y contratos siguen en `main`.

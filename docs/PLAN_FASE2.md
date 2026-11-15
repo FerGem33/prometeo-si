@@ -46,6 +46,7 @@ Ordenados por impacto en la demo. Los dos primeros son fallos visibles en la URL
 | P11 | Revisiones humanas que T12 y T14 dejaron abiertas: clases destino y umbrales de la ficha de ML; diferencias del mapeo propuesto por Bedrock (65.2 % de asignaciones exactas). | `PROGRESS.md`. | Decisiones D4 y D7. |
 | P12 | Otras ramas sin integrar: `dev-josue` (2 commits, ya contenidos en `frontend`) y `nasa2genui` (24 commits, **sin historia común** con `main`: migración a Next.js y figuras isométricas). | `git rev-list`. | Decisión D8. |
 | P13 | Carpetas locales sin versionar: `tools/` y `pipeline/tools/datos_psi/` (copias de la descarga de PSI, con PDFs). | `git status`. | No subirlas tal cual (tamaño). Se resuelve con P4. |
+| P14 | **`/ask`: unidades fuera del esquema.** `"500 mmHg"` devuelve `p: 0.66` (lo convierte el modelo, con redondeo; 500/760 = 0.658). `"40% humidity"` se omite sin nota. | Prueba pública del 15-nov. | Agregar mmHg, bar y torr a `display_units` en `pipeline/build_pack.py` y regenerar el pack (depende de D9). Menor. |
 
 Precisiones al cuadro de cobertura del documento de brechas:
 - **CU-19 (preguntar en lenguaje natural)** figura como *Hecho*; con P1 y P2 es **Parcial**.
@@ -78,7 +79,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 | D3 | Límites del corpus: MB por archivo, páginas por PDF, documentos por lote. | 20 MB, 60 páginas, 30 documentos (el escenario del §11 de los casos de uso). Medir costo en T31 antes de fijarlo. | T30–T36 |
 | D4 | Clases destino y umbrales de la ficha de ML (CU-24). | Los tres veredictos del caso de uso con umbrales visibles y editables en `lens`. | T27 |
 | D5 | ¿Entran "respaldado" y "refutado" en el motor? Exigen una variable de resultado con sentido definido. | No por ahora: las tablas de BASS y BASS-II no traen resultado y 12 investigaciones lo traen en formatos distintos. Mantener los cuatro niveles de cobertura. | — |
-| D6 | ¿Se migra a Haiku 5.5 y al SDK actual? | Sí, junto con la corrección de P1 (un solo redeploy). | T17 |
+| D6 | ¿Se migra a Haiku 5.5? | El SDK ya es el actual (2.8.0). Haiku 5.5 da 403 en esta cuenta: hay que pedir acceso al modelo en Bedrock. No urge; Haiku 4.5 cumple todas las comprobaciones. | — |
 | D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | Quien conoce las tablas (autor de `construir_corpus.py`). | T32 (sirve de conjunto de prueba) |
 | D8 | ¿Qué se hace con `nasa2genui`? | Comparar en una sesión y traer a `main` solo piezas concretas (figuras), no la migración a Next.js. | — |
 | D9 | ¿`data/psi` vuelve al repo? | Sí (632 KB, CC0). | T18 |
@@ -91,15 +92,16 @@ Mismas reglas que `docs/PLAN.md` y `AGENTS.md`: cada tarea tiene verificación, 
 
 ### Bloque A · Cerrar el MVP (antes de cualquier función nueva)
 
-**T16 — Publicar `main` desde otra laptop** · requiere perfil `prometeo`
+**T16 — Publicar `main` desde otra laptop** · hecha (14-nov 23:56); cerró el punto 9 y T15
 - `export AWS_PROFILE=prometeo && bash infra/20_api.sh && bash infra/deploy_web.sh` desde una laptop distinta a la del primer deploy; comprobar que reutiliza bucket, distribución, Lambda y API (cierra el punto 9 y T15).
 - Publica de una vez: la sugerencia corregida, `lens.parts`, y el código de T17 y T19.
 - No incluye la rama `frontend`.
 - *Verificación:* los comandos de §7; punto 9 marcado en `PROGRESS.md`; el hash del bundle público coincide con el build local.
 
-**T17 — Corregir `/ask`** · código hecho en `main`; falta desplegar y probar con Bedrock · D6
+**T17 — Corregir `/ask`** · hecha y desplegada (15-nov)
 - Hecho: el modelo ya no convierte unidades; devuelve las condiciones como las dice la pregunta y `api/handler.py` las convierte con `display_units` (psi, kPa). Lo inválido se descarta en vez de tumbar la respuesta; `502` solo cuando el modelo no responde. Con `version: 2` la respuesta trae `notes` (contrato en `CONTRATOS_FASE2.md` §4.1); sin `version`, la respuesta es idéntica a la actual. 10 pruebas nuevas con dobles del modelo.
-- Falta: `infra/20_api.sh` y comprobar con el modelo real. El cambio de prompt no se ha probado contra Bedrock: si el modelo no sigue el formato nuevo, ajustar `ASK_SYSTEM`.
+- Desplegado y comprobado con el modelo real: psi, kPa, gravedad y las cuatro sugerencias devuelven 200 con todas sus variables.
+- Pendiente menor (P14): unidades que el esquema no declara (mmHg, bar, torr) las convierte el modelo, con redondeo; y una condición que no es variable del corpus puede omitirse sin nota.
 - *Verificación:* las cuatro sugerencias de `lens.questions`, `"30% oxygen, 10.2 psi, PMMA"` y `"…with PMMA at 0.17 g"` devuelven 200 con todas sus variables en la URL pública (comandos en §7).
 
 **T18 — Datos reproducibles** · D9
@@ -107,7 +109,7 @@ Mismas reglas que `docs/PLAN.md` y `AGENTS.md`: cada tarea tiene verificación, 
 - `induce_schema.py` y `build_pack.py` leen del mismo sitio; quitar la ruta local `tools/datos_psi`.
 - *Verificación:* en un clon limpio, `python3 -I pipeline/build_pack.py && python3 -I pipeline/validate_pack.py` reproduce el pack byte a byte (`git diff --exit-code web/public/demo`).
 
-**T19 — Análisis con más contenido (CU-20)** · código hecho en `main`; falta desplegar
+**T19 — Análisis con más contenido (CU-20)** · hecha y desplegada (15-nov)
 - Hecho: oración nueva para `tested_elsewhere`, cotejada contra el pack como las demás; las de `above_tested` y `below_tested` ahora dicen el valor extremo registrado; el prompt pide al menos tres oraciones, con los vacíos primero. Para el preset lunar hay 5 oraciones posibles en lugar de 3.
 - Se mantuvo la decisión de T09: el modelo elige y ordena oraciones redactadas por el código, no escribe prosa libre (una oración con los números correctos puede invertir el sentido).
 - No entraron `known_gap`, `category_untested` ni `quality_flags`: sus hallazgos no traen fuentes y la interfaz publicada exige al menos una por oración. Requiere cambiar el motor y la interfaz a la vez; queda para después de la fusión de `frontend`.
@@ -190,7 +192,7 @@ CU-09 (añadir documentos a una base publicada), CU-22 (compartir), CU-23 (pregu
 
 ## 6. Orden recomendado
 
-1. **En la laptop con perfil `prometeo`:** T16 (publica T17 y T19) y la verificación de §7. Es media hora.
+1. **Hecho el 14–15 de noviembre:** T16, T17 y T19 publicadas y comprobadas (§7).
 2. **Equipo de interfaz, en paralelo:** T21, T22, T23, T24, T25, T26, T28 y T29 sobre el motor ya listo; y las pantallas del bloque C con los ejemplos de `docs/fixtures/fase2/`.
 3. **Agentes de motor y API, sin AWS:** T18 cuando se cierre D9; T32 (extracción fuera de línea) necesita Bedrock, así que va en la laptop con perfil.
 4. **Bloque C** cuando estén D1–D3: T30 → T32 → T31 → T33 → T34 → T35 → T36 → T37. T32 va antes que la infraestructura porque es donde está el riesgo (calidad de la extracción) y se puede medir sin desplegar nada.
