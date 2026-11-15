@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Relevo AWS y bloque C · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. API actualizada y originales CSV verificados con dos usuarios. Worker y publicación web bloqueados por IAM; políticas en docs/PERMISOS_RELEVO_AWS.md. |
 | Último commit verificado | API desplegada `2745d85` (12 rutas JWT, original CSV real); T38 local `777fb81`; bundle T37 `8f23050`; T32 delegada `cc61d95`. 148 API/40 pipeline/106 web/6 helper pasan. |
-| Siguiente paso exacto | Administrador aplica políticas T34 y T38 web al permission set, reprovisiona y valida condición IAM del mapping (docs/PERMISOS_RELEVO_AWS.md). Después: ZIP del commit vigente, RELEVO §3–4 y deploy web T38. T35 aún sin activar; schema+originals generan 15 rutas JWT. Pendientes de código: publicación autenticada/síntesis T37 y persistencia/API/pantallas T36. |
+| Siguiente paso exacto | Aplicar política consolidada infra/prometeo-deployer-policy.json al permission set, conservando otros permisos T31; reprovisionar y validar condición IAM del mapping (docs/PERMISOS_RELEVO_AWS.md). GetRole/CloudFront ya pasan, pero SQS GetQueueAttributes y S3 ListBucket siguen denegados. Después: ZIP vigente, RELEVO §3–4 y web T38. T35 aún sin activar; pendientes de código T37/T36 documentados. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -99,6 +99,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Comprobación de permisos añadidos y política consolidada
+- Dueño informa nueva política inline y SSO renovado. git pull --rebase sin cambios de main; rama frontend solo se actualiza como referencia remota, sin fusionarla.
+- STS real pasa con cuenta/rol esperados. GetRole del dueño responde NoSuchEntity: lectura autorizada, rol no creado. Consulta real de CloudFront pasa (E2SO4K789H7YOQ, Deployed).
+- Comprobación de solo lectura aún falla: GetQueueAttributes de ingest AccessDenied y ListObjectsV2 del bucket web AccessDenied por falta de s3:ListBucket. No se ejecuta apply/sync ni se crean recursos con estos permisos incompletos.
+- Preparada infra/prometeo-deployer-policy.json: unión exacta de T33/T34/T38, sin Sid duplicados ni pérdida de permisos API/worker. ReadApprovedModelProfile idéntico se conserva una vez; BasicLogging por rol conserva ambos recursos con Sid distinto. Falta aplicar/reprovisionar el conjunto completo y simular condición del mapping; no basta lectura de rol/CloudFront. Guía actualizada.
+- Validación local: JSON con22declaraciones/Sid únicos,4991bytes compactos y cobertura exacta de los tres archivos de origen. 148 API pasan; web104 pasan y2 se omiten al no indicar bundle externo en esta corrida. check_agnostic y diff-check pasan. Solo cambian política y documentación; no despliegue ni cambios del corpus.
 
 ### 2026-11-15 · Retoma AWS: originales comprobados, permisos worker/web pendientes
 - API empaquetada y actualizada (20_api exit0); deploy_projects --uploads --originals exit0. Gateway confirma **12 rutas JWT**. Lambda Active/Successful conserva nombre/rol y Haiku4.5 de D6. T35 no se activó sin consumidor.

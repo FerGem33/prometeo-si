@@ -5,6 +5,31 @@ rol SSO `Prometeo-T31`. Login/STS y despliegue API funcionan. No se necesita
 cambiar modelo, perfil ni usar root. Faltan permisos del operador; no nuevas
 decisiones científicas.
 
+## Actualización después de añadir permisos de lectura
+
+El dueño añadió lectura del rol worker y acceso CloudFront. Comprobación real
+posterior: STS responde con la identidad esperada; GetRole devuelve NoSuchEntity
+(lectura autorizada, rol aún sin crear) y GetDistribution responde Deployed.
+Sin embargo, GetQueueAttributes de ingest y ListObjectsV2 del bucket web siguen
+devolviendo AccessDenied. Leer el rol no autoriza crearlo; CloudFront tampoco
+concede la subida de objetos S3.
+
+Para evitar copiar solo el permiso del primer error, se preparó una política
+consolidada: [`infra/prometeo-deployer-policy.json`](../infra/prometeo-deployer-policy.json).
+Contiene exactamente el alcance combinado de T33, T34 y T38 web, conserva los
+permisos API y elimina duplicados semánticos. El Sid de BasicLogging del worker
+se renombró para no colisionar con el del rol API; se conservan ambos recursos.
+Se verificaron cobertura de declaraciones y unicidad de Sid, sin aplicarla a AWS.
+
+En IAM Identity Center, usar ese JSON para la política inline de despliegue del
+permission set Prometeo-T31, conservando cualquier declaración/política adicional
+de T31 que exista fuera de estos tres archivos. Reprovisionar la cuenta
+352818909129 y renovar SSO. No basta añadir únicamente GetRole/GetDistribution.
+La simulación del mapping que exige el relevo sigue pendiente del administrador.
+
+Las secciones siguientes describen los archivos de origen y los rechazos
+anteriores; GetRole/GetDistribution ya pasaron la comprobación posterior.
+
 ## Worker T34
 
 Aplicar `infra/t34-deployer-policy.json` al permission set existente en la
