@@ -49,12 +49,14 @@ export function ScenarioPanel({
   levels,
   extras,
   onExtras,
+  isCustomCorpus,
 }: {
   scenario: Scenario;
   onChange: (s: Scenario) => void;
   levels: VariableEvidence[];
   extras: Extra[];
   onExtras: (e: Extra[]) => void;
+  isCustomCorpus?: boolean;
 }) {
   const { pack, lens } = useData();
   const [selectedBaseline, setSelectedBaseline] = useState<string>("earth_std");
@@ -116,97 +118,103 @@ export function ScenarioPanel({
     <section className="scenario" aria-label={t("Proposed scenario")}>
       <div className="scn-head">
         <h2>{t("Proposed scenario")}</h2>
-        <div className="presets" role="group" aria-label={t("Preset scenarios")}>
-          {presets.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="chip"
-              aria-pressed={preset === p.id}
-              title={t("{0} Source: {1}.", p.blurb, p.source)}
-              onClick={() => onChange(habitatScenario(lens, p.id))}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        {!isCustomCorpus && presets.length > 0 && (
+          <div className="presets" role="group" aria-label={t("Preset scenarios")}>
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="chip"
+                aria-pressed={preset === p.id}
+                title={t("{0} Source: {1}.", p.blurb, p.source)}
+                onClick={() => onChange(habitatScenario(lens, p.id))}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Large Selected-Design Interactive Animation Stage on the Final Report Interface */}
-      <aside className="design-hero-stage scn-design-stage noprint" aria-label={t("Selected scenario isometric architecture")}>
-        <div className="design-hero-visual">
-          <HabitatFigure name={preset || "custom"} size="xl" />
-        </div>
-        <div className="design-hero-info">
-          <span className="design-hero-kicker">{t("Active Scenario Architecture · Interactive Isometric Model")}</span>
-          <h3>{activePresetObj ? activePresetObj.label : t("Custom Operating Scenario")}</h3>
-          <p>
-            {activePresetObj
-              ? activePresetObj.blurb
-              : t("Custom experimental conditions defined via scenario sliders. Select any reference habitat above or adjust sliders below to see the architecture respond in real time.")}
-          </p>
-          <div className="design-hero-pills">
-            {scenario.active.map((id) => (
-              <span key={id} className="design-pill">
-                <b>{vars.find((v) => v.id === id)?.label ?? id}:</b>{" "}
-                {scenarioValueText(pack, id, scenario.values[id])}
-              </span>
-            ))}
+      {!isCustomCorpus && (
+        <aside className="design-hero-stage scn-design-stage noprint" aria-label={t("Selected scenario isometric architecture")}>
+          <div className="design-hero-visual">
+            <HabitatFigure name={preset || "custom"} size="xl" />
           </div>
-          {activePresetObj?.source && <small className="design-hero-src">{t("Reference:")} {activePresetObj.source}</small>}
-        </div>
-      </aside>
+          <div className="design-hero-info">
+            <span className="design-hero-kicker">{t("Active Scenario Architecture · Interactive Isometric Model")}</span>
+            <h3>{activePresetObj ? activePresetObj.label : t("Custom Operating Scenario")}</h3>
+            <p>
+              {activePresetObj
+                ? activePresetObj.blurb
+                : t("Custom experimental conditions defined via scenario sliders. Select any reference habitat above or adjust sliders below to see the architecture respond in real time.")}
+            </p>
+            <div className="design-hero-pills">
+              {scenario.active.map((id) => (
+                <span key={id} className="design-pill">
+                  <b>{vars.find((v) => v.id === id)?.label ?? id}:</b>{" "}
+                  {scenarioValueText(pack, id, scenario.values[id])}
+                </span>
+              ))}
+            </div>
+            {activePresetObj?.source && <small className="design-hero-src">{t("Reference:")} {activePresetObj.source}</small>}
+          </div>
+        </aside>
+      )}
 
       {/* Real-time What-If Delta Simulation against baseline */}
-      <div className="whatif-panel noprint" role="region" aria-label={t("What-if baseline comparison")}>
-        <div className="whatif-head">
-          <div className="whatif-title-group">
-            <span className="whatif-kicker">{t("NASA Comparative Flammability Engine")}</span>
-            <h4>{t("What-If Simulator vs. Baseline Atmosphere")}</h4>
+      {!isCustomCorpus && (
+        <div className="whatif-panel noprint" role="region" aria-label={t("What-if baseline comparison")}>
+          <div className="whatif-head">
+            <div className="whatif-title-group">
+              <span className="whatif-kicker">{t("NASA Comparative Flammability Engine")}</span>
+              <h4>{t("What-If Simulator vs. Baseline Atmosphere")}</h4>
+            </div>
+            <div className="whatif-selector">
+              <label htmlFor="whatif-base-select">{t("Compare against:")}</label>
+              <select
+                id="whatif-base-select"
+                value={selectedBaseline}
+                onChange={(e) => setSelectedBaseline(e.target.value)}
+              >
+                {BASELINE_PROFILES.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.description})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="whatif-selector">
-            <label htmlFor="whatif-base-select">{t("Compare against:")}</label>
-            <select
-              id="whatif-base-select"
-              value={selectedBaseline}
-              onChange={(e) => setSelectedBaseline(e.target.value)}
-            >
-              {BASELINE_PROFILES.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.description})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        <div className="whatif-cards">
-          <div className="whatif-card">
-            <span className="whatif-label">{t("Δ O₂ Concentration")}</span>
-            <span className={`whatif-val ${delta.o2Delta > 0 ? "whatif-up" : delta.o2Delta < 0 ? "whatif-down" : ""}`}>
-              {delta.o2Delta > 0 ? `+${delta.o2Delta.toFixed(1)}%` : `${delta.o2Delta.toFixed(1)}%`}
-            </span>
-          </div>
-          <div className="whatif-card">
-            <span className="whatif-label">{t("Δ Cabin Pressure")}</span>
-            <span className={`whatif-val ${delta.pDelta > 0 ? "whatif-up" : delta.pDelta < 0 ? "whatif-down" : ""}`}>
-              {delta.pDelta > 0 ? t("+{0} atm", delta.pDelta.toFixed(2)) : t("{0} atm", delta.pDelta.toFixed(2))}
-            </span>
-          </div>
-          <div className="whatif-card">
-            <span className="whatif-label">{t("Δ Flammability Index")}</span>
-            <span className={`whatif-val ${delta.flammabilityIndexChangePct > 0 ? "whatif-risk-high" : "whatif-risk-low"}`}>
-              {delta.flammabilityIndexChangePct > 0 ? `+${delta.flammabilityIndexChangePct}%` : `${delta.flammabilityIndexChangePct}%`}
-            </span>
-          </div>
-          <div className={`whatif-summary-badge whatif-badge-${delta.riskTendency}`}>
-            <span className="whatif-icon" aria-hidden="true">
-              {delta.riskTendency === "elevated" ? "⚠️" : delta.riskTendency === "reduced" ? "🛡️" : "⚖️"}
-            </span>
-            <span>{delta.riskSummary}</span>
+          <div className="whatif-cards">
+            <div className="whatif-card">
+              <span className="whatif-label">{t("Δ O₂ Concentration")}</span>
+              <span className={`whatif-val ${delta.o2Delta > 0 ? "whatif-up" : delta.o2Delta < 0 ? "whatif-down" : ""}`}>
+                {delta.o2Delta > 0 ? `+${delta.o2Delta.toFixed(1)}%` : `${delta.o2Delta.toFixed(1)}%`}
+              </span>
+            </div>
+            <div className="whatif-card">
+              <span className="whatif-label">{t("Δ Cabin Pressure")}</span>
+              <span className={`whatif-val ${delta.pDelta > 0 ? "whatif-up" : delta.pDelta < 0 ? "whatif-down" : ""}`}>
+                {delta.pDelta > 0 ? t("+{0} atm", delta.pDelta.toFixed(2)) : t("{0} atm", delta.pDelta.toFixed(2))}
+              </span>
+            </div>
+            <div className="whatif-card">
+              <span className="whatif-label">{t("Δ Flammability Index")}</span>
+              <span className={`whatif-val ${delta.flammabilityIndexChangePct > 0 ? "whatif-risk-high" : "whatif-risk-low"}`}>
+                {delta.flammabilityIndexChangePct > 0 ? `+${delta.flammabilityIndexChangePct}%` : `${delta.flammabilityIndexChangePct}%`}
+              </span>
+            </div>
+            <div className={`whatif-summary-badge whatif-badge-${delta.riskTendency}`}>
+              <span className="whatif-icon" aria-hidden="true">
+                {delta.riskTendency === "elevated" ? "⚠️" : delta.riskTendency === "reduced" ? "🛡️" : "⚖️"}
+              </span>
+              <span>{delta.riskSummary}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="scn-layout">
         <div className="scn-table-col">

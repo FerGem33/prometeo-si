@@ -33,6 +33,9 @@ const isMissing = (a: AxisScore | undefined) => !a || a.missing || !!a.reason;
 
 /** Closeness 0–100 per variable. A variable the source does not record is a dashed spoke, not a zero. */
 function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; onVertex: (recordId: string) => void }) {
+  if (axes.length < 3) {
+    return <Bars axes={axes} name={name} />;
+  }
   const W = 420;
   const H = 330;
   const cx = W / 2;
@@ -94,6 +97,9 @@ function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; on
 
 /** With fewer than three variables a polygon has no area, so the same numbers are drawn as bars. */
 function Bars({ axes, name }: { axes: Axis[]; name: string | null }) {
+  if (axes.length === 0) {
+    return <p className="hint">{t("No variables available for closeness comparison.")}</p>;
+  }
   return (
     <ul className="ga-bars">
       {axes.map((a) => (
@@ -136,7 +142,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
     () =>
       corpusSummary(pack, scenario).map((b) => ({
         id: b.variable,
-        label: varOf(pack, b.variable).label,
+        label: pack.schema.variables.find((v) => v.id === b.variable)?.label ?? b.variable,
         value: scenarioValueText(pack, b.variable, scenario.values[b.variable]),
         best: b.best,
         score: selId ? close[selId]?.[b.variable] : undefined,

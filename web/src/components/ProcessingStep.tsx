@@ -3,6 +3,7 @@ import { useData } from "./ctx";
 import { ChamberFigure } from "./ChamberFigure";
 import { Prefs } from "./Prefs";
 import { t, tx, many, lazy } from "../i18n";
+import type { EvaluationDraft } from "./ScenarioStep";
 
 export const PROCESSING_STEPS = lazy([
   tx("Reading documents and source tables"),
@@ -12,19 +13,24 @@ export const PROCESSING_STEPS = lazy([
 ]);
 
 export function ProcessingStep({
-  fileCount = 0,
+  draft,
+  fileCount,
   stepDurationMs = 620,
   onBack,
   onComplete,
 }: {
+  draft?: EvaluationDraft | null;
   fileCount?: number;
   stepDurationMs?: number;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (finalDraft?: EvaluationDraft) => void;
 }) {
-  const { pack, lens } = useData();
+  const { pack: demoPack, lens: demoLens } = useData();
+  const pack = draft?.pack ?? demoPack;
+  const lens = draft?.lens ?? demoLens;
   const [currentStep, setCurrentStep] = useState(0);
   const s = pack.meta.stats;
+  const effectiveFileCount = draft?.docs?.length ?? fileCount ?? 0;
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -34,11 +40,11 @@ export function ProcessingStep({
       }, stepDurationMs);
     } else {
       timer = setTimeout(() => {
-        onComplete();
+        onComplete(draft ?? undefined);
       }, 380);
     }
     return () => clearTimeout(timer);
-  }, [currentStep, stepDurationMs, onComplete]);
+  }, [currentStep, stepDurationMs, onComplete, draft]);
 
   const progressPct = Math.min(100, Math.round((currentStep / PROCESSING_STEPS.length) * 100));
 
@@ -61,7 +67,7 @@ export function ProcessingStep({
           <p className="cover-kicker">{t("Isometric Chamber · Evidence Harmonization")}</p>
           <h1>{t("Preparing your evidence report")}</h1>
           <p className="step-lede">
-            {fileCount > 0 ? t("{0} staged document(s) and ", fileCount) : ""}
+            {effectiveFileCount > 0 ? t("{0} staged document(s) and ", effectiveFileCount) : ""}
             {lens.byline}: {pack.studies.length} {many(lens.unit_of_study ?? "study")}, {(s.tests ?? 0).toLocaleString("en-US")} {t("individual {0}", lens.subject ?? t("tests"))}.
           </p>
 
@@ -103,7 +109,7 @@ export function ProcessingStep({
               </div>
 
               <div className="proc-actions">
-                <button type="button" className="cta" onClick={onComplete}>
+                <button type="button" className="cta" onClick={() => onComplete(draft ?? undefined)}>
                   {t("Skip to report →")}
                 </button>
               </div>

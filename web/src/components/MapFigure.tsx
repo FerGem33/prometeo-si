@@ -70,8 +70,22 @@ export function MapFigure({
   const { pack, lens } = useData();
   const open = useProv();
   const nums = pack.schema.variables.filter((v): v is NumVariable => v.type === "num");
-  const vx = nums.find((v) => v.id === axes.x)!;
-  const vy = nums.find((v) => v.id === axes.y)!;
+
+  if (nums.length < 2) {
+    return (
+      <figure className="fig wide map" id="fig-map">
+        <figcaption>
+          <b>{t("Figure")} {figure} |</b> {t("Distribution map.")}
+        </figcaption>
+        <div className="fig-fallback-note" style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--ink-2)", background: "var(--bg-subtle, rgba(0,0,0,0.02))", borderRadius: "4px", margin: "1rem 0" }}>
+          <p>{t("At least two numeric variables are required to display the distribution map.")}</p>
+        </div>
+      </figure>
+    );
+  }
+
+  const vx = nums.find((v) => v.id === axes.x) ?? nums[0];
+  const vy = nums.find((v) => v.id === axes.y) ?? (nums.find((v) => v.id !== vx.id) ?? nums[1] ?? nums[0]);
   const pv = pack.schema.variables.find((v) => v.type === "cat" && v.role === "partition");
   const [hidden, setHidden] = useState<string[]>([]);
 

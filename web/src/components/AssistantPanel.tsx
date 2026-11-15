@@ -7,9 +7,20 @@ import { API_BASE, parseAnalysis, parseAsk, postApi } from "../report/api";
 import type { Analysis, Sentence } from "../report/api";
 import { getLang, t } from "../i18n";
 import { originalPack } from "../i18n/localize";
+import { interpretLocalQuestion } from "../ingest/localAsk";
 
-export function AssistantPanel({ scenario, levels, findings, onChange }: {
-  scenario: Scenario; levels: VariableEvidence[]; findings: Finding[]; onChange: (next: Scenario) => void;
+export function AssistantPanel({
+  scenario,
+  levels,
+  findings,
+  onChange,
+  isCustomCorpus,
+}: {
+  scenario: Scenario;
+  levels: VariableEvidence[];
+  findings: Finding[];
+  onChange: (next: Scenario) => void;
+  isCustomCorpus?: boolean;
 }) {
   const { pack, lens } = useData();
   const [question, setQuestion] = useState("");
@@ -24,7 +35,7 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
 
   useEffect(() => () => request.current?.abort(), []);
   useEffect(() => {
-    if (!configured) return;
+    if (!configured || isCustomCorpus) return;
     const controller = new AbortController();
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const debounce = setTimeout(() => {
@@ -38,7 +49,7 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
         .finally(() => clearTimeout(timeout));
     }, 800);
     return () => { clearTimeout(debounce); clearTimeout(timeout); controller.abort(); };
-  }, [key, configured, findings, pack]);
+  }, [key, configured, findings, pack, isCustomCorpus]);
 
   async function ask() {
     request.current?.abort();
@@ -46,6 +57,26 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
     request.current = controller;
     const started = latestKey.current;
     setBusy(true); setMessage("");
+
+    if (isCustomCorpus) {
+      try {
+        const next = interpretLocalQuestion(question, pack);
+        if (started !== latestKey.current) {
+          setMessage(t("The scenario changed. Submit the question again to apply it."));
+          return;
+        }
+        if ("unsupported" in next) {
+          setMessage(next.unsupported);
+        } else {
+          onChange(next);
+          setMessage(t("Scenario updated. Edit its values in the controls above."));
+        }
+      } finally {
+        if (request.current === controller) setBusy(false);
+      }
+      return;
+    }
+
     const timer = setTimeout(() => controller.abort(), 20000);
     try {
       const next = parseAsk(await postApi("ask", { question, schema: originalPack(pack).schema }, controller.signal), pack);
@@ -67,11 +98,11 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
         <label htmlFor="scenario-question">{t("Ask about a scenario")}</label>
         <div className="question-row">
           <input id="scenario-question" value={question} maxLength={2000} onChange={(event) => setQuestion(event.target.value)} required disabled={busy} />
-          <button className="chip" disabled={!configured || busy || !question.trim()}>{busy ? t("Interpreting…") : t("Apply question")}</button>
+          <button className="chip" disabled={(!configured && !isCustomCorpus) || busy || !question.trim()}>{busy ? t("Interpreting…") : t("Apply question")}</button>
         </div>
       </form>
       <div className="presets">{lens.questions?.map((q) => <button type="button" className="chip" key={q} disabled={busy} onClick={() => setQuestion(q)}>{q}</button>)}</div>
-      <p role="status">{message || (!configured ? t("Questions are unavailable; use the scenario controls.") : t("Questions change conditions only; they do not predict outcomes."))}</p>
+      <p role="status">{message || (!configured && !isCustomCorpus ? t("Questions are unavailable; use the scenario controls.") : t("Questions change conditions only; they do not predict outcomes."))}</p>
       <div className="presets" aria-label={t("Interpreted scenario")}>{scenario.active.map((id) => {
         const v = pack.schema.variables.find((item) => item.id === id);
         if (!v) return null;
