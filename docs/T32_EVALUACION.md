@@ -252,3 +252,18 @@ y las páginas solicitadas.
 
 Pruebas tras estos cambios: Python 3.12 API/pipeline 72, web 54, `validate_pack.py` y
 `check_agnostic.sh` pasan. D7/PDF semántico siguen pendientes. No se actualizó el pack.
+# Actualización de cierre: revisión delegada del 15-nov
+
+D7 aprobada en `D7_DECISIONES.md`; revisión PDF aplicada por delegación explícita
+de `DECISIONES_CIERRE.md` §8 y documentada con versión/hashes en
+`T32_PDF_DECISIONES.md` y `.json`. Doce candidatos se aceptan solo como contexto,
+tres se excluyen y ninguno se asigna a filas de tablas. El PDF 20120015928 tiene
+render legible pero texto extraído no confiable: solo metadatos para este cierre.
+
+Recalculado desde `tables-final/report-corrected.json` (alineación de bordes de
+encabezados sin cambiar mapping): se excluyen exactamente 55 columnas de regla A.
+Asignación 154/172 = 89,53 %; conjunta unidad/variable 148/172 = 86,05 %.
+La meta de acuerdo >=85 % se cumple bajo el criterio revisado aprobado en D7;
+no representa precisión científica. T32 queda hecha con estas limitaciones.
+El contenido anterior conserva el registro histórico y los pendientes de ese
+momento. Ningún pack publicado ni fuente se modificó para mejorar métricas.

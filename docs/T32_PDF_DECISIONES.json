@@ -1,0 +1,465 @@
+{
+  "version": 1,
+  "reviewed_at": "2026-11-15T13:07:49.534160+00:00",
+  "authority": "docs/DECISIONES_CIERRE.md §8",
+  "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea",
+  "sources_sha256": {
+    "20150008961.pdf": "8cee8a023d9f0aab214996ebaeefb842080b0c935ba9e01db0096a47379519f7",
+    "papers-real/20150008961/verified-final.json": "f2cbabd16d7cc4888c310a403a39ea28c9c0d839321ed88b9318046f95c99a85",
+    "20150019858.pdf": "e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+    "papers-real/20150019858/verified-final.json": "67a9cdf5a91705e974cf088cc95b1d4a879bc5d54fd9d2b35fd64e0f476e6503",
+    "20150023456.pdf": "b4f6ca983e2792c33a0b92220a791a818f426bb635b94f7fd33dc8c9c471e79d",
+    "papers-real/20150023456/verified-final.json": "531ced93b59ba0335a682f6a2c205c03946e3a935ce052343714b4735e7b86d8",
+    "20210011385.pdf": "5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+    "papers-real/20210011385/verified-final.json": "8048a9a2e53affd0e5765340feb2db11ce347c7e9ea8349ca6af70dcdf593da8",
+    "20120015928.pdf": "635a5f17c2f0d45cc53ffc57bd6bea76c93072b455eb1afd8e1f889310944a26"
+  },
+  "decisions": [
+    {
+      "id": "20150008961:1",
+      "ntrs": "20150008961",
+      "verified_candidate_index": 1,
+      "candidate": {
+        "variable": "material",
+        "value": "PMMA",
+        "unit": null,
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_8cee8a023d9f0aab214996ebaeefb842080b0c935ba9e01db0096a47379519f7",
+          "page": 1,
+          "quote": "Microgravity Flammability of PMMA Rods in Concurrent Flow",
+          "verified": true
+        },
+        "scope": "Cast PMMA cylindrical rods used in BASS-II experiment aboard ISS",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "excluded",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Excluir por redundancia: el título identifica PMMA pero el candidato siguiente describe explícitamente el material fundido y la población.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150008961:2",
+      "ntrs": "20150008961",
+      "verified_candidate_index": 2,
+      "candidate": {
+        "variable": "material",
+        "value": "cast PMMA",
+        "unit": null,
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_8cee8a023d9f0aab214996ebaeefb842080b0c935ba9e01db0096a47379519f7",
+          "page": 1,
+          "quote": "Microgravity experiments burning cast PMMA cylindrical rods in axial flow have been conducted aboard the International Space Station",
+          "verified": true
+        },
+        "scope": "BASS-II experiment material specification",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual de material/población citada.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150019858:1",
+      "ntrs": "20150019858",
+      "verified_candidate_index": 1,
+      "candidate": {
+        "variable": "o2",
+        "value": [
+          21,
+          21
+        ],
+        "unit": "%",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+          "page": 4,
+          "quote": "Oxygen concentrations in the MSG working volume were varied during the testing from ambient ISS oxygen levels (~ 21% O 2)",
+          "verified": true
+        },
+        "scope": "ambient ISS oxygen levels in MSG working volume",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual del extremo aproximado de O2; no valor exacto asignable a ensayos.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150019858:2",
+      "ntrs": "20150019858",
+      "verified_candidate_index": 2,
+      "candidate": {
+        "variable": "o2",
+        "value": [
+          14,
+          14
+        ],
+        "unit": "%",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+          "page": 4,
+          "quote": "Oxygen concentrations in the MSG working volume were varied during the testing from ambient ISS oxygen levels (~ 21% O 2) down to ~ 14% O2 for very near-limit flames",
+          "verified": true
+        },
+        "scope": "very near-limit flames in MSG working volume",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual del extremo aproximado de O2; no valor exacto asignable a ensayos.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150019858:3",
+      "ntrs": "20150019858",
+      "verified_candidate_index": 3,
+      "candidate": {
+        "variable": "flow",
+        "value": [
+          55,
+          55
+        ],
+        "unit": "cm/s",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+          "page": 2,
+          "quote": "With no restrictors, the maximum flow velocity was ~55 cm/s",
+          "verified": true
+        },
+        "scope": "maximum flow velocity through duct with no restrictors",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "apparatus_maximum",
+      "reason": "Aceptación contextual del máximo aproximado del ducto/configuración de restrictor; no punto medido por ensayo.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150019858:4",
+      "ntrs": "20150019858",
+      "verified_candidate_index": 4,
+      "candidate": {
+        "variable": "flow",
+        "value": [
+          35,
+          35
+        ],
+        "unit": "cm/s",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+          "page": 2,
+          "quote": "with two restrictors this was reduced to ~35 cm/s",
+          "verified": true
+        },
+        "scope": "flow velocity through duct with two restrictors",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "apparatus_maximum",
+      "reason": "Aceptación contextual del máximo aproximado del ducto/configuración de restrictor; no punto medido por ensayo.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150019858:5",
+      "ntrs": "20150019858",
+      "verified_candidate_index": 5,
+      "candidate": {
+        "variable": "p",
+        "value": [
+          1,
+          1
+        ],
+        "unit": "atm",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_e9c1286f0903700c0ae180a574debb6826f3676a072df2eeb926c22955a09831",
+          "page": 8,
+          "quote": "Using the ideal gas law, the free volume of MSG of V=250,000 cc, ideal gas constant R=82.05 cc-atm/gmol K, P= 1 atm, and T=300 K",
+          "verified": true
+        },
+        "scope": "MSG working volume conditions for calculations",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "excluded",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Excluir como condición experimental: P=1 atm es supuesto de la ley de gases para un cálculo de consumo, no medición por ensayo.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150023456:1",
+      "ntrs": "20150023456",
+      "verified_candidate_index": 1,
+      "candidate": {
+        "variable": "o2",
+        "value": [
+          21,
+          21
+        ],
+        "unit": "%",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_b4f6ca983e2792c33a0b92220a791a818f426bb635b94f7fd33dc8c9c471e79d",
+          "page": 12,
+          "quote": "heptane droplet burning in a cabin air (0.21/0.79 O2/N2 mole fraction), 1.0-atm ambient environment",
+          "verified": true
+        },
+        "scope": "Test sequence shown in Figure 4, heptane in cabin air at 1.0 atm",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Aceptación solo para la secuencia ilustrada en figura 4; no toda la campaña.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20150023456:2",
+      "ntrs": "20150023456",
+      "verified_candidate_index": 2,
+      "candidate": {
+        "variable": "p",
+        "value": [
+          1.0,
+          1.0
+        ],
+        "unit": "atm",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_b4f6ca983e2792c33a0b92220a791a818f426bb635b94f7fd33dc8c9c471e79d",
+          "page": 12,
+          "quote": "heptane droplet burning in a cabin air (0.21/0.79 O2/N2 mole fraction), 1.0-atm ambient environment",
+          "verified": true
+        },
+        "scope": "Figure 4 test sequence with heptane in cabin air",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Aceptación solo para la secuencia ilustrada en figura 4; no toda la campaña.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:1",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 1,
+      "candidate": {
+        "variable": "o2",
+        "value": [
+          21,
+          21
+        ],
+        "unit": "%",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 14,
+          "quote": "O2 concentrations in the MSG working volume were varied during the testing from ambient ISS O2 levels (~21 percent O2) down to ~14 percent O2 for very near limit flames.",
+          "verified": true
+        },
+        "scope": "ambient ISS O2 levels in MSG working volume",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual del extremo aproximado de O2; no valor exacto asignable a ensayos.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:2",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 2,
+      "candidate": {
+        "variable": "o2",
+        "value": [
+          14,
+          14
+        ],
+        "unit": "%",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 14,
+          "quote": "O2 concentrations in the MSG working volume were varied during the testing from ambient ISS O2 levels (~21 percent O2) down to ~14 percent O2 for very near limit flames.",
+          "verified": true
+        },
+        "scope": "very near limit flames in BASS-II tests",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual del extremo aproximado de O2; no valor exacto asignable a ensayos.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:3",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 3,
+      "candidate": {
+        "variable": "flow",
+        "value": [
+          55,
+          55
+        ],
+        "unit": "cm/s",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 12,
+          "quote": "With no restrictors, the maximum flow velocity was ~55 cm/s, and with two restrictors this was reduced to ~35 cm/s.",
+          "verified": true
+        },
+        "scope": "maximum flow velocity in BASS-II flow duct with no restrictors",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "apparatus_maximum",
+      "reason": "Aceptación contextual del máximo aproximado del ducto/configuración de restrictor; no punto medido por ensayo.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:4",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 4,
+      "candidate": {
+        "variable": "flow",
+        "value": [
+          35,
+          35
+        ],
+        "unit": "cm/s",
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 12,
+          "quote": "With no restrictors, the maximum flow velocity was ~55 cm/s, and with two restrictors this was reduced to ~35 cm/s.",
+          "verified": true
+        },
+        "scope": "flow velocity in BASS-II flow duct with two restrictors",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": true,
+      "scope_kind": "apparatus_maximum",
+      "reason": "Aceptación contextual del máximo aproximado del ducto/configuración de restrictor; no punto medido por ensayo.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:5",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 5,
+      "candidate": {
+        "variable": "material",
+        "value": "PMMA",
+        "unit": null,
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 14,
+          "quote": "The O2 depletion data is compared to the CO2 production for each BASS–II test that used PMMA as the fuel.",
+          "verified": true
+        },
+        "scope": "BASS-II tests comparing O2 depletion and CO2 production",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "accepted_context_only",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Aceptación contextual de material/población citada.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    {
+      "id": "20210011385:6",
+      "ntrs": "20210011385",
+      "verified_candidate_index": 6,
+      "candidate": {
+        "variable": "phase",
+        "value": "gas-phase",
+        "unit": null,
+        "citation": {
+          "kind": "paper",
+          "doc_id": "doc_5ffa911fd9b6356f204646003fb9342e341810dcdfdf5cb15756e7f01ec5f770",
+          "page": 10,
+          "quote": "and after each test were analyzed and compared very well to stoichiometric ratios for a one-step gas-phase reaction.",
+          "verified": true
+        },
+        "scope": "combustion analysis of BASS-II tests",
+        "status": "awaiting_semantic_review"
+      },
+      "decision": "excluded",
+      "approximate": false,
+      "scope_kind": "document_context",
+      "reason": "Excluir: gas-phase califica la reacción/modelo estequiométrico, no la fase física de la muestra.",
+      "use_in_records": false,
+      "propagate_to_tables": false,
+      "approval": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    }
+  ],
+  "additional_pdf": {
+    "ntrs": "20120015928",
+    "decision": "metadata_only",
+    "rendered_page": 1,
+    "reason": "Render visual legible; extracción Poppler fallida y pypdf mal codificado. No hay candidatos fiables para aceptar condiciones automáticamente. Se conserva metadato; no exige ni presupone OCR inventado."
+  },
+  "metrics_D7": {
+    "source_report": "tables-final/report-corrected.json",
+    "original_columns": 227,
+    "excluded_D7_A": 55,
+    "eligible_columns": 172,
+    "assignment_matches": 154,
+    "joint_matches": 148,
+    "report_sha256": "09b3eb3fe53dc6e646ceb5ade741e8bc3a83789082a7ca412116ae5595f074fb",
+    "mapping_sha256": "4d2694a5819aa9265fe065887e8af01d6feecd87bfc8549b73081ba48640897d"
+  },
+  "published_records_added": 0,
+  "limitations": [
+    "Aceptaciones contextuales no son constantes por fila ni evaluación experta.",
+    "O2 aproximado y máximos del aparato conservan calificadores; reportes BASS-II no cuentan como experimentos independientes.",
+    "Los ocho rechazos de formato/texto de la evaluación original permanecen rechazados."
+  ],
+  "decision_sha256": "f8b36bcad0ee36569e926db9ff31c9be70720c8d60a5c2bd9853357743af724a"
+}

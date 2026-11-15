@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Relevo AWS en ejecución · stringbuilder.** Base 7cdeacc sincronizada. Preparación → T33 DELETE/smoke cleanup → T34 despliegue/lote/DLQ. Revisión PDF T32 y esquema ebullición aprobables por delegación explícita de DECISIONES_CIERRE §8. |
+| Tarea en curso | **Relevo AWS · stringbuilder.** T32 revisión delegada terminada. Corpus ebullición regenerado y 23 hashes coinciden. Preparación local pasa; AWS SSO GetRoleCredentials devuelve 503 incluso tras renovar login. T33 DELETE/smoke y T34 despliegue real esperan acceso; continuar tareas locales independientes. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
 | Siguiente paso exacto | Seguir **`docs/RELEVO_LAPTOP_AWS.md`** en orden: 0 preparación y corpus; 1 API con DELETE y CORS solo CloudFront; 2 smoke T33 `--cleanup` (Daniel con contraseñas A/B); 3 desplegar el worker; 4 lote de 10 + corrupto y DLQ; 5 (en paralelo) tabla precargada de los PDF de T32 para que Daniel la firme. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -60,7 +60,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | hecha | Claude · ferlr; Claude · Daniel | esta entrega | Dueño aprobó §5 completo el 15-nov y se añadió §5.10 (exportación para ML → T38). D1–D5, D7, D8 y D10 cerradas; ver `docs/DECISIONES_CIERRE.md` |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
-| T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
+| T32 | Extracción fuera de línea | fase 2 · C | hecha | laptop AWS · stringbuilder | esta entrega | D7 aprobada por dueño; revisión PDF aprobada por delegación con hashes: 12 contextuales/3 excluidos, 0 añadidos a tablas. Métrica D7: 154/172 asignación; 148/172 conjunta (86,05%). No equivale a precisión científica. `docs/T32_PDF_DECISIONES.md` |
 | T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder; Claude · Daniel | `4268b90` + esta entrega | A/B real pasa (verificación del plan). Cargas/complete/jobs/resume desplegados. DELETE de proyecto y documento implementado con tombstone, borrado S3 acotado y transacción de cupo (11 pruebas con dobles), **sin desplegar**. Smoke con `--cleanup` listo. Falta: desplegar y smoke real (RELEVO §1–2). Regenerar la lente al editar sigue pendiente (llega con T35/T37) |
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
 | T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | D10 resuelta: corpus de ebullición, lote de 23 documentos dentro de D3 (`docs/t37/manifest_ebullicion.csv`). T37 se sube con `cli.mjs batch`. La aprobación científica sigue siendo humana |
@@ -97,6 +97,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T32 revisión delegada y preparación del relevo
+- T32: revisión conservadora de 15 candidatos con originales/páginas; 12 aceptados como contexto (aproximaciones/máximos/figura concreta), tres excluidos (material redundante, supuesto P=1 atm y fase del modelo). Ninguno se propaga a tablas; ocho rechazos iniciales permanecen. Aprobación delegada explícita, no revisión experta; versión/hashes en docs/T32_PDF_DECISIONES.json.
+- PDF 20120015928 renderizado visualmente legible en página 1, aunque texto extraído mal codificado; solo metadatos, sin condiciones nuevas. Render FLEX figura4 confirma O2/1atm solo de esa secuencia. No se cierra el hueco de presión 0/268 de sólidos ni se cambia el pack.
+- D7: informe correcto es tables-final/report-corrected.json, que alinea espacios de bordes del builder. Excluir 55 columnas reglaA deja154/172 asignación89,53% y148/172 conjunta86,05%. T32 hecha bajo criterio aprobado, con límites documentados y cero llamadas Bedrock nuevas.
+- Preparación: 120 API, 98 web, 28 pipeline y validate_pack/check_agnostic pasan. Corpus regenerado: 23/23 documentos coinciden en SHA, bytes, DOI y páginas con manifiesto de Daniel; descargas fuera de Git.
+- AWS: STS/GetRole fallan antes de operación con GetRoleCredentials503, incluso tras aws sso login exitoso. El intento de20_api.sh terminó254 antes de desplegar. Sin escrituras AWS; continuar local y reintentar cuando vuelva el servicio/credencial. Consulta al dueño presentada; no usar otro perfil/root.
 
 ### 2026-11-15 · Retoma del relevo Daniel en laptop AWS
 - `git pull --rebase` trajo main hasta 7cdeacc; lectura de AGENTS, relevo, decisiones y D7 completada. Único corpus previo sin seguimiento permanece fuera de Git.
