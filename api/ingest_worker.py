@@ -248,7 +248,18 @@ def handler(event, context=None):
     failures = []
     for record in event['Records']:
         try:
-            worker.process(json.loads(record['body']), record['messageId'])
+            message = json.loads(record['body'])
+            if message.get('action') == 'extract':
+                try:
+                    from . import extract_worker, schema_review
+                    from .projects import Projects
+                except ImportError:
+                    import extract_worker, schema_review
+                    from projects import Projects
+                repository = schema_review.service(Projects(worker.table))
+                extract_worker.process(message, record['messageId'], repository)
+            else:
+                worker.process(message, record['messageId'])
         except Exception:
             failures.append({'itemIdentifier': record['messageId']})
     return {'batchItemFailures': failures}

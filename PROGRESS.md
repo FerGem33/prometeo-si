@@ -63,7 +63,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T32 | Extracción fuera de línea | fase 2 · C | hecha | laptop AWS · stringbuilder | esta entrega | D7 aprobada por dueño; revisión PDF aprobada por delegación con hashes: 12 contextuales/3 excluidos, 0 añadidos a tablas. Métrica D7: 154/172 asignación; 148/172 conjunta (86,05%). No equivale a precisión científica. `docs/T32_PDF_DECISIONES.md` |
 | T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder; Claude · Daniel | `4268b90` + esta entrega | A/B real pasa (verificación del plan). Cargas/complete/jobs/resume desplegados. DELETE de proyecto y documento implementado con tombstone, borrado S3 acotado y transacción de cupo (11 pruebas con dobles), **sin desplegar**. Smoke con `--cleanup` listo. Falta: desplegar y smoke real (RELEVO §1–2). Regenerar la lente al editar sigue pendiente (llega con T35/T37) |
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
-| T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | D10 resuelta: corpus de ebullición, lote de 23 documentos dentro de D3 (`docs/t37/manifest_ebullicion.csv`). T37 se sube con `cli.mjs batch`. La aprobación científica sigue siendo humana |
+| T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
+| T37 | Publicación y segundo dominio | fase 2 · C | pendiente | | | Corpus de ebullición regenerado: 23/23 hashes coinciden con manifiesto. Aprobación concreta del esquema delegada por el dueño; aún no aplicada a una propuesta de ese corpus |
+| T36 | Correcciones y relaciones declaradas | fase 2 · C | pendiente | | | Requiere borrador extraído; conservar original, autor y cita; pendientes APIs y pantalla |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | pendiente | | | Contrato §5.10 aprobado 15-nov: CSV con unidad, DOI, `group_id` por estudio, valor original y `datacard.json`; sin AWS |
 
 ## Aceptación final (T15)
@@ -97,6 +99,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T35 backend local y recuperación de acceso AWS
+- Implementadas GET/PATCH/approve de esquema con versiones inmutables, hash de fuentes/artefacto, control de revisión, edición que revoca aprobación y despacho recuperable a SQS. Extracción tabular determinista con leases, citas por celda, conversiones y rechazos/conflictos conservados; no publica el pack.
+- Configuración optativa `--schema` añade tres rutas JWT y permisos por prefijo; T33 sin el flag conserva 11 rutas. Paquetes API/worker incluyen los validadores estándar de T32. Ver docs/T35_REVISION_API.md y límites allí detallados.
+- Python 3.12: **135 API pasan** (incluye dobles de revisión/extracción/despliegue); **98 web pasan**, validate_pack y check_agnostic pasan, bash-n y diff-check pasan. `web/public/demo` sin cambios. Las pruebas nuevas no prueban AWS real; T35 no se marca hecha.
+- STS volvió a responder con cuenta352818909129 y rol SSO Prometeo-T31 al ejecutarlo fuera del sandbox. Se retoma relevo; no hace falta cambiar perfil ni modelo. `20_api.sh` terminó0 y reutilizó API/Lambda/rol existentes. `deploy_projects.py --uploads` terminó0; regresión y smoke en curso. No hay llamadas nuevas de extracción ni costes de lote todavía.
 
 ### 2026-11-15 · T32 revisión delegada y preparación del relevo
 - T32: revisión conservadora de 15 candidatos con originales/páginas; 12 aceptados como contexto (aproximaciones/máximos/figura concreta), tres excluidos (material redundante, supuesto P=1 atm y fase del modelo). Ninguno se propaga a tablas; ocho rechazos iniciales permanecen. Aprobación delegada explícita, no revisión experta; versión/hashes en docs/T32_PDF_DECISIONES.json.

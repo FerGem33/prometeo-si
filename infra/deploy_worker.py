@@ -72,6 +72,8 @@ def documents(env):
          'Resource': f'arn:aws:s3:::{BUCKET}/u/*/p/*/raw/*'},
         {'Sid': 'ReadWriteWorkerArtifacts', 'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:PutObject'],
          'Resource': f'arn:aws:s3:::{BUCKET}/u/*/p/*/text/*'},
+        {'Sid': 'ReadApprovedSchema', 'Effect': 'Allow', 'Action': 's3:GetObject',
+         'Resource': f'arn:aws:s3:::{BUCKET}/u/*/p/*/schema/*'},
         # Without ListBucket, S3 answers a missing cache object with 403 instead of 404 and the worker
         # would fail every first model call (read_json treats only NoSuchKey/404 as "not cached").
         # ListBucket cannot be limited by object prefix for that check; it is limited to this bucket.
@@ -82,7 +84,7 @@ def documents(env):
          'Resource': QUEUE_ARN},
         # Bedrock resources are filled from the approved inference profile at apply time.
         {'Sid': 'InvokeApprovedModel', 'Effect': 'Allow', 'Action': 'bedrock:InvokeModel', 'Resource': []}]}
-    environment = {'DATA_TABLE': env['DATA_TABLE'], 'CORPUS_BUCKET': BUCKET, 'MODEL_ID': env['MODEL_ID'],
+    environment = {'DATA_TABLE': env['DATA_TABLE'], 'CORPUS_BUCKET': BUCKET, 'MODEL_ID': env['MODEL_ID'], 'INGEST_QUEUE_URL': QUEUE_URL,
                    'UPLOAD_LIMITS_JSON': json.dumps(LIMITS)}
     mapping = {'BatchSize': 1, 'FunctionResponseTypes': ['ReportBatchItemFailures'],
                'ScalingConfig': {'MaximumConcurrency': MAX_CONCURRENCY}}

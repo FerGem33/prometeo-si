@@ -146,7 +146,8 @@ def test_refuses_unexpected_route_integration(config):
     assert not aws.writes
 
 
-def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypatch):
+@pytest.mark.parametrize('schema', [False, True])
+def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypatch, schema):
     root, env, aws = config
     values = {'CORPUS_BUCKET': 'prometeo-hack-corpus-352818909129',
               'INGEST_QUEUE_ARN': 'arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest',
@@ -154,12 +155,13 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     for k, v in values.items():
         monkeypatch.setenv(k, v)
     output = root/'uploads'
-    monkeypatch.setattr(sys, 'argv', ['prepare', '--output-dir', str(output), '--uploads'])
+    monkeypatch.setattr(sys, 'argv', ['prepare', '--output-dir', str(output), '--uploads'] + (['--schema'] if schema else []))
     prepare_projects.main()
     deploy_projects.configure(output, env, aws)
     deploy_projects.configure(output, env, aws)
     # 4 project routes + 5 upload routes + 2 DELETE routes (T33), each with its own invoke permission.
-    assert len(aws.routes) == 11 and len(aws.authorizers) == 1 and len(aws.statements) == 11
+    expected = 14 if schema else 11
+    assert len(aws.routes) == expected and len(aws.authorizers) == 1 and len(aws.statements) == expected
     assert {'DELETE /projects/{id}', 'DELETE /projects/{id}/documents/{doc_id}'} <= {r['RouteKey'] for r in aws.routes}
     assert aws.variables['UPLOADS_ENABLED'] == 'true'
     assert json.loads(aws.variables['UPLOAD_LIMITS_JSON'])['max_bytes'] == 20000000
@@ -169,3 +171,7 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     assert [s['Resource'] for s in deletes] == ['arn:aws:s3:::prometeo-hack-corpus-352818909129/u/*/p/*']
     listing = next(s for s in policy['Statement'] if s['Action'] == ['s3:ListBucket'])
     assert listing['Condition'] == {'StringLike': {'s3:prefix': ['u/*/p/*']}}
+    if schema:
+        assert {'GET /projects/{id}/schema', 'PATCH /projects/{id}/schema',
+                'POST /projects/{id}/schema/approve'} <= {r['RouteKey'] for r in aws.routes}
+        assert any(s['Resource'].endswith('/schema/*') for s in policy['Statement'])

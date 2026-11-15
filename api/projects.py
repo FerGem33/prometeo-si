@@ -197,6 +197,20 @@ def handle(event):
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
+            schema_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/schema(/approve)?', path)
+            if schema_path:
+                try:
+                    from .schema_review import service as schema_service
+                except ImportError:
+                    from schema_review import service as schema_service
+                schemas = schema_service(store())
+                if not schema_path[2] and method == 'GET':
+                    return 200, schemas.get(uid, schema_path[1])
+                if not schema_path[2] and method == 'PATCH':
+                    return 200, schemas.patch(uid, schema_path[1], body(event))
+                if schema_path[2] and method == 'POST':
+                    return 200, schemas.approve(uid, schema_path[1], body(event))
+                fail(405, 'method_not_allowed', 'Schema method not available')
             document = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})', path)
             if document and method == 'DELETE':
                 return 204, deletions().delete_document(uid, document[1], document[2])
