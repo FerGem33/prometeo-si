@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · stringbuilder: revisión humana D7/PDF pendiente. T31 hecha con rol SSO; recursos e IDs documentados en `infra/outputs.env`. T18 hecha. |
+| Tarea en curso | T33 preparación local · stringbuilder: identidad verificada por authorizer y proyectos draft. T32 revisión humana D7/PDF pendiente. T31 hecha. |
 | Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
 | Siguiente paso exacto | Una persona revisa D7 y los candidatos PDF de `docs/T32_EVALUACION.md`; aprobar/corregir contrato T30 y límites D3 antes de iniciar T33. T21–T29 siguen a cargo del equipo de interfaz. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -62,6 +62,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
 | T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
+| T33 (avance local) | Identidad y proyectos draft | fase 2 · C | en curso | stringbuilder | esta entrega | Autorizado preparar código/pruebas independientes; cargas y activación AWS esperan T30/D3. No implica completar T33 |
 
 ## Aceptación final (T15)
 
