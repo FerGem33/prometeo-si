@@ -139,6 +139,8 @@ class Worker:
         parent = self.table.get_item(Key={'PK': 'U#'+uid, 'SK': 'P#'+pid}, ConsistentRead=True).get('Item')
         key = {'PK': 'P#'+pid, 'SK': 'D#'+did}
         item = self.table.get_item(Key=key, ConsistentRead=True).get('Item')
+        if parent and (parent.get('status') == 'deleting' or not item or item.get('status') == 'deleting'):
+            return  # Removed by the owner (T33 DELETE) after the message was queued: nothing to process.
         if not parent or not item or item['object_key'] != f'u/{uid}/p/{pid}/raw/{did}' or not item.get('expected_sha256'):
             raise DocumentFailure('invalid_document')
         if item['status'] in ('done', 'skipped'):
@@ -147,9 +149,11 @@ class Worker:
             return
         now = int(time.time())
         self.table.update_item(Key=key, UpdateExpression='SET worker_lease = :lease, worker_until = :until, #status = :running',
-            ConditionExpression='(attribute_not_exists(worker_until) OR worker_until < :now) AND #status <> :done AND #status <> :skipped',
+            ConditionExpression=('(attribute_not_exists(worker_until) OR worker_until < :now) '
+                                 'AND #status <> :done AND #status <> :skipped AND #status <> :deleting'),
             ExpressionAttributeNames={'#status': 'status'}, ExpressionAttributeValues={
-                ':lease': lease, ':until': now+150, ':now': now, ':running': 'running', ':done': 'done', ':skipped': 'skipped'})
+                ':lease': lease, ':until': now+150, ':now': now, ':running': 'running', ':done': 'done',
+                ':skipped': 'skipped', ':deleting': 'deleting'})
         try:
             if item['bytes'] > self.limits['max_bytes']:
                 raise DocumentFailure('too_large')

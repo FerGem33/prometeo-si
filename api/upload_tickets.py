@@ -242,6 +242,8 @@ class UploadTickets:
         totals = dict.fromkeys(('queued', 'running', 'done', 'failed', 'skipped'), 0)
         jobs = []
         for item in items:
+            if item['status'] == 'deleting':  # T33 DELETE in progress: already gone for the owner.
+                continue
             totals[item['status']] += 1
             jobs.append({'doc_id': item['id'], 'name': item['name'], 'stage': item['stage'],
                 'status': item['status'], 'updated_at': item.get('updated_at', item['uploaded_at']),

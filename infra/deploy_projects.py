@@ -121,7 +121,7 @@ def configure(root, env, call=aws):
          '--environment', json.dumps({'Variables': variables}), '--revision-id', config['RevisionId'])
     call('lambda', 'wait', 'function-updated', '--function-name', function)
     call('apigatewayv2', 'update-api', '--api-id', api_id, '--cors-configuration', json.dumps({
-        'AllowOrigins': [env['CF_URL']], 'AllowMethods': ['GET', 'POST', 'PATCH', 'OPTIONS'],
+        'AllowOrigins': [env['CF_URL']], 'AllowMethods': ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
         'AllowHeaders': ['content-type', 'authorization', 'idempotency-key'], 'MaxAge': 300}))
 
 

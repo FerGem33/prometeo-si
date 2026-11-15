@@ -1,23 +1,31 @@
 # Revisión humana final pendiente
 
-Consolidado por instrucción del dueño: avanzar técnicamente por etapas y dejar
-las decisiones de datos/producto para revisión final. No se infieren aprobaciones
-de mensajes de continuidad. D3 sí está aprobada: 20 MB/60 páginas/30 documentos.
+Consolidado por instrucción del dueño: avanzar técnicamente por etapas y dejar las decisiones de datos y producto para
+revisión humana. No se infieren aprobaciones de mensajes de continuidad. El 15-nov el dueño cerró casi todas
+(`D7_DECISIONES.md` y `DECISIONES_CIERRE.md`).
+
+## Abiertas
 
 | Revisión | Evidencia concreta | Resultado que debe registrar una persona |
 |---|---|---|
-| ~~D7: discrepancias de mapping~~ | `D7_DECISIONES.md` | **Cerrada el 2026-11-15 (Daniel Sun):** mapping vigente conservado en las 79 filas |
-| Soporte semántico y alcance PDF | Candidatos y rechazos de `T32_EVALUACION.md`; parser nuevo en `T34_WORKER_PREPARACION.md` | Cita respalda valor/unidad/experimentos; texto legible cuando haga falta. No propagar presión a todas las filas sin evidencia |
-| T30: resto del contrato C | `CONTRATOS_FASE2.md` §5 y límites técnicos documentados | Aprobación/corrección explícita de las partes aún no aprobadas |
-| T12/T27, D4 | Ficha ML descriptiva y criterios propuestos | Definir clases destino/umbrales antes de afirmar aptitud ML |
-| D10, segundo dominio | Corpus público a seleccionar para T37 | Dominio, fuentes, responsable y referencias aprobadas |
-| Fuente/esquema/versiones | Propuesta conjunta cuando esté generada | Aprobación explícita de versión vinculada a hashes; nunca aprobación emitida por el modelo |
-| Costos y operación | `T33_CARGAS_PREPARACION.md` y mediciones reales del futuro worker | Presupuesto operativo, política de reintentos/uso; límites D3 no fijan gasto máximo |
+| Soporte semántico y alcance de los PDF (T32) | Candidatos y rechazos de `T32_EVALUACION.md`; artefactos en `/tmp/prometeo-t32/` de la laptop AWS; parser nuevo en `T34_WORKER_PREPARACION.md` | Firmar `T32_PDF_DECISIONES.md` (la prepara un agente en la laptop AWS, `RELEVO_LAPTOP_AWS.md` §5): la cita respalda valor, unidad y experimentos. No propagar presión a todas las filas sin evidencia |
+| Fuente, esquema y versiones (T35/T37) | Propuesta conjunta, cuando el worker la genere | Aprobación explícita de la versión, vinculada a hashes; nunca la emite el modelo |
 
-Las APIs de revisión se pueden implementar antes; extracción/publicación deben
-seguir bloqueadas hasta aprobación de la versión correspondiente. No publicar
-candidatos PDF ni dar T32 por hecha sin su revisión. La aprobación de límites o
-un deploy exitoso no aprueba contenido científico.
+## Cerradas el 2026-11-15 (Daniel Sun)
 
-El permiso administrativo AWS pendiente para desplegar cargas (CORS) es una
-acción operativa distinta de esta revisión. Ver `T33_PERMISOS_DESPLIEGUE.md`.
+| Revisión | Dónde | Resultado |
+|---|---|---|
+| D7: discrepancias de mapping | `D7_DECISIONES.md` | Mapping vigente conservado en las 79 filas |
+| T30: resto del contrato C | `DECISIONES_CIERRE.md` §1 | Aprobado; se añade §5.10 (exportación para ML → T38) |
+| D4: ficha ML | `DECISIONES_CIERRE.md` §2 | Cuatro veredictos con umbrales de partida en `lens` |
+| D10: segundo dominio | `DECISIONES_CIERRE.md` §3 | Ebullición y cambio de fase (PSI, Fluid Physics); lote de 23 documentos |
+| Costos y operación | `DECISIONES_CIERRE.md` §5 | Tope operativo de USD 30 en Bedrock; reintentos SQS ×3 → DLQ, sin reenvío automático |
+| Permiso `s3:ListBucket` del worker | `DECISIONES_CIERRE.md` §4 | Aprobado, solo sobre el bucket de corpus |
+| CORS con localhost | `DECISIONES_CIERRE.md` §6 | Solo CloudFront por defecto |
+
+Las APIs de revisión se pueden implementar antes. La extracción y la publicación siguen bloqueadas hasta que se
+apruebe la versión correspondiente. No se publican candidatos PDF ni se da T32 por hecha sin su revisión. Ni la
+aprobación de límites ni un deploy exitoso aprueban contenido científico.
+
+Los permisos administrativos de AWS (`t33-deployer-policy.json`, `t34-deployer-policy.json`) son una acción operativa
+distinta de esta revisión.

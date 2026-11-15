@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--output', default=str(Path(tempfile.gettempdir()) / 'prometeo-t33-upload-check.json'))
+    parser.add_argument('--cleanup', action='store_true', help='Also verify DELETE (document, project) and isolation')
     args = parser.parse_args()
     path = args.source.resolve()
     if path.suffix.lower() not in ('.csv', '.pdf') or not path.is_file() or not 1 <= path.stat().st_size <= 20000000:
@@ -72,8 +73,18 @@ def main():
         assert ticket['doc_id'] in [d['id'] for d in listing['items']]
         send('foreign_list_rejected', 'GET', endpoint, 404, token=b)
         send('jobs', 'GET', base+'/projects/'+pid+'/jobs', 200, token=a)
+        if args.cleanup:  # Requires the deployed T33 DELETE routes.
+            document = endpoint+'/'+ticket['doc_id']
+            send('foreign_delete_document_rejected', 'DELETE', document, 404, token=b)
+            send('foreign_delete_project_rejected', 'DELETE', base+'/projects/'+pid, 404, token=b)
+            send('delete_document', 'DELETE', document, 204, token=a)
+            listing = send('list_after_delete', 'GET', endpoint, 200, token=a)
+            assert ticket['doc_id'] not in [d['id'] for d in listing['items']]
+            send('delete_project', 'DELETE', base+'/projects/'+pid, 204, token=a)
+            send('project_gone', 'GET', base+'/projects/'+pid, 404, token=a)
         receipt.append({'project_id': pid, 'doc_id': ticket['doc_id'], 'sha256_expected': digest['sha256'],
-                        'sha256_observed': doc['sha256'], 'cleanup': 'Retained for owner cleanup'})
+                        'sha256_observed': doc['sha256'],
+                        'cleanup': 'Deleted through API' if args.cleanup else 'Retained for owner cleanup'})
     finally:
         Path(args.output).write_text(json.dumps(receipt, indent=2)+'\n')
     print(json.dumps(receipt, indent=2))

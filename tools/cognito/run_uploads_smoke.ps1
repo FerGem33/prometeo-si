@@ -2,9 +2,11 @@
 # Pide correo y contraseña de A y B con entrada oculta; no guarda contraseñas ni tokens.
 # Crea un proyecto y sube un archivo real que NO se borra (DELETE aún no existe).
 # Recibo sin tokens: %TEMP%\prometeo-t33-upload-check.json
-# Uso: powershell -ExecutionPolicy Bypass -File tools\cognito\run_uploads_smoke.ps1 [-Source <csv|pdf>]
+# Uso: powershell -ExecutionPolicy Bypass -File tools\cognito\run_uploads_smoke.ps1 [-Source <csv|pdf>] [-Cleanup]
+# -Cleanup: tras desplegar el DELETE de T33, verifica también el borrado (404 ajeno, 204 dueño, proyecto eliminado).
 param(
-  [string]$Source = 'tools/psi/data/datos_psi/tablas/PSI-25/PSI-25_Experimental table_BASS-II.csv'
+  [string]$Source = 'tools/psi/data/datos_psi/tablas/PSI-25/PSI-25_Experimental table_BASS-II.csv',
+  [switch]$Cleanup
 )
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..\..')
@@ -18,4 +20,5 @@ foreach ($file in 'infra/config.env', 'infra/outputs.env') {
 }
 # check_uploads_live.py solo usa la librería estándar; cualquier Python 3 local sirve.
 if (-not $env:T33_PYTHON) { $env:T33_PYTHON = (Get-Command python).Source }
-node tools/cognito/cli.mjs uploads (Resolve-Path -LiteralPath $Source).Path
+$extra = @(); if ($Cleanup) { $extra = @('--cleanup') }
+node tools/cognito/cli.mjs uploads (Resolve-Path -LiteralPath $Source).Path @extra

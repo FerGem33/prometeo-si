@@ -34,8 +34,24 @@ del usuario autenticado y claves de proyecto.
 
 **Límite explícito:** cambiar intención de un proyecto procesado/publicado
 devuelve 409 hasta implementar la regeneración de lente. Un draft vacío conserva
-`lens_version=null`; no se simula una lente regenerada. DELETE y subrutas de
-documentos/esquema aún no están implementadas.
+`lens_version=null`; no se simula una lente regenerada. Las subrutas de esquema
+aún no están implementadas.
+
+**DELETE (implementado el 15-nov, sin desplegar todavía):** `api/deletions.py`.
+
+- **`DELETE /projects/{id}/documents/{doc_id}`** responde 204. Solo antes de publicar.
+  1. Marca el documento `deleting`.
+  2. Borra el original y `text/<doc_id>/` en S3, y el marcador de duplicado si apunta a él.
+  3. En una transacción quita el documento, devuelve el cupo D3 y ajusta el estado del proyecto: `draft` si ya no quedan documentos, `awaiting_review` o `failed` si los restantes terminaron.
+- **`DELETE /projects/{id}`** responde 204. Marca el proyecto, borra todo `u/<uid>/p/<id>/` y todos los items `P#<id>`, y al final el proyecto.
+- **Comportamiento común:**
+  - Un proyecto ajeno da 404.
+  - Con un lease activo del worker responde 409.
+  - Una ejecución interrumpida termina al repetir la petición; el cupo no se descuenta dos veces.
+  - El worker descarta mensajes de documentos borrados o en `deleting`, y no puede tomar en proceso uno marcado.
+- **Permisos nuevos del rol de la API** (`prepare_projects.py --uploads`): `dynamodb:DeleteItem`, `s3:DeleteObject` en `u/*/p/*` y `s3:ListBucket` con la condición `s3:prefix` `u/*/p/*`.
+- **Pruebas:** `api/test_deletions.py` (11, con dobles).
+- **Verificación real tras desplegar:** `tools\cognito\run_uploads_smoke.ps1 -Cleanup`.
 
 ## Identidad y frontera de confianza
 
@@ -183,6 +199,6 @@ ejecutar `unset T33_TOKEN_A T33_TOKEN_B`.
 Con ambos tokens, el mismo comando crea dos drafts de prueba, verifica lecturas,
 listados, edición propia, 404 cruzado e idempotencia. La salida contiene sus IDs;
 conservarlos para limpieza posterior del dueño. No se borran automáticamente:
-DELETE aún no está implementado. El script es operativo, no ejecuta registro
+DELETE está implementado pero sin desplegar; con la ruta desplegada se pueden borrar. El script es operativo, no ejecuta registro
 ni inicio de sesión por sí solo; el wrapper Cognito ya obtuvo ambas sesiones
 durante la prueba real documentada.

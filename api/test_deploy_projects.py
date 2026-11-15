@@ -158,8 +158,14 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     prepare_projects.main()
     deploy_projects.configure(output, env, aws)
     deploy_projects.configure(output, env, aws)
-    assert len(aws.routes) == 9 and len(aws.authorizers) == 1 and len(aws.statements) == 9
+    # 4 project routes + 5 upload routes + 2 DELETE routes (T33), each with its own invoke permission.
+    assert len(aws.routes) == 11 and len(aws.authorizers) == 1 and len(aws.statements) == 11
+    assert {'DELETE /projects/{id}', 'DELETE /projects/{id}/documents/{doc_id}'} <= {r['RouteKey'] for r in aws.routes}
     assert aws.variables['UPLOADS_ENABLED'] == 'true'
     assert json.loads(aws.variables['UPLOAD_LIMITS_JSON'])['max_bytes'] == 20000000
     policy = json.loads((output/'projects-policy.json').read_text())
     assert all(s['Resource'] != '*' for s in policy['Statement'])
+    deletes = [s for s in policy['Statement'] if s['Action'] == ['s3:DeleteObject']]
+    assert [s['Resource'] for s in deletes] == ['arn:aws:s3:::prometeo-hack-corpus-352818909129/u/*/p/*']
+    listing = next(s for s in policy['Statement'] if s['Action'] == ['s3:ListBucket'])
+    assert listing['Condition'] == {'StringLike': {'s3:prefix': ['u/*/p/*']}}

@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33 API de cargas/complete/progreso desplegada; CORS S3 actualizado y preflight real 200. Falta smoke de archivo/confirmación. T34 worker local hasta propuesta, sin deploy/consumidor. Drafts A/B comprobados; T31 hecha. |
+| Tarea en curso | **Relevo a la laptop con AWS.** Decisiones humanas cerradas salvo la revisión semántica de los PDF de T32. T33: DELETE implementado (sin desplegar); falta desplegarlo y correr el smoke real con `--cleanup`. T34: worker y despliegue listos, sin ejecutar en AWS. Corpus D10 generado. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | (1) ~~Firmar D7~~ hecho 15-nov. (2) Dueño en Windows/PowerShell: `tools\cognito\run_uploads_smoke.ps1` (smoke de archivo real T33 con cuentas A/B). (3) Admin: añadir `infra/t34-deployer-policy.json` al permission set y aprobar `s3:ListBucket` del worker. (4) Laptop AWS: guion de `docs/T34_WORKER_PREPARACION.md` §Despliegue (dos corridas `--apply`, luego `--enable`) y lote real de 10 + corrupto/DLQ. |
+| Siguiente paso exacto | Seguir **`docs/RELEVO_LAPTOP_AWS.md`** en orden: 0 preparación y corpus; 1 API con DELETE y CORS solo CloudFront; 2 smoke T33 `--cleanup` (Daniel con contraseñas A/B); 3 desplegar el worker; 4 lote de 10 + corrupto y DLQ; 5 (en paralelo) tabla precargada de los PDF de T32 para que Daniel la firme. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -61,9 +61,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | hecha | Claude · ferlr; Claude · Daniel | esta entrega | Dueño aprobó §5 completo el 15-nov y se añadió §5.10 (exportación para ML → T38). D1–D5, D7, D8 y D10 cerradas; ver `docs/DECISIONES_CIERRE.md` |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | 14 checks A/B reales de drafts pasan (verificación del plan cumplida). Cargas/complete/jobs/resume desplegados con CORS S3 confirmado. Smoke de archivo real listo (`tools/cognito/run_uploads_smoke.ps1`), pendiente de que el dueño lo ejecute; falta gestión completa (DELETE/lente) |
-| T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Hash real, parseo/perfil/propuestas, leases/cache/duplicados y batch failures implementados; ZIP Linux preparado. Script de despliegue `infra/deploy_worker.py` + política de operador escritos y probados con dobles; sin ejecutar contra AWS ni lote/DLQ real; `docs/T34_WORKER_PREPARACION.md` |
-| T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | Decisiones humanas reunidas para revisión final; no se omite gate de aprobación científica |
+| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder; Claude · Daniel | `4268b90` + esta entrega | A/B real pasa (verificación del plan). Cargas/complete/jobs/resume desplegados. DELETE de proyecto y documento implementado con tombstone, borrado S3 acotado y transacción de cupo (11 pruebas con dobles), **sin desplegar**. Smoke con `--cleanup` listo. Falta: desplegar y smoke real (RELEVO §1–2). Regenerar la lente al editar sigue pendiente (llega con T35/T37) |
+| T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
+| T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | D10 resuelta: corpus de ebullición, lote de 23 documentos dentro de D3 (`docs/t37/manifest_ebullicion.csv`). T37 se sube con `cli.mjs batch`. La aprobación científica sigue siendo humana |
+| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | pendiente | | | Contrato §5.10 aprobado 15-nov: CSV con unidad, DOI, `group_id` por estudio, valor original y `datacard.json`; sin AWS |
 
 ## Aceptación final (T15)
 
@@ -96,6 +97,21 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Claude · laptop Daniel (Windows) · DELETE de T33, carga por lotes y relevo
+- **T33 DELETE:** `api/deletions.py`.
+  - Marca primero el documento o proyecto como `deleting`, luego borra en S3 solo el prefijo `u/<uid>/p/<id>/` y por último DynamoDB; el borrado de documento y el cupo D3 van en una transacción.
+  - 404 si es ajeno y 409 con un lease activo del worker; la reanudación es idempotente.
+  - El worker ignora documentos borrados y no puede tomar uno en `deleting`. `GET /jobs` ya no se rompe con documentos en `deleting`.
+  - Rutas y permisos acotados en `prepare_projects.py`; CORS con DELETE.
+  - La prueba de despliegue pasa de 9 a 11 rutas y ahora comprueba que los permisos de borrado estén acotados.
+- **Herramientas:** `check_uploads_live.py --cleanup` verifica DELETE en real. Nuevo `cli.mjs batch <carpeta> [--limit N] [--corrupt]` con `api/check_batch_live.py`: sube una carpeta, sigue `/jobs` y deja recibo, para T34 y T37.
+- **Relevo:** `docs/RELEVO_LAPTOP_AWS.md` con pasos, comandos, resultados esperados y qué registrar.
+- **Verificación local** (Python 3.12, `PYTHONUTF8=1`):
+  - API: 116 pasan + 3 de `test_bad_bodies`; persiste el caso de más de 32 KB que solo falla en Windows.
+  - CLI Cognito 6/6; `node --check`; parser de PowerShell sin errores; `bash -n` de `20_api.sh`; `check_agnostic` y `diff --check` OK.
+  - Sin llamadas a AWS.
+- **Trampa encontrada:** el doble de S3 paginaba por posición y se saltaba objetos al borrar. S3 real pagina por clave; se corrigió el doble, no el código.
 
 ### 2026-11-15 · Claude · laptop Daniel (Windows) · cierre de decisiones y corpus del segundo dominio
 - **Decisiones (autorizadas por el dueño en la conversación):** `docs/DECISIONES_CIERRE.md`.

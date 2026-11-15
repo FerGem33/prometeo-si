@@ -179,8 +179,10 @@ def handler(event, context=None):
             from projects import handle
         status, output = (204, {}) if method == 'OPTIONS' else handle(event)
         response = reply(status, output, origin)
+        if status == 204:
+            response['body'] = ''
         if origin == os.environ.get('CF_URL'):
-            response['headers'].update({'access-control-allow-methods': 'GET, POST, PATCH, OPTIONS',
+            response['headers'].update({'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS',
                                         'access-control-allow-headers': 'content-type, authorization, idempotency-key'})
         return response
     if path not in ('/ask', '/analysis'):

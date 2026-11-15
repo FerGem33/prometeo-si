@@ -177,6 +177,14 @@ def store():
     return Projects(boto3.resource('dynamodb').Table(os.environ['DATA_TABLE']))
 
 
+def deletions():
+    try:
+        from .deletions import service
+    except ImportError:
+        from deletions import service
+    return service(store())
+
+
 def handle(event):
     try:
         uid = identity(event)
@@ -189,6 +197,9 @@ def handle(event):
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
+            document = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})', path)
+            if document and method == 'DELETE':
+                return 204, deletions().delete_document(uid, document[1], document[2])
             documents = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents', path)
             completed = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/complete', path)
             jobs = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/jobs', path)
@@ -222,6 +233,8 @@ def handle(event):
                 return 200, project(store().get(uid, match[1]))
             if method == 'PATCH':
                 return 200, store().patch(uid, match[1], body(event))
+            if method == 'DELETE':
+                return 204, deletions().delete_project(uid, match[1])
         fail(405, 'method_not_allowed', 'Method not available in this release')
     except ApiError as exc:
         return exc.status, {'error': {'code': exc.code, 'message': exc.message,
