@@ -361,6 +361,14 @@ Etapas por documento (`stage`): `upload → parse → profile → propose → ex
 
 Operaciones del revisor (`SchemaEdit`): `set_status`, `rename`, `merge` (fusionar variables), `set_unit`, `set_convert` (solo conversiones lineales `factor` y `offset`), `map_column`, `set_role` (marcar la partición), `set_sigma`.
 
+Extensiones desplegadas el 15-nov: `add_variable` recibe una variable revisada con
+citas verificadas y la inicia como `proposed`; approve acepta opcionalmente
+`review_authority` y `metadata` (`id,documents,lens,thresholds`). La aprobación
+de metadatos se liga en servidor a actor/fecha/hashes; se exige para publicar.
+`GET /projects/{id}/diagnostics` expone al propietario motivos/uso sin texto
+crudo. Resume admite `doc_ids` para reintento selectivo, sin replay de DLQ.
+Detalle del recorte y ejemplo reproducible: [relevo API](T35_T37_RELEVO_API.md).
+
 Reglas:
 - Aprobar exige que ninguna variable ni columna quede en `proposed`, y que a lo sumo una variable tenga `role: "partition"`.
 - Cada variable propuesta trae `evidence`: las citas que justifican su existencia. La pantalla las muestra.
@@ -392,6 +400,15 @@ Reglas:
 | `POST /projects/{id}/ask` | `{"question", "version": 2}` | igual que §4.1; el esquema lo pone el servidor |
 | `POST /projects/{id}/analysis` | igual que §4.2 | igual que §4.2 |
 | `POST /projects/{id}/synthesis` | `{"study_ids": [...], "focus"?}` | `{"mode", "sentences": [{"text", "citations": Citation[]}], "dropped"}` |
+
+Recorte desplegado el 15-nov de publish/pack/synthesis: publicación privada inmutable
+con URLs de 300 s y repetición idempotente; síntesis extractiva de hasta seis citas
+candidatas, selección IA de hasta cinco y fallback `template` explícito.
+También devuelve `method` y `note`. El smoke real terminó en plantilla; no
+demuestra síntesis IA. Las rutas de propuestas/preguntas del proyecto y la
+regeneración de lente por intención siguen pendientes. El contrato anterior
+describe el objetivo completo; [relevo API](T35_T37_RELEVO_API.md) delimita lo
+implementado y comprobado.
 
 - La interfaz carga el pack publicado con las tres URLs y usa el motor igual que con la demo. **El motor no sabe si el pack es la demo o un proyecto.**
 - La síntesis solo publica oraciones cuyos números y citas estén en los registros de los estudios elegidos; el resto se descarta y se cuenta en `dropped`.

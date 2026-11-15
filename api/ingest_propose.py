@@ -42,6 +42,10 @@ is valid when a document provides no explicit measurable evidence.
 Before answering, check that every non-null column variable is declared in variables,
 categorical units are null, and table evidence has exactly kind/doc_id/row/column/text
 copied from a sample (no extra keys). Never add prose before or after the JSON.
+For TABLE evidence copy a complete object from profile.columns[].sample verbatim.
+The supplied row is the physical CSV row, NOT a sample index; never renumber it.
+The text must preserve spaces, line breaks, decimal spelling and unit characters
+exactly as supplied. Do not replace a cell by numeric_range, a header or a unit.
 '''
 
 

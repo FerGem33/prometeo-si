@@ -25,8 +25,11 @@ def main():
     action.add_argument('--retry-project')
     parser.add_argument('--retry-docs', nargs='+')
     parser.add_argument('--resume-receipt', type=Path)
+    parser.add_argument('--inspect-project')
     parser.add_argument('--output', default='/tmp/prometeo-evidence-diagnostics.json')
     args = parser.parse_args()
+    if args.workflow_dir and args.retry_docs and not args.resume_receipt:
+        parser.error('Workflow retries require an existing receipt')
     base = os.environ['API_URL'].rstrip('/')
     if base != 'https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com': parser.error('Unexpected API')
     checks = []
@@ -52,6 +55,11 @@ def main():
             if chosen and all(j['status'] in ('done', 'failed', 'skipped') for j in chosen): return jobs
             time.sleep(5)
         raise RuntimeError('Processing timeout; resume the existing project, do not upload again')
+    if args.inspect_project:
+        diagnosis = send('GET', '/projects/'+args.inspect_project+'/diagnostics')
+        Path('/tmp/prometeo-t34-postfix-diagnostics.json').write_text(json.dumps(diagnosis, indent=2)+'\n')
+        print(json.dumps({'inspected': [{'name': d['name'], 'status': d['status'],
+            'responses': len(d['responses'])} for d in diagnosis['items']]}), flush=True)
     if args.diagnostics_project:
         value = send('GET', '/projects/'+args.diagnostics_project+'/diagnostics')
         Path(args.output).write_text(json.dumps(value, indent=2)+'\n'); print(json.dumps(value, indent=2)); return
@@ -64,6 +72,8 @@ def main():
         print(json.dumps({'result': value['totals'], 'selected': len(args.retry_docs)})); return
     config = json.loads((ROOT/'docs/t37/revision_local.json').read_text())
     receipt = json.loads(args.resume_receipt.read_text()) if args.resume_receipt else {'checks': checks, 'sources': []}
+    if args.resume_receipt:
+        checks[:0] = receipt.get('checks', [])
     receipt['checks'] = checks
     def save(): Path(args.output).write_text(json.dumps(receipt, indent=2)+'\n')
     try:
@@ -84,6 +94,8 @@ def main():
             for source in pending: send('POST', '/projects/'+pid+'/documents/'+source['doc_id']+'/complete', {'sha256': source['sha256']})
         pid = receipt['project_id']; endpoint = '/projects/'+pid
         if 'approved' not in receipt:
+            if args.retry_docs:
+                send('POST', endpoint+'/ingest/resume', {'doc_ids': args.retry_docs}, 202)
             jobs = wait(pid)
             if any(j['status'] == 'failed' for j in jobs['jobs']):
                 receipt['diagnostics'] = send('GET', endpoint+'/diagnostics'); save()

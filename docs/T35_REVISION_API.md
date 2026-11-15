@@ -1,8 +1,9 @@
 # T35 — Revisión versionada del esquema (implementación local)
 
-Estado: backend implementado y probado con dobles; no equivale a verificación
-desplegada ni a T35 terminada. Falta la pantalla del equipo de interfaz y la
-verificación completa con un pack publicado (T37).
+Estado al 15-nov: backend desplegado y recorrido tabular real comprobado hasta el pack
+privado v2. T35 sigue en curso por pantalla/extracción PDF integrada. Evidencia,
+extensiones del contrato y comandos vigentes: [relevo API](T35_T37_RELEVO_API.md).
+Las secciones siguientes describen el fundamento local y despliegue parcial.
 
 ## Contrato y garantías
 

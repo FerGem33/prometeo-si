@@ -343,3 +343,14 @@ def test_expired_worker_lease_can_resume_but_active_cannot(completed_upload):
     assert service.resume('owner', 'prj_test')['reenqueued'] == 0
     item['worker_until'] = 0
     assert service.resume('owner', 'prj_test')['reenqueued'] == 1
+
+
+def test_selected_resume_keeps_pending_durable_when_sqs_fails(completed_upload):
+    service, repo, queue, did = completed_upload
+    service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    repo.items['P#prj_test', 'D#'+did].update(status='failed', worker_until=0)
+    queue.fail = True
+    with pytest.raises(RuntimeError):
+        service.resume('owner', 'prj_test', {'doc_ids': [did]})
+    assert service.get('prj_test', did)['status'] == 'queued'
+    assert service.get('prj_test', did)['dispatch_pending'] is True

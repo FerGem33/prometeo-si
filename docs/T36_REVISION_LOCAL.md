@@ -1,8 +1,9 @@
 # T36 — Correcciones auditables y originales desplegados
 
-Estado: **en curso**. CLI de revisión implementada; ruta de originales desplegada
-y verificada con CSV real. Persistencia/API/pantallas de registros, conflictos y
-relaciones siguen pendientes; no se declaran sustituidas por la CLI.
+Estado al 15-nov: **en curso**. CLI y API persistente de registros/conflictos
+implementadas; confirmación del mismo valor y nueva versión del pack verificadas
+en AWS. Originales CSV también comprobados. Claims en servidor/PDF/pantallas
+siguen pendientes. Evidencia y contrato: [relevo API](T35_T37_RELEVO_API.md).
 
 ## Original en página citada
 

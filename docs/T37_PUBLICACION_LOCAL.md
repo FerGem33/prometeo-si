@@ -1,8 +1,10 @@
 # T37 — Publicación local versionada y segundo dominio
 
-Estado: fundamento local probado; **T37 sigue en curso**, sin publicación AWS,
-síntesis ni conexión de pantallas. El lote completo de 23 documentos no se da
-por aceptado por la prueba acotada siguiente.
+Estado al 15-nov: fundamento local y publicación AWS privada v1/v2 comprobados con
+dos tablas. Síntesis real HTTP200/template; no selección IA verificada. **T37
+sigue en curso** por corpus completo/lente/variantes/pantallas. Evidencia y
+contrato desplegado: [relevo API](T35_T37_RELEVO_API.md). Lo siguiente conserva
+la reproducción local; no acepta automáticamente el lote completo de 23 fuentes.
 
 ## Aprobación delegada concreta
 
