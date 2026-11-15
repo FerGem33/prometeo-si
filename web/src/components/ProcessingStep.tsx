@@ -1,28 +1,39 @@
 import { useEffect, useState } from "react";
 import { useData } from "./ctx";
 import { ChamberFigure } from "./ChamberFigure";
+import { Prefs } from "./Prefs";
+import { t, tx, many, lazy } from "../i18n";
+import type { EvaluationDraft } from "./ScenarioStep";
 
-export const PROCESSING_STEPS = [
-  "Reading documents and source tables",
-  "Detecting experimental variables and canonical units",
-  "Harmonizing test records across partitions",
-  "Computing σ-distance, study grades (A–D) and findings",
-];
+export const PROCESSING_STEPS = lazy([
+  tx("Reading documents and source tables"),
+  tx("Detecting experimental variables and canonical units"),
+  tx("Harmonizing test records across partitions"),
+  tx("Computing σ-distance, study grades (A–D) and findings"),
+]);
 
 export function ProcessingStep({
-  fileCount = 0,
+  draft,
+  fileCount,
   stepDurationMs = 620,
+  hold = false,
   onBack,
   onComplete,
 }: {
+  draft?: EvaluationDraft | null;
   fileCount?: number;
   stepDurationMs?: number;
+  /** Stay on this screen after the last step instead of opening the report (the guided tour talks over it). */
+  hold?: boolean;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (finalDraft?: EvaluationDraft) => void;
 }) {
-  const { pack, lens } = useData();
+  const { pack: demoPack, lens: demoLens } = useData();
+  const pack = draft?.pack ?? demoPack;
+  const lens = draft?.lens ?? demoLens;
   const [currentStep, setCurrentStep] = useState(0);
   const s = pack.meta.stats;
+  const effectiveFileCount = draft?.docs?.length ?? fileCount ?? 0;
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -30,13 +41,13 @@ export function ProcessingStep({
       timer = setTimeout(() => {
         setCurrentStep((prev) => prev + 1);
       }, stepDurationMs);
-    } else {
+    } else if (!hold) {
       timer = setTimeout(() => {
-        onComplete();
+        onComplete(draft ?? undefined);
       }, 380);
     }
     return () => clearTimeout(timer);
-  }, [currentStep, stepDurationMs, onComplete]);
+  }, [currentStep, stepDurationMs, onComplete, hold, draft]);
 
   const progressPct = Math.min(100, Math.round((currentStep / PROCESSING_STEPS.length) * 100));
 
@@ -44,27 +55,30 @@ export function ProcessingStep({
     <div className="screen step">
       <header className="screen-bar">
         <span>
-          <b>Prometeo</b> · Harmonizing evidence
+          <b>{t("Prometeo")}</b> {t("· Harmonizing evidence")}
         </span>
-        <button type="button" className="linkbtn" onClick={onBack}>
-          Back to scenario
+        <span className="bar-links">
+          <Prefs />
+          <button type="button" className="linkbtn" onClick={onBack}>
+          {t("Back to scenario")}
         </button>
+        </span>
       </header>
 
       <main className="step-main proc-main">
         <section className="step-panel proc-panel" role="status" aria-live="polite">
-          <p className="cover-kicker">Isometric Chamber · Evidence Harmonization</p>
-          <h1>Preparing your evidence report</h1>
+          <p className="cover-kicker">{t("Isometric Chamber · Evidence Harmonization")}</p>
+          <h1>{t("Preparing your evidence report")}</h1>
           <p className="step-lede">
-            {fileCount > 0 ? `${fileCount} staged document(s) and ` : ""}
-            {lens.byline}: {pack.studies.length} {lens.unit_of_study ?? "study"}s, {(s.tests ?? 0).toLocaleString("en-US")} individual {lens.subject ?? "tests"}.
+            {effectiveFileCount > 0 ? t("{0} staged document(s) and ", effectiveFileCount) : ""}
+            {lens.byline}: {pack.studies.length} {many(lens.unit_of_study ?? "study")}, {(s.tests ?? 0).toLocaleString("en-US")} {t("individual {0}", lens.subject ?? t("tests"))}.
           </p>
 
           <div className="proc-grid">
             <ChamberFigure step={currentStep} progressPct={progressPct} />
 
             <div className="proc-status-col">
-              <ol className="psteps" aria-label="Harmonization steps">
+              <ol className="psteps" aria-label={t("Harmonization steps")}>
                 {PROCESSING_STEPS.map((label, idx) => {
                   const isDone = idx < currentStep;
                   const isNow = idx === currentStep;
@@ -87,7 +101,7 @@ export function ProcessingStep({
                 <div
                   className="pbar"
                   role="progressbar"
-                  aria-label="Analysis progress"
+                  aria-label={t("Analysis progress")}
                   aria-valuenow={progressPct}
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -98,8 +112,8 @@ export function ProcessingStep({
               </div>
 
               <div className="proc-actions">
-                <button type="button" className="cta" onClick={onComplete}>
-                  Skip to report →
+                <button type="button" className="cta" onClick={() => onComplete(draft ?? undefined)}>
+                  {t("Skip to report →")}
                 </button>
               </div>
             </div>

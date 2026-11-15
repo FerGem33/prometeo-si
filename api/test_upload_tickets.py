@@ -354,3 +354,14 @@ def test_selected_resume_keeps_pending_durable_when_sqs_fails(completed_upload):
         service.resume('owner', 'prj_test', {'doc_ids': [did]})
     assert service.get('prj_test', did)['status'] == 'queued'
     assert service.get('prj_test', did)['dispatch_pending'] is True
+
+
+def test_full_batch_of_30_documents_then_limit():
+    repo, s3 = Repository(), S3()
+    service = UploadTickets(repo, repo, repo, s3, 'bucket-test', Limits(100, 60, 30))
+    for i in range(30):
+        service.reserve('owner', 'prj_test', {**DATA, 'name': f'doc{i}.csv'})
+    assert repo.parent['counts']['documents'] == 30 and len(s3.calls) == 30
+    with pytest.raises(ApiError) as e:
+        service.reserve('owner', 'prj_test', {**DATA, 'name': 'doc30.csv'})
+    assert e.value.status == 422 and e.value.details['limit'] == 30 and repo.parent['counts']['documents'] == 30

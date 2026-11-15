@@ -3,11 +3,12 @@ import { pool } from "../engine";
 import type { DataRecord, Finding, OverallEvidence, Pack, Scenario, StudyResult } from "../engine";
 import { useData } from "./ctx";
 import type { Mapping } from "./ctx";
-import { FINDING_LEVEL, findingText, findingTitle, OVERALL, whyText } from "../report/text";
+import { FINDING_LEVEL, findingText, findingTitle, overallText, whyText } from "../report/text";
 import { matchingHabitatPreset, allHabitatPresets } from "./HabitatFigure";
 import { scenarioValueText, varOf } from "../report/format";
-import { generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
-import { datasetCsv, datasetExport } from "../report/dataset-export";
+import { generateBibtex, generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
+import { datasetCsv, datasetExport, variableColumns } from "../report/dataset-export";
+import { t, many } from "../i18n";
 
 export type ExportScope = "all" | "comparable" | "graded";
 
@@ -31,6 +32,81 @@ export function scopeRecords(pack: Pack, scope: ExportScope, comparable: DataRec
 
 export function harmonizedCsv(pack: Pack, records: DataRecord[] = pack.records, mapping?: Mapping): string {
   return datasetCsv(pack, records, mapping);
+}
+
+/** The same records as `harmonizedCsv`, as JSON: values keep their engine shape (numeric ranges as [min, max]). */
+export function harmonizedJson(pack: Pack, records: DataRecord[] = pack.records): string {
+  const shorts = new Map(pack.studies.map((s) => [s.id, s.short]));
+  const files = new Map(pack.sources.map((s) => [s.id, s.name]));
+  return JSON.stringify(
+    {
+      pack: pack.meta.id,
+      created_at: pack.meta.created_at,
+      source_note: pack.meta.source_note,
+      records: records.map((r) => ({ ...r, study_short: shorts.get(r.study) ?? null, source_file: files.get(r.source.id) ?? null })),
+    },
+    null,
+    2,
+  );
+}
+
+/** Column-by-column description of the harmonized export, so the CSV can be used without reading the code. */
+export function dataDictionary(pack: Pack) {
+  const part = pack.schema.variables.find((v) => v.type === "cat" && v.role === "partition");
+  const has = (id: string) => pack.records.filter((r) => r.values[id] !== undefined && r.values[id] !== "").length;
+  const flags = [...new Set(pack.records.flatMap((r) => r.flags))].sort();
+  return {
+    pack: pack.meta.id,
+    title: pack.meta.title,
+    created_at: pack.meta.created_at,
+    source_note: pack.meta.source_note,
+    license: pack.meta.license ?? null,
+    records: pack.records.length,
+    variables: pack.schema.variables.map((v) => ({
+      id: v.id,
+      label: v.long ?? v.label,
+      type: v.type,
+      unit: v.type === "num" ? v.unit : null,
+      role: v.type === "cat" ? (v.role ?? null) : null,
+      range: v.type === "num" ? v.range : null,
+      sigma: v.type === "num" ? v.sigma : null,
+      display_units: v.type === "num" ? (v.display_units ?? []) : [],
+      csv_columns: variableColumns(v),
+      records_with_value: has(v.id),
+    })),
+    thresholds: pack.schema.thresholds,
+    flags: flags.map((id) => ({
+      id,
+      label: pack.schema.flags?.[id]?.label ?? null,
+      note: pack.schema.flags?.[id]?.note ?? null,
+      records: pack.records.filter((r) => r.flags.includes(id)).length,
+    })),
+    notes: [
+      "An empty cell means the source does not record the value; it is not a zero.",
+      "Numeric variables are ranges in the canonical unit: <id>_min [unit] and <id>_max [unit].",
+      "<id>_original columns keep the value before a reviewer correction; <id>_source_text and <id>_source_unit keep the cell as the source wrote it.",
+      ...(part ? [`${part.id} separates records that are never compared with each other.`] : []),
+      "source_file, source_row and source_page point to the origin of each record; flags are separated by |.",
+    ],
+  };
+}
+
+export function dataDictionaryMd(pack: Pack): string {
+  const d = dataDictionary(pack);
+  const cell = (s: unknown) => String(s ?? "").replace(/\|/g, "\\|");
+  return [
+    `# Data dictionary · ${d.title}`,
+    "",
+    `${d.source_note}. Pack \`${d.pack}\`, ${d.created_at}, ${d.records} records.`,
+    "",
+    "| CSV columns | Variable | Type | Canonical unit | Range | Records with value |",
+    "|---|---|---|---|---|---|",
+    ...d.variables.map((v) => `| \`${v.csv_columns.join("`, `")}\` | ${cell(v.label)} | ${v.role ?? v.type} | ${cell(v.unit)} | ${v.range ? v.range.join("–") : ""} | ${v.records_with_value} |`),
+    "",
+    ...(d.flags.length ? ["| Flag | Meaning | Records |", "|---|---|---|", ...d.flags.map((f) => `| \`${f.id}\` | ${cell(f.label ?? f.note)} | ${f.records} |`), ""] : []),
+    ...d.notes.map((n) => `- ${n}`),
+    "",
+  ].join("\n");
 }
 
 export function caseResultCsv(pack: Pack, ranking: StudyResult[]): string {
@@ -92,10 +168,11 @@ export function DossierModal({
     const parts = scenario.active
       .filter((id) => scenario.values[id] !== undefined && scenario.values[id] !== "")
       .map((id) => `${varOf(pack, id).label}: ${scenarioValueText(pack, id, scenario.values[id])}`);
-    return `${presetObj ? presetObj.label : "Custom scenario"} (${parts.join(" · ") || "no active variables"})`;
+    return `${presetObj ? presetObj.label : t("Custom scenario")} (${parts.join(" · ") || t("no active variables")})`;
   }, [pack, presetObj, scenario]);
 
   const top6 = useMemo(() => ranking.slice(0, 6), [ranking]);
+  const bibtex = useMemo(() => generateBibtex(pack), [pack]);
   const comparable = useMemo(() => pool(pack, scenario), [pack, scenario]);
   const scopedRecords = useMemo(
     () => scopeRecords(pack, scope, comparable, ranking),
@@ -108,7 +185,7 @@ export function DossierModal({
       const { datacard } = await datasetExport(pack, mapping, lens, scopedRecords);
       downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}_datacard.json`, JSON.stringify(datacard, null, 2), "application/json;charset=utf-8");
     } catch (error: unknown) {
-      setToast(error instanceof Error ? error.message : "Dataset export failed.");
+      setToast(error instanceof Error ? error.message : t("Dataset export failed."));
     } finally {
       setExporting(false);
     }
@@ -121,9 +198,9 @@ export function DossierModal({
       window.setTimeout(() => setToast(null), 2000);
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(() => notify("Executive Markdown copied to clipboard"));
+      navigator.clipboard.writeText(text).then(() => notify(t("Executive Markdown copied to clipboard")));
     } else {
-      notify("Clipboard unavailable");
+      notify(t("Clipboard unavailable"));
     }
   };
 
@@ -144,7 +221,7 @@ export function DossierModal({
       className="dossier-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Evidence dossier and data export"
+      aria-label={t("Evidence dossier and data export")}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -152,27 +229,35 @@ export function DossierModal({
       <div className="dossier-paper">
         <header className="dossier-head">
           <div>
-            <p className="dossier-kicker">Prometeo · Academic Dossier &amp; Export</p>
+            <p className="dossier-kicker">{t("Prometeo · Academic Dossier & Export")}</p>
             <h2>{lens.title}</h2>
             <p className="dossier-sub">
               {lens.byline} · {pack.meta.created_at}
             </p>
           </div>
           <div className="dossier-actions noprint">
-            <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title="Copy Executive Summary formatted for Flight Directors">
-              📋 Copy Markdown Brief
+            <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title={t("Copy Executive Summary formatted for Flight Directors")}>
+              {t("Copy Markdown brief")}
             </button>
-            <button type="button" className="chip" onClick={handleDownloadMarkdown} title="Download Markdown Dossier">
-              💾 Download .md
+            <button type="button" className="chip" onClick={handleDownloadMarkdown} title={t("Download Markdown Dossier")}>
+              {t("Download .md")}
             </button>
-            <button type="button" className="chip" onClick={handleDownloadJson} title="Export full JSON evidence pack">
-              📦 Export JSON
+            <button type="button" className="chip" onClick={handleDownloadJson} title={t("Export the scenario, ranking and findings as JSON")}>
+              {t("Export dossier JSON")}
             </button>
-            <button type="button" className="chip" onClick={() => window.print()} title="Print or save as official NASA PDF">
-              📄 Print / PDF
+            <button
+              type="button"
+              className="chip"
+              onClick={() => downloadFile("prometeo.pack.json", JSON.stringify(pack, null, 2), "application/json;charset=utf-8")}
+              title={t("Download the processed evidence pack: sources, harmonized records and SHA-256 checksums")}
+            >
+              {t("Download pack JSON")}
+            </button>
+            <button type="button" className="chip" onClick={() => window.print()} title={t("Print or save as official NASA PDF")}>
+              {t("Print / PDF")}
             </button>
             <button type="button" className="chip" onClick={onClose}>
-              Close ✕
+              {t("Close")}
             </button>
           </div>
         </header>
@@ -184,32 +269,32 @@ export function DossierModal({
         )}
 
         <section className="dossier-sec">
-          <h3>Scenario &amp; summary</h3>
+          <h3>{t("Scenario & summary")}</h3>
           <p>
-            <b>Proposed scenario:</b> {scenarioSummary}
+            <b>{t("Proposed scenario:")}</b> {scenarioSummary}
           </p>
           {goal.trim() && (
             <p>
-              <b>Question:</b> “{goal.trim()}”
+              <b>{t("Question:")}</b> “{goal.trim()}”
             </p>
           )}
           <p>
-            <b>Overall evidence:</b> {OVERALL[overall.level]}. Grades: <b>A {overall.counts.A}</b> ·{" "}
-            <b>B {overall.counts.B}</b> · <b>C {overall.counts.C}</b> · <b>D {overall.counts.D}</b> across{" "}
-            {pack.studies.length} {lens.unit_of_study ?? "study"}s ({comparable.length.toLocaleString("en-US")}{" "}
-            comparable tests).
+            <b>{t("Overall evidence:")}</b> {overallText(overall.level)}{t(". Grades:")} <b>A {overall.counts.A}</b> ·{" "}
+            <b>B {overall.counts.B}</b> · <b>C {overall.counts.C}</b> · <b>D {overall.counts.D}</b> {t("across")}{" "}
+            {pack.studies.length} {many(lens.unit_of_study ?? "study")} ({comparable.length.toLocaleString("en-US")}{" "}
+            {t("comparable tests).")}
           </p>
         </section>
 
         <section className="dossier-sec">
-          <h3>Nearest {lens.unit_of_study ?? "study"}s (top 6)</h3>
+          <h3>{t("Nearest")} {many(lens.unit_of_study ?? "study")} {t("(top 6)")}</h3>
           <table className="dossier-table">
             <thead>
               <tr>
-                <th>Grade</th>
-                <th>Study</th>
-                <th>Basis</th>
-                <th>Nearest record</th>
+                <th>{t("Grade")}</th>
+                <th>{t("Study")}</th>
+                <th>{t("Basis")}</th>
+                <th>{t("Nearest record")}</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +311,7 @@ export function DossierModal({
                     </td>
                     <td>{r.why.map((w) => whyText(pack, lens, w)).join(" · ")}</td>
                     <td className="mono">
-                      {rec ? `${rec.id} (row ${rec.source.row ?? "–"})` : "–"}
+                      {rec ? t("{0} (row {1})", rec.id, rec.source.row ?? "–") : "–"}
                     </td>
                   </tr>
                 );
@@ -236,7 +321,7 @@ export function DossierModal({
         </section>
 
         <section className="dossier-sec">
-          <h3>Key findings ({findings.length})</h3>
+          <h3>{t("Key findings (")}{findings.length})</h3>
           <ul className="dossier-list">
             {findings.slice(0, 6).map((f, i) => (
               <li key={i}>
@@ -249,15 +334,29 @@ export function DossierModal({
           </ul>
         </section>
 
+        <section className="dossier-sec">
+          <h3>{t("References (BibTeX)")}</h3>
+          {bibtex ? (
+            <>
+              <pre className="dossier-bib">{bibtex}</pre>
+              <button type="button" className="chip noprint" onClick={() => downloadFile(`prometeo_${pack.meta.id}_${dateTag}.bib`, bibtex, "application/x-bibtex;charset=utf-8")}>
+                {t("Download BibTeX")}
+              </button>
+            </>
+          ) : (
+            <p>{t("No DOI was found in the documents of this corpus, so no BibTeX entry can be written.")}</p>
+          )}
+        </section>
+
         <section className="dossier-sec noprint">
-          <h3>Export harmonized datasets</h3>
+          <h3>{t("Export harmonized datasets")}</h3>
           <div className="dossier-export-bar">
             <label>
-              Scope:{" "}
+              {t("Scope:")}{" "}
               <select disabled={exporting} value={scope} onChange={(e) => setScope(e.target.value as ExportScope)}>
-                <option value="comparable">Comparable tests ({comparable.length})</option>
-                <option value="graded">Graded A–C studies</option>
-                <option value="all">Full corpus ({pack.records.length})</option>
+                <option value="comparable">{t("Comparable tests (")}{comparable.length})</option>
+                <option value="graded">{t("Graded A–C studies")}</option>
+                <option value="all">{t("Full corpus (")}{pack.records.length})</option>
               </select>
             </label>
             <button
@@ -267,16 +366,16 @@ export function DossierModal({
                 try {
                   downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}.csv`, harmonizedCsv(pack, scopedRecords, mapping));
                 } catch (error: unknown) {
-                  setToast(error instanceof Error ? error.message : "Dataset export failed.");
+                  setToast(error instanceof Error ? error.message : t("Dataset export failed."));
                 }
               }}
             >
-              Download records CSV ({scopedRecords.length})
+              {t("Download records CSV (")}{scopedRecords.length})
             </button>
             <button type="button" className="chip" disabled={exporting} onClick={handleDatacard}>
-              {exporting ? "Preparing datacard…" : "Download datacard JSON"}
+              {exporting ? t("Preparing datacard…") : t("Download datacard JSON")}
             </button>
-            <p>Dataset export: split by study. Predictive performance is not assessed.</p>
+            <p>{t("Dataset export: split by study. Predictive performance is not assessed.")}</p>
             <button
               type="button"
               className="chip"
@@ -284,7 +383,34 @@ export function DossierModal({
                 downloadFile(`prometeo_${pack.meta.id}_ranking_${dateTag}.csv`, caseResultCsv(pack, ranking))
               }
             >
-              Download ranking CSV
+              {t("Download ranking CSV")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}.json`, harmonizedJson(pack, scopedRecords), "application/json;charset=utf-8")
+              }
+            >
+              {t("Download records JSON")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_data_dictionary.md`, dataDictionaryMd(pack), "text/markdown;charset=utf-8")
+              }
+            >
+              {t("Download data dictionary (.md)")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_data_dictionary.json`, JSON.stringify(dataDictionary(pack), null, 2), "application/json;charset=utf-8")
+              }
+            >
+              {t("Download data dictionary (.json)")}
             </button>
             <button
               type="button"
@@ -297,7 +423,7 @@ export function DossierModal({
                 )
               }
             >
-              Download dossier (.md)
+              {t("Download dossier (.md)")}
             </button>
           </div>
         </section>

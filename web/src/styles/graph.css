@@ -1,42 +1,71 @@
-/* Evidence network. Paper, ink, one accent; shape and letter carry the grade, never color alone. */
-.kg-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 20px; align-items: start; border-top: 1px solid var(--ink); padding-top: 10px; }
-.kg-plot svg { width: 100%; height: auto; display: block; }
-.kg-status { font-family: var(--sans); font-size: 12px; color: var(--ink-2); min-height: 2.6em; margin-top: 4px; }
-.ge { stroke: var(--ink-3); stroke-width: 1; opacity: .45; }
-.ge.rel { stroke: var(--ink); stroke-width: 2; opacity: .7; }
-.ge.on { stroke: var(--accent); opacity: 1; }
-.ge.off { opacity: .1; }
-.ge:hover { stroke: var(--accent); opacity: 1; }
-.gnode { cursor: pointer; outline: none; }
-.gnode.dim { opacity: .35; }
-.gnode.dd { opacity: .6; }
-.gnode.dd.dim { opacity: .3; }
-.gn { stroke-width: 1.5; stroke: var(--ink); }
-.gn-A { fill: var(--grade-a); }
-.gn-B { fill: var(--grade-b); }
-.gn-C { fill: var(--paper); }
-.gn-D { fill: var(--paper); stroke: var(--ink-3); }
-.gn-var { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
-.gn-mat { fill: var(--paper); stroke: var(--ink-3); stroke-width: 1.4; }
-.ge.aux { stroke: var(--ink-3); opacity: .28; }
-.gid-var { font-weight: 600; fill: var(--accent); }
-.gid-mat { fill: var(--ink-3); }
-.sep-dot { color: var(--rule); margin: 0 2px; }
-.gnode.sel .gn, .gnode:focus-visible .gn { stroke: var(--accent); stroke-width: 3; }
-.gl { font-family: var(--sans); font-size: 11px; font-weight: 600; fill: var(--paper); pointer-events: none; }
-.gn-C ~ .gl, .gn-D ~ .gl { fill: var(--ink); }
-.gid { font-family: var(--sans-c); font-size: 10px; fill: var(--ink-2); pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
-.kg-side { font-family: var(--sans); font-size: 12.5px; line-height: 1.45; color: var(--ink-2); border-left: 1px solid var(--rule); padding-left: 16px; min-height: 120px; }
-.kg-side h4 { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--ink); }
-.kg-sub { margin: 2px 0 8px; color: var(--ink-3); }
-.kg-side dt { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-top: 8px; }
-.kg-side dd { margin: 2px 0 0; }
-.kg-side ul { list-style: none; padding: 0; }
-.kg-side li { margin-bottom: 3px; }
-.kg-empty { color: var(--ink-3); }
-.kg-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-family: var(--sans); font-size: 12px; color: var(--ink-2); padding: 8px 0; border-bottom: 1px solid var(--rule-2); }
-.kg-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.kg-alt { margin-top: 8px; font-family: var(--sans); font-size: 12.5px; }
+/* Evidence network. The one figure that is allowed soft shadows: nodes and panels float over the canvas.
+   Letter, size and dash carry the grade, never colour alone. */
+.kg-stage { position: relative; border: 1px solid var(--rule); border-radius: 4px; background: var(--paper); overflow: hidden; }
+.kg-stage svg { display: block; width: 100%; height: auto; touch-action: pan-x pan-y; user-select: none; }
+.kg-dot { fill: var(--rule); }
+
+.ge { stroke: var(--ink-3); stroke-width: 1; opacity: .28; transition: opacity .25s, stroke .25s; }
+.ge.rel { stroke: var(--ink-2); stroke-width: 1.8; opacity: .5; }
+.kg-stage.focus .ge { opacity: .07; }
+.ge.on, .kg-stage.focus .ge.on { stroke: var(--accent); opacity: .9; }
+.ge:hover { stroke: var(--accent); opacity: .9; }
+
+.gnode { cursor: grab; outline: none; transition: opacity .25s; touch-action: none; }
+.kg-stage.dragging .gnode { cursor: grabbing; }
+.gnode.dim { opacity: .22; }
+.gn { stroke: var(--paper); stroke-width: 2; filter: drop-shadow(0 2px 3px rgba(29, 28, 26, .28)); transition: r .3s, fill .3s; }
+.gnode:hover .gn, .gnode:focus-visible .gn { filter: drop-shadow(0 5px 9px rgba(29, 28, 26, .34)); }
+.gnode.gA .gn { fill: var(--grade-a); }
+.gnode.gB .gn { fill: var(--grade-b); }
+.gnode.gC .gn { fill: var(--ink-2); }
+.gnode.gD .gn { fill: var(--paper); stroke: var(--ink-3); stroke-width: 1.2; stroke-dasharray: 3 2.5; filter: drop-shadow(0 1px 2px rgba(29, 28, 26, .16)); }
+.gnode.sel .gn, .gnode:focus-visible .gn { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: none; }
+.gring { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: .55; transform-origin: center; transform-box: fill-box; animation: kg-pulse 2.6s ease-in-out infinite; }
+@keyframes kg-pulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.18); opacity: .12; } }
+.gl { font-family: var(--sans); font-weight: 700; fill: var(--paper); pointer-events: none; }
+.gnode.gD .gl { fill: var(--ink-3); }
+.gid { font-family: var(--sans); font-size: 11.5px; font-weight: 500; fill: var(--ink-2); pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
+.gnode.gD .gid { fill: var(--ink-3); font-weight: 400; font-size: 10px; }
+.gnode.sel .gid, .gnode:hover .gid { fill: var(--ink); font-weight: 600; }
+
+/* floating pieces */
+.kg-tools { position: absolute; top: 12px; left: 12px; }
+.kg-float-btn { font-family: var(--sans); font-size: calc(12 * var(--fz)); color: var(--ink-2); background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 4px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(29, 28, 26, .1); }
+.kg-float-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+.kg-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; max-width: calc(100% - 24px); font-family: var(--sans); font-size: calc(11.5 * var(--fz)); color: var(--ink-2); background: var(--paper); border: 1px solid var(--rule-2); border-radius: 3px; padding: 5px 10px; box-shadow: 0 2px 8px rgba(29, 28, 26, .1); }
+.kg-legend span { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.kg-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-family: var(--sans); font-size: calc(10 * var(--fz)); font-weight: 700; font-style: normal; color: var(--paper); flex: none; }
+.kg-badge.gA { background: var(--grade-a); } .kg-badge.gB { background: var(--grade-b); } .kg-badge.gC { background: var(--ink-2); }
+.kg-badge.gD { background: var(--paper); color: var(--ink-3); border: 1px dashed var(--ink-3); }
+.kg-line { display: inline-block; width: 20px; border-top: 1px solid var(--ink-3); }
+.kg-line.rel { border-top: 2px solid var(--ink-2); }
+.kg-status { position: absolute; right: 12px; bottom: 12px; max-width: 46%; font-family: var(--sans); font-size: calc(11.5 * var(--fz)); line-height: 1.35; color: var(--ink-3); text-align: right; background: var(--paper); border-radius: 3px; padding: 4px 8px; pointer-events: none; }
+.kg-card { position: absolute; top: 12px; right: 12px; width: calc(300 * var(--fz)); max-height: calc(100% - 64px); overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px 12px; font-family: var(--sans); font-size: calc(12.5 * var(--fz)); line-height: 1.45; color: var(--ink-2); box-shadow: 0 10px 28px rgba(29, 28, 26, .16), 0 2px 6px rgba(29, 28, 26, .08); animation: kg-in .18s ease-out; }
+@keyframes kg-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.kg-card header { display: flex; align-items: center; gap: 8px; }
+.kg-card h4 { font-family: var(--serif); font-size: calc(19 * var(--fz)); font-weight: 500; color: var(--ink); flex: 1; line-height: 1.2; }
+.kg-card .kg-badge { width: 22px; height: 22px; font-size: calc(12 * var(--fz)); }
+.kg-close { background: none; border: 0; font-size: calc(20 * var(--fz)); line-height: 1; color: var(--ink-3); cursor: pointer; padding: 0 2px; }
+.kg-close:hover { color: var(--accent); }
+.kg-sub { margin: 3px 0 8px; color: var(--ink-3); font-size: calc(12 * var(--fz)); }
+.kg-card dt { font-size: calc(10.5 * var(--fz)); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-top: 9px; }
+.kg-card dd { margin: 2px 0 0; }
+.kg-card ul { list-style: none; padding: 0; }
+.kg-card li { margin-bottom: 3px; }
+.kg-alt { margin-top: 8px; font-family: var(--sans); font-size: calc(12.5 * var(--fz)); }
 .kg-alt summary { cursor: pointer; color: var(--ink-2); }
-@media (max-width: 800px) { .kg-grid { grid-template-columns: 1fr; } .kg-side { border-left: 0; padding-left: 0; } }
-@media print { .kg-alt { display: none; } }
+
+@media (max-width: 800px) {
+  .kg-stage { overflow-x: auto; }
+  .kg-stage svg { min-width: 720px; }
+  .kg-tools { position: static; padding: 8px 10px 0; }
+  .kg-card { position: static; width: auto; max-height: none; box-shadow: none; border: 0; border-top: 1px solid var(--rule); border-radius: 0; }
+  .kg-status { display: none; }
+  .kg-legend { position: static; border: 0; box-shadow: none; border-top: 1px solid var(--rule-2); border-radius: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .gring, .kg-card { animation: none; } }
+@media print {
+  .kg-alt, .kg-status { display: none; }
+  .gn { filter: none; }
+  .kg-card, .kg-legend { position: static; box-shadow: none; width: auto; max-height: none; }
+}

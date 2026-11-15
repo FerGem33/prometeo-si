@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { playMissionIgnition } from "../report/sound";
+import { t } from "../i18n";
 
 export interface LaunchButtonProps {
   onLaunch: () => void;
@@ -16,7 +17,7 @@ const CROWN_TONGUES = Array.from({ length: 16 }, (_, i) => i * (360 / 16));
 
 export function LaunchButton({
   onLaunch,
-  label = "Begin evaluation",
+  label = t("Begin evaluation"),
   className = "cta big",
   autoFocus,
   disabled,

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createProject, deleteProject, duplicateProject, listProjects, renameProject, saveExploration } from "./workspace";
+import { createProject, deleteProject, duplicateProject, listProjects, renameProject, sanitize, saveExploration } from "./workspace";
+import { createMemoryCustomStore } from "./customStore";
+import type { EvaluationDraft } from "../components/ScenarioStep";
 
 function mockStorage(failWrites = false) {
   const m = new Map<string, string>();
@@ -72,5 +74,28 @@ describe("workspace", () => {
   it("reports failed writes", () => {
     mockStorage(true);
     expect(createProject("A", "", "pk").ok).toBe(false);
+  });
+});
+
+describe("custom evaluations in the workspace", () => {
+  beforeEach(() => {
+    mockStorage();
+  });
+
+  it("keeps the reference to a custom evaluation and drops a malformed one", () => {
+    const p = createProject("Mine", "", "custom_pack").project!;
+    saveExploration(p.id, sc, ax, d(1), [], { id: "eval-1", title: "Batch", docs: 23, variables: 135 });
+    const ex = listProjects()[0].explorations[0];
+    expect(ex.custom).toEqual({ id: "eval-1", title: "Batch", docs: 23, variables: 135 });
+    expect(sanitize([{ id: "p", name: "n", explorations: [{ id: "e", scenario: sc, axes: ax, custom: { title: "no id" } }] }])[0].explorations[0].custom).toBeUndefined();
+  });
+
+  it("stores and returns a custom draft in the memory fallback store", async () => {
+    const store = createMemoryCustomStore();
+    const draft = { isCustomCorpus: true } as unknown as EvaluationDraft;
+    await store.save({ id: "eval-1", savedAt: "2026-11-15T00:00:00Z", draft });
+    expect(await store.list()).toEqual(["eval-1"]);
+    expect((await store.get("eval-1"))?.draft).toBe(draft);
+    expect(await store.get("missing")).toBeNull();
   });
 });

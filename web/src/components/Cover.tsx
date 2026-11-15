@@ -8,21 +8,23 @@ import { LaunchButton } from "./LaunchButton";
 import { scenarioValueText } from "../report/format";
 import { NASA_MISSION_PRESETS } from "./presets";
 import { getSoundEnabled, playTelemetryClick, setSoundEnabled } from "../report/sound";
+import { Prefs } from "./Prefs";
+import { t, tx, many, lazy } from "../i18n";
 
-const HOW: [string, string][] = [
+const HOW: [string, string][] = lazy([
   [
-    "Bring your papers",
-    "Reports, articles and experiment tables on any subject. Prometeo reads them and keeps the source of every value.",
+    tx("Bring your papers"),
+    tx("Reports, articles and experiment tables on any subject. Prometeo reads them and keeps the source of every value."),
   ],
   [
-    "Describe your case",
-    "Say what you want to do and set the conditions you have in mind. Start from a ready-made setting or from scratch.",
+    tx("Describe your case"),
+    tx("Say what you want to do and set the conditions you have in mind. Start from a ready-made setting or from scratch."),
   ],
   [
-    "Read the evidence",
-    "See what has been studied under your conditions, how close it comes, and where nobody has looked. Every figure links to its source.",
+    tx("Read the evidence"),
+    tx("See what has been studied under your conditions, how close it comes, and where nobody has looked. Every figure links to its source."),
   ],
-];
+]);
 
 /**
  * Landing in article style. The hero fits one viewport; the explanation and isometric apparatus plates follow below.
@@ -47,10 +49,10 @@ export function Cover({
   const activeHabPreset = presets.find((p) => p.id === selectedHab);
   const activeHabScenario = selectedHab === "custom" ? { values: { o2: 21, p: 1, material: "PMMA" }, active: ["o2", "p", "material"] } : habitatScenario(lens, selectedHab);
   const facts: [string, string][] = [
-    [String(pack.studies.length), `${unit}s`],
-    [(s.tests ?? 0).toLocaleString("en-US"), `individual ${lens.subject ?? "tests"}`],
-    [String(s.publications ?? 0), "linked publications"],
-    [String(s.sources ?? 0), "source tables, each with a checksum"],
+    [String(pack.studies.length), `${many(unit)}`],
+    [(s.tests ?? 0).toLocaleString("en-US"), t("individual {0}", lens.subject ?? "tests")],
+    [String(s.publications ?? 0), t("linked publications")],
+    [String(s.sources ?? 0), t("source tables, each with a checksum")],
   ];
 
   return (
@@ -58,9 +60,10 @@ export function Cover({
       <section className="hero">
         <header className="screen-bar">
           <span>
-            <b>Prometeo</b> · Evidence portals
+            <b>{t("Prometeo")}</b> {t("· Evidence portals")}
           </span>
           <span className="bar-links">
+            <Prefs />
             <button
               type="button"
               className="linkbtn sound-toggle"
@@ -70,15 +73,15 @@ export function Cover({
                 setSoundEnabled(next);
                 if (next) playTelemetryClick();
               }}
-              title={soundOn ? "Mute telemetry sounds" : "Enable telemetry sounds"}
+              title={soundOn ? t("Mute telemetry sounds") : t("Enable telemetry sounds")}
             >
-              {soundOn ? "🔊 SFX ON" : "🔇 SFX OFF"}
+              {soundOn ? t("SFX on") : t("SFX off")}
             </button>
             <button type="button" className="linkbtn" onClick={onWorkspace}>
-              Workspace
+              {t("Workspace")}
             </button>
             <a href="#how" className="linkbtn">
-              How it works
+              {t("How it works")}
             </a>
           </span>
         </header>
@@ -86,19 +89,19 @@ export function Cover({
           <img
             className="cover-logo"
             src="/logo-mark-float-512.png"
-            alt="Prometeo emblem"
+            alt={t("Prometeo emblem")}
             width={220}
             height={220}
           />
-          <p className="cover-kicker">From papers to a portal of cited knowledge</p>
-          <h1 className="cover-title">Know what the literature already shows about your idea</h1>
+          <p className="cover-kicker">{t("From papers to a portal of cited knowledge")}</p>
+          <h1 className="cover-title">{t("Know what the literature already shows about your idea")}</h1>
           <p className="cover-lede">
-            Bring your papers and say what you want to do. Prometeo builds a portal around it: what has been studied under your conditions, how solid it is, and where nobody has looked.
+            {t("Bring your papers and say what you want to do. Prometeo builds a portal around it: what has been studied under your conditions, how solid it is, and where nobody has looked.")}
           </p>
           <div className="cover-ctas">
-            <LaunchButton label="Begin evaluation" className="cta big" onLaunch={() => onStart()} autoFocus />
+            <LaunchButton label={t("Begin evaluation")} className="cta big" onLaunch={() => onStart()} autoFocus />
             <button type="button" className="ghostbtn big" onClick={onDemo}>
-              See the example report
+              {t("See the example report")}
             </button>
           </div>
         </div>
@@ -106,10 +109,10 @@ export function Cover({
 
       <section className="mission-profiles-sec">
         <div className="section-head">
-          <p className="cover-kicker">NASA Reference Profiles</p>
-          <h2>One-Click Mission Evaluations</h2>
+          <p className="cover-kicker">{t("NASA Reference Profiles")}</p>
+          <h2>{t("One-Click Mission Evaluations")}</h2>
           <p className="section-desc">
-            Select a verified space exploration mission setting to evaluate its flammability regime and empirical evidence coverage instantly against the 1,889 NASA PSI tests.
+            {t("Select a verified space exploration mission setting to evaluate its flammability regime and empirical evidence coverage instantly against the 1,889 NASA PSI tests.")}
           </p>
         </div>
         <div className="mission-profiles-grid">
@@ -130,8 +133,8 @@ export function Cover({
               </div>
               <div className="mission-card-params">
                 <span><b>O₂:</b> {m.scenario.o2}%</span>
-                <span><b>Pressure:</b> {m.scenario.p} atm</span>
-                <span><b>Material:</b> {m.scenario.material}</span>
+                <span><b>{t("Pressure:")}</b> {m.scenario.p} {t("atm")}</span>
+                <span><b>{t("Material:")}</b> {m.scenario.material}</span>
               </div>
               <button
                 type="button"
@@ -144,7 +147,7 @@ export function Cover({
                   onStart(s);
                 }}
               >
-                Evaluate profile →
+                {t("Evaluate profile →")}
               </button>
             </div>
           ))}
@@ -152,7 +155,7 @@ export function Cover({
       </section>
 
       <section className="how" id="how">
-        <h2>How it works</h2>
+        <h2>{t("How it works")}</h2>
         <ol>
           {HOW.map(([t, d], i) => (
             <li key={t}>
@@ -165,7 +168,7 @@ export function Cover({
       </section>
 
       <section className="example">
-        <h2>The example corpus in this demo</h2>
+        <h2>{t("The example corpus in this demo")}</h2>
         <p>{lens.byline}.</p>
         <dl className="cover-facts">
           {facts.map(([n, label]) => (
@@ -178,15 +181,15 @@ export function Cover({
 
         <div className="cover-iso-showcase">
           <div className="cover-iso-bar">
-            <span className="cover-iso-title">Interactive isometric apparatus &amp; habitats</span>
-            <div className="presets" role="group" aria-label="Isometric plate selector">
+            <span className="cover-iso-title">{t("Interactive isometric apparatus & habitats")}</span>
+            <div className="presets" role="group" aria-label={t("Isometric plate selector")}>
               <button
                 type="button"
                 className="chip"
                 aria-pressed={plateMode === "chamber"}
                 onClick={() => setPlateMode("chamber")}
               >
-                CIR / BASS Combustion Chamber
+                {t("CIR / BASS Combustion Chamber")}
               </button>
               <button
                 type="button"
@@ -194,7 +197,7 @@ export function Cover({
                 aria-pressed={plateMode === "habitats"}
                 onClick={() => setPlateMode("habitats")}
               >
-                Reference Habitats (6)
+                {t("Reference Habitats (6)")}
               </button>
               <button
                 type="button"
@@ -202,7 +205,7 @@ export function Cover({
                 aria-pressed={plateMode === "bench"}
                 onClick={() => setPlateMode("bench")}
               >
-                Optical Test Bench
+                {t("Optical Test Bench")}
               </button>
             </div>
           </div>
@@ -211,14 +214,14 @@ export function Cover({
 
           {plateMode === "habitats" && (
             <div className="cover-habitats-showcase">
-              <div className="design-hero-stage" role="region" aria-label="Selected habitat animation preview">
+              <div className="design-hero-stage" role="region" aria-label={t("Selected habitat animation preview")}>
                 <div className="design-hero-visual">
                   <HabitatFigure name={selectedHab} size="xl" />
                 </div>
                 <div className="design-hero-info">
-                  <span className="design-hero-kicker">Selected reference design · Live isometric telemetry</span>
-                  <h3>{activeHabPreset ? activeHabPreset.label : "Custom control bench"}</h3>
-                  <p>{activeHabPreset ? activeHabPreset.blurb : "Open experimental test rig with manual variable controls across the full NASA PSI corpus."}</p>
+                  <span className="design-hero-kicker">{t("Selected reference design · Live isometric telemetry")}</span>
+                  <h3>{activeHabPreset ? activeHabPreset.label : t("Custom control bench")}</h3>
+                  <p>{activeHabPreset ? activeHabPreset.blurb : t("Open experimental test rig with manual variable controls across the full NASA PSI corpus.")}</p>
                   <div className="design-hero-pills">
                     {activeHabScenario.active.map((id) => (
                       <span key={id} className="design-pill">
@@ -228,12 +231,12 @@ export function Cover({
                     ))}
                   </div>
                   <small className="design-hero-src">
-                    {activeHabPreset ? activeHabPreset.source : "Manual variable rig · Full corpus comparison"}
+                    {activeHabPreset ? activeHabPreset.source : t("Manual variable rig · Full corpus comparison")}
                   </small>
                 </div>
               </div>
 
-              <div className="cover-habitats-grid" role="group" aria-label="Select a habitat design to preview">
+              <div className="cover-habitats-grid" role="group" aria-label={t("Select a habitat design to preview")}>
                 {presets.map((p) => (
                   <button
                     key={p.id}
@@ -254,8 +257,8 @@ export function Cover({
                   onClick={() => setSelectedHab("custom")}
                 >
                   <HabitatFigure name="custom" size="sm" />
-                  <b>Custom bench</b>
-                  <small>Manual variable rig</small>
+                  <b>{t("Custom bench")}</b>
+                  <small>{t("Manual variable rig")}</small>
                 </button>
               </div>
             </div>
@@ -265,7 +268,7 @@ export function Cover({
         </div>
 
         <div className="cover-ctas">
-          <LaunchButton label="Begin evaluation" className="cta" onLaunch={() => onStart()} />
+          <LaunchButton label={t("Begin evaluation")} className="cta" onLaunch={() => onStart()} />
         </div>
       </section>
 

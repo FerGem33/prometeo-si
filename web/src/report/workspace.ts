@@ -2,9 +2,12 @@ import type { Scenario } from "../engine";
 import { loadJson, newId, saveJson } from "./storage";
 import { cleanExtras } from "../state";
 import type { Axes, Extra } from "../state";
+import { t } from "../i18n";
 
 /** Browser-local projects. No accounts, no server: everything lives in this browser's storage. */
-export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[] };
+/** A reference to a custom evaluation kept in IndexedDB (see customStore.ts); counts are copied so the list works without it. */
+export type CustomRef = { id: string; title: string; docs: number; variables: number };
+export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[]; custom?: CustomRef };
 export type Project = {
   id: string;
   name: string;
@@ -30,7 +33,14 @@ function cleanExploration(x: unknown): SavedExploration | null {
     scenario: { values: sc.values as Scenario["values"], active: sc.active.filter((a): a is string => typeof a === "string") },
     axes: { x: x.axes.x, y: x.axes.y },
     extras: cleanExtras(x.extras),
+    custom: cleanCustom(x.custom),
   };
+}
+
+function cleanCustom(c: unknown): CustomRef | undefined {
+  if (!isObj(c) || typeof c.id !== "string") return undefined;
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  return { id: c.id, title: typeof c.title === "string" ? c.title : "", docs: n(c.docs), variables: n(c.variables) };
 }
 
 /** Drops anything malformed so corrupt storage never breaks the screen. */
@@ -73,8 +83,8 @@ function commit(next: Project[], project?: Project): Result {
 const stamp = (now?: Date) => (now ?? new Date()).toISOString();
 
 export function createProject(name: string, intent: string, packId: string, now?: Date): Result {
-  const t = stamp(now);
-  const p: Project = { id: newId("proj"), name: name.trim() || "Untitled project", intent: intent.trim(), packId, explorations: [], createdAt: t, modifiedAt: t };
+  const at = stamp(now);
+  const p: Project = { id: newId("proj"), name: name.trim() || t("Untitled project"), intent: intent.trim(), packId, explorations: [], createdAt: at, modifiedAt: at };
   return commit([...all(), p], p);
 }
 
@@ -95,15 +105,15 @@ export function duplicateProject(id: string, intent: string, now?: Date): Result
   const list = all();
   const src = list.find((p) => p.id === id);
   if (!src) return { ok: false, projects: sortByModified(list) };
-  const t = stamp(now);
+  const at = stamp(now);
   const copy: Project = {
     ...src,
     id: newId("proj"),
-    name: `${src.name} (copy)`,
+    name: t("{0} (copy)", src.name),
     intent: intent.trim(),
     explorations: src.explorations.map((e) => ({ ...e, id: newId("exp") })),
-    createdAt: t,
-    modifiedAt: t,
+    createdAt: at,
+    modifiedAt: at,
   };
   return commit([...list, copy], copy);
 }
@@ -112,13 +122,13 @@ export function deleteProject(id: string): Result {
   return commit(all().filter((p) => p.id !== id));
 }
 
-export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date, extras: Extra[] = []): Result {
+export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date, extras: Extra[] = [], custom?: CustomRef): Result {
   const t = stamp(now);
-  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes }, extras: extras.map((x) => ({ ...x })) };
+  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes }, extras: extras.map((x) => ({ ...x })), ...(custom ? { custom: { ...custom } } : {}) };
   return update(id, (p) => ({ ...p, explorations: [...p.explorations, e], modifiedAt: t }));
 }
 
 export function formatDate(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "unknown date" : d.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+  return Number.isNaN(d.getTime()) ? t("unknown date") : d.toISOString().slice(0, 16).replace("T", " ") + " UTC";
 }

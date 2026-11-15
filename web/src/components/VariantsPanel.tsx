@@ -7,6 +7,7 @@ import { DIRECTION_ARROW, DIRECTION_WORD } from "../report/diff";
 import { compareVariants, defaultParts, deleteVariant, loadVariants, makeVariant, saveVariant, type Variant } from "../report/variants";
 import { cleanExtras } from "../state";
 import type { Extra } from "../state";
+import { t } from "../i18n";
 
 export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenario: Scenario; onChange: (s: Scenario) => void; extras: Extra[]; onExtras: (e: Extra[]) => void }) {
   const { pack, lens } = useData();
@@ -21,22 +22,22 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
     return v?.long ?? v?.label ?? id;
   };
   const save = () => {
-    if (!name.trim()) return setNotice("Give the variant a name before saving.");
+    if (!name.trim()) return setNotice(t("Give the variant a name before saving."));
     const r = saveVariant(packId, { ...makeVariant(name, scenario, defaultParts(scenario)), extras: extras.map((e) => ({ ...e })) });
     setVariants(r.list);
-    setNotice(r.ok ? `Saved "${name.trim()}" in this browser.` : "This browser refused to store the variant (private mode, blocked or full storage). It was not saved and will be lost on reload.");
+    setNotice(r.ok ? t("Saved \"{0}\" in this browser.", name.trim()) : t("This browser refused to store the variant (private mode, blocked or full storage). It was not saved and will be lost on reload."));
     if (r.ok) setName("");
   };
   const remove = (v: Variant) => {
     const r = deleteVariant(packId, v.id);
     setVariants(r.list);
     setPair((p) => [p[0] === v.id ? "" : p[0], p[1] === v.id ? "" : p[1]]);
-    setNotice(r.ok ? `Deleted "${v.name}".` : "This browser refused the change; the variant may reappear on reload.");
+    setNotice(r.ok ? t("Deleted \"{0}\".", v.name) : t("This browser refused the change; the variant may reappear on reload."));
   };
   const load = (v: Variant) => {
     onExtras(cleanExtras(v.extras));
     onChange({ ...v.scenario, values: { ...v.scenario.values }, active: [...v.scenario.active] });
-    setNotice(`Loaded "${v.name}".`);
+    setNotice(t("Loaded \"{0}\".", v.name));
   };
 
   const a = variants.find((v) => v.id === pair[0]);
@@ -44,11 +45,11 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
   const cmp = useMemo(() => (a && b ? compareVariants(pack, lens, a, b) : null), [a, b, pack, lens]);
 
   return (
-    <section className="variants" aria-label="Saved variants">
-      <h2>Saved variants</h2>
+    <section className="variants" aria-label={t("Saved variants")}>
+      <h2>{t("Saved variants")}</h2>
 
       <div className="varsave">
-        <p className="tblnote">Keep the scenario above under a name, then load it again or compare two of them. Saved in this browser only. Nothing is sent to a server, and variants are not shared between browsers or devices.</p>
+        <p className="tblnote">{t("Keep the scenario above under a name, then load it again or compare two of them. Saved in this browser only. Nothing is sent to a server, and variants are not shared between browsers or devices.")}</p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -56,10 +57,10 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
           }}
         >
           <label>
-            Variant name <input type="text" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+            {t("Variant name")} <input type="text" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
           </label>{" "}
           <button type="submit" className="chip">
-            Save variant
+            {t("Save variant")}
           </button>
         </form>
         {notice && (
@@ -68,17 +69,17 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
           </p>
         )}
         {variants.length === 0 ? (
-          <p className="hint">No variants saved for this dataset yet.</p>
+          <p className="hint">{t("No variants saved for this dataset yet.")}</p>
         ) : (
           <ul className="varlist">
             {variants.map((v) => (
               <li key={v.id}>
-                <b>{v.name}</b> <small>({v.scenario.active.length + (v.extras?.length ?? 0)} variables, saved {v.savedAt.slice(0, 16).replace("T", " ")} UTC)</small>{" "}
+                <b>{v.name}</b> <small>({v.scenario.active.length + (v.extras?.length ?? 0)} {t("variables, saved")} {v.savedAt.slice(0, 16).replace("T", " ")} {t("UTC)")}</small>{" "}
                 <button type="button" className="chip" onClick={() => load(v)}>
-                  Load
+                  {t("Load")}
                 </button>{" "}
                 <button type="button" className="chip" onClick={() => remove(v)}>
-                  Delete
+                  {t("Delete")}
                 </button>
               </li>
             ))}
@@ -88,12 +89,12 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
 
       {variants.length >= 2 && (
         <div className="varcmp">
-          <h3>Compare two variants</h3>
+          <h3>{t("Compare two variants")}</h3>
           {(["A", "B"] as const).map((tag, i) => (
             <label key={tag}>
-              Variant {tag}{" "}
+              {t("Variant")} {tag}{" "}
               <select value={pair[i]} onChange={(e) => setPair((p) => (i === 0 ? [e.target.value, p[1]] : [p[0], e.target.value]))}>
-                <option value="">Select a variant</option>
+                <option value="">{t("Select a variant")}</option>
                 {variants.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
@@ -104,13 +105,13 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
           ))}
           {a && b && cmp && (
             <>
-              <table className="scn" aria-label="Evidence level by variable in the two variants">
+              <table className="scn" aria-label={t("Evidence level by variable in the two variants")}>
                 <thead>
                   <tr>
-                    <th scope="col">Variable</th>
+                    <th scope="col">{t("Variable")}</th>
                     <th scope="col">A: {a.name}</th>
                     <th scope="col">B: {b.name}</th>
-                    <th scope="col">Difference</th>
+                    <th scope="col">{t("Difference")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -121,9 +122,9 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
                     return (
                       <tr key={id}>
                         <td>{label(id)}</td>
-                        <td>{la ? <LevelWord level={la.level} /> : <span className="hint">not in this variant</span>}</td>
-                        <td>{lb ? <LevelWord level={lb.level} /> : <span className="hint">not in this variant</span>}</td>
-                        <td>{ch ? <><span aria-hidden="true">{DIRECTION_ARROW[ch.direction]}</span> {DIRECTION_WORD[ch.direction]} in B</> : "same level"}</td>
+                        <td>{la ? <LevelWord level={la.level} /> : <span className="hint">{t("not in this variant")}</span>}</td>
+                        <td>{lb ? <LevelWord level={lb.level} /> : <span className="hint">{t("not in this variant")}</span>}</td>
+                        <td>{ch ? <><span aria-hidden="true">{DIRECTION_ARROW[ch.direction]}</span> {DIRECTION_WORD[ch.direction]} {t("in B")}</> : t("same level")}</td>
                       </tr>
                     );
                   })}
@@ -133,7 +134,7 @@ export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenar
                 {([[a, cmp.findingsA, "A"], [b, cmp.findingsB, "B"]] as const).map(([v, fs, tag]) => (
                   <div key={tag}>
                     <h4>
-                      Findings, {tag}: {v.name}
+                      {t("Findings,")} {tag}: {v.name}
                     </h4>
                     <ul>
                       {fs.map((f) => (

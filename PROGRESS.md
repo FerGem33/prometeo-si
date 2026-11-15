@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Integración frontend T35–T37. Backend del MVP implementado y comprobado en AWS:** 42 rutas JWT, PDF contextual, claims/variantes, intención/lente e inferencia por proyecto. Ventana de integración con worker habilitado. |
 | Último commit verificado | `08be856` + cierre de esta entrega. 172 pruebas API; web 104 pasan/2 omitidas,6 helper Cognito y motor con bundle AWS pasan; build/validate_pack/check_agnostic pasan. Recibos reales:38+57 comprobaciones HTTP. T38 web sigue en `d0308e9`; no se volvió a publicar. |
-| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. |
+| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. Formulario de `nasa2genui` integrado en `frontend` (carga real, 30 archivos): publicar `/propose` y `/design` con `infra/20_api.sh` tras confirmación humana. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -112,6 +112,114 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Pruebas: 105 web pasan/2 omitidas, 172 API pasan y check_agnostic pasa. Documentadas configuración aplicada, arranque Vite con puerto estricto, reproducción y conservación/retiro de orígenes en docs/GUIA_CONEXION_FRONTEND_BACKEND.md y docs/BACKEND_INTEGRACION_FINAL.md. Desplegar proyectos sin EXTRA_ORIGINS restablece los tres servicios a CloudFront; 20_api.sh sin ella solo API/Lambda, por lo que hay que mantenerlos alineados.
 - Siguiente paso exacto: equipo frontend prueba desde 127.0.0.1:5173 o localhost:5173 con su cuenta propia y el recorrido de la guía. Las pantallas pendientes y la revisión humana de publicación siguen vigentes. Documentación y recibo incluidos en esta entrega; sin nuevo despliegue web.
 
+### 2026-11-15 · rama frontend · merge de nasa2genui (formulario con carga real y detección de variables)
+- Se integra `nasa2genui` (hasta 0f08553) en `frontend`. De `nasa2genui` se toma completo el formulario *New evaluation* de 3 pasos (Documents → Interface design → Variables), con estos cambios:
+  - carga real de CSV/TSV/JSON/PDF, hasta 30 archivos;
+  - extracción de variables con cita;
+  - pack y lente propios del corpus subido;
+  - blueprint de secciones y `/propose`/`/design` en `api/handler.py`.
+- De `frontend` se conservan:
+  - el tour del jurado de 9 paradas (`JudgeTour.tsx`, `tour.css`);
+  - `HabitatPanel` con `data-preset`;
+  - `id="methods"`;
+  - el `hold` de `ProcessingStep`;
+  - el estado del dossier en `Flow`.
+- Combinaciones:
+  - `ProcessingStep` recibe a la vez el borrador (`draft`) y `hold`.
+  - El informe usa el orden de secciones del blueprint, con el pliegue Methods identificado como `#methods`.
+  - `HabitatPanel` solo aparece con el corpus demo; con un corpus propio, `ScenarioPanel` muestra `NasaApparatus` si se detecta temática NASA.
+  - El tour limpia el corpus propio al empezar.
+  - En `handler.py`, `/ask` y `/analysis` usan `schema(active_pack)`.
+  - `.gitignore` y `test_upload_tickets.py` conservan las adiciones de ambas ramas.
+  - En esta bitácora se descartó la copia que traía `nasa2genui` de cuatro entradas de `frontend` (con un marcador `>>>>>>> origin/frontend` ya commiteado).
+- Arreglos tras el merge:
+  - se repuso la traducción `Question` que usa el tour;
+  - `lote.test.ts` y `nasaDetect.test.ts` leían una ruta fija de otra laptop; ahora usan `PROMETEO_LOTE_DIR` y se omiten si no existe. El lote real está en `tools/psi/data/dominio_ebullicion/lote`, fuera de git.
+- Verificado:
+  - tsc;
+  - pruebas web con el lote real: 219 pasan, 3 omitidas;
+  - 185 pruebas API, con boto3 en un venv temporal y `PYTHONUTF8=1`; sin UTF-8, Windows falla por cp1252;
+  - build, con aviso de chunk de 1.28 MB por pdfjs;
+  - `check_agnostic.sh`.
+- Comprobado en Chrome headless a 1366×860, sin errores de consola:
+  - formulario con 3 archivos reales del lote: 17 variables, informe `#report` sin `HabitatPanel`;
+  - demo con 5 presets y los hallazgos 0/268 y 22.2 % BASS-II;
+  - tour completo: 9 paradas, cada una con su elemento resaltado.
+- Ojo:
+  - la detección de variables en PDF produce etiquetas ruidosas (por ejemplo, "that the A power law coefficient of mSDB" con unidad "in"); es calidad de `ingest/pdf.ts`, no del merge;
+  - `infra/20_api.sh` debe volver a ejecutarse para publicar `/propose` y `/design`, y requiere confirmación.
+
+### 2026-11-15 · rama frontend · recorrido guiado alineado con el pitch (`docs/pitch.pdf`)
+- El tour sigue ahora el guion de 3 min y el recorrido de la §4 del pitch, en 9 paradas:
+  1. Problema (portada).
+  2. Prometeo (pantalla de procesamiento).
+  3. Informe, que abre con otro preset de la lente (estación espacial).
+  4. Escenario: hace clic en el preset por defecto (base lunar) y el informe se recalcula a la vista.
+  5. Fuentes: abre `PSI-25_Experimental table_BASS-II.csv`, fila 2, DOI 10.60555/4qc4-de67.
+  6. Pregunta: escribe `lens.questions[0]` sin enviarla; el presentador pulsa *Apply question* en vivo.
+  7. Exportación (dossier).
+  8. Cualquier área: abre Methods y señala la nota de reproducibilidad.
+  9. Cierre en Key findings.
+- Textos (revisión del dueño):
+  - generales, cortos y sin vocabulario del corpus, para jueces de cualquier área;
+  - cada parada describe lo que está resaltado en pantalla;
+  - la parada 4 explica la banda (rango ya cubierto), la marca (escenario) y los tres niveles con las mismas palabras de la interfaz.
+
+  El ejemplo solo aparece por sus conteos (pack) y los nombres de sus presets (lente). `tour.test.ts` comprueba que ningún texto use el sujeto ni las etiquetas de variables del pack, y que cada texto tenga 60 palabras o menos.
+- Móvil: la cabecera de la portada desbordaba a 390 px y el panel del tour se cortaba en la parada 1. Ahora `.screen-bar` y `.bar-links` hacen salto de línea por debajo de 700 px.
+- Cambios de soporte:
+  - `data-preset` en los chips de `HabitatPanel`;
+  - `id="methods"` en el pliegue de Methods;
+  - `onStart` del tour recibe el escenario inicial.
+- Verificado:
+  - tsc, 113 tests web y build;
+  - `check_agnostic.sh`;
+  - recorrido en Chrome headless a 1912×857, 1280×640 y 1536×730 (equivalentes a zoom de 150 % y 125 % en 1080p) y 390×844 en español, sin errores de consola;
+  - en el build, la llegada al informe tarda unos 1.1 s.
+- Pendiente del pitch, sin pantalla en la app:
+  - el paso 5 (versiones / "qué cambió");
+  - el paso 6 (cambio en vivo al dominio de ebullición);
+  - la carga de documentos propios, que el guion menciona en 2:15 y que el Workspace declara como no construida.
+
+  El tour no los muestra.
+
+### 2026-11-15 · rama frontend · recorrido guiado para el jurado rehecho
+- Antes: modal centrado con fondo oscurecido y desenfoque que tapaba la pantalla, texto en EB Garamond de 13 px y datos erróneos (base lunar "24 % O₂ / 0.70 atm", "telemetría en vivo", "zero AI hallucination").
+- Ahora (`components/JudgeTour.tsx`, `styles/tour.css`): panel acoplado abajo, o en columna a la derecha a partir de 1600 px, que reserva su espacio en la página, así que no tapa nada. Cada parada marca con un contorno el elemento del que habla y lo desplaza a la vista. 8 paradas (Problema, Caso, Motor, Respuesta, Cobertura, Fuentes, Asistente, Exportación); por decisión del dueño solo se nombra la parada actual (sin lista de pasos ni leyenda del contorno), con texto grande y sin cursiva. Se maneja con ← →, PageUp/PageDown (control de presentaciones) y Esc.
+- Contenido: las cifras salen del pack y de la lente (pruebas, investigaciones, tablas, preset por defecto, primera pregunta). Las afirmaciones sobre `/ask` y `/analysis` se comprobaron contra `api/verify.py`. Al iniciar se carga el preset por defecto (base lunar); la parada Fuentes abre un panel de procedencia real.
+- Cambios de soporte: `ProcessingStep` acepta `hold` para quedarse en pantalla durante su parada, y el estado del dossier pasó de `Report` a `Flow` para que el tour pueda abrirlo y cerrarlo.
+- Verificado: tsc, 112 tests web (prueba del tour reescrita, incluye que ningún texto prediga resultados), build y `check_agnostic.sh`. Recorrido completo en Chrome headless a 1877×842, 1366×768 (ES, claro) y 390×844, sin errores de consola.
+- Ojo: a 390 px la portada y el formulario ya desbordaban en horizontal antes de este cambio (enlaces de la cabecera y el stepper); no se tocó. En Git Bash, `npm test` falla al arrancar por la ruta `/d/` frente a `D:\` (dos copias de vitest); desde PowerShell pasa.
+
+### 2026-11-15 · rama frontend · merge de main (T32–T38 hasta 2745d85)
+- Conflictos resueltos en `PROGRESS.md` (bitácora: se conservan las entradas de ambas ramas) y `DossierModal.tsx` (i18n de `frontend` + exportación de datacard de `main`). Los textos nuevos del datacard van en `t()` con traducción en `i18n/es/flow.ts`.
+- Choque no marcado por git: `main` cambió las columnas del CSV (`<id>_min [unidad]`, `_original_*`, `_source_*`) y el diccionario de datos seguía anunciando `<id>_min`. Ahora ambos usan `variableColumns` de `report/dataset-export.ts`.
+- Verificado: tsc, 110 tests web (2 omitidos) y `check_agnostic.sh`. No se probó en navegador.
+
+### 2026-11-15 · rama frontend · tema claro/oscuro e idioma inglés/español
+- Hecho: selector de idioma (EN/ES) y tema (Claro/Oscuro) en todas las cabeceras (`components/Prefs.tsx`); la elección queda en este navegador. El oscuro sigue por defecto; el claro usa la paleta del artículo.
+- Bug corregido: en oscuro el abstract no se leía porque `--wash` estaba fijo a un color claro en `summary.css`. Ahora `--wash`, `--muted` y `--rule-light` derivan del tema en `report.css`.
+- i18n (`web/src/i18n/`): la frase en inglés es la clave; `t()` traduce, `tx()` + `lazy()` para tablas fuera de componentes, `count()`/`many()` para plurales. Diccionario en `i18n/es/` (report, flow, showcase). `{masculino|femenino}` sigue el género de la unidad de estudio.
+- Textos del corpus (título, variables, presets, notas) en `web/public/demo/locale.es.json`, no en el código; `i18n/localize.ts` los aplica sin tocar ids, valores ni registros, así que el motor da los mismos resultados. A `/ask` se envía siempre el esquema original en inglés. Las frases de IA de `/analysis` llegan en inglés y se avisa.
+- Verificado: tsc, 100 tests web (nuevo `i18n/coverage.test.ts`: toda frase tiene traducción y conserva sus `{n}`), build, `check_agnostic.sh`; capturas en Chrome headless de informe, portada y formulario en ambos temas e idiomas, sin errores de consola.
+- Ojo: un texto nuevo de la interfaz debe ir dentro de `t()` y tener entrada en `i18n/es/`, o el test de cobertura falla. Si `build_pack.py` regenera `web/public/demo/`, `locale.es.json` debe conservarse.
+
+### 2026-11-15 · rama frontend · merge de main (contratos del backend + isométricos)
+- Hecho: `origin/main` (hasta 17392f5) integrado en `frontend`. El trabajo de frontend de main (isométricos, presets de misión, What-If, tour, dossier) partía de `826b23b`, así que los conflictos se resolvieron con esa base.
+- Se conserva de `frontend`: informe por capas (`Fold`, graphical abstract, tarjeta de evidencia, panel lateral), red de evidencia viva (`KnowledgeGraph` + `graph.ts`), `NumField` y el orden del formulario Documents, Question, Setting, Variables.
+- Se conserva de `main`: `web/src/iso/`, `HabitatFigure`, `ChamberFigure` (ahora dentro del pliegue Methods), `ProcessingStep`, `JudgeTour`, `DossierModal`, presets, What-If, carga de archivos en el paso Documents, `web/src/contracts/`, `engine/extend.ts` y todo el backend.
+- Ojo: el `KnowledgeGraph` de main (modo fuerza/círculo con nodos de variable y de material) no se integró; queda el de `frontend`. Los estilos `.gn-var`, `.gn-mat` de main tampoco.
+
+### 2026-11-15 · rama frontend · informe más gráfico y por capas
+- Hecho (rama `frontend`): "Graphical abstract" sin número al inicio del informe (franja por variable con el rango probado y el valor del escenario, radar de cercanía por variable, las investigaciones por nota con ficha al seleccionar una); panel lateral fijo con escenario actual, preguntas y análisis; tablas y métodos plegados, que se imprimen siempre completos. También: variables propias del usuario ("Not in this corpus", no se comparan), lista de unidades con buscador, modal para guardar en el workspace, y el formulario en orden Documents → Question → Setting → Variables. Se quitó el panel "Parts".
+- Verificado: tsc, 60 tests web, build y `check_agnostic.sh`; recorrido en Chrome headless a 1440, 1100 y 420 px sin errores de consola. La página del informe pasó de unos 15 000 a unos 7 100 px de alto. En emulación de impresión las secciones plegadas se muestran; no se generó ni revisó el PDF.
+- Ojo: el radar necesita 3 o más variables activas; con menos se dibujan barras. Una variable no registrada es un radio punteado, no un cero. Un enlace a `#ref-…` ya no devuelve a la portada.
+
+### 2026-11-14 · rama frontend · fases 1-3 del MVP local
+- Hecho (rama `frontend`, no en `main`): grafo de evidencia (Fig. 4, aristas calculadas por el motor, no extraídas de los textos), tabla "Sources ranked" con valores reales y orden por columna, resumen de cambios de nivel, variantes guardables y comparables, partes con nombre, y Workspace local (proyectos en `localStorage`, solo este navegador, sin cuentas; la subida de papers aparece deshabilitada).
+- Verificado: tsc, 60 tests web, build Vite y `check_agnostic.sh`. NO se probó en navegador: diseño, foco de teclado y vista de impresión sin revisar.
+- Ojo: la Tabla 4 colisionaba entre "Sources ranked" y Methods; Methods pasó a la Tabla 6. La numeración global de tablas no sigue el orden de aparición en la página.
+- Brechas que siguen requiriendo backend: ver `docs/Prometeo — Brechas del frontend y contratos del backend.md`.
 ### 2026-11-15 · Cierre del backend del MVP: APIs privadas y PDF contextual reales
 - Código y despliegue: 42 rutas JWT, variantes persistentes con versiones, claims auditados, intención/lente sin reextraer, revisión explícita de presets, ask/analysis con pack del servidor y síntesis por IDs de citas/caché. API/worker/roles/tabla/bucket/colas reutilizados; no deploy web ni modificación de demo.
 - `docs/backend-smoke-2026-11-15.json` registra 38+57 comprobaciones HTTP reales con A/B. Proyecto `prj_c6888f85103d49a692cfae4119434ce0`: 51 registros, 2 estudios, 3 fuentes; pack v2/lente v3, 2 contextos PDF y 1 gap literal. A/B 404, variantes repetibles, versión de referencia conservada, intención mantiene SHA del pack, GET/PUT lente/publicación pasan. Ask conserva condición; analysis `ai`/4 frases, synthesis `ai`/5 extractos con ambos estudios; caché repetida estable.
@@ -177,6 +285,12 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Lectura de contadores SQS también devuelve AccessDenied. Política T34 preparada incluye ahora observación de DLQ y REPORT del log exclusivo del worker; ReceiveMessage solo DLQ para cotejar el doc_id con visibilidad0, sin DeleteMessage/SendMessage. No se aplicó la política desde esta sesión ni se consumieron mensajes. ZIP vigente preparado en /tmp/prometeo-worker-relevo-final.zip.
 - Web T38: los tres JSON demo remotos/locales coincidieron byte a byte antes del intento. deploy_web terminó254 en cloudfront:GetDistribution denegado, antes de build/sync/invalidation; no hubo publicación web ni cambios de datos. Política mínima nueva infra/t38-web-deployer-policy.json y guía docs/PERMISOS_RELEVO_AWS.md; no privilegios administrativos ni borrado.
 - Llamadas Bedrock de esta sesión: dos de regresión pública ask/analysis; sus respuestas no exponen tokens, no se inventa costo exacto. Extracción nueva de lote y pruebas locales: cero llamadas. Conservar tope USD30/revisión de lote>USD5. Queda intervención administrativa concreta y los pendientes de código indicados arriba; ninguna decisión científica se reabre.
+
+### 2026-11-15 · pendiente.md §1–3 (frontend) y §1.1 backend
+- Hecho y verificado con el lote real (`~/Descargas/lote`, 23 archivos → 23 procesados, 135 variables): límite de 30 por lote con aviso de excedentes; progreso por archivo, "Clear all documents", arrastre de carpetas; chips de variables, reordenar secciones (arrastre + botones), botón `/design`; buscador, grupos colapsables y conversión de unidades solo de visualización; detección NASA (`ingest/nasaDetect.ts`) con figura isométrica en panel, resumen gráfico y fold "Experimental apparatus"; guardar/reabrir evaluaciones propias (IndexedDB `prometeo-custom-db`) con historial en Workspace; apéndice de impresión (Tablas A1/A2), BibTeX real desde DOIs, descarga `prometeo.pack.json`; preguntas locales (máx/mín/media/conteo y filtros) con procedencia. Pruebas: 212 web, 162 API, check_agnostic OK, build OK.
+- Backend: `/propose` admite 30 documentos y rechaza 31; reservas de subida aceptan 30 y la 31 da 422. `infra/20_api.sh` ya enruta `/propose` y `/design` (`$default`), con IAM Bedrock, CORS y throttling.
+- Falta: volver a ejecutar `infra/20_api.sh` para publicar el `handler.py` actual y `infra/deploy_web.sh` para la UI (requieren AWS y confirmación); worker SQS sigue bloqueado por T34. Emojis previos en Cover, ScenarioPanel (what-if) y ProcessingStep sin tocar.
+- **Trampas:** con localhost la API responde sin CORS (esperado: solo orígenes CloudFront). El resumen del kicker con 100+ variables ahora se recorta a 3 líneas (texto completo en `title` e impresión).
 
 ### 2026-11-15 · T36 revisión local y acceso a originales
 - CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.

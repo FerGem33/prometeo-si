@@ -1,240 +1,130 @@
-/* ── Floating Judge Tour Launcher Pill ─────────────────────────── */
-.judge-tour-pill-wrap {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 999;
+/* Guided tour. A panel docked to the bottom of the window (to the right on wide screens) that reserves its own
+   space, so the page stays visible and usable. Same identity as report.css: paper, ink, one accent, no shadows. */
+:root { --tour-w: calc(440 * var(--fz)); }
+
+/* ---------- launcher ---------- */
+.tour-launch {
+  position: fixed; right: 20px; bottom: 20px; z-index: 50;
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 500 calc(14.5 * var(--fz))/1.2 var(--sans); color: var(--ink);
+  background: var(--paper); border: 1.5px solid var(--ink); border-radius: 2px;
+  padding: 10px 16px; cursor: pointer;
+}
+.tour-launch b { font-weight: 600; }
+.tour-launch:hover { border-color: var(--accent); }
+.tour-launch-mark {
+  display: inline-grid; place-items: center; width: 22px; height: 22px;
+  background: var(--accent-fill); color: var(--on-accent); border-radius: 2px; font-size: calc(10 * var(--fz));
+}
+body:has(.prov) .tour-launch { display: none; }
+
+/* ---------- docked panel ---------- */
+.tour-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
+  max-height: 55vh; overflow-y: auto;
+  background: var(--paper); color: var(--ink);
+  border-top: 2px solid var(--accent);
+  font-family: var(--sans);
+}
+.tour-inner {
+  max-width: 1320px; margin: 0 auto; padding: 14px 32px 20px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  grid-template-areas: "top top" "main take" "main nav" "main keys";
+  grid-template-rows: auto auto auto 1fr; gap: 12px 48px;
 }
 
-.judge-tour-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #1D1C1A;
-  color: #F1EFEA;
-  border: 1px solid #94251B;
-  border-radius: 999px;
-  padding: 10px 18px;
-  font-size: 13.5px;
-  font-family: inherit;
-  font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+/* Only the current stop is named; there is no list of all stops. */
+.tour-top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.tour-kicker {
+  margin: 0; font: 600 calc(14 * var(--fz))/1.2 var(--sans-c);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
 }
-
-.judge-tour-pill:hover {
-  transform: translateY(-2px) scale(1.02);
-  background: #2A120D;
-  box-shadow: 0 12px 30px rgba(148, 37, 27, 0.35);
+.tour-close {
+  font: 500 calc(14.5 * var(--fz))/1 var(--sans); color: var(--ink-2); white-space: nowrap;
+  background: none; border: 1px solid var(--rule); border-radius: 2px; padding: 8px 12px; cursor: pointer;
 }
+.tour-close:hover { color: var(--ink); border-color: var(--ink-3); }
+.tour-close span { font-size: calc(18 * var(--fz)); margin-left: 4px; }
 
-.judge-tour-pill .tour-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: #94251B;
-  color: #FFF;
-  border-radius: 50%;
-  font-size: 10px;
+.tour-main { grid-area: main; min-width: 0; }
+.tour-title { margin: 0 0 10px; font: 600 calc(30 * var(--fz))/1.2 var(--serif); color: var(--ink); }
+.tour-title:focus { outline: none; }
+.tour-pitch { margin: 0; max-width: 72ch; font: 400 calc(18 * var(--fz))/1.6 var(--sans); color: var(--ink); }
+
+.tour-takeaway { grid-area: take; align-self: start; border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; margin-top: 6px; }
+.tour-takeaway b {
+  display: block; margin-bottom: 6px; font: 600 calc(13 * var(--fz))/1.2 var(--sans-c);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
 }
+.tour-takeaway p { margin: 0; font: 500 calc(18 * var(--fz))/1.5 var(--sans); color: var(--ink); }
 
-.judge-tour-pill .tour-pulse {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4ADE80;
-  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-  animation: pulse-green 1.8s infinite;
-}
-
-@keyframes pulse-green {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
-  }
-}
-
-/* ── Interactive Spotlight Tour Dialog ─────────────────────────── */
-.judge-tour-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(18, 17, 16, 0.65);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 32px 16px;
-  animation: tour-fade-in 0.25s ease;
-}
-
-@keyframes tour-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.judge-tour-dialog {
-  background: var(--surface-card, #F1EFEA);
-  border: 2px solid var(--accent, #94251B);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 620px;
-  padding: 24px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  color: var(--ink, #1D1C1A);
-  animation: tour-slide-up 0.25s ease;
-}
-
-@keyframes tour-slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.tour-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--rule-light, #E3E0D8);
-  padding-bottom: 10px;
-}
-
-.tour-badge {
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  background: var(--accent, #94251B);
-  color: #FFF;
-  padding: 3px 10px;
-  border-radius: 12px;
-}
-
-.tour-close-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: var(--muted, #62605B);
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-}
-
-.tour-close-btn:hover {
-  color: var(--ink, #1D1C1A);
-}
-
-.tour-title {
-  margin: 0 0 8px;
-  font-family: var(--font-serif, "EB Garamond", serif);
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ink, #1D1C1A);
-}
-
-.tour-pitch {
-  margin: 0 0 14px;
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: var(--ink, #1D1C1A);
-}
-
-.tour-takeaway {
-  background: var(--paper, #EAE8E3);
-  border-left: 3px solid var(--accent, #94251B);
-  padding: 10px 14px;
-  border-radius: 0 6px 6px 0;
-}
-
-.takeaway-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--accent, #94251B);
-  margin-bottom: 2px;
-}
-
-.tour-takeaway p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink, #1D1C1A);
-  font-weight: 500;
-}
-
-.tour-dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--rule-light, #E3E0D8);
-  padding-top: 14px;
-}
-
-.tour-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.tour-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--rule, #D3D0C8);
-  transition: all 0.2s ease;
-}
-
-.tour-dot.active {
-  background: var(--accent, #94251B);
-  transform: scale(1.25);
-}
-
-.tour-actions {
-  display: flex;
-  gap: 10px;
-}
-
+.tour-nav { grid-area: nav; display: flex; gap: 10px; }
 .tour-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font: 600 calc(16 * var(--fz))/1.2 var(--sans); color: var(--ink);
+  background: var(--surface-control, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
+  padding: 11px 16px; cursor: pointer;
+}
+.tour-btn:hover:not(:disabled) { border-color: var(--ink-3); }
+.tour-btn.primary { flex: 1; background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.tour-btn.primary:hover { border-color: var(--ink); }
+.tour-btn:disabled { opacity: .45; cursor: default; }
+.tour-keys { grid-area: keys; margin: 0; font: 400 calc(13.5 * var(--fz))/1.4 var(--sans); color: var(--ink-3); }
+
+.tour-launch:focus-visible, .tour-close:focus-visible, .tour-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
-.tour-btn.ghost {
-  background: var(--paper, #EAE8E3);
-  border: 1px solid var(--rule, #D3D0C8);
-  color: var(--ink, #1D1C1A);
+/* ---------- what the current stop talks about ---------- */
+[data-tour-focus] { outline: 2px solid var(--accent) !important; outline-offset: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-tour-focus] { animation: tour-mark .6s ease-out 1; }
+  @keyframes tour-mark { from { outline-offset: 18px; outline-color: transparent; } to { outline-offset: 6px; } }
 }
 
-.tour-btn.ghost:hover {
-  background: var(--surface-control, #DFDDD7);
+/* ---------- the page gives the panel its space ---------- */
+html[data-tour] body { padding-bottom: var(--tour-h, 0px); }
+html[data-tour] .dossier-overlay { bottom: var(--tour-h, 0px); }
+html[data-tour] .prov { bottom: calc(var(--tour-h, 0px) + 16px); max-height: calc(100vh - var(--tour-h, 0px) - 32px); }
+@media (min-width: 1181px) {
+  html[data-tour] .cols > .rail { max-height: calc(100vh - 24px - var(--tour-h, 0px)); }
 }
 
-.tour-btn.cta {
-  background: var(--accent, #94251B);
-  border: 1px solid var(--accent, #94251B);
-  color: #FFF;
+/* Wide screens: a column on the right, next to the page instead of over it. */
+@media (min-width: 1600px) {
+  .tour-dock { top: 0; left: auto; width: var(--tour-w); max-height: none; border-top: 0; border-left: 2px solid var(--accent); }
+  .tour-inner {
+    min-height: 100%; padding: 22px 30px 26px;
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "take" "nav" "keys";
+    grid-template-rows: none; align-content: start; gap: 22px;
+  }
+  .tour-top { padding-bottom: 14px; border-bottom: 1px solid var(--rule-2); }
+
+  html[data-tour] body { padding-bottom: 0; padding-right: var(--tour-w); }
+  html[data-tour] .page { width: min(calc(1440 * var(--fz)), calc(100vw - var(--tour-w) - 40px)); }
+  html[data-tour] .dossier-overlay { bottom: 0; right: var(--tour-w); }
+  html[data-tour] .prov { bottom: 16px; right: calc(var(--tour-w) + 16px); max-height: 70vh; }
+  html[data-tour] .cols > .rail { max-height: calc(100vh - 24px); }
 }
 
-.tour-btn.cta:hover {
-  background: #7A1E16;
+/* Phones: one column that scrolls inside the panel, navigation always in view. */
+@media (max-width: 700px) {
+  .tour-dock { max-height: 48vh; }
+  .tour-inner {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "take" "nav";
+    grid-template-rows: none; padding: 10px 16px 0; gap: 10px;
+  }
+  .tour-kicker { font-size: calc(13 * var(--fz)); }
+  .tour-close { padding: 7px 10px; font-size: calc(14 * var(--fz)); }
+  .tour-title { font-size: calc(22 * var(--fz)); margin-bottom: 6px; }
+  .tour-pitch { font-size: calc(16 * var(--fz)); line-height: 1.55; }
+  .tour-takeaway p { font-size: calc(16 * var(--fz)); }
+  .tour-nav { position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 14px; border-top: 1px solid var(--rule-2); }
+  .tour-btn { font-size: calc(15 * var(--fz)); }
+  .tour-keys { display: none; }
+  .tour-launch { right: 12px; bottom: 12px; }
+}
+
+@media print {
+  html[data-tour] body { padding: 0; }
+  [data-tour-focus] { outline: none !important; }
 }

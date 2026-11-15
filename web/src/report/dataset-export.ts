@@ -28,15 +28,19 @@ const cell = (value: unknown): string => {
 };
 const range = (value: Range | string | null | undefined) => Array.isArray(value) ? value : ["", ""];
 
+/** CSV columns written for one schema variable, in order. */
+export function variableColumns(v: Pack["schema"]["variables"][number]): string[] {
+  return v.type === "num" ? [`${v.id}_min [${v.unit}]`, `${v.id}_max [${v.unit}]`,
+    `${v.id}_original_min [${v.unit}]`, `${v.id}_original_max [${v.unit}]`, `${v.id}_source_text`, `${v.id}_source_unit`] :
+    [v.id, `${v.id}_original`, `${v.id}_source_text`];
+}
+
 /** Canonical values, correction originals and raw source text have distinct columns. */
 export function datasetCsv(pack: Pack, selected: DataRecord[] = pack.records, mapping?: Mapping): string {
   const variables = pack.schema.variables;
   const outcomes = mapping?.tables.flatMap(t => t.columns.filter(c => c.role === "outcome" && c.status === "approved")
     .map(c => ({ source: t.source, column: c.column, unit: c.unit }))) ?? [];
-  const head = ["record_id", "study_id", "group_id", "doi", "kind", ...variables.flatMap(v =>
-    v.type === "num" ? [`${v.id}_min [${v.unit}]`, `${v.id}_max [${v.unit}]`,
-      `${v.id}_original_min [${v.unit}]`, `${v.id}_original_max [${v.unit}]`, `${v.id}_source_text`, `${v.id}_source_unit`] :
-      [v.id, `${v.id}_original`, `${v.id}_source_text`]),
+  const head = ["record_id", "study_id", "group_id", "doi", "kind", ...variables.flatMap(variableColumns),
     ...outcomes.map(o => `outcome:${o.source}:${o.column}${o.unit ? ` [${o.unit}]` : ""}`),
     "source_file", "source_row", "source_page", "confidence", "quote", "citations", "corrections", "flags"];
   const rows = exportableRecords(pack, selected).map(r => [r.id, r.study, r.study, doiFor(pack, r), r.kind,

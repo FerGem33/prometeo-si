@@ -3,11 +3,12 @@ import type { VariableEvidence } from "../engine";
 import { useData } from "./ctx";
 import { LEVELS } from "../report/text";
 import { DIRECTION_ARROW, DIRECTION_WORD, diffLevels, type LevelChange } from "../report/diff";
+import { t } from "../i18n";
 
 const sig = (levels: VariableEvidence[]) => levels.map((l) => `${l.variable}=${l.value}:${l.level}`).join("|");
 
 export function LevelWord({ level }: { level: VariableEvidence["level"] | null }) {
-  if (!level) return <span>none</span>;
+  if (!level) return <span>{t("none")}</span>;
   const l = LEVELS[level];
   return (
     <span className={`level level-${level}`}>
@@ -35,17 +36,17 @@ export function ChangeSummary({ levels }: { levels: VariableEvidence[] }) {
   };
 
   return (
-    <div className="changes" role="status" aria-live="polite" aria-label="Changes since last edit">
-      <h3>Changes since last edit</h3>
+    <div className="changes" role="status" aria-live="polite" aria-label={t("Changes since last edit")}>
+      <h3>{t("Changes since last edit")}</h3>
       {!state ? (
-        <p className="hint">Move a control to see which variables change evidence level.</p>
+        <p className="hint">{t("Move a control to see which variables change evidence level.")}</p>
       ) : state.changes.length === 0 ? (
-        <p className="hint">No variable changed evidence level.</p>
+        <p className="hint">{t("No variable changed evidence level.")}</p>
       ) : (
         <ul>
           {state.changes.map((c) => (
             <li key={c.variable} className={`chg chg-${c.direction}`}>
-              <span className="arrow" aria-hidden="true">{DIRECTION_ARROW[c.direction]}</span> <b>{label(c.variable)}</b> {DIRECTION_WORD[c.direction]}: <LevelWord level={c.from} /> to <LevelWord level={c.to} />
+              <span className="arrow" aria-hidden="true">{DIRECTION_ARROW[c.direction]}</span> <b>{label(c.variable)}</b> {DIRECTION_WORD[c.direction]}: <LevelWord level={c.from} /> {t("to")} <LevelWord level={c.to} />
             </li>
           ))}
         </ul>

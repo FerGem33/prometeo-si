@@ -3,6 +3,7 @@ import { Dots, FaceText, IsoFigure, Line, Plate, Solid, useInView, useLoop, useR
 import "../iso/iso.css";
 import "../iso/theme-prometeo.css";
 import { ART, H, RISE, TRAVEL, W } from "../iso/bench-geometry";
+import { t } from "../i18n";
 
 /** The moving assembly. The stem is painted before the housing and the sample after it, so the housing hides the stem's sunk part. */
 function LiveSample({ rise, travel }: { rise: [number, number]; travel: number }) {
@@ -17,16 +18,16 @@ function LiveSample({ rise, travel }: { rise: [number, number]; travel: number }
 
   useLoop((dt, calm) => {
     time.current += dt;
-    const t = time.current;
-    const lift = calm ? travel / 2 : (travel / 2) * (1 - Math.cos(t * 1.2));
+    const now = time.current;
+    const lift = calm ? travel / 2 : (travel / 2) * (1 - Math.cos(now * 1.2));
     const move = `translate(${(rise[0] * lift).toFixed(2)} ${(rise[1] * lift).toFixed(2)})`;
     stem.current?.setAttribute("transform", move);
     group.current?.setAttribute("transform", move);
 
     if (flameRef.current) {
       const intensity = 0.85 + 0.3 * (lift / travel);
-      const sx = calm ? 1 : intensity + Math.sin(t * 6.4) * 0.07;
-      const sy = calm ? 1 : intensity * 1.05 + Math.cos(t * 5.8) * 0.1;
+      const sx = calm ? 1 : intensity + Math.sin(now * 6.4) * 0.07;
+      const sy = calm ? 1 : intensity * 1.05 + Math.cos(now * 5.8) * 0.1;
       // scale about the top of the sample, so the flame stays rooted on it
       flameRef.current.setAttribute(
         "transform",
@@ -34,7 +35,7 @@ function LiveSample({ rise, travel }: { rise: [number, number]; travel: number }
       );
     }
 
-    say(`lift ${lift.toFixed(0)} / ${travel} units`);
+    say(t("lift {0} / {1} units", lift.toFixed(0), travel));
     return !calm;
   }, inView);
 
@@ -76,18 +77,18 @@ export function IsoBenchFigure() {
     <div className="iso iso-prometeo iso-bench-wrap">
       <Plate
         fig="BENCH"
-        title="Sample actuator & camera"
-        hint="isometric geometry · live motion"
-        readout={`lift 0 / ${TRAVEL} units`}
+        title={t("Sample actuator & camera")}
+        hint={t("isometric geometry · live motion")}
+        readout={t("lift 0 / {0} units", TRAVEL)}
         keys={[
-          { mark: "raised", label: "fixed bench" },
-          { mark: "lit", label: "moving sample" },
-          { mark: "dotted", label: "travel axis" },
-          { mark: "red", label: "flame envelope" },
+          { mark: "raised", label: t("fixed bench") },
+          { mark: "lit", label: t("moving sample") },
+          { mark: "dotted", label: t("travel axis") },
+          { mark: "red", label: t("flame envelope") },
         ]}
-        caption="Schematic 2:1 isometric drawing of a test bench: the sample travels along the vertical axis on a stem that slides inside the actuator housing, watched by a camera. Illustrative geometry, not a measurement."
+        caption={t("Schematic 2:1 isometric drawing of a test bench: the sample travels along the vertical axis on a stem that slides inside the actuator housing, watched by a camera. Illustrative geometry, not a measurement.")}
       >
-        <IsoFigure width={W} height={H} label="A fuel sample rising and falling on an actuator stem over a test bench, with a flame on top and a camera on a post.">
+        <IsoFigure width={W} height={H} label={t("A fuel sample rising and falling on an actuator stem over a test bench, with a flame on top and a camera on a post.")}>
           {/* Our own deterministic geometry (no user input). */}
           <g className="iso-backdrop" dangerouslySetInnerHTML={{ __html: ART.floor }} />
           <Solid paths={ART.base} tone="mid" />
@@ -96,7 +97,7 @@ export function IsoBenchFigure() {
           <Line d={ART.ticks.minor} tone="lo" />
           <Line d={ART.ticks.major} tone="mid" />
           <FaceText transform={ART.label} size={5} tone="mid">
-            PROMETEO
+            {t("PROMETEO")}
           </FaceText>
           <g data-tint="solar">
             <Solid paths={ART.postFoot} tone="mid" />
