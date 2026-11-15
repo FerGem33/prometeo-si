@@ -21,6 +21,10 @@
 
 - D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy. Dueño autorizó retomar AWS: API/originales desplegados y verificados; worker sigue denegado y deploy web falla en GetDistribution antes de subir archivos. Políticas concretas: docs/PERMISOS_RELEVO_AWS.md.
 
+- [15-nov] **No publicar la web todavía.** La interfaz nueva entró a `main` y tiene puntos que chocan con las reglas: la llama crece en "Ignition", hay textos del dominio escritos a mano y el CSS usa gradientes y sombras. Detalle en `docs/PLAN_FASE2.md` §9.2 — equipo de interfaz y una persona que lo apruebe.
+- [15-nov] La interfaz duplica en `web/src/report/` lógica que ya existe en el motor (grafo, diferencias, variantes y espacio de trabajo). Hay que unificarla antes de las pantallas del bloque C (`docs/PLAN_FASE2.md` §9.3) — equipo de interfaz.
+- [15-nov] Las aprobaciones delegadas de `DECISIONES_CIERRE.md` §8 cuentan como recomendaciones del agente hasta que el dueño del repositorio las confirme (§9.4) — dueño.
+
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
 ## Prerrequisitos humanos
@@ -99,6 +103,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Revisión del trabajo restante (Claude · ferlr)
+- Revisado hasta `d0308e9`: 104 pruebas web y 188 de API, pipeline y herramientas en verde; build y check_agnostic OK; sin coautoría. La web publicada sigue en `index-Ben2isQ8.js`.
+- Queda cerca del 40 % de la fase 2: unas 6–10 h de agente en el backend C, tras IAM; 1.5–3 días de pantallas del bloque C; y la revisión y unificación de la interfaz nueva. Desglose y ruta corta en `docs/PLAN_FASE2.md` §9.
+- `AGENTS.md` §6 tiene dos reglas nuevas: una sola lógica, en el motor y los contratos; y no publicar la web sin la revisión de una persona anotada aquí.
+- Siguiente paso exacto: un administrador aplica `infra/prometeo-deployer-policy.json`; el agente AWS sigue con T34 → T37; el equipo de interfaz atiende §9.2 y §9.3.
 
 ### 2026-11-15 · Comprobación de permisos añadidos y política consolidada
 - Dueño informa nueva política inline y SSO renovado. git pull --rebase sin cambios de main; rama frontend solo se actualiza como referencia remota, sin fusionarla.
