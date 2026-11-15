@@ -77,10 +77,22 @@ def main():
             'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/pack/*'})
         documents['projects-policy.json']['Statement'].append({'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:PutObject'],
             'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/text/reviews/*'})
+        documents['projects-policy.json']['Statement'].append({'Effect': 'Allow', 'Action': 's3:PutObject',
+            'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/text/doc_*/manual-*.json'})
         documents['projects-routes.json'].extend({'RouteKey': key, 'AuthorizationType': 'JWT'} for key in (
             'GET /projects/{id}/records', 'PATCH /projects/{id}/records/{rid}', 'DELETE /projects/{id}/records/{rid}',
             'GET /projects/{id}/conflicts', 'POST /projects/{id}/conflicts/{cid}/resolve',
-            'POST /projects/{id}/publish', 'GET /projects/{id}/pack', 'POST /projects/{id}/synthesis'))
+            'POST /projects/{id}/publish', 'GET /projects/{id}/pack', 'POST /projects/{id}/synthesis',
+            'GET /projects/{id}/proposals', 'GET /projects/{id}/proposals/{pid}',
+            'PUT /projects/{id}/proposals/{pid}', 'DELETE /projects/{id}/proposals/{pid}',
+            'GET /projects/{id}/claims', 'POST /projects/{id}/claims', 'DELETE /projects/{id}/claims/{cid}',
+            'POST /projects/{id}/ask', 'POST /projects/{id}/analysis'))
+        documents['projects-routes.json'].extend({'RouteKey': key, 'AuthorizationType': 'JWT'} for key in (
+            'POST /projects/{id}/documents/{doc_id}/proposal',
+            'GET /projects/{id}/paper-candidates', 'POST /projects/{id}/paper-candidates',
+            'POST /projects/{id}/paper-candidates/{cid}/review', 'POST /projects/{id}/papers/{doc_id}/review',
+            'GET /projects/{id}/lens', 'PUT /projects/{id}/lens', 'POST /projects/{id}/papers/{doc_id}/extract',
+            'GET /projects/{id}/documents/{doc_id}/text'))
     for filename, value in documents.items():
         path = output / filename
         encoded = json.dumps(value, indent=2) + '\n'

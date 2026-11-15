@@ -3,6 +3,8 @@ import copy
 import hashlib
 import json
 import os
+import re
+import time
 
 from boto3.dynamodb.types import TypeSerializer
 
@@ -51,6 +53,17 @@ class Schemas:
         with response['Body'] as stream:
             return json.loads(stream.read())
 
+    def optional(self, key):
+        # Prefix-scoped ListBucket also distinguishes a missing object without
+        # interpreting an S3 access denial as a cache miss.
+        listed = self.s3.list_objects_v2(Bucket=self.bucket, Prefix=key, MaxKeys=1)
+        if not any(item['Key'] == key for item in listed.get('Contents', [])): return None
+        try:
+            return self.load(key)
+        except Exception as exc:
+            if getattr(exc, 'response', {}).get('Error', {}).get('Code') in ('NoSuchKey', '404'): return None
+            raise
+
     def corpus(self, uid, pid):
         self.projects.get(uid, pid)
         from boto3.dynamodb.conditions import Key
@@ -73,7 +86,8 @@ class Schemas:
                 fail(409, 'conflict', 'Every document must finish proposal processing before schema review')
             did = item['id']
             expected = f'u/{uid}/p/{pid}/text/{did}/'
-            if item['proposal_key'] != expected+'proposals.json':
+            if (item['proposal_key'] != expected+'proposals.json' and not
+                    (item.get('proposal_origin') == 'manual' and re.fullmatch(re.escape(expected)+r'manual-[a-f0-9]{64}\.json', item['proposal_key']))):
                 fail(409, 'conflict', 'Unexpected proposal location')
             parsed = self.load(expected+'parsed.json')['document']
             proposed = self.load(item['proposal_key'])
@@ -89,6 +103,84 @@ class Schemas:
 
     def metadata(self, pid, version):
         return self.table.get_item(Key={'PK': 'P#'+pid, 'SK': 'S#'+str(version)}, ConsistentRead=True).get('Item')
+
+    def source_text(self, uid, pid, did, query):
+        self.projects.get(uid, pid)
+        item = self.table.get_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+did}, ConsistentRead=True).get('Item')
+        if not item: fail(404, 'not_found', 'Document not found')
+        if item.get('object_key') != f'u/{uid}/p/{pid}/raw/{did}': fail(409, 'conflict', 'Unexpected source location')
+        value = self.optional(f'u/{uid}/p/{pid}/text/{did}/parsed.json')
+        if value is None: fail(409, 'conflict', 'Wait for document parsing')
+        doc = value['document']
+        head = self.s3.head_object(Bucket=self.bucket, Key=item['object_key'])
+        if (doc['id'] != did or doc['sha256'] != item.get('expected_sha256') or head['ETag'] != item.get('object_etag')
+                or head['ContentLength'] != item['bytes']): fail(409, 'conflict', 'Source changed; reprocess before review')
+        try:
+            if doc['kind'] == 'paper':
+                if set(query)-{'page'}: raise ValueError()
+                page = int(query.get('page', '1'))
+                selected = next((p for p in doc['pages'] if p['page'] == page), None)
+                if selected is None: raise ValueError()
+                return {'doc_id': did, 'sha256': doc['sha256'], 'kind': 'paper', 'pages': len(doc['pages']), **selected}
+            if set(query)-{'cursor', 'limit'}: raise ValueError()
+            offset, limit = int(query.get('cursor', '0')), int(query.get('limit', '50'))
+            if offset < 0 or not 1 <= limit <= 50: raise ValueError()
+            return {'doc_id': did, 'sha256': doc['sha256'], 'kind': 'table', 'headers': doc['headers'],
+                    'rows': doc['rows'][offset:offset+limit], 'next_cursor': str(offset+limit) if offset+limit < len(doc['rows']) else None}
+        except (ValueError, TypeError): fail(400, 'invalid_request', 'Invalid source-text pagination')
+
+    def manual(self, uid, pid, did, data):
+        parent = self.projects.get(uid, pid)
+        if parent.get('schema_version') or parent['status'] == 'deleting':
+            fail(409, 'conflict', 'Manual proposal recovery is available before schema review')
+        if (not isinstance(data, dict) or set(data) != {'proposal', 'reason'} or not isinstance(data['reason'], str)
+                or not 1 <= len(data['reason'].strip()) <= 4000):
+            fail(400, 'invalid_request', 'Expected reviewed proposal and reason')
+        item = self.table.get_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+did}, ConsistentRead=True).get('Item')
+        if not item: fail(404, 'not_found', 'Document not found')
+        repeated = item['status'] == 'done' and item.get('proposal_origin') == 'manual'
+        if (not (item['status'] == 'failed' or repeated) or item['stage'] != 'propose'
+                or int(item.get('worker_until', 0)) >= int(time.time())):
+            fail(409, 'conflict', 'Only a parsed document with a rejected proposal can be recovered')
+        prefix = f'u/{uid}/p/{pid}/text/{did}/'
+        document = self.load(prefix+'parsed.json')['document']
+        head = self.s3.head_object(Bucket=self.bucket, Key=item['object_key'])
+        if (item['object_key'] != f'u/{uid}/p/{pid}/raw/{did}' or document['id'] != did
+                or document['sha256'] != item.get('sha256') or item['sha256'] != item['expected_sha256']
+                or head['ETag'] != item['object_etag'] or head['ContentLength'] != item['bytes']):
+            fail(409, 'conflict', 'Source changed; reprocess before manual review')
+        try:
+            proposed = review.ingest.validate_proposal(data['proposal'], {did: document})
+        except (ValueError, KeyError, TypeError) as exc:
+            fail(400, 'invalid_request', str(exc))
+        if repeated:
+            previous = self.load(item['proposal_key'])
+            if previous['schemas'] != [proposed] or previous['reason'] != data['reason'].strip():
+                fail(409, 'conflict', 'Manual proposal already saved; edit the versioned schema instead')
+            return {'doc_id': did, 'origin': 'manual', 'status': 'proposed',
+                    'note': 'Model rejection retained. Manual proposal still requires explicit schema approval.'}
+        value = {'schemas': [proposed], 'status': 'proposed', 'source_sha256': document['sha256'],
+                 'origin': 'manual', 'by': uid, 'at': stamp(), 'reason': data['reason'].strip(),
+                 'rejected_model_reason': item.get('failure_reason')}
+        key = prefix+'manual-'+review.digest(value)+'.json'
+        self.s3.put_object(Bucket=self.bucket, Key=key, Body=json.dumps(value).encode(), ContentType='application/json')
+        self.table.update_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+did},
+            UpdateExpression='SET proposal_key = :key, proposal_origin = :manual, #status = :done, updated_at = :at',
+            ConditionExpression='#status = :failed AND expected_sha256 = :sha AND (attribute_not_exists(worker_until) OR worker_until < :now)',
+            ExpressionAttributeNames={'#status': 'status'}, ExpressionAttributeValues={':key': key, ':manual': 'manual',
+                ':done': 'done', ':failed': 'failed', ':sha': document['sha256'], ':at': stamp(), ':now': int(time.time())})
+        try:
+            self.corpus(uid, pid)
+        except Exception as exc:
+            if getattr(exc, 'status', None) != 409: raise
+        else:
+            self.table.update_item(Key={'PK': 'U#'+uid, 'SK': 'P#'+pid},
+                UpdateExpression='SET #status = :review, revision = revision + :one',
+                ConditionExpression='attribute_not_exists(schema_version) AND #status <> :deleting',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={':review': 'awaiting_review', ':one': 1, ':deleting': 'deleting'})
+        return {'doc_id': did, 'origin': 'manual', 'status': 'proposed',
+                'note': 'Model rejection retained. Manual proposal still requires explicit schema approval.'}
 
     def diagnostics(self, uid, pid):
         self.projects.get(uid, pid)
@@ -249,6 +341,12 @@ class Schemas:
         self.sqs.send_message(QueueUrl=self.queue, MessageBody=json.dumps({'version': 1, 'action': 'extract',
             'uid': uid, 'project_id': pid, 'schema_version': approval['schema']['version'],
             'schema_sha256': approval['schema_sha256']}))
+        documents, _ = self.corpus(uid, pid)
+        for did, document in documents.items():
+            if document['kind'] == 'paper':
+                self.sqs.send_message(QueueUrl=self.queue, MessageBody=json.dumps({'version': 1, 'action': 'paper_extract',
+                    'uid': uid, 'project_id': pid, 'doc_id': did, 'schema_version': approval['schema']['version'],
+                    'schema_sha256': approval['schema_sha256']}))
         self.table.update_item(Key={'PK': 'U#'+uid, 'SK': 'P#'+pid},
             UpdateExpression='SET extraction_dispatch_pending = :false',
             ConditionExpression='schema_version = :version',

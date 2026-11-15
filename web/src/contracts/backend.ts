@@ -163,11 +163,29 @@ export type Claim = {
 };
 
 export type PublishResponse = { pack_version: number; lens_version: number; files: { pack: string; lens: string; mapping: string }; expires_in: number };
-export type PublishedFiles = { pack: Pack; lens: Lens };
+export type PaperCandidate = {
+  id: string;
+  variable: string;
+  value: [number, number] | string;
+  unit: string | null;
+  citation: Extract<Citation, { kind: "paper" }>;
+  scope: string;
+  proposed_scope?: string;
+  status: "awaiting_semantic_review" | "contextual" | "rejected";
+  origin?: "manual";
+  review?: { by: string; at: string; reason: string; scope: string; supports_value: boolean;
+    use_in_records: false; propagate_to_tables: false };
+};
 
-export type Proposal = { id: string; name: string; scenario: Scenario; created_at: string; updated_at: string };
+/** PDF context is separate from records; it never contributes to comparison levels. */
+export type PublicationPack = Pack & { contextual_evidence?: PaperCandidate[] };
+export type PublishedFiles = { pack: PublicationPack; lens: Lens };
+
+export type Proposal = { id: string; name: string; scenario: Scenario; created_at: string; updated_at: string;
+  pack_version?: number; lens_version?: number };
 
 export type SynthesisRequest = { study_ids: string[]; focus?: string };
-export type SynthesisResponse = { mode: "ai" | "template"; sentences: { text: string; citations: Citation[] }[]; dropped: number };
+export type SynthesisResponse = { mode: "ai" | "template"; sentences: { text: string; citations: Citation[]; study?: string }[]; dropped: number;
+  method?: "extractive_source_quotes"; fallback_reason?: string | null; represented_studies?: string[]; omitted_studies?: string[] };
 
 export type Page<T> = { items: T[]; next_cursor: string | null };

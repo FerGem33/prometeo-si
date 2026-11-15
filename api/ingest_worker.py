@@ -256,7 +256,7 @@ def handler(event, context=None):
     for record in event['Records']:
         try:
             message = json.loads(record['body'])
-            if message.get('action') == 'extract':
+            if message.get('action') in ('extract', 'paper_extract'):
                 try:
                     from . import extract_worker, schema_review
                     from .projects import Projects
@@ -264,7 +264,14 @@ def handler(event, context=None):
                     import extract_worker, schema_review
                     from projects import Projects
                 repository = schema_review.service(Projects(worker.table))
-                extract_worker.process(message, record['messageId'], repository)
+                if message['action'] == 'paper_extract':
+                    try:
+                        from . import paper_worker
+                    except ImportError:
+                        import paper_worker
+                    paper_worker.process(message, record['messageId'], repository, worker.client, worker.model)
+                else:
+                    extract_worker.process(message, record['messageId'], repository)
             else:
                 worker.process(message, record['messageId'])
         except Exception:

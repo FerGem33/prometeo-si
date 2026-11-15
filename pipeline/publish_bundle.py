@@ -63,7 +63,17 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
         expected = {**expected, 'records': [r for r in reviewed_state['records'] if not r.get('excluded')],
                     'conflicts': [c for c in reviewed_state['conflicts'] if c['status'] == 'open']}
     require(not expected['conflicts'], 'Resolve conflicts before publication')
-    require(expected['records'], 'No verified table records to publish')
+    contextual = copy.deepcopy(reviewed_state.get('contextual_evidence', [])) if reviewed_state else []
+    for candidate in contextual:
+        citation = {k: v for k, v in candidate['citation'].items() if k != 'verified'}
+        checked = review.verify_paper_candidates({'candidates': [{k: candidate[k] for k in ('variable', 'value', 'unit', 'scope')}
+                                                               | {'citation': citation}]}, approval, documents)
+        context_decision = candidate.get('review', {})
+        require(not checked['rejected'] and candidate.get('status') == 'contextual'
+                and context_decision.get('supports_value') is True and context_decision.get('by') and context_decision.get('at')
+                and context_decision.get('reason') and context_decision.get('scope') and context_decision.get('use_in_records') is False
+                and context_decision.get('propagate_to_tables') is False, 'Explicit source-bound contextual PDF review required')
+    require(expected['records'] or contextual or reviewed_state and reviewed_state.get('claims'), 'No reviewed evidence to publish')
     entries = metadata['documents']
     require(set(entries) == set(documents), 'Review metadata for every source')
     sources, studies, records = [], {}, []
@@ -88,9 +98,9 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
                 'counts': {'records': 0, 'tests': 0, 'publications': 0, 'documents': 0}}
         sources.append({'id': did, 'kind': 'table' if document['kind'] == 'table' else 'paper',
             'name': document['name'], 'study': sid, 'sha256': document['sha256'],
-            'license': entry.get('license'), 'used': document['kind'] == 'table'})
+            'license': entry.get('license'), 'used': document['kind'] == 'table' or any(c['citation']['doc_id'] == did for c in contextual)})
         studies[sid]['counts']['documents'] += 1
-    used = set()
+    used = {c['variable'] for c in contextual}
     for item in expected['records']:
         entry = entries[item['doc_id']]
         origins = {}
@@ -121,10 +131,12 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
             require(type(sigma) in (int, float) and math.isfinite(sigma) and sigma > 0,
                     'Explicit reviewed positive sigma required: '+key)
             bounds = [x for r in records if key in r['values'] for x in r['values'][key]]
+            bounds += [x for c in contextual if c['variable'] == key for x in c['value']]
             value['range'] = [min(bounds), max(bounds)]  # Observed envelope, not a physical limit.
         schema_variables.append(value)
     lens = copy.deepcopy(metadata['lens'])
-    require(lens.get('title') and lens.get('presets') and lens.get('evidence', {}).get('min_studies', 0) > 0,
+    require(lens.get('title') and isinstance(lens.get('presets'), list)
+            and (not records or lens['presets']) and lens.get('evidence', {}).get('min_studies', 0) > 0,
             'Reviewed lens with sourced presets and evidence threshold required')
     require(all(key in used and variables[key]['type'] == 'num' for key in lens['default_axes']),
             'Lens axes must be published numeric variables')
@@ -149,7 +161,8 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
             'flagged': sum(bool(r['flags']) for r in records), 'publications': 0, 'documents': len(documents)}},
         'schema': {'variables': schema_variables, 'thresholds': thresholds}, 'sources': sources,
         'studies': list(studies.values()), 'records': records,
-        'claims': copy.deepcopy(reviewed_state['claims']) if reviewed_state is not None else []}
+        'claims': copy.deepcopy(reviewed_state['claims']) if reviewed_state is not None else [],
+        'contextual_evidence': contextual}
     mapping = {'version': approval['schema']['version'], 'schema_sha256': approval['schema_sha256'],
         'approved_by': approval['schema']['approved_by'], 'approved_at': approval['schema']['approved_at'],
         'tables': [{'source': did, 'columns': [copy.deepcopy(c) for c in approval['schema']['columns'] if c['doc_id'] == did],
@@ -158,7 +171,7 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
     lens['lens_version'] = lens_version
     receipt = {'stage': 'publication_draft', 'published': False, 'pack_version': pack_version, 'lens_version': lens_version,
         'approval': decision, 'sources': review.snapshot(documents), 'rejected': expected['rejected'],
-        'limitations': ['Table extraction only; PDF conditions require contextual review before inclusion.'],
+        'limitations': ['PDF evidence is contextual only; never propagated to table records. Literal verification is not semantic support.'],
         'files': {name: review.digest(value) for name, value in [('pack', pack), ('lens', lens), ('mapping', mapping)]}}
     return {'pack': pack, 'lens': lens, 'mapping': mapping, 'receipt': receipt}
 

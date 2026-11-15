@@ -108,6 +108,8 @@ Una entrada por sesión de agente, la más reciente arriba.
 ### 2026-11-15 · Inicio de cierre completo del backend autorizado
 - Dueño autoriza completar pendientes del backend y acciones AWS necesarias. `git pull --rebase`:sin cambios; perfil prometeo/STS cuenta352818909129 correcto;155pruebas API pasan antes de editar.
 - Se conservan modelo D6, corpus fuera de Git, demo intacta, presupuesto y revisión explícita de evidencia. Ningún cambio de frontend ni deploy web. Implementación por etapas con contratos/pruebas y comprobaciones AWS; no se convierten automáticamente PDF rechazados en datos publicados.
+- Implementado cierre de código: propuestas persistentes/versionadas con transacción contra borrado concurrente; claims auditados; intención/lente sin reextraer; revisión explícita de lente/presets; ask/analysis con pack privado y validadores existentes; síntesis por IDs de citas con caché y cobertura por estudio. PDF asíncrono separado por documento, candidatos y alcance revisables, recuperación manual de propuestas rechazadas y texto parseado autenticado. El contexto PDF nunca rellena filas de tablas.
+- Python3.12:164 pruebas API pasan, constructor5/revisión7/extracción10 pasan, build TypeScript/Vite y check_agnostic pasan (aviso de chunk629kB). Despliegue API existente completado; ampliación a42rutas y worker en aplicación. Comprobaciones reales aún en curso; no se declaran resultados AWS por pruebas con dobles.
 
 ### 2026-11-15 · Ruta corta comprobada en AWS: lote/DLQ y pack privado v2
 - `8bcf568` subido tras rebase con los documentos de pitch de Daniel; no se tocó frontend. API v3 desplegada sobre Lambda existente, 24 rutas JWT. Worker reutiliza rol, Lambda y mapping `01099ec2-85e7-4271-9a74-9ac80f6289fe`.

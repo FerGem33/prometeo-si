@@ -20,11 +20,12 @@ def pack():
     return json.loads(path.read_text())
 
 
-def schema():
-    result = json.loads(json.dumps(pack()['schema']))
+def schema(source_pack=None):
+    source_pack = pack() if source_pack is None else source_pack
+    result = json.loads(json.dumps(source_pack['schema']))
     for v in result['variables']:
         if v['type'] == 'cat':
-            v['categories'] = sorted({r['values'][v['id']] for r in pack()['records']
+            v['categories'] = sorted({r['values'][v['id']] for r in source_pack['records']
                                       if isinstance(r['values'].get(v['id']), str)})
     return result
 
@@ -61,6 +62,9 @@ def model_json(system, data):
     client = AnthropicBedrock(aws_region=os.environ.get('AWS_REGION', 'us-east-1'), timeout=15, max_retries=0)
     result = client.messages.create(model=model, max_tokens=1200, system=system,
         messages=[{'role': 'user', 'content': '<untrusted_data>\n' + json.dumps(data, ensure_ascii=True).replace('<', '\\u003c').replace('>', '\\u003e') + '\n</untrusted_data>'}])
+    print(json.dumps({'event': 'model_usage', 'model': model, 'usage': result.usage.model_dump(),
+                      'stop_reason': result.stop_reason}), flush=True)
+    if result.stop_reason != 'end_turn': raise ValueError('Incomplete model response')
     text = ''.join(block.text for block in result.content if block.type == 'text')
     return parse_model_json(text)
 
@@ -166,7 +170,7 @@ def reply(status, body, origin):
     return {'statusCode': status, 'headers': headers, 'body': json.dumps(body, allow_nan=False)}
 
 
-def handler(event, context=None):
+def handler(event, context=None, source_pack=None):
     if not isinstance(event, dict) or not isinstance(event.get('requestContext'), dict) or not isinstance(event['requestContext'].get('http'), dict) or not isinstance(event.get('headers', {}), dict):
         return reply(400, {'error': 'Invalid event'}, '')
     origin = event.get('headers', {}).get('origin', '')
@@ -182,7 +186,7 @@ def handler(event, context=None):
         if status == 204:
             response['body'] = ''
         if origin == os.environ.get('CF_URL'):
-            response['headers'].update({'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+            response['headers'].update({'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
                                         'access-control-allow-headers': 'content-type, authorization, idempotency-key'})
         return response
     if path not in ('/ask', '/analysis'):
@@ -202,13 +206,14 @@ def handler(event, context=None):
         data = json.loads(raw, parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Nonfinite JSON')))
         if not isinstance(data, dict):
             raise ValueError('Expected object')
-        definitions = schema()
+        active_pack = pack() if source_pack is None else source_pack
+        definitions = schema(active_pack)
         if path == '/ask':
             if not {'question', 'schema'} <= set(data) or set(data) - {'question', 'schema', 'version'} or not isinstance(data['question'], str) or not 1 <= len(data['question'].strip()) <= 2000:
                 raise ValueError('Invalid question')
             if data.get('version', 1) not in (1, 2):
                 raise ValueError('Invalid version')
-            if data['schema'] not in (pack()['schema'], definitions):
+            if data['schema'] not in (active_pack['schema'], definitions):
                 raise ValueError('Schema does not match deployed pack')
         else:
             if set(data) != {'scenario', 'levels', 'findings'}:
@@ -219,8 +224,8 @@ def handler(event, context=None):
             for level in data['levels']:
                 if not isinstance(level, dict) or level.get('variable') not in data['scenario']['active'] or level.get('level') not in ('studied', 'scarce', 'near', 'not_studied'):
                     raise ValueError('Invalid level')
-            refs = {r['id'] for r in pack()['records']} | {s['id'] for s in pack()['studies']}
-            validate_facts(data['findings'], pack(), data['scenario'])
+            refs = {r['id'] for r in active_pack['records']} | {s['id'] for s in active_pack['studies']}
+            validate_facts(data['findings'], active_pack, data['scenario'])
             allowed = candidates(data['findings'], definitions, refs)
     except (ValueError, TypeError, KeyError, UnicodeError):
         return reply(400, {'error': 'Invalid request'}, origin)

@@ -51,6 +51,17 @@ def main(carpeta):
         if len(s.get("sha256", "")) != 64:
             err(f"fuente {s['id']}: sha256 invalido")
     ids = set()
+    for candidate in pack.get('contextual_evidence', []):
+        citation, decision = candidate.get('citation', {}), candidate.get('review', {})
+        source = fuentes.get(citation.get('doc_id'), {})
+        if (candidate.get('status') != 'contextual' or candidate.get('variable') not in variables
+                or citation.get('kind') != 'paper' or source.get('kind') != 'paper'
+                or type(citation.get('page')) is not int or citation['page'] < 1 or not citation.get('quote')
+                or citation.get('verified') is not True or decision.get('supports_value') is not True
+                or decision.get('use_in_records') is not False or decision.get('propagate_to_tables') is not False
+                or not all(decision.get(k) for k in ('by', 'at', 'reason', 'scope'))
+                or candidate.get('scope') != decision.get('scope')):
+            err('contextual_evidence: falta revisión contextual explícita, variable o cita válida')
     for r in pack["records"]:
         rid = r.get("id")
         if rid in ids:

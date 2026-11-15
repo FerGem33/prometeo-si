@@ -26,6 +26,9 @@ def main():
     parser.add_argument('--retry-docs', nargs='+')
     parser.add_argument('--resume-receipt', type=Path)
     parser.add_argument('--inspect-project')
+    parser.add_argument('--paper', type=Path, help='Include one reviewed-manifest PDF as contextual evidence')
+    parser.add_argument('--stop-after-extract', action='store_true', help='Save candidates for explicit semantic decisions before publishing')
+    parser.add_argument('--manual-recovery', action='store_true', help='Explicitly use the delegated reference mapping after an invalid AI proposal')
     parser.add_argument('--output', default='/tmp/prometeo-evidence-diagnostics.json')
     args = parser.parse_args()
     if args.workflow_dir and args.retry_docs and not args.resume_receipt:
@@ -43,7 +46,7 @@ def main():
         except HTTPError as exc: response = exc
         with response: status, raw = response.code, response.read()
         checks.append({'method': method, 'path': path if not path.startswith('https://') else 'S3 signed object', 'http': status})
-        if status != expected:
+        if status not in (expected if isinstance(expected, tuple) else (expected,)):
             detail = json.loads(raw).get('error', {}) if raw and auth else {}
             raise RuntimeError('HTTP '+str(status)+' '+str(detail)[:500])
         return json.loads(raw) if raw and auth else raw
@@ -82,14 +85,19 @@ def main():
                 'intent': 'Compare documented conditions across the reviewed boiling sources; do not predict outcomes.'}, 201)['id']
             receipt['project_id'] = pid; save()
             pending = []
+            paths = []
             for entry in config['documents']:
-                paths = [p for p in args.workflow_dir.glob(entry['study']+'__*.csv')]
-                if len(paths) != 1: raise RuntimeError('Ambiguous reviewed table '+entry['study'])
-                path = paths[0]; raw = path.read_bytes(); digest = hashlib.sha256(raw).hexdigest()
-                ticket = send('POST', '/projects/'+pid+'/documents', {'name': path.name, 'media_type': 'text/csv', 'bytes': len(raw)}, 201,
-                    headers={'Idempotency-Key': 'workflow-'+entry['study']})
+                selected_paths = list(args.workflow_dir.glob(entry['study']+'__*.csv'))
+                if len(selected_paths) != 1: raise RuntimeError('Ambiguous reviewed table '+entry['study'])
+                paths.extend(selected_paths)
+            if args.paper: paths.append(args.paper)
+            for path in paths:
+                raw = path.read_bytes(); digest = hashlib.sha256(raw).hexdigest(); study = path.name.split('__')[0]
+                kind = 'paper' if path.suffix.lower() == '.pdf' else 'table'
+                ticket = send('POST', '/projects/'+pid+'/documents', {'name': path.name, 'media_type': 'application/pdf' if kind == 'paper' else 'text/csv', 'bytes': len(raw)}, 201,
+                    headers={'Idempotency-Key': 'workflow-'+digest[:32]})
                 send('PUT', ticket['upload']['url'], raw, auth=False, headers=ticket['upload']['headers'])
-                item = {'doc_id': ticket['doc_id'], 'name': path.name, 'sha256': digest, 'study': entry['study']}
+                item = {'doc_id': ticket['doc_id'], 'name': path.name, 'sha256': digest, 'study': study, 'kind': kind}
                 receipt['sources'].append(item); pending.append(item); save()
             for source in pending: send('POST', '/projects/'+pid+'/documents/'+source['doc_id']+'/complete', {'sha256': source['sha256']})
         pid = receipt['project_id']; endpoint = '/projects/'+pid
@@ -99,12 +107,40 @@ def main():
             jobs = wait(pid)
             if any(j['status'] == 'failed' for j in jobs['jobs']):
                 receipt['diagnostics'] = send('GET', endpoint+'/diagnostics'); save()
-                raise RuntimeError('Proposal rejected; diagnostics saved, retain this project for targeted retry')
+                if not args.manual_recovery:
+                    raise RuntimeError('Proposal rejected; diagnostics saved, retain this project for targeted retry')
+                for job in jobs['jobs']:
+                    if job['status'] != 'failed': continue
+                    source = next(s for s in receipt['sources'] if s['doc_id'] == job['doc_id'])
+                    variables, columns = [], []
+                    if source.get('kind') != 'paper':
+                        document = review.ingest.parse_document(args.workflow_dir/source['name']); document['id'] = source['doc_id']
+                        reference = next(d for d in config['documents'] if d['study'] == source['study'])
+                        for value in reference['variables']:
+                            index = document['headers'].index(value['column'])
+                            row = next(r for r in document['rows'] if r['values'][index].strip())
+                            variables.append({k: value[k] for k in ('id', 'label', 'type', 'unit')} | {'evidence': [
+                                {'kind': 'table', 'doc_id': document['id'], 'row': row['row'], 'column': value['column'], 'text': row['values'][index]}]})
+                        for header in document['headers']:
+                            v = next((v for v in reference['variables'] if v['column'] == header), None)
+                            columns.append({'column': header, 'variable': v['id'] if v else None, 'unit': v['unit'] if v else None, 'convert': None})
+                    send('POST', endpoint+'/documents/'+source['doc_id']+'/proposal', {'proposal': {'doc_id': source['doc_id'],
+                        'variables': variables, 'columns': columns}, 'reason': config['authority']+'; manual recovery from the reviewed reference; model rejection retained. PDF conditions are contextual only.'})
             schema = send('GET', endpoint+'/schema')
             edits, metadata_docs, prepared = [], {}, {}
             for variable in schema['variables']:
                 edits.append({'op': 'set_status', 'target': 'variable', 'id': variable['id'], 'status': 'rejected'})
             for source in receipt['sources']:
+                if source.get('kind') == 'paper':
+                    import csv
+                    page = send('GET', endpoint+'/documents/'+source['doc_id']+'/text?page=1')
+                    with (ROOT/'docs/t37/manifest_ebullicion.csv').open(encoding='utf-8-sig', newline='') as f:
+                        item = next(m for m in csv.DictReader(f) if m['sha256'] == source['sha256'] and m['incluido'] == 'True')
+                    quote_text = next(line.strip() for line in page['text'].splitlines() if line.strip())
+                    metadata_docs[source['doc_id']] = {'sha256': source['sha256'], 'study': source['study'], 'doi': item['doi'],
+                        'title': item['investigacion'], 'kind': 'campaign', 'kind_note': 'Reviewed article identity; contextual PDF evidence only, no table-wide attribution.',
+                        'license': None, 'kind_evidence': {'kind': 'paper', 'doc_id': source['doc_id'], 'page': 1, 'quote': quote_text}}
+                    continue
                 doc = review.ingest.parse_document(args.workflow_dir/source['name']); doc['id'] = source['doc_id']
                 if doc['sha256'] != source['sha256']: raise RuntimeError('Source changed')
                 reference = next(d for d in config['documents'] if d['study'] == source['study'])
@@ -153,6 +189,19 @@ def main():
                 'review_authority': config['authority']+'; reference config SHA256 '+review.digest(config)})
             receipt['approved'] = {'version': approved['version'], 'authority': config['authority']}; save()
         wait(pid)
+        for _ in range(90):
+            ready = send('GET', endpoint+'/records', expected=(200, 409))
+            if 'items' in ready: break
+            time.sleep(3)
+        else: raise RuntimeError('Table extraction not ready; resume the receipt')
+        if args.stop_after_extract:
+            for _ in range(90):
+                candidates = send('GET', endpoint+'/paper-candidates')
+                if all(d['status'] != 'pending' for d in candidates['documents']): break
+                time.sleep(3)
+            Path('/tmp/prometeo-live-paper-candidates.json').write_text(json.dumps(candidates, indent=2)+'\n')
+            receipt['paper_review'] = {'documents': len(candidates['documents']), 'candidates': len(candidates['items']), 'status': 'awaiting_explicit_decisions'}
+            save(); print(json.dumps({'project_id': pid, 'review_file': '/tmp/prometeo-live-paper-candidates.json'})); return
         first_publish = send('POST', endpoint+'/publish', {})
         receipt['first_pack_version'] = first_publish['pack_version']; save()
         if 'correction' not in receipt:

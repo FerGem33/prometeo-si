@@ -160,7 +160,7 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     deploy_projects.configure(output, env, aws)
     deploy_projects.configure(output, env, aws)
     # 4 project routes + 5 upload routes + 2 DELETE routes (T33), each with its own invoke permission.
-    expected = 11 + 3 * schema + originals + 9 * evidence
+    expected = 11 + 3 * schema + originals + 27 * evidence
     assert len(aws.routes) == expected and len(aws.authorizers) == 1 and len(aws.statements) == expected
     assert {'DELETE /projects/{id}', 'DELETE /projects/{id}/documents/{doc_id}'} <= {r['RouteKey'] for r in aws.routes}
     assert aws.variables['UPLOADS_ENABLED'] == 'true'
@@ -178,5 +178,9 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     if originals:
         assert 'POST /projects/{id}/documents/{doc_id}/url' in {r['RouteKey'] for r in aws.routes}
     if evidence:
+        assert {'PUT /projects/{id}/proposals/{pid}', 'POST /projects/{id}/ask',
+                'POST /projects/{id}/analysis', 'POST /projects/{id}/claims',
+                'POST /projects/{id}/documents/{doc_id}/proposal',
+                'POST /projects/{id}/paper-candidates/{cid}/review', 'PUT /projects/{id}/lens'} <= {r['RouteKey'] for r in aws.routes}
         assert any(s['Resource'].endswith('/text/reviews/*') for s in policy['Statement'])
         assert any(s['Resource'].endswith('/pack/*') for s in policy['Statement'])
