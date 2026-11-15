@@ -9,9 +9,9 @@ no equivale al recorrido completo operativo.
 |---|---|---|
 | T31 recursos base | DynamoDB, S3 privado, SQS/DLQ, pool/cliente Cognito; dos corridas reales | Hecha; conservar scripts e IDs |
 | T33 cuentas/proyectos | Registro/confirmación/login SRP y 14 checks A/B reales pasan. API drafts y cuatro rutas JWT desplegadas; MVP operativo | Cargas D3 y gestión completa de proyectos (DELETE/lente); conexión de pantallas por interfaz. Evidencia `T33_PRUEBA_USUARIOS.md` |
-| T30/D3 | Contrato y límites propuestos; permiso acotado para desplegar drafts | Aprobar resto del contrato y límites/costo del corpus. 20 MB/60 páginas/30 documentos no están aprobados por inferencia |
+| T30/D3 | Dueño aprobó D3: 20 MB/60 páginas/30 documentos; permiso acotado drafts | Aprobar resto del contrato; verificar enforcement y medir costo efectivo del worker. Límites no son tope monetario |
 | T32 extracción | CLI local y evaluación real documentadas | Revisión humana D7, citas PDF y alcance; fuente/OCR legible del PDF pendiente |
-| T33 cargas | Bucket privado y reserva de tickets local con cupo transaccional; deshabilitada | D3, complete/hash real, listado/limpieza, integridad/encolado y pruebas S3 reales. Ver `T33_CARGAS_PREPARACION.md` |
+| T33 cargas | D3 aprobada; bucket privado y reserva local con cupo transaccional; aún deshabilitada | Complete/hash real, listado/limpieza, integridad/encolado y pruebas S3 reales. Ver `T33_CARGAS_PREPARACION.md` |
 | T34 worker | Cola/DLQ creadas; pipeline local disponible | Lambda empaquetada con parser PDF, permisos, asociación SQS, progreso/reanudación, lote real y corrupto aislado |
 | T35 revisión | Revisión/aprobación local versionada disponible | API persistente/autenticada y arranque de extracción tras aprobación; pantallas con equipo de interfaz |
 | T36 correcciones y originales | Contratos preparados | API de correcciones/conflictos/claims, auditoría y URLs PDF por propietario; pruebas y pantallas |
@@ -23,7 +23,7 @@ no equivale al recorrido completo operativo.
 1. Registro/confirmación y prueba `node tools/cognito/cli.mjs ab` ya completados
    con dos cuentas propias. Conservar control de esas cuentas para regresiones;
    no compartir ni versionar credenciales.
-2. Resolver T30/D3 con límites y costos revisados, asignar revisor científico
+2. D3 ya aprobada. Aprobar resto del contrato T30, asignar revisor científico
    D7/PDF y seleccionar segundo dominio D10. El código no toma esas decisiones.
 3. Aprobar permisos adicionales específicos cuando se entregue el worker y
    las cargas. El permission set de T33 no es permiso general para toda AWS.

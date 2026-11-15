@@ -1,5 +1,10 @@
 # T33: reservas de carga preparadas, aún deshabilitadas
 
+**Actualización 15-nov:** el dueño aprobó D3 con los límites de este documento
+(20.000.000 bytes, 60 páginas, 30 documentos). Las secciones de propuesta/costo
+conservan el contexto revisado. La carga continúa deshabilitada hasta completar
+integridad, confirmación y procesamiento verificables; no es tope de gasto.
+
 ## Alcance implementado localmente
 
 `api/upload_tickets.py` reserva un documento y genera una URL PUT S3 privada

@@ -76,7 +76,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 |---|---|---|---|
 | D1 | ¿Se levanta la restricción de `AGENTS.md` §8 sobre Cognito, SQS y DynamoDB? | **Decidido (15-nov): sí.** `AGENTS.md` §8 actualizado: solo por scripts idempotentes de `infra/` y con permisos acotados. | — |
 | D2 | ¿Scripts de AWS CLI o plantilla SAM? | Mantener los scripts: ya funcionan y el equipo los conoce. | Bloque C |
-| D3 | Límites del corpus: MB por archivo, páginas por PDF, documentos por lote. | 20 MB, 60 páginas, 30 documentos (el escenario del §11 de los casos de uso). Medir costo en T31 antes de fijarlo. | T30–T36 |
+| D3 | Límites del corpus: MB por archivo, páginas por PDF, documentos por lote. | **Decidido por el dueño (15-nov):** 20 MB (20.000.000 bytes) por archivo, 60 páginas por PDF y 30 documentos por proyecto. Revisó el escenario orientativo de costo en `T33_CARGAS_PREPARACION.md`; no es tope de gasto ni tarifa efectiva comprobada. Implementación/enforcement y medición del worker siguen pendientes. | — |
 | D4 | Clases destino y umbrales de la ficha de ML (CU-24). | Los tres veredictos del caso de uso con umbrales visibles y editables en `lens`. | T27 |
 | D5 | ¿Entran "respaldado" y "refutado" en el motor? Exigen una variable de resultado con sentido definido. | No por ahora: las tablas de BASS y BASS-II no traen resultado y 12 investigaciones lo traen en formatos distintos. Mantener los cuatro niveles de cobertura. | — |
 | D6 | ¿Se migra a Haiku 5.5? | **Decidido por el dueño (15-nov): no.** Conservar `us.anthropic.claude-haiku-4-5-20251001-v1:0` y SDK 2.8.0; Haiku 4.5 cumple las comprobaciones y tiene acceso en esta cuenta. | — |
