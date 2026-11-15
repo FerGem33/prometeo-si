@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import type { AxisScore, Finding, GapGrid, NumVariable, Scenario, StudyResult } from "../engine";
 import { useData, Src } from "./ctx";
+import { ariaSort, nextSort, overallCloseness, sortStable } from "../report/ranking";
+import type { Dir, SortValue } from "../report/ranking";
 import { doiOf, num, partitionName, rangeText, studyShort, valueText, varOf } from "../report/format";
 import { FINDING_LEVEL, findingText, findingTitle, whyText } from "../report/text";
 
@@ -107,37 +109,40 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
   );
 }
 
-type SortKey = "rank" | "study" | "distance" | "tests";
+type SortKey = "rank" | "study" | "grade" | "distance" | "tests";
+
+/** Column header that sorts: a real button inside the th, with aria-sort on the th. */
+export function SortTh({ label, active, dir, onSort, className = "" }: { label: React.ReactNode; active: boolean; dir: Dir; onSort: () => void; className?: string }) {
+  return (
+    <th className={className} aria-sort={ariaSort(active, dir)}>
+      <button type="button" className={`sorth ${active ? (dir === 1 ? "asc" : "desc") : ""}`} onClick={onSort}>
+        {label}
+      </button>
+    </th>
+  );
+}
 
 export function RankingTable({ results, scenario }: { results: StudyResult[]; scenario: Scenario }) {
   const { pack, lens } = useData();
-  const [sort, setSort] = useState<{ k: SortKey; dir: 1 | -1 }>({ k: "rank", dir: 1 });
+  const [sort, setSort] = useState<{ k: SortKey; dir: Dir }>({ k: "rank", dir: 1 });
   const rows = useMemo(() => {
     const withRank = results.map((r, i) => ({ r, i }));
-    const key = (x: { r: StudyResult; i: number }) =>
-      sort.k === "rank" ? x.i : sort.k === "study" ? studyShort(pack, x.r.study) : sort.k === "distance" ? (x.r.distance ?? Infinity) : x.r.comparable;
-    return [...withRank].sort((a, b) => {
-      const ka = key(a);
-      const kb = key(b);
-      return (typeof ka === "string" ? ka.localeCompare(kb as string) : (ka as number) - (kb as number)) * sort.dir || a.i - b.i;
-    });
+    const key = (x: { r: StudyResult; i: number }): SortValue =>
+      sort.k === "rank" ? x.i : sort.k === "study" ? studyShort(pack, x.r.study) : sort.k === "grade" ? x.r.grade : sort.k === "distance" ? x.r.distance : x.r.comparable;
+    return sortStable(withRank, key, sort.dir);
   }, [results, sort, pack]);
-  const th = (k: SortKey, label: string, cls = "") => (
-    <th className={`sort ${cls} ${sort.k === k ? (sort.dir === 1 ? "asc" : "desc") : ""}`} onClick={() => setSort((s) => ({ k, dir: s.k === k && s.dir === 1 ? -1 : 1 }))}>
-      {label}
-    </th>
-  );
+  const th = (k: SortKey, label: string, cls = "") => <SortTh label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
   const actives = scenario.active.map((id) => varOf(pack, id));
   return (
     <table id="tbl-rank">
       <caption>
-        <b>Table 1 |</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : "Study"} ranking for the scenario: grade A–D, then number of missing variables, then normalised distance <i>d</i> of the nearest comparable record. <span className="hint">Click a column to sort; click a test for its source row.</span>
+        <b>Table 1 |</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : "Study"} ranking for the scenario: grade A–D, then number of missing variables, then normalised distance <i>d</i> of the nearest comparable record. <span className="hint">Use the column buttons to sort (stable; ties keep the default order); click a test for its source row.</span>
       </caption>
       <thead>
         <tr>
           {th("rank", "#")}
           {th("study", lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : "Study")}
-          <th>Grade</th>
+          {th("grade", "Grade")}
           {th("distance", "d", "r")}
           <th>Nearest record</th>
           {actives.map((v) => (
@@ -183,7 +188,7 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
   );
 }
 
-const REASON: Record<string, string> = {
+export const REASON: Record<string, string> = {
   not_recorded: "not recorded",
   not_comparable: "not comparable",
   no_records: "no table",
@@ -193,26 +198,45 @@ const REASON: Record<string, string> = {
 export function HeatTable({ results, closeness, scenario, figure }: { results: StudyResult[]; closeness: Record<string, Record<string, AxisScore>>; scenario: Scenario; figure: number }) {
   const { pack, lens } = useData();
   const [all, setAll] = useState(false);
+  const [sort, setSort] = useState<{ k: string; dir: Dir }>({ k: "default", dir: 1 });
   const actives = scenario.active.map((id) => varOf(pack, id));
+  const activeIds = actives.map((v) => v.id);
   const comparableRows = results.filter((r) => r.comparable > 0);
   const rest = results.filter((r) => r.comparable === 0);
-  const rows = all ? results : comparableRows;
+  const shown = all ? results : comparableRows;
+  const rows = useMemo(() => {
+    const key = (r: StudyResult): SortValue => {
+      if (sort.k === "study") return studyShort(pack, r.study);
+      if (sort.k === "grade") return r.grade;
+      if (sort.k === "overall") return overallCloseness(closeness[r.study], activeIds);
+      const a = closeness[r.study]?.[sort.k.slice(4)];
+      return a && !a.reason && !a.missing ? a.score : null;
+    };
+    return sort.k === "default" ? shown : sortStable(shown, key, sort.dir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown, sort, closeness, pack, activeIds.join("|")]);
+  const hth = (k: string, label: React.ReactNode, cls = "") => <SortTh label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
   return (
     <figure className="fig wide" id="fig-heat">
       <table className="heat">
         <thead>
           <tr>
-            <th>{(lens.unit_of_study ?? "study").replace(/^./, (c) => c.toUpperCase())}</th>
-            <th>Grade</th>
-            {actives.map((v) => (
-              <th key={v.id} className="c">
-                {v.label}
-                <small>
-                  {" "}
-                  {typeof scenario.values[v.id] === "number" ? `${num(scenario.values[v.id] as number)} ${(v as NumVariable).unit}` : String(scenario.values[v.id] ?? "")}
-                </small>
-              </th>
-            ))}
+            {hth("study", (lens.unit_of_study ?? "study").replace(/^./, (c) => c.toUpperCase()))}
+            {hth("grade", "Grade")}
+            {hth("overall", "Overall closeness", "c")}
+            {actives.map((v) =>
+              hth(
+                `var:${v.id}`,
+                <>
+                  {v.label}
+                  <small>
+                    {" "}
+                    {typeof scenario.values[v.id] === "number" ? `${num(scenario.values[v.id] as number)} ${(v as NumVariable).unit}` : String(scenario.values[v.id] ?? "")}
+                  </small>
+                </>,
+                "c",
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
@@ -226,6 +250,7 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
                 <td>
                   <Grade g={r.grade} />
                 </td>
+                <td className="c">{(() => { const o = overallCloseness(closeness[r.study], activeIds); return o === null ? "—" : <b>{num(o, 1)}</b>; })()}</td>
                 {actives.map((v) => {
                   const a = closeness[r.study]?.[v.id];
                   if (!a) return <td key={v.id} />;
@@ -256,7 +281,7 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
         <b>
           Figure {figure} | Closeness of each {lens.unit_of_study ?? "study"} to the scenario, by variable.
         </b>{" "}
-        Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least {pack.schema.thresholds.closeness_reach}σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.{" "}
+        Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table 1. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least {pack.schema.thresholds.closeness_reach}σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.{" "}
         {rest.length > 0 && (
           <>
             {all ? "All sources are shown. " : `${rest.length} ${lens.unit_of_study ?? "study"}s without comparable records are not shown (${rest.map((r) => studyShort(pack, r.study)).join(", ")}). `}
