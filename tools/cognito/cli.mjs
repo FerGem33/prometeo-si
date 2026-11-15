@@ -26,8 +26,9 @@ async function prompt(label, secret = false) {
 
 async function main() {
   const mode = process.argv[2];
-  if (!['register', 'confirm', 'login', 'ab'].includes(mode) || process.argv.length !== 3) {
-    throw new Error('Usage: node tools/cognito/cli.mjs register|confirm|login|ab');
+  if (!['register', 'confirm', 'login', 'ab', 'uploads'].includes(mode)
+      || process.argv.length !== (mode === 'uploads' ? 4 : 3)) {
+    throw new Error('Usage: node tools/cognito/cli.mjs register|confirm|login|ab|uploads [source]');
   }
   const config = {poolId: process.env.USER_POOL_ID, clientId: process.env.USER_POOL_CLIENT_ID};
   if (config.poolId !== 'us-east-1_JP5FcOZMA' || config.clientId !== 'n509p2ooh8opklaphskhs68sc') {
@@ -62,9 +63,10 @@ async function main() {
         tokens.push(await c.login(email, password));
         password = '';
       }
-      const script = fileURLToPath(new URL('../../api/check_projects_live.py', import.meta.url));
+      const script = fileURLToPath(new URL(mode === 'uploads' ? '../../api/check_uploads_live.py' : '../../api/check_projects_live.py', import.meta.url));
+      const checks = mode === 'uploads' ? ['--source', process.argv[3]] : ['--output', '/tmp/prometeo-t33-ab.json'];
       const status = await new Promise((resolve, reject) => {
-        const child = spawn(process.env.T33_PYTHON || 'python3.12', ['-I', script, '--output', '/tmp/prometeo-t33-ab.json'], {
+        const child = spawn(process.env.T33_PYTHON || 'python3.12', ['-I', script, ...checks], {
           env: {...process.env, T33_TOKEN_A: tokens[0], T33_TOKEN_B: tokens[1]}, stdio: 'inherit',
         });
         child.once('error', reject);

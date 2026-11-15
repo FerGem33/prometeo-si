@@ -9,6 +9,7 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', required=True)
+    parser.add_argument('--uploads', action='store_true', help='Include approved D3 upload routes/configuration')
     args = parser.parse_args()
     table = os.environ['DATA_TABLE_ARN']
     pool = os.environ['USER_POOL_ID']
@@ -32,6 +33,22 @@ def main():
         'projects-routes.json': [{'RouteKey': route, 'AuthorizationType': 'JWT'} for route in (
             'POST /projects', 'GET /projects', 'GET /projects/{id}', 'PATCH /projects/{id}')],
     }
+    if args.uploads:
+        bucket = os.environ['CORPUS_BUCKET']
+        queue = os.environ['INGEST_QUEUE_ARN']
+        if bucket != 'prometeo-hack-corpus-352818909129' or queue != 'arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest':
+            parser.error('Unexpected corpus/queue outputs')
+        documents['projects-policy.json']['Statement'][0]['Action'].append('dynamodb:UpdateItem')
+        documents['projects-policy.json']['Statement'].extend([
+            {'Effect': 'Allow', 'Action': ['s3:PutObject', 's3:GetObject'], 'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/raw/*'},
+            {'Effect': 'Allow', 'Action': ['sqs:SendMessage'], 'Resource': queue}])
+        documents['projects-env-merge.json'].update({'UPLOADS_ENABLED': 'true',
+            'UPLOAD_LIMITS_JSON': json.dumps({'max_bytes': 20000000, 'max_pages': 60, 'max_documents': 30}),
+            'CORPUS_BUCKET': bucket, 'INGEST_QUEUE_URL': os.environ['INGEST_QUEUE_URL']})
+        documents['projects-routes.json'].extend({'RouteKey': key, 'AuthorizationType': 'JWT'} for key in (
+            'POST /projects/{id}/documents', 'GET /projects/{id}/documents',
+            'POST /projects/{id}/documents/{doc_id}/complete', 'GET /projects/{id}/jobs',
+            'POST /projects/{id}/ingest/resume'))
     for filename, value in documents.items():
         path = output / filename
         encoded = json.dumps(value, indent=2) + '\n'

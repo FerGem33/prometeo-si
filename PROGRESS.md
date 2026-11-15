@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33: usuarios/drafts A/B reales comprobados; D3 aprobada, reserva de cargas local aún deshabilitada por falta de complete/hash, integridad y procesamiento verificados. T32 D7/PDF pendiente; T31 hecha. |
+| Tarea en curso | T33 API de cargas/complete/progreso desplegada; CORS S3 actualizado y preflight real 200. Falta smoke de archivo/confirmación. T34 worker local hasta propuesta, sin deploy/consumidor. Drafts A/B comprobados; T31 hecha. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Implementar complete/hash real/integridad, listado, encolado durable y worker con los límites D3 aprobados; verificar antes de activar cargas. D7/PDF requiere revisor; T30 resto del contrato sigue pendiente. |
+| Siguiente paso exacto | Ejecutar smoke de archivo real T33 con las dos sesiones; PUT/overwrite/complete/aislamiento. La cola todavía no tiene consumidor: preparar provisión/rol/asociación SQS de T34 y lote real después. Decisiones humanas en `docs/REVISION_FINAL_PENDIENTE.md`; no aprobar datos automáticamente. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -61,8 +61,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | Registro/confirmación/login SRP y 14 comprobaciones HTTP A/B reales pasan. Faltan cargas T30/D3 y gestión completa (DELETE/lente); `docs/T33_PRUEBA_USUARIOS.md` |
-| T34–T37 | Worker, revisión y publicación | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus); revisión T32/D7 pendiente |
+| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | 14 checks A/B reales de drafts pasan. Cargas/complete/jobs/resume implementados localmente; deploy bloqueado por CORS. Faltan smoke de cargas y gestión completa (DELETE/lente) |
+| T34 | Worker | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Hash real, parseo/perfil/propuestas, leases/cache/duplicados y batch failures implementados; ZIP Linux preparado. Sin provisión/deploy ni lote/DLQ real; `docs/T34_WORKER_PREPARACION.md` |
+| T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | Decisiones humanas reunidas para revisión final; no se omite gate de aprobación científica |
 
 ## Aceptación final (T15)
 
@@ -95,6 +96,21 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · CORS confirmado y etapa API de cargas desplegada
+- Dueño actualizó permission set. GetBucketCors real correcto; se publicó API actual (`20_api.sh`, código 0) y se aplicó configuración --uploads (`deploy_projects.py`, código 0). Despliegue acotado a endpoints operativos autorizado por la instrucción de avanzar/desplegar etapas; no aprueba contenido científico ni publica packs.
+- Lectura posterior confirma origen CloudFront, método PUT, if-none-match y headers anteriores. OPTIONS real a S3 con Origin web y headers content-type/if-none-match: HTTP 200, Access-Control-Allow-Origin correcto, Allow-Methods PUT y Allow-Headers content-type, if-none-match.
+- T33 habilita reservas/complete/listado/jobs/resume en API, con gate configurado y límites D3 aprobados. Worker todavía no está desplegado ni asociado a la cola: los mensajes quedarán pendientes hasta esa etapa. No se afirma procesamiento completo.
+- Preflight local: API 98 passed, 1 skipped (PDF worker no instalado en api/.venv); prueba completa worker de la entrega anterior fue 99 con requirements-worker. Sin cambios de código en esta confirmación; falta smoke de archivo real.
+
+### 2026-11-15 · T33 complete/colas/progreso y T34 worker local
+- Autorización del dueño: avanzar/desplegar por etapas y reunir decisiones humanas para revisión final. `docs/REVISION_FINAL_PENDIENTE.md` conserva D7/PDF/T30/ML/D10 y gate de aprobación; D3 sigue aprobada.
+- T33 local: PUT IfNoneMatch firmado, complete con HEAD de tipo/tamaño, hash declarado separado del verificado, transición/dispatch pendientes durables, listado paginado, jobs y resume. No hay subida del archivo vía API. Envío SQS puede repetirse; worker usa lease y checkpoints. Esquema/API no confirman SHA real hasta que el worker lee bytes.
+- Despliegue --uploads intentado: s3:GetBucketCORS y s3:PutBucketCORS fueron rechazados; el último error explícito es RuntimeError AWS s3api put-bucket-cors failed (AccessDenied), exit 254. Se detuvo antes de habilitar variables/rutas de documentos. Política adicional mínima versionada en infra/t33-deployer-policy.json y documentada para el administrador.
+- T34 local: verifica dueño/ruta/ETag/hash, parsea CSV y PDF pypdf 7.1.0, perfila, invoca propuestas por modelo D6 y valida citas. Guarda raw/uso/resultado en S3, reutiliza respuestas, limita llamadas por documento, retiene duplicados y falla por documento. Termina en proposed/awaiting_review, nunca aprueba/extracción/publicación.
+- Parser real local sobre cinco PDF T32: 20120015928 (44 páginas), 20150008961 (10) y 20150019858 (9) leídos; 20150023456 y 20210011385 rechazados por >60 páginas. Se cambió layout→plain al detectar texto girado omitido; diferencia frente a Poppler T32 registrada, no se declara soporte semántico. Recibo /tmp/prometeo-worker-parse-check.json; no hubo llamada Bedrock en esta prueba.
+- Empaquetado Linux arm64/Python3.12 de worker completado en /tmp/prometeo-t34-worker-v2.zip y módulo del ZIP cotejado con fuente actual; falta script de provisión, rol/trigger y prueba real lote/corrupto/DLQ. No se crearon recursos AWS ni se modificó el pack publicado.
+- Verificaciones: 99 API/worker (venv Python3.12 con requirements-worker), 98 web, 6 helper Cognito, validate_pack, check_agnostic y diff-check pasan. Son dobles en AWS/modelo de worker; PDF y empaquetado sí son reales/locales. T33/T34 no se marcan hechas; T35–T37 pendientes.
 
 ### 2026-11-15 · D3 aprobada por el dueño
 - Aprobación explícita de 20 MB (20.000.000 bytes) por archivo, 60 páginas por PDF y 30 documentos por proyecto tras presentar costo orientativo y aclarar que no representa tope monetario.

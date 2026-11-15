@@ -48,6 +48,11 @@ peticiones anónimas, CORS, creación/listado/lectura/edición, reintentos y 404
 cruzado. Si ambas sesiones pertenecen al mismo usuario, la prueba falla.
 Recibo sin tokens en `/tmp/prometeo-t33-ab.json`.
 
+Cuando estén habilitadas y comprobadas las rutas de cargas, el modo
+`node tools/cognito/cli.mjs uploads /ruta/real/original.csv` inicia dos sesiones
+y ejecuta el smoke S3/complete contra un CSV/PDF real. No usarlo como sustituto
+del despliegue del worker; estado y permisos en `docs/T33_CARGAS_PREPARACION.md`.
+
 La prueba **crea dos proyectos vacíos** de verificación. Sus IDs quedan en el
 recibo para limpieza futura; no se borran automáticamente porque DELETE aún
 no existe. No cargar documentos para esta prueba. D3 de cargas sigue pendiente.
