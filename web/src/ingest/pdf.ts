@@ -166,13 +166,24 @@ export async function extractPdfPages(
     throw new PdfDocError("unreadable", "PDF byte buffer is empty");
   }
 
+  if (bytes.byteLength > D3_LIMITS.maxBytes) {
+    throw new PdfDocError(
+      "too_large",
+      `PDF size of ${bytes.byteLength} bytes exceeds limit of ${D3_LIMITS.maxBytes} bytes`
+    );
+  }
+
   let doc: pdfjs.PDFDocumentProxy;
+  let loadingTask: any;
   try {
-    const loadingTask = pdfjs.getDocument({
+    loadingTask = pdfjs.getDocument({
       data: bytes,
       useWorkerFetch: false,
     });
     doc = await loadingTask.promise;
+    if (typeof (doc as any).destroy !== "function" && typeof loadingTask?.destroy === "function") {
+      (doc as any).destroy = () => loadingTask.destroy();
+    }
   } catch (err) {
     throw new PdfDocError(
       "unreadable",
@@ -180,120 +191,133 @@ export async function extractPdfPages(
     );
   }
 
-  const pageCount = doc.numPages;
-  if (pageCount > D3_LIMITS.maxPages) {
-    throw new PdfDocError(
-      "too_many_pages",
-      `PDF has ${pageCount} pages, which exceeds the limit of ${D3_LIMITS.maxPages}`
-    );
-  }
-
-  if (pageCount === 0) {
-    throw new PdfDocError("no_text_layer", "PDF has 0 pages");
-  }
-
-  let metadataTitle: string | undefined;
   try {
-    const meta = await doc.getMetadata();
-    const infoTitle = (meta?.info as Record<string, unknown> | undefined)?.Title;
-    if (typeof infoTitle === "string" && infoTitle.trim()) {
-      metadataTitle = infoTitle.trim();
-    }
-  } catch {
-    // Ignore metadata extraction failure
-  }
-
-  const pages: ParsedPage[] = [];
-  let totalNonWhitespaceChars = 0;
-
-  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-    const page = await doc.getPage(pageNum);
-    const textContent = await page.getTextContent();
-
-    interface RawTextItem {
-      str: string;
-      x: number;
-      y: number;
-      width: number;
-      hasEOL: boolean;
+    const pageCount = doc.numPages;
+    if (pageCount > D3_LIMITS.maxPages) {
+      throw new PdfDocError(
+        "too_many_pages",
+        `PDF has ${pageCount} pages, which exceeds the limit of ${D3_LIMITS.maxPages}`
+      );
     }
 
-    const items: RawTextItem[] = [];
-    for (const it of textContent.items) {
-      if ("str" in it && typeof it.str === "string") {
-        const transform = it.transform || [0, 0, 0, 0, 0, 0];
-        items.push({
-          str: it.str,
-          x: transform[4] ?? 0,
-          y: transform[5] ?? 0,
-          width: it.width ?? 0,
-          hasEOL: Boolean(it.hasEOL),
-        });
+    if (pageCount === 0) {
+      throw new PdfDocError("no_text_layer", "PDF has 0 pages");
+    }
+
+    let metadataTitle: string | undefined;
+    try {
+      const meta = await doc.getMetadata();
+      const infoTitle = (meta?.info as Record<string, unknown> | undefined)?.Title;
+      if (typeof infoTitle === "string" && infoTitle.trim()) {
+        metadataTitle = infoTitle.trim();
       }
+    } catch {
+      // Ignore metadata extraction failure
     }
 
-    // Sort items top-to-bottom (descending y), then left-to-right (ascending x)
-    items.sort((a, b) => {
-      const yDiff = b.y - a.y;
-      if (Math.abs(yDiff) > 3) {
-        return yDiff;
+    const pages: ParsedPage[] = [];
+    let totalNonWhitespaceChars = 0;
+
+    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+      const page = await doc.getPage(pageNum);
+      const textContent = await page.getTextContent();
+
+      interface RawTextItem {
+        str: string;
+        x: number;
+        y: number;
+        width: number;
+        hasEOL: boolean;
       }
-      return a.x - b.x;
-    });
 
-    let pageText = "";
-    let prevY: number | null = null;
-    let prevXEnd: number | null = null;
+      const items: RawTextItem[] = [];
+      for (const it of textContent.items) {
+        if ("str" in it && typeof it.str === "string") {
+          const transform = it.transform || [0, 0, 0, 0, 0, 0];
+          items.push({
+            str: it.str,
+            x: transform[4] ?? 0,
+            y: transform[5] ?? 0,
+            width: it.width ?? 0,
+            hasEOL: Boolean(it.hasEOL),
+          });
+        }
+      }
 
-    for (const item of items) {
-      if (!item.str && !item.hasEOL) continue;
+      // Sort items top-to-bottom (descending y), then left-to-right (ascending x)
+      items.sort((a, b) => {
+        const yDiff = b.y - a.y;
+        if (Math.abs(yDiff) > 3) {
+          return yDiff;
+        }
+        return a.x - b.x;
+      });
 
-      if (prevY !== null && Math.abs(prevY - item.y) > 3) {
-        if (!pageText.endsWith("\n")) {
+      let pageText = "";
+      let prevY: number | null = null;
+      let prevXEnd: number | null = null;
+
+      for (const item of items) {
+        if (!item.str && !item.hasEOL) continue;
+
+        if (prevY !== null && Math.abs(prevY - item.y) > 3) {
+          if (!pageText.endsWith("\n")) {
+            pageText += "\n";
+          }
+        } else if (
+          prevXEnd !== null &&
+          !pageText.endsWith(" ") &&
+          !pageText.endsWith("\n") &&
+          !item.str.startsWith(" ")
+        ) {
+          if (item.x - prevXEnd > 2) {
+            pageText += " ";
+          }
+        }
+
+        pageText += item.str;
+        if (item.hasEOL && !pageText.endsWith("\n")) {
           pageText += "\n";
         }
-      } else if (
-        prevXEnd !== null &&
-        !pageText.endsWith(" ") &&
-        !pageText.endsWith("\n") &&
-        !item.str.startsWith(" ")
-      ) {
-        if (item.x - prevXEnd > 2) {
-          pageText += " ";
-        }
+
+        prevY = item.y;
+        prevXEnd = item.x + item.width;
       }
 
-      pageText += item.str;
-      if (item.hasEOL && !pageText.endsWith("\n")) {
-        pageText += "\n";
-      }
+      const cleanedText = pageText
+        .split("\n")
+        .map((l) => l.trimEnd())
+        .join("\n")
+        .trim();
 
-      prevY = item.y;
-      prevXEnd = item.x + item.width;
+      totalNonWhitespaceChars += cleanedText.replace(/\s+/g, "").length;
+
+      pages.push({
+        page: pageNum,
+        text: cleanedText,
+      });
     }
 
-    const cleanedText = pageText
-      .split("\n")
-      .map((l) => l.trimEnd())
-      .join("\n")
-      .trim();
+    if (totalNonWhitespaceChars === 0) {
+      throw new PdfDocError(
+        "no_text_layer",
+        "PDF does not contain an extractable text layer"
+      );
+    }
 
-    totalNonWhitespaceChars += cleanedText.replace(/\s+/g, "").length;
-
-    pages.push({
-      page: pageNum,
-      text: cleanedText,
-    });
+    return { pages, pageCount, metadataTitle };
+  } finally {
+    try {
+      await (doc as any)?.destroy?.();
+    } catch {
+      // Defensively ignore destroy failures
+    }
+    try {
+      await loadingTask?.destroy?.();
+    } catch {
+      // Defensively ignore destroy failures
+    }
   }
-
-  if (totalNonWhitespaceChars === 0) {
-    throw new PdfDocError(
-      "no_text_layer",
-      "PDF does not contain an extractable text layer"
-    );
-  }
-
-  return { pages, pageCount, metadataTitle };
 }
 
 /**
@@ -473,14 +497,17 @@ export function parsePaperPages(
   // 4. Candidate variable findings extraction
   const findings: ParsedPaperFinding[] = [];
   const { exact, lowerMap } = getKnownUnits();
+  const unitPattern = "[A-Za-z°µΩ%][A-Za-z0-9°µΩ%/()·\\-_]*";
 
   for (const page of pages) {
     const text = page.text;
     if (!text) continue;
 
     // Pattern 1: Tolerance notation (e.g. "Pressure: 100 ± 5 kPa" or "100 +/- 5 kPa")
-    const toleranceRegex =
-      /([A-Za-z][A-Za-z0-9\s\-_/()]{1,40}?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*(?:±|\+\/-)\s*(-?\d+(?:\.\d+)?)\s*([A-Za-z°µΩ%][A-Za-z0-9°µΩ%/(·\-_)]*)/g;
+    const toleranceRegex = new RegExp(
+      `([A-Za-z][A-Za-z0-9\\s\\-_/()]{1,40}?)\\s*[:=]\\s*(-?\\d+(?:\\.\\d+)?)\\s*(?:±|\\+\\/-)\\s*(-?\\d+(?:\\.\\d+)?)\\s*(${unitPattern})`,
+      "g"
+    );
     let match: RegExpExecArray | null;
 
     while ((match = toleranceRegex.exec(text)) !== null) {
@@ -515,8 +542,10 @@ export function parsePaperPages(
     }
 
     // Pattern 2: Quantitative range notation (e.g. "Temperature: 320–480 K" or "320 to 480 K")
-    const rangeRegex =
-      /([A-Za-z][A-Za-z0-9\s\-_/()]{1,40}?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*(?:[-–—−]|to|\.\.\.)\s*(-?\d+(?:\.\d+)?)\s*([A-Za-z°µΩ%][A-Za-z0-9°µΩ%/(·\-_)]*)/g;
+    const rangeRegex = new RegExp(
+      `([A-Za-z][A-Za-z0-9\\s\\-_/()]{1,40}?)\\s*[:=]\\s*(-?\\d+(?:\\.\\d+)?)\\s*(?:[-–—−]|to|\\.\\.\\.)\\s*(-?\\d+(?:\\.\\d+)?)\\s*(${unitPattern})`,
+      "g"
+    );
 
     while ((match = rangeRegex.exec(text)) !== null) {
       const rawName = match[1].trim();
@@ -580,8 +609,10 @@ export function parsePaperPages(
     }
 
     // Pattern 4: Single value with unit (e.g. "Electrolyte concentration = 1.2 M")
-    const singleRegex =
-      /([A-Za-z][A-Za-z0-9\s\-_/()]{1,40}?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*([A-Za-z°µΩ%][A-Za-z0-9°µΩ%/(·\-_)]*)/g;
+    const singleRegex = new RegExp(
+      `([A-Za-z][A-Za-z0-9\\s\\-_/()]{1,40}?)\\s*[:=]\\s*(-?\\d+(?:\\.\\d+)?)\\s*(${unitPattern})`,
+      "g"
+    );
 
     while ((match = singleRegex.exec(text)) !== null) {
       const rawName = match[1].trim();

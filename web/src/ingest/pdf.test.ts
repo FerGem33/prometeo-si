@@ -216,6 +216,22 @@ For the working electrode, we compared Substrate: Graphite vs Silicon to assess 
     expect(pFinding?.min).toBe(101.3);
     expect(pages[0].text.includes(pFinding!.quote)).toBe(true);
   });
+
+  it("handles compound scientific units with parentheses like W/(m·K)", () => {
+    const pages: ParsedPage[] = [
+      {
+        page: 1,
+        text: "Measured Thermal conductivity = 1.5 W/(m·K) across the test sample.\nRange: 1.2 to 1.8 W/(m·K) and tolerance: 1.5 ± 0.2 W/(m·K).",
+      },
+    ];
+    const res = parsePaperPages(pages, "sample.pdf");
+    const findings = res.findings.filter((f) => f.unit === "W/(m·K)");
+    expect(findings.length).toBeGreaterThanOrEqual(1);
+    for (const f of findings) {
+      expect(f.unit).toBe("W/(m·K)");
+      expect(pages[0].text.includes(f.quote)).toBe(true);
+    }
+  });
 });
 
 describe("extractPdfPages", () => {
@@ -273,6 +289,18 @@ describe("extractPdfPages", () => {
       const pdfErr = err as PdfDocError;
       expect(pdfErr.code).toBe("unreadable");
       expect(pdfErr.message).toContain("unreadable");
+      return true;
+    });
+  });
+
+  it(`throws too_large error when PDF bytes exceed D3_LIMITS.maxBytes (${D3_LIMITS.maxBytes})`, async () => {
+    const oversizedBytes = new Uint8Array(D3_LIMITS.maxBytes + 1);
+
+    await expect(extractPdfPages(oversizedBytes)).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(PdfDocError);
+      const pdfErr = err as PdfDocError;
+      expect(pdfErr.code).toBe("too_large");
+      expect(pdfErr.message).toContain("too_large");
       return true;
     });
   });
