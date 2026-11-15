@@ -3,7 +3,7 @@ import type { Finding, Scenario, VariableEvidence } from "../engine";
 import { Src, useData } from "./ctx";
 import { findingText } from "../report/text";
 import { doiOf, scenarioValueText } from "../report/format";
-import { parseAnalysis, parseAsk, postApi } from "../report/api";
+import { API_BASE, parseAnalysis, parseAsk, postApi } from "../report/api";
 import type { Analysis, Sentence } from "../report/api";
 
 export function AssistantPanel({ scenario, levels, findings, onChange }: {
@@ -18,7 +18,7 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
   const key = JSON.stringify({ scenario, levels, findings });
   const latestKey = useRef(key);
   latestKey.current = key;
-  const configured = Boolean(import.meta.env.VITE_API_URL);
+  const configured = Boolean(API_BASE);
 
   useEffect(() => () => request.current?.abort(), []);
   useEffect(() => {

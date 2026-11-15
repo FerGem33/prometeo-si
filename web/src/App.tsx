@@ -20,6 +20,7 @@ import { KnowledgeGraph } from "./components/KnowledgeGraph";
 import { GraphicalAbstract } from "./components/GraphicalAbstract";
 import { Fold } from "./components/Fold";
 import { EvidenceCard } from "./components/EvidenceCard";
+import { ReadingGuide } from "./components/ReadingGuide";
 import { ExtraTag } from "./components/ExtraVars";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
@@ -165,6 +166,14 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
 
         {/* Main column, with a side rail that stays in view while the page scrolls. */}
         <div className="cols">
+          <section className="abstract-card" aria-label="Abstract">
+            <div className="abstract-head">
+              <b className="lbl">Abstract</b>
+              <ReadingGuide />
+            </div>
+            <p className="abstract">{abstractText(pack, lens, scenario, r.overall, r.finds)}</p>
+          </section>
+
           <div className="top">
             <EvidenceCard overall={r.overall} ranking={r.ranking} levels={r.levels} comparable={r.n} />
             <KeyFindings findings={r.finds} />
@@ -214,22 +223,6 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
           </Fold>
 
           <GraphicalAbstract scenario={scenario} onChange={setScenario} ranking={r.ranking} close={r.close} levels={r.levels} overall={r.overall} comparable={r.n} />
-
-          <div className="row">
-            <p className="abstract">
-              <b className="lbl">Abstract. </b>
-              {abstractText(pack, lens, scenario, r.overall, r.finds)}
-            </p>
-            <aside className="side">
-              <p>
-                <b>How to read this report.</b> Every recorded test is placed in the space of experimental conditions and compared with the scenario above. Change a value and every figure, table and sentence is recomputed in the browser. Underlined values open their source: file, row, original text, conversion and dataset DOI. Sections marked with + open the full tables.
-              </p>
-              <p>
-                <b>Grades.</b> A: a comparable record lies within one σ-distance and nothing is missing. B: inside the tested range, with missing variables or a larger distance. C: outside the tested range. D: no comparable record.
-              </p>
-              <p>{lens.disclaimer}</p>
-            </aside>
-          </div>
 
           <div className="row">
             <div className="body">

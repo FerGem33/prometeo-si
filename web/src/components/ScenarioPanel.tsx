@@ -5,6 +5,7 @@ import { LEVELS, levelBasis } from "../report/text";
 import { num, scenarioValueText } from "../report/format";
 import { ChangeSummary } from "./ChangeSummary";
 import { matchingPreset, presetScenario } from "../state";
+import { NumField } from "./NumField";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 
@@ -117,19 +118,7 @@ export function ScenarioPanel({
                         value={typeof x === "number" ? x : (defaults[v.id] as number)}
                         onChange={(e) => set(v.id, Number(e.target.value))}
                       />
-                      <input
-                        type="number"
-                        aria-label={`${v.label} value`}
-                        disabled={!on}
-                        min={v.range[0]}
-                        max={v.range[1]}
-                        step={v.step ?? "any"}
-                        value={typeof x === "number" ? x : ""}
-                        onChange={(e) => {
-                          const n = Number(e.target.value);
-                          if (e.target.value !== "" && Number.isFinite(n)) set(v.id, Math.min(v.range[1], Math.max(v.range[0], n)));
-                        }}
-                      />
+                      <NumField label={`${v.label} value`} disabled={!on} min={v.range[0]} max={v.range[1]} step={v.step} value={typeof x === "number" ? x : undefined} onCommit={(n) => set(v.id, n)} />
                       {on && typeof x === "number" && v.display_units?.[0] && (
                         <span className="alt">
                           = {num(x * v.display_units[0].factor, 1)} {v.display_units[0].unit}

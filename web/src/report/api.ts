@@ -36,8 +36,11 @@ export function parseAnalysis(x: unknown, finds: Finding[], pack: Pack): Analysi
   return { mode: x.mode, sentences, dropped: x.dropped };
 }
 
+/** Deployed builds get VITE_API_URL at build time. The dev server has no CORS access to the API, so it forwards /api (vite.config.ts). */
+export const API_BASE: string = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "/api" : "");
+
 export async function postApi(path: string, body: unknown, signal: AbortSignal): Promise<unknown> {
-  const base: string | undefined = import.meta.env.VITE_API_URL;
+  const base = API_BASE;
   if (!base) throw new Error("API not configured");
   const response = await fetch(`${base.replace(/\/$/, "")}/${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
