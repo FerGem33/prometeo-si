@@ -8,9 +8,9 @@ import { matchingPreset, presetScenario } from "../state";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 
-const STEPS = ["Setting", "Variables", "Question", "Documents"];
+const STEPS = ["Documents", "Question", "Setting", "Variables"];
 
-/** Four-step form: setting, variables, question, documents. One idea per screen. */
+/** Four-step form: documents, question, setting, variables. The corpus comes first because the variables are read from it. */
 export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoal, onBack, onRun }: {
   scenario: Scenario; onChange: (s: Scenario) => void; extras: Extra[]; onExtras: (e: Extra[]) => void; goal: string; onGoal: (g: string) => void; onBack: () => void; onRun: () => void;
 }) {
@@ -70,7 +70,7 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
           ))}
         </ol>
 
-        {step === 0 && (
+        {STEPS[step] === "Setting" && (
           <section className="step-panel">
             <h1>Where is this scenario set?</h1>
             <p className="step-lede">Pick a starting point. Each setting loads its own conditions, and you can change every one of them in the next step.</p>
@@ -82,7 +82,7 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
                   <small>{p.active.map((id) => `${vars.find((v) => v.id === id)?.label ?? id} ${scenarioValueText(pack, id, p.values[id])}`).join(" · ")}</small>
                 </button>
               ))}
-              <button type="button" className="choice" aria-pressed={preset === ""} onClick={() => { onChange({ values: {}, active: [] }); setStep(1); }}>
+              <button type="button" className="choice" aria-pressed={preset === ""} onClick={() => { onChange({ values: {}, active: [] }); setStep(STEPS.indexOf("Variables")); }}>
                 <b>Custom</b>
                 <span>Start with no conditions and add the ones you need.</span>
               </button>
@@ -90,10 +90,10 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
           </section>
         )}
 
-        {step === 1 && (
+        {STEPS[step] === "Variables" && (
           <section className="step-panel">
             <h1>Choose your variables</h1>
-            <p className="step-lede">Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all. You can also add a variable of your own: it stays in your scenario, marked as not in this corpus.</p>
+            <p className="step-lede">Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all. These are the variables the corpus of step 1 records. You can also add one of your own: no document of this corpus records it, so it stays in your scenario marked as not in this corpus.</p>
             {included.length === 0 && extras.length === 0 && <p className="empty">No variable is included yet. Add one below.</p>}
             <ul className="vlist">
               {included.map((v) => {
@@ -178,7 +178,7 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
           </section>
         )}
 
-        {step === 2 && (
+        {STEPS[step] === "Question" && (
           <section className="step-panel">
             <h1>What do you want to know?</h1>
             <p className="step-lede">Write your question or goal in your own words. It is optional; it appears at the top of the report. The levels and the ranking depend only on the conditions you set, never on this text.</p>
@@ -199,10 +199,10 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
           </section>
         )}
 
-        {step === 3 && (
+        {STEPS[step] === "Documents" && (
           <section className="step-panel">
             <h1>Your documents</h1>
-            <p className="step-lede">The portal is built from a corpus of papers. This demo ships with one ready to use.</p>
+            <p className="step-lede">Everything starts from a corpus of papers and tables: the variables you can compare are the ones those documents record. This demo ships with one corpus, already processed and reviewed.</p>
             <div className="corpus">
               <div>
                 <b>Example corpus</b>
@@ -217,7 +217,6 @@ export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoa
               <span>PDF, CSV or Excel. Prometeo would propose the variables, you would review them, and the interface would be generated for your subject.</span>
               <em>Not available in this demo. Coming in the next phase.</em>
             </div>
-            {included.length === 0 && <p className="empty">No variable is included. Go back to step 2 and include at least one.</p>}
           </section>
         )}
 

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { Extra } from "../state";
 import { newId } from "../report/storage";
+import { unitOptions } from "../report/units";
+import { useData } from "./ctx";
 
 export const EXTRA_BASIS = "No source table in this corpus records this variable, so it is listed with the scenario but not compared.";
 
@@ -19,6 +21,12 @@ export function AddExtra({ known, onKnown, onAdd }: { known: { id: string; label
   const [value, setValue] = useState("");
   const [unit, setUnit] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  const { pack } = useData();
+  const listId = useId();
+  const units = useMemo(
+    () => unitOptions(pack.schema.variables.flatMap((v) => (v.type === "num" ? [{ unit: v.unit, label: v.label }, ...(v.display_units ?? []).map((d) => ({ unit: d.unit, label: v.label }))] : []))),
+    [pack],
+  );
 
   const submit = () => {
     const n = name.trim();
@@ -47,7 +55,12 @@ export function AddExtra({ known, onKnown, onAdd }: { known: { id: string; label
       <span className="addextra-lbl">Add your own variable</span>
       <input aria-label="Variable name" placeholder="Name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
       <input aria-label="Value" placeholder="Value" maxLength={40} value={value} onChange={(e) => setValue(e.target.value)} />
-      <input aria-label="Unit, optional" placeholder="Unit (optional)" maxLength={20} value={unit} onChange={(e) => setUnit(e.target.value)} />
+      <input aria-label="Unit, optional: type to search the list or enter your own" placeholder="Unit: search or type" maxLength={20} list={listId} autoComplete="off" value={unit} onChange={(e) => setUnit(e.target.value)} />
+      <datalist id={listId}>
+        {units.map((u) => (
+          <option key={u.unit} value={u.unit} label={u.note} />
+        ))}
+      </datalist>
       <button type="submit" className="chip add" disabled={!name.trim()}>
         + Add variable
       </button>
