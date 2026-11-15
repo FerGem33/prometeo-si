@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · stringbuilder: revisión humana D7/PDF pendiente. T31 preparada, pero ejecución detenida porque el perfil AWS `prometeo` devuelve identidad root. T18 hecha. |
+| Tarea en curso | T32 en curso · stringbuilder: revisión humana D7/PDF pendiente. T31 parcialmente aplicada con rol SSO; falta `cognito-idp:TagResource` para completar Cognito y outputs. T18 hecha. |
 | Último commit verificado | `97d1613`; T18 reproducible. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Configurar un principal AWS IAM de mínimo privilegio para `prometeo` (sin root), verificar `sts get-caller-identity` y ejecutar dos veces `infra/30_data.sh` según §8 de `docs/PLAN_FASE2.md`. En paralelo, una persona revisa D7 y los candidatos PDF de `docs/T32_EVALUACION.md`; el detalle está en “Revisión final pendiente”. |
+| Siguiente paso exacto | Añadir al permission set `Prometeo-T31` la acción `cognito-idp:TagResource`, limitada a `arn:aws:cognito-idp:us-east-1:352818909129:userpool/*` y al tag de solicitud `project=prometeo-hack`; reprovisionar el permission set, renovar SSO y completar dos corridas de `infra/30_data.sh`. En paralelo, una persona revisa D7/PDF en `docs/T32_EVALUACION.md`. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18 está hecha. T21–T29 corresponden al equipo de interfaz. T32 sigue en curso por revisión D7/PDF. D3 sigue abierta para las subidas. T31 no se ejecutó porque STS identificó el perfil disponible como root; falta perfil IAM de mínimo privilegio.
+- D9 decidida: `data/psi` permanece fuera de git; T18 está hecha. T21–T29 corresponden al equipo de interfaz. T32 sigue en curso por revisión D7/PDF. D3 sigue abierta para las subidas. En T31, el rol SSO ya creó/configuró DynamoDB, S3 y SQS; Cognito requiere `cognito-idp:TagResource` en el permission set.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -59,7 +59,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
-| T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Script pasó simulador y `bash -n`; ejecución AWS pendiente: perfil `prometeo` resuelve a root, se requiere principal IAM acotado |
+| T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Rol SSO de mínimo privilegio verificado; DynamoDB/S3/SQS creados/configurados. Falta `cognito-idp:TagResource` en `Prometeo-T31`; outputs aún no escritos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
 | T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
@@ -79,7 +79,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 - **T32:** revisar las discrepancias listadas en `docs/T32_EVALUACION.md` y los 15 candidatos PDF antes de cualquier aprobación nueva. El 92.1 % es acuerdo de asignación con el mapping vigente, no precisión científica; D7 sigue pendiente. Un PDF requiere texto/OCR revisado. La aprobación local no autentica al operador.
 
-- **T31 / acceso AWS:** el 2026-11-15 el perfil `prometeo` autenticó como `arn:aws:iam::352818909129:root`. No se ejecutó `infra/30_data.sh`. Antes de crear/configurar recursos, sustituir el perfil por una identidad IAM de mínimo privilegio y volver a verificar la cuenta; no usar root para el flujo de trabajo. `bash -n infra/30_data.sh` sí pasó. Después se requieren las dos corridas idempotentes y la inspección de `infra/outputs.env` sin secretos.
+- **T31 / permiso pendiente:** el perfil ya usa el rol SSO `AWSReservedSSO_Prometeo-T31_…/prometeo-admin` en la cuenta `352818909129`. La ejecución creó/configuró DynamoDB, S3 y SQS; Cognito falló al crear el pool porque falta `cognito-idp:TagResource`. `outputs.env` no se escribió parcialmente y `list-user-pools` confirmó que no existe aún `prometeo-hack-users`. Añadir solo esta acción al permission set, con recurso `arn:aws:cognito-idp:us-east-1:352818909129:userpool/*` y condición `aws:RequestTag/project = prometeo-hack`; reprovisionar, renovar SSO y reanudar el script idempotente.
 
 - **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
 - **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
@@ -101,6 +101,12 @@ Una entrada por sesión de agente, la más reciente arriba.
 - AWS STS para `AWS_PROFILE=prometeo` devolvió cuenta `352818909129` y ARN `arn:aws:iam::352818909129:root`. No se ejecutó el guion ni se crearon o modificaron recursos. Se detuvo la operación para no usar identidad root, conforme al principio de permisos acotados de `AGENTS.md` §8.
 - Se detallaron en “Revisión final pendiente” los responsables/evidencias esperadas para T12, D7/T14/T32, soporte semántico PDF, T30/D3 y D10/T37. Ninguna aprobación humana fue inferida.
 - **Siguiente paso:** cambiar el perfil `prometeo` a una identidad IAM de mínimo privilegio, comprobar cuenta con STS y completar la verificación de dos corridas de T31. En paralelo, solicitar la revisión humana D7/PDF y la aprobación de D3.
+
+### 2026-11-15 · T31 ejecución parcial con rol SSO
+- `aws sso login --profile prometeo` completado por el dueño. STS confirma cuenta `352818909129` y rol `AWSReservedSSO_Prometeo-T31_e5fccb7bc636c4a5/prometeo-admin`; ya no se usa la identidad root.
+- `infra/30_data.sh` se ejecutó dos veces. La primera creó DynamoDB `prometeo-hack-data` y S3 `prometeo-hack-corpus-352818909129`; la segunda constató DynamoDB/S3 existentes y SQS DLQ/ingest existentes, y reaplicó atributos previstos. Ambos intentos llegaron a Cognito y fallaron con `AccessDeniedException`: falta `cognito-idp:TagResource` durante `CreateUserPool` para etiquetar `project=prometeo-hack`.
+- Verificación de recuperación: `list-user-pools` no encontró `prometeo-hack-users`; `git diff -- infra/outputs.env` vacío. El script solo escribe outputs al final, así que no hay salidas parciales. No se borró ni reemplazó ningún recurso.
+- **Siguiente paso exacto:** agregar al permission set `Prometeo-T31` la acción `cognito-idp:TagResource` sobre `arn:aws:cognito-idp:us-east-1:352818909129:userpool/*`, con condición `aws:RequestTag/project = prometeo-hack`; reprovisionar el permission set, volver a hacer `aws sso login --profile prometeo` y ejecutar `infra/30_data.sh` dos veces. Luego inspeccionar `infra/outputs.env` por IDs/ARNs/URLs solamente.
 
 ### 2026-11-15 02:14 CST · T18 datos reproducibles
 - `collect_data.py --salida` ahora filtra descarga hacia `<raíz>/tables` y `meta`; `build_pack.py --data-dir/--output-dir` permite entrada y salida temporal. `induce_schema.py --tables-dir` ya podía recibir la misma ruta.
