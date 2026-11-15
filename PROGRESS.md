@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · Codex / ferlr: lectura local CSV/PDF y verificación de citas. T18 pendiente de documentación (D9 decidida). |
+| Tarea en curso | T32 en curso · Codex / ferlr: lectura, perfilado y validación de propuestas locales. T18 pendiente de documentación (D9 decidida). |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | T32: perfilado, propuesta de esquema y extracción revisable; ver `docs/T32_LECTURA_LOCAL.md`. Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
+| Siguiente paso exacto | T32: revisión/aprobación, extracción y evaluación con Bedrock; ver `docs/T32_LECTURA_LOCAL.md`. Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -60,7 +60,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
 | T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | `infra/30_data.sh` escrito y probado con simulador; falta ejecutarlo con perfil `prometeo` |
-| T32 | Extracción fuera de línea | fase 2 · C | en curso | Codex · ferlr | | Lectura CSV/PDF y verificación local listas; falta perfilado, Bedrock y evaluación D7. `docs/T32_LECTURA_LOCAL.md` |
+| T32 | Extracción fuera de línea | fase 2 · C | en curso | Codex · ferlr | | Lectura, perfiles, adaptador Bedrock y validación de propuestas listos localmente; falta revisión/extracción y evaluación real D7. `docs/T32_LECTURA_LOCAL.md` |
 | T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
 ## Aceptación final (T15)
@@ -89,6 +89,14 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **D6 cerrada:** se conserva `us.anthropic.claude-haiku-4-5-20251001-v1:0`, ya configurado y probado con SDK 2.8.0. Se descarta la migración a Haiku 5.5 y se retira el requisito de solicitar acceso.
 - **T17:** permanece hecha con la evidencia pública registrada en `0813d37` y la revisión posterior; no requiere otro deploy para esta decisión.
 - **Alcance:** documentación activa actualizada; el historial del intento con 5.5 se conserva. T31/T32 y el siguiente paso del relevo siguen vigentes.
+
+### 2026-11-15 · Codex · T32 perfiles y propuestas revisables
+- Perfilado determinista CSV/PDF y validación estricta de propuestas en `pipeline/ingest.py`. Adaptador separado `api/ingest_propose.py` con SDK oficial, modelo desde entorno y modo preparación sin red.
+- Validación: 27 tablas perfiladas; petición BASS-II preparada (129 filas, 17 columnas). 13 pruebas locales, pack y agnostic pasan. Python 3.14; falta repetir con 3.12.
+- No se invocó Bedrock: falta perfil `prometeo` y SDK local. Respuestas guardadas se validan para revisión, jamás se aprueban automáticamente. No hay medición de precisión nueva.
+- Pendiente T32: revisión/aprobación, extracción, fusión/constantes y evaluación 22 tablas/5 PDF con D7. No se marca hecha.
+- Git pull sigue fallando por permisos de configuración SSH; no se cambiaron credenciales ni configuración del sistema. Corpus/artefactos fuera de git.
+
 
 ### 2026-11-15 · Codex · T32 lectura local y verificación de citas
 - Implementado `pipeline/ingest.py`: CSV con celdas originales y filas lógicas, PDF por página con Poppler, SHA-256, duplicados, errores por documento; verificador de citas con ubicación exacta. No llama a AWS ni modifica el pack.

@@ -32,3 +32,17 @@ Poppler está instalado en esta laptop. No se invocó Bedrock ni se desplegaron 
 Siguiente tramo: perfilar documentos, proponer un esquema validado y extraer contra un esquema
 aprobado. Medir las 22 tablas contra el mapping revisado (D7) y seleccionar 5 PDF BASS-II/FLEX.
 Verificar texto y soporte del valor por separado; reportar rechazos sin publicar valores no revisados.
+
+## Continuación: perfilado y validación de propuestas
+
+- 27 tablas de `pipeline/tools/datos_psi/tablas` perfiladas sin fallos (incluyen 5 ajenas
+  al conjunto de combustión). BASS-II: 129 filas, 17 columnas; petición preparada sin AWS.
+- `api/ingest_propose.py` prepara o invoca una propuesta por documento. PDF exige páginas
+  explícitas. La respuesta cruda pasa después por `pipeline/ingest.py --proposal-response`.
+- Validación estricta: campos, IDs, referencias, cobertura de columnas, conversiones finitas,
+  citas verificadas por ubicación; nunca acepta aprobación del modelo.
+- 13 pruebas locales pasan (10 pipeline, 3 adaptador); pack y chequeo agnóstico pasan.
+- No hay perfil `prometeo` (solo `default` y `road2tech`) ni SDK Anthropic instalado aquí.
+  No se usaron otras cuentas ni se hicieron llamadas reales; la precisión sigue sin medir.
+- Sigue pendiente: revisión/aprobación persistente, extracción, fusión entre documentos,
+  constantes con alcance y evidencia, evaluación real de 22 tablas y 5 PDF con D7.

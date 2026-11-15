@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Local T32 parse/verify stages. Standard library plus Poppler for PDFs.
+"""Local T32 parse/profile/proposal validation stages. Standard library plus Poppler for PDFs.
 
-This does not propose schemas, infer values, or approve/publish records.
+Saved model proposals can be validated; this never approves or publishes records.
 """
 import argparse
 import csv
 import hashlib
 import io
 import json
+import math
+import re
 from pathlib import Path
 import subprocess
 import unicodedata
@@ -110,11 +112,105 @@ def verify_citation(citation, documents):
     return {'verified': matches, 'reason': 'text_found' if matches else 'text_not_found_at_location'}
 
 
+def finite_number(value):
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+def profile_document(doc):
+    """Describe observed data; do not infer canonical units or scientific roles."""
+    result = {k: doc[k] for k in ('id', 'name', 'kind', 'sha256')}
+    if doc['kind'] == 'paper':
+        result['pages'] = [{'page': p['page'], 'characters': len(p['text']),
+                            'has_text': bool(p['text'].strip())} for p in doc['pages']]
+        # Full text stays in the parsed artifact. Proposals select pages explicitly.
+        return result
+    result['rows'] = len(doc['rows'])
+    result['columns'] = []
+    for i, header in enumerate(doc['headers']):
+        cells = [(r['row'], r['values'][i]) for r in doc['rows'] if r['values'][i].strip()]
+        numbers = []
+        for _, value in cells:
+            if re.fullmatch(r'[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?', value.strip()):
+                n = float(value)
+                if math.isfinite(n):
+                    numbers.append(n)
+        result['columns'].append({'column': header, 'nonempty': len(cells),
+            'missing': len(doc['rows']) - len(cells), 'numeric_cells': len(numbers),
+            'observed_type': 'empty' if not cells else 'numeric' if len(numbers) == len(cells) else 'text_or_mixed',
+            'numeric_range': [min(numbers), max(numbers)] if numbers else None,
+            'sample': [{'kind': 'table', 'doc_id': doc['id'], 'row': row, 'column': header, 'text': value}
+                       for row, value in cells[:5]]})
+    return result
+
+
+def validate_proposal(response, documents):
+    """Strict local model-response format -> unapproved SchemaProposal contract.
+
+    Approval is never accepted from model output. Constants are deferred until
+    their evidence and scope have a reviewable contract.
+    """
+    def require(condition, message):
+        if not condition:
+            raise ValueError(message)
+
+    require(isinstance(response, dict) and set(response) == {'doc_id', 'variables', 'columns'}, 'invalid response fields')
+    doc_id = response['doc_id']
+    require(isinstance(doc_id, str) and doc_id in documents, 'unknown document')
+    doc = documents[doc_id]
+    variables, columns = response['variables'], response['columns']
+    require(isinstance(variables, list) and isinstance(columns, list), 'expected arrays')
+    ids, clean_variables = set(), []
+    for v in variables:
+        require(isinstance(v, dict) and set(v) == {'id', 'label', 'type', 'unit', 'evidence'}, 'invalid variable fields')
+        key = v['id']
+        require(isinstance(key, str) and re.fullmatch(r'[a-z][a-z0-9_]{0,63}', key) is not None and key not in ids, 'invalid or duplicate variable id')
+        require(isinstance(v['label'], str) and 0 < len(v['label'].strip()) <= 200, 'invalid label')
+        require(v['type'] in ('num', 'cat'), 'invalid variable type')
+        require(v['unit'] is None or isinstance(v['unit'], str) and 0 < len(v['unit'].strip()) <= 80, 'invalid unit')
+        require(v['type'] != 'cat' or v['unit'] is None, 'categorical unit')
+        require(isinstance(v['evidence'], list) and bool(v['evidence']), 'evidence required')
+        evidence = []
+        for cite in v['evidence']:
+            require(isinstance(cite, dict), 'invalid citation')
+            keys = {'kind', 'doc_id', 'row', 'column', 'text'} if doc['kind'] == 'table' else {'kind', 'doc_id', 'page', 'quote'}
+            require(set(cite) == keys and cite['doc_id'] == doc_id, 'invalid evidence fields')
+            require(verify_citation(cite, documents)['verified'], 'evidence not found at location')
+            evidence.append({**cite, **({'verified': True} if doc['kind'] == 'paper' else {})})
+        ids.add(key)
+        clean = {'id': key, 'label': v['label'], 'type': v['type'], 'status': 'proposed',
+                 'merged_from': [], 'records': 0, 'evidence': evidence}
+        if v['unit'] is not None:
+            clean['unit'] = v['unit']
+        clean_variables.append(clean)
+    seen, clean_columns = set(), []
+    headers = doc.get('headers', [])
+    for col in columns:
+        require(isinstance(col, dict) and set(col) == {'column', 'variable', 'unit', 'convert'}, 'invalid column fields')
+        name, variable = col['column'], col['variable']
+        require(isinstance(name, str) and name in headers and name not in seen, 'unknown or duplicate column')
+        require(variable is None or isinstance(variable, str) and variable in ids, 'unknown variable reference')
+        require(col['unit'] is None or isinstance(col['unit'], str) and bool(col['unit'].strip()), 'invalid column unit')
+        convert = col['convert']
+        require(convert is None or isinstance(convert, dict) and set(convert) == {'factor', 'offset'} and all(finite_number(x) for x in convert.values()) and convert['factor'] != 0, 'invalid conversion')
+        if variable is None:
+            require(convert is None, 'unmapped conversion')
+        elif next(v for v in clean_variables if v['id'] == variable)['type'] == 'cat':
+            require(convert is None and col['unit'] is None, 'categorical conversion')
+        seen.add(name)
+        i = headers.index(name)
+        sample = [r['values'][i] for r in doc['rows'] if r['values'][i].strip()][:5]
+        clean_columns.append({**col, 'doc_id': doc_id, 'status': 'proposed', 'sample': sample})
+    require(seen == set(headers), 'every source column must appear exactly once')
+    return {'version': 1, 'status': 'proposed', 'variables': clean_variables,
+            'columns': clean_columns, 'constants': []}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', type=Path, help='local CSV/PDF file or directory')
     parser.add_argument('--output', type=Path, required=True, help='local JSON artifact (outside corpus)')
     parser.add_argument('--citations', type=Path, help='JSON array of citations to check')
+    parser.add_argument('--proposal-response', type=Path, help='saved model JSON to validate, never approve')
     args = parser.parse_args()
     root = args.input.resolve()
     output = args.output.resolve()
@@ -146,16 +242,26 @@ def main():
             seen.add(doc['sha256'])
         docs.append(doc)
     index = {d['id']: d for d in docs if d['status'] == 'done'}
+    proposal_check = None
+    if args.proposal_response:
+        if output == args.proposal_response.resolve():
+            parser.error('output must not overwrite model response')
+        try:
+            response = json.loads(args.proposal_response.read_text(encoding='utf-8'))
+            proposal_check = {'status': 'valid', 'schema': validate_proposal(response, index)}
+        except (ValueError, OSError) as exc:
+            proposal_check = {'status': 'rejected', 'reason': str(exc)}
     checks = [{'citation': c, **verify_citation(c, index)} for c in citations]
     summary = {s: sum(d['status'] == s for d in docs) for s in ('done', 'failed', 'skipped')}
     summary.update(citations_verified=sum(c['verified'] for c in checks), citations_rejected=sum(not c['verified'] for c in checks))
-    artifact = {'version': 1, 'stage': 'parse_verify', 'summary': summary, 'documents': docs, 'citation_checks': checks,
+    artifact = {'version': 1, 'stage': 'parse_profile_verify', 'summary': summary, 'documents': docs, 'profiles': [profile_document(d) for d in index.values()],
+                'proposal_check': proposal_check, 'citation_checks': checks,
                 'limitations': ['Text matching does not establish semantic support for an extracted value.',
-                                'No schema proposal, extraction, approval or publication is performed.']}
+                                'Proposals require human review; no extraction, approval or publication is performed.']}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(artifact, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(summary))
-    return 1 if summary['failed'] or summary['citations_rejected'] else 0
+    return 1 if summary['failed'] or summary['citations_rejected'] or (proposal_check and proposal_check['status'] == 'rejected') else 0
 
 
 if __name__ == '__main__':

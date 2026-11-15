@@ -43,3 +43,52 @@ Este artefacto no es un pack publicable ni sustituye la revisión humana.
 El generador requiere `data/psi/tables` y `data/psi/meta` locales; falla sin sobrescribir el pack
 si no están presentes. T18 sigue pendiente: documentar la descarga y unificar las rutas configurables.
 `induce_schema.py` es la prueba T14 de mapeo de columnas; no es el extractor T32.
+
+## T32: perfiles y propuestas de esquema
+
+Cada ejecución produce `profiles`: conteos de vacíos/no vacíos, números estrictos finitos,
+rango numérico observado y hasta cinco celdas citadas por columna. Los rangos no son rangos
+científicos aprobados ni escalas del motor. No interpreta porcentajes, intervalos, unidades
+ni separadores decimales ambiguos. PDF: inventario de páginas y cantidad de texto.
+
+Preparar una petición (sin SDK ni AWS), usando un ID de `documents` del artefacto:
+
+```bash
+python3 -I api/ingest_propose.py /tmp/prometeo-ingest/parsed.json \
+  --doc-id doc_HASH --prepare-only --output /tmp/proposal-request.json
+```
+
+Para PDF, agregar `--pages 1 2` con páginas físicas seleccionadas. Cada petición está limitada
+a 60,000 caracteres; no se recorta texto silenciosamente. Este límite técnico no decide D3.
+
+En una laptop con el perfil `prometeo` y las dependencias de `api/requirements.txt` instaladas:
+
+```bash
+export AWS_PROFILE=prometeo
+source infra/config.env
+# Usar el Python del entorno con anthropic[bedrock]. Omitir --prepare-only invoca el modelo.
+python3 -I api/ingest_propose.py /tmp/prometeo-ingest/parsed.json \
+  --doc-id doc_HASH --output /tmp/proposal-response.json
+python3 -I pipeline/ingest.py /ruta/al/corpus \
+  --proposal-response /tmp/proposal-response.json --output /tmp/prometeo-ingest/review.json
+```
+
+El adaptador utiliza el SDK oficial AnthropicBedrock, `MODEL_ID`, región `us-east-1`,
+6,000 tokens máximos de salida y cero reintentos automáticos. El JSON que guarda es una
+**respuesta sin validar**, nunca un esquema aprobado. Rechaza respuestas truncadas y JSON
+ilegible; la segunda orden valida campos, referencias, conversiones finitas y citas contra
+los documentos. `proposal_check.status` informa `valid` o `rejected` con motivo.
+Un rechazo devuelve código 1. `valid` solo permite revisión; no implica corrección científica.
+
+El formato de respuesta está en `api/ingest_propose.py:SYSTEM`. Cada petición cubre un documento;
+no fusiona variables entre documentos. El validador produce `SchemaProposal` con todos los
+estados `proposed`, conteos extraídos en cero y sin constantes. Las constantes, fusiones,
+aprobación humana y extracción siguen pendientes; no se deducen de la validación textual.
+La comprobación de evidencia no prueba que una unidad propuesta tenga sentido semántico.
+
+Pruebas locales sin SDK ni AWS:
+
+```bash
+python3 -I pipeline/test_ingest.py
+python3 -I api/test_ingest_propose.py
+```
