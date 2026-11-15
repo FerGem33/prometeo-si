@@ -302,7 +302,7 @@ export function parseQueryParts(question: string, pack: Pack): QueryParts | null
   const nums = (pack.schema?.variables ?? []).filter((v): v is NumVariable => v.type === "num");
   const plain = stripAccents(q);
   const mentions = (a: string) => {
-    const re = new RegExp(`(?:^|[^\p{L}\d_])${escapeRegex(a)}(?=$|[^\p{L}\d_])`, "iu");
+    const re = new RegExp(`(?:^|[^\\p{L}\\d_])${escapeRegex(a)}(?=$|[^\\p{L}\\d_])`, "iu");
     return re.test(q) || re.test(plain);
   };
   // The longest alias mentioned wins, so "gravity level" beats "gravity".
@@ -312,14 +312,14 @@ export function parseQueryParts(question: string, pack: Pack): QueryParts | null
     .sort((a, b) => b.len - a.len)[0]?.x;
   if (!v) return null;
 
-  const between = q.match(new RegExp(`(?:between|entre)\s*${NUM}${UNIT}\s*(?:and|y|-)\s*${NUM}${UNIT}`, "i"));
+  const between = q.match(new RegExp(`(?:between|entre)\\s*${NUM}${UNIT}\\s*(?:and|y|-)\\s*${NUM}${UNIT}`, "i"));
   if (between) {
     const a = inVarUnit(between[1], between[2] ?? between[4], v);
     const b = inVarUnit(between[3], between[4] ?? between[2], v);
     return { variable: v.id, op: "between", bounds: [Math.min(a, b), Math.max(a, b)] };
   }
   for (const [op, words] of OPS) {
-    const m = q.match(new RegExp(`(?:${words})\s*${NUM}${UNIT}`, "i"));
+    const m = q.match(new RegExp(`(?:${words})\\s*${NUM}${UNIT}`, "i"));
     if (m) return { variable: v.id, op, bounds: [inVarUnit(m[1], m[2], v)] };
   }
   const stat = STATS.find(([, re]) => re.test(q))?.[0];

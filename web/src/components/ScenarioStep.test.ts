@@ -9,11 +9,17 @@ import { buildPackFromDocs } from "../ingest/buildPack";
 import type { Pack, Lens } from "../engine";
 
 describe("ScenarioStep 3-step redesign & zero-scenarios check", () => {
-  it("exports exactly 3 steps: Documents, Interface design, and Variables", () => {
-    expect(SCENARIO_STEPS).toEqual(["Documents", "Interface design", "Variables"]);
-    expect(SCENARIO_STEPS.length).toBe(3);
-    expect(SCENARIO_STEPS).not.toContain("Setting");
-    expect(SCENARIO_STEPS).not.toContain("Question");
+  it("exports exactly 2 steps: Documents and Purpose", () => {
+    expect(SCENARIO_STEPS).toEqual(["Documents", "Purpose"]);
+    expect(SCENARIO_STEPS).not.toContain("Variables");
+    expect(SCENARIO_STEPS).not.toContain("Interface design");
+  });
+
+  it("requires a purpose of at least 8 characters before generating the dashboard", () => {
+    const src = readFileSync(join(__dirname, "ScenarioStep.tsx"), "utf-8");
+    expect(src).toContain("What do you want to find out from these documents?");
+    expect(src).toContain("purpose.trim().length < 8");
+    expect(src).toContain("Generate dashboard");
   });
 
   it("ensures ScenarioStep.tsx has zero imports or usage of preset mission/habitat selectors", () => {

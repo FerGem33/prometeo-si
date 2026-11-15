@@ -88,7 +88,8 @@ export function ChatPanel({ docs, scenario, isCustomCorpus, suggestions, onApply
       const answer = await routeQuestion(q, { pack, docs, scenario, history, isCustomCorpus, post, signal: controller.signal });
       if (!controller.signal.aborted) setTurns((prev) => [...prev, answer].slice(-MAX_TURNS));
     } catch {
-      if (!controller.signal.aborted) setTurns((prev) => [...prev, { id: `e-${Date.now().toString(36)}`, role: "assistant", mode: "error" as const, text: t("The question could not be answered. Try again.") }].slice(-MAX_TURNS));
+      const failed: ChatTurn = { id: `e-${Date.now().toString(36)}`, role: "assistant", mode: "error", text: t("The question could not be answered. Try again.") };
+      if (!controller.signal.aborted) setTurns((prev) => [...prev, failed].slice(-MAX_TURNS));
     } finally {
       if (request.current === controller) { setBusy(false); request.current = null; }
     }

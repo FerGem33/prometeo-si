@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Pack, Scenario } from "../engine";
 import type { UploadedDoc } from "../ingest/types";
 import type { ExtractedVariable } from "../ingest/types";
-import { answerLocalQuery } from "../ingest/localAsk";
+import { filterAnswer, statAnswer } from "../ingest/localAsk";
 import type { LocalAnswer } from "../ingest/localAsk";
 import { coverageMatrix, docSummaries, histogram, paperRelevance, scatterPoints } from "./stats";
 import type { ModuleSpec } from "./types";
@@ -40,15 +40,7 @@ function withUnit(l: { label: string; unit: string | null }): string {
 
 /** Deterministic question built from variable data and the module parameters, answered by localAsk. */
 function answerFor(spec: Extract<ModuleSpec, { type: "answer_stat" | "answer_filter" }>, pack: Pack): LocalAnswer | { unsupported: string } {
-  const label = labelOf(pack, spec.type === "answer_stat" ? spec.variable : spec.variable).label;
-  if (spec.type === "answer_stat") {
-    const word = { max: "maximum", min: "minimum", mean: "mean", count: "count" }[spec.stat];
-    return answerLocalQuery(`${word} ${label}`, pack);
-  }
-  const [a, b] = spec.bounds;
-  const q =
-    spec.op === "between" ? `between ${a} and ${b} ${label}` : `${label} ${{ "<": "below", ">": "above", "<=": "at most", ">=": "at least" }[spec.op]} ${a}`;
-  return answerLocalQuery(q, pack);
+  return spec.type === "answer_stat" ? statAnswer(pack, spec.variable, spec.stat) : filterAnswer(pack, spec.variable, spec.op, spec.bounds);
 }
 
 export function renderModule(spec: ModuleSpec, ctx: ModuleCtx, figure: number): ReactNode {

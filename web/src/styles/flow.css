@@ -15,6 +15,9 @@ body:has(.screen) { background: var(--paper); }
 .hero { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
 .hero-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.5vh 24px 4vh; }
 .cover-logo { display: block; height: min(25vh, 230px); width: auto; max-width: 60vw; filter: brightness(1.75) saturate(.85); }
+/* the brightening only lifts the mark on dark paper; on the journal paper it keeps its own red */
+:root[data-theme="light"] .cover-logo { filter: none; }
+@media print { .cover-logo { filter: none; } }
 .cover-kicker { font-family: var(--sans-c); font-size: clamp(12px, 1.9vh, 14px); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 1vh 0 1.8vh; }
 .cover-title { font-size: clamp(30px, min(4.6vw, 7vh), 62px); line-height: 1.06; font-weight: 500; max-width: calc(920 * var(--fz)); text-wrap: balance; }
 .cover-lede { font-size: clamp(16px, 2.8vh, 22px); line-height: 1.5; max-width: calc(680 * var(--fz)); margin: 2.6vh 0 3.6vh; text-wrap: pretty; color: var(--ink-2); }

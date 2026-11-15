@@ -1,0 +1,96 @@
+/* Distribution module (owner: D2). Hand-written SVG histogram, article identity. */
+.gx-dist {
+  font-family: var(--sans);
+}
+.gx-dist-n {
+  font-family: var(--sans-c);
+  font-size: 12px;
+  color: var(--ink-3);
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+.gx-dist-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+.gx-dist-axis {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+.gx-dist-grid {
+  stroke: var(--rule-2);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+.gx-dist-tick line {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+.gx-dist-tick text {
+  fill: var(--ink-2);
+  font-family: var(--sans-c);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.gx-dist-label {
+  fill: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 12px;
+}
+.gx-dist-bar {
+  cursor: pointer;
+  outline: none;
+}
+.gx-dist-bar rect {
+  fill: var(--ink);
+  fill-opacity: 0.8;
+}
+.gx-dist-bar.is-sel rect {
+  fill: var(--accent);
+  fill-opacity: 1;
+}
+.gx-dist-bar:hover rect,
+.gx-dist-bar:focus-visible rect {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.gx-dist-detail {
+  margin-top: 10px;
+  border-top: 1px solid var(--rule-2);
+  padding-top: 8px;
+}
+.gx-dist-sel-heading {
+  font-family: var(--sans-c);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin: 0 0 6px;
+}
+.gx-dist-records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gx-dist-chip {
+  font-family: var(--sans);
+  font-size: 12px;
+}
+.gx-dist-chip button.src {
+  font-size: inherit;
+}
+.gx-dist-more {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+  align-self: center;
+}
+.gx-dist-empty {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: 0;
+}

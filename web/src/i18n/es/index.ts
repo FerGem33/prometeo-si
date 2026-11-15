@@ -5,5 +5,6 @@ import { REPORT } from "./report";
 import { SHOWCASE } from "./showcase";
 import { UPLOAD } from "./upload";
 import { WORKSPACE } from "./workspace";
+import { GENUI } from "./genui";
 
-export const ES: Record<string, string> = { ...REPORT, ...FLOW, ...SHOWCASE, ...UPLOAD, ...WORKSPACE, ...NASA };
+export const ES: Record<string, string> = { ...REPORT, ...FLOW, ...SHOWCASE, ...UPLOAD, ...WORKSPACE, ...GENUI, ...NASA };

@@ -1,0 +1,94 @@
+/* Coverage matrix module (owner: D4). Prefix gx-cov-. Article identity: no gradients, no shadows, radius <= 4px. */
+
+.gx-cov-empty {
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.gx-cov-scroll {
+  overflow-x: auto;
+}
+
+.gx-cov-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-family: var(--sans-c);
+  font-size: calc(12.5 * var(--fz));
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+.gx-cov-table th,
+.gx-cov-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: top;
+}
+
+.gx-cov-table thead th {
+  font-family: var(--sans-c);
+  font-size: calc(11 * var(--fz));
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+  border-bottom: 2px solid var(--ink);
+  white-space: normal;
+}
+
+.gx-cov-var {
+  min-width: 7.5em;
+  max-width: 11em;
+  overflow-wrap: break-word;
+}
+
+.gx-cov-doc-head {
+  min-width: 10em;
+}
+
+.gx-cov-doc {
+  font-family: var(--sans);
+  font-weight: 600;
+  color: var(--ink);
+  white-space: normal;
+}
+
+.gx-cov-total {
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.gx-cov-table tfoot th,
+.gx-cov-table tfoot td {
+  border-bottom: 2px solid var(--ink);
+}
+
+.gx-cov-cell {
+  font-family: var(--sans-c);
+  font-size: calc(12.5 * var(--fz));
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.gx-cov-found {
+  color: var(--ink);
+}
+
+.gx-cov-notfound {
+  color: var(--ink-3);
+}
+
+.gx-cov-legend {
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--ink-2);
+  margin: 8px 0 0;
+}
+
+.gx-cov-sep {
+  color: var(--ink-3);
+}
