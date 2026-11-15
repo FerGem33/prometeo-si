@@ -16,7 +16,9 @@ import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
-import { KnowledgeGraph } from "./components/KnowledgeGraph";
+import { EvidenceMap } from "./components/EvidenceMap";
+import { GraphTeaser } from "./components/GraphTeaser";
+import { TopBar } from "./components/TopBar";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
@@ -75,13 +77,36 @@ function Flow({ data }: { data: Data }) {
     window.location.hash = next === "cover" ? "" : next;
   };
   if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} onWorkspace={() => go("workspace")} />;
-  if (stage === "workspace") return <Workspace onBack={() => go("cover")} onOpen={(p, e) => { setGoal(p.intent); if (e) { setScenario(e.scenario); setAxes(e.axes); } setProjectId(p.id); go("report"); }} />;
   if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
-  return <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} />;
+  const screen =
+    stage === "workspace" ? (
+      <Workspace
+        onBack={() => go("cover")}
+        onOpen={(p, e) => {
+          setGoal(p.intent);
+          if (e) {
+            setScenario(e.scenario);
+            setAxes(e.axes);
+          }
+          setProjectId(p.id);
+          go("report");
+        }}
+      />
+    ) : stage === "graph" ? (
+      <EvidenceMap scenario={scenario} onReport={() => go("report")} />
+    ) : (
+      <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} onGraph={() => go("graph")} />
+    );
+  return (
+    <>
+      <TopBar active={stage} onGo={go} />
+      {screen}
+    </>
+  );
 }
 
-function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace }: {
-  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void;
+function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace, onGraph }: {
+  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void; onGraph: () => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
@@ -234,7 +259,7 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, o
 
         <div className="row">
           <div className="wide">
-            <KnowledgeGraph figure={4} scenario={scenario} />
+            <GraphTeaser scenario={scenario} onOpen={onGraph} />
           </div>
         </div>
 

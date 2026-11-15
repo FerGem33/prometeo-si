@@ -1,0 +1,97 @@
+/* Evidence map: the network as its own section. Paper, ink, one accent; the grade is carried by
+   shape, size and letter, never by colour alone. Ghost points are texture, not data. */
+
+.map-screen { max-width: 1240px; min-width: 0; margin: 22px auto 64px; padding: 0 26px; }
+.map-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; }
+.map-kicker { margin: 0 0 4px; font-family: var(--sans-c); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+.map-head h1 { font-weight: 500; font-size: 32px; line-height: 1.15; max-width: 760px; }
+.map-sub { margin-top: 6px; max-width: 760px; font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+
+.map-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 14px 0 12px; font-family: var(--sans); font-size: 12px; }
+.map-search { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-3); }
+.map-search input { width: 190px; padding: 4px 8px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); color: var(--ink); font: inherit; }
+.map-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.map-grades { display: flex; gap: 6px; }
+.map-zoom { display: inline-flex; align-items: center; gap: 6px; }
+.map-zoom-value { min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+.map-grid { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: start; }
+.map-grid > * { min-width: 0; }
+.map-canvas { position: relative; border: 1px solid var(--rule); background: var(--paper); }
+.map-canvas svg { display: block; width: 100%; height: clamp(420px, 66vh, 700px); touch-action: none; cursor: grab; user-select: none; }
+.map-canvas.is-panning svg { cursor: grabbing; }
+
+/* faint texture behind the network */
+.map-ghosts { fill: var(--ink-3); stroke: var(--ink-3); filter: blur(1.4px); pointer-events: none; transition: opacity 90ms linear; }
+.map-ghosts.is-dim { opacity: .32; }
+
+/* edges: hairline by default, accent when related to the selection; 14px invisible hit area */
+.map-edge .ge { transition: opacity 90ms linear, stroke 90ms linear; }
+.map-edge-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.map-edge.on .ge { stroke: var(--accent); opacity: 1; }
+.map-edge.off .ge { opacity: .10; }
+
+.map-canvas .gnode { transition: opacity 90ms linear; }
+.map-canvas .gnode.hov .gn { stroke: var(--accent); stroke-width: 2.5; }
+
+.map-tip { position: absolute; z-index: 6; max-width: 264px; padding: 5px 8px; border-radius: 2px; background: var(--ink); color: var(--paper); font-family: var(--sans); font-size: 11.5px; line-height: 1.35; pointer-events: none; }
+
+.map-side { position: sticky; top: 62px; font-family: var(--sans); font-size: 12.5px; line-height: 1.45; color: var(--ink-2); border-left: 1px solid var(--rule); padding-left: 16px; max-height: calc(100vh - 90px); overflow: auto; }
+.map-side h2 { font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink); }
+.map-study-title { margin: 2px 0 8px; color: var(--ink-3); font-size: 12px; }
+.map-side dt { margin-top: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.map-side dd { margin: 2px 0 0; }
+.map-side ul { margin: 0; padding: 0; list-style: none; }
+.map-side li { margin-bottom: 3px; }
+.map-empty { color: var(--ink-3); }
+.map-legend li { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.map-note { margin-top: 14px; font-family: var(--sans); font-size: 12px; line-height: 1.5; color: var(--ink-3); max-width: 96ch; }
+.map-alt { margin-top: 10px; font-family: var(--sans); font-size: 12.5px; }
+.map-alt-scroll { overflow-x: auto; }
+.map-alt table { min-width: 540px; }
+.map-alt summary { cursor: pointer; color: var(--ink-2); }
+
+/* announcement in the report where the figure used to be */
+.kg-teaser { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; align-items: center; margin: 10px 0 6px; padding: 18px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.kg-teaser-art svg { display: block; width: 190px; height: 190px; }
+.kg-teaser-edge { stroke: var(--ink-3); stroke-width: .8; opacity: .35; }
+.kg-teaser-node { stroke: var(--ink); stroke-width: 1; }
+.kg-teaser-node.g-A { fill: var(--grade-a); }
+.kg-teaser-node.g-B { fill: var(--grade-b); }
+.kg-teaser-node.g-C,
+.kg-teaser-node.g-D { fill: var(--paper); }
+.kg-teaser h2 { margin: 0 0 6px; font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.kg-teaser p { max-width: 64ch; font-family: var(--sans); font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.kg-teaser-meta { margin: 8px 0 10px; color: var(--ink-3); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .map-grid { grid-template-columns: 1fr; }
+  .map-side { position: static; max-height: none; border-left: 0; padding-left: 0; }
+  .kg-teaser { grid-template-columns: 1fr; }
+  .kg-teaser-art svg { width: 150px; height: 150px; }
+}
+@media (max-width: 720px) {
+  .topbar { padding: 8px 12px; gap: 8px; }
+  .topbar-brand { display: none; }
+  .topbar-tabs { width: 100%; justify-content: space-between; gap: 10px; }
+  .map-screen { padding: 0 14px; }
+  .map-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .map-head h1 { font-size: 24px; }
+  .map-toolbar { gap: 8px 10px; }
+  .map-search { flex: 1 1 100%; }
+  .map-search input { width: auto; min-width: 0; }
+  .map-grades { flex: 1 1 100%; flex-wrap: wrap; }
+  .map-grades .chip { padding: 4px 7px; }
+  .map-canvas svg { height: auto; aspect-ratio: 1 / 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-ghosts, .map-edge .ge, .map-canvas .gnode { transition: none; }
+}
+@media print {
+  /* the flow screens are hidden when printing the report; the map screen is printable on its own */
+  .screen.map-screen { display: block !important; }
+  .map-screen { max-width: none; margin: 0; padding: 0; }
+  .map-toolbar, .map-tip, .map-head .chip { display: none !important; }
+  .map-ghosts { display: none !important; }
+  .map-side { position: static; max-height: none; }
+}

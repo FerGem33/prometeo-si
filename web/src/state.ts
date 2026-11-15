@@ -1,13 +1,14 @@
 import type { Lens, Pack, Scenario } from "./engine";
 
 export type Axes = { x: string; y: string };
-export type Stage = "cover" | "scenario" | "report" | "workspace";
+export type Stage = "cover" | "scenario" | "report" | "workspace" | "graph";
 
-/** #scenario and #report are explicit; a bare link that carries scenario parameters opens the report. */
+/** #scenario, #report, #workspace and #graph are explicit; a bare link that carries scenario parameters opens the report. */
 export function stageFromUrl(hash: string, search: string): Stage {
   if (hash === "#scenario") return "scenario";
   if (hash === "#report") return "report";
   if (hash === "#workspace") return "workspace";
+  if (hash === "#graph") return "graph";
   return search.replace(/^\?/, "") ? "report" : "cover";
 }
 
