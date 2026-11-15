@@ -4,6 +4,7 @@ build
 __pycache__
 *.zip
 .env
+.env.*
 .venv
 *.pyc
 .DS_Store

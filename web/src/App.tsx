@@ -9,11 +9,14 @@ import { MapFigure } from "./components/MapFigure";
 import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesTable } from "./components/Tables";
 import { Methods, References } from "./components/Methods";
 import { Provenance } from "./components/Provenance";
+import { Cover } from "./components/Cover";
+import { ScenarioStep } from "./components/ScenarioStep";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
-import { readUrl, writeUrl } from "./state";
+import { readUrl, stageFromUrl, writeUrl } from "./state";
+import type { Stage } from "./state";
 import type { Axes } from "./state";
 
 async function load(): Promise<Data> {
@@ -36,22 +39,47 @@ export function App() {
   if (!data) return <article className="page"><p className="abstract">Loading the evidence pack…</p></article>;
   return (
     <DataCtx.Provider value={data}>
-      <Report data={data} />
+      <Flow data={data} />
     </DataCtx.Provider>
   );
 }
 
-function Report({ data }: { data: Data }) {
+/** Cover -> scenario form -> report. The stage lives in the URL hash so Back works and a shared link opens the report. */
+function Flow({ data }: { data: Data }) {
   const { pack, lens } = data;
   const initial = useMemo(() => readUrl(pack, lens, window.location.search), [pack, lens]);
   const [scenario, setScenario] = useState<Scenario>(initial.scenario);
   const [axes, setAxes] = useState<Axes>(initial.axes);
-  const [prov, setProv] = useState<string | null>(null);
-  const openProv = useCallback((id: string) => setProv(id), []);
+  const [goal, setGoal] = useState("");
+  const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
 
   useEffect(() => {
+    const onHash = () => {
+      setStage(stageFromUrl(window.location.hash, ""));
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  useEffect(() => {
+    if (stage === "cover") return;
     window.history.replaceState(null, "", writeUrl(lens, scenario, axes) + window.location.hash);
-  }, [lens, scenario, axes]);
+  }, [lens, scenario, axes, stage]);
+
+  const go = (next: Stage) => {
+    window.location.hash = next === "cover" ? "" : next;
+  };
+  if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} />;
+  if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
+  return <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} onHome={() => go("cover")} onEdit={() => go("scenario")} />;
+}
+
+function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEdit }: {
+  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; onHome: () => void; onEdit: () => void;
+}) {
+  const { pack, lens } = data;
+  const [prov, setProv] = useState<string | null>(null);
+  const openProv = useCallback((id: string) => setProv(id), []);
 
   const r = useMemo(() => {
     const part = partitionOf(pack, scenario);
@@ -92,6 +120,12 @@ function Report({ data }: { data: Data }) {
           <span>{lens.kicker ?? "Scenario assessment"}</span>
           <span className="verify">{summary}</span>
           <span className="sep" />
+          <button type="button" className="chip noprint" onClick={onEdit}>
+            Edit scenario
+          </button>
+          <button type="button" className="chip noprint" onClick={onHome}>
+            Start
+          </button>
           <button type="button" className="chip noprint" onClick={() => window.print()}>
             Export PDF
           </button>
@@ -101,6 +135,12 @@ function Report({ data }: { data: Data }) {
           <span>{pack.meta.source_note}</span>
           <span>every value links to its source row and DOI</span>
         </p>
+
+        {goal.trim() && (
+          <p className="goalline">
+            <b>Question.</b> {goal.trim()}
+          </p>
+        )}
 
         <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
 

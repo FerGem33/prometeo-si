@@ -134,3 +134,5 @@ figure.fig.wide { margin: 18px 0 8px; }
 .assistant-panel .presets { flex-wrap: wrap; }
 .assistant-panel li { margin-bottom: .75rem; }
 @media (max-width: 600px) { .question-row { flex-direction: column; } }
+.goalline { font-size: 18px; font-style: italic; color: var(--ink-2); margin: 0 0 18px; }
+.goalline b { font-style: normal; font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-right: 6px; }
