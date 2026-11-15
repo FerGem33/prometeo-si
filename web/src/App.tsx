@@ -77,7 +77,8 @@ function Report({ data }: { data: Data }) {
     <ProvCtx.Provider value={openProv}>
       <article className="page">
         <header className="mast">
-          <span>
+          <span className="brand">
+            <img src="/logo-mark-float-512.png" alt="" width={135} height={135} />
             <b>Prometeo</b> · Evidence report
           </span>
           <span>{pack.meta.created_at}</span>
