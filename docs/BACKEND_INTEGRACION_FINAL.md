@@ -169,7 +169,18 @@ api/.venv/bin/python -I infra/deploy_projects.py \
   --apply --contract-approved
 ```
 
-Sin `EXTRA_ORIGINS`, ese guion vuelve al CloudFront autorizado por defecto.
+**Configuración aplicada el 15-nov-2026:** los dos orígenes del ejemplo ya están
+autorizados en API Gateway, Lambda y CORS GET/PUT del bucket, conservando CloudFront.
+[Recibo real](cors-local-5173-2026-11-15.json): 11 preflight pasan, incluidas
+denegaciones de un origen ajeno; tres GET anónimos mantienen 401 con CORS correcto.
+Las 42 rutas de proyectos siguen JWT y el modelo D6 no cambió. No se hizo deploy
+web ni login/carga de navegador en esa comprobación. Arranque local e instrucciones
+para el equipo: [guía de conexión, §2](GUIA_CONEXION_FRONTEND_BACKEND.md#desarrollo-local-y-cors).
+
+La configuración permanece en AWS. Sin `EXTRA_ORIGINS`, ese guion vuelve API,
+Lambda y bucket al CloudFront autorizado por defecto. `infra/20_api.sh` también
+necesita la variable para conservar los orígenes de API/Lambda, pero no modifica
+CORS del bucket; mantener ambos despliegues alineados.
 No acepta comodines ni orígenes con rutas/credenciales. Un dominio propio requiere
 el hostname y DNS/certificado correspondientes; no se configuró un dominio no
 identificado. No se necesitan claves AWS en el frontend.

@@ -105,6 +105,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · CORS de integración local aplicado y comprobado
+- Dueño autoriza localhost:5173 para pruebas. Perfil `prometeo`, identidad SSO no-root en cuenta 352818909129 validada. Antes del cambio, API/Lambda/bucket permitían solo CloudFront.
+- `infra/deploy_projects.py --uploads --schema --originals --evidence --apply --contract-approved` terminó 0 con `EXTRA_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`. Se reutilizan API/Lambda/rol/bucket/rutas; CloudFront y modelo D6 conservados. No se publicó la web ni se modificó el worker.
+- Lectura posterior de AWS: tres orígenes exactos en Gateway y CORS GET/PUT de S3, variable Lambda correcta, actualización Successful y 42 rutas de proyectos con JWT. Once preflight HTTP pasan (API/PUT/GET S3 desde los tres orígenes y dos controles de origen ajeno); tres GET anónimos devuelven 401 con CORS correcto. Recibo sin secretos: docs/cors-local-5173-2026-11-15.json. No equivale a login/carga desde navegador.
+- Pruebas: 105 web pasan/2 omitidas, 172 API pasan y check_agnostic pasa. Documentadas configuración aplicada, arranque Vite con puerto estricto, reproducción y conservación/retiro de orígenes en docs/GUIA_CONEXION_FRONTEND_BACKEND.md y docs/BACKEND_INTEGRACION_FINAL.md. Desplegar proyectos sin EXTRA_ORIGINS restablece los tres servicios a CloudFront; 20_api.sh sin ella solo API/Lambda, por lo que hay que mantenerlos alineados.
+- Siguiente paso exacto: equipo frontend prueba desde 127.0.0.1:5173 o localhost:5173 con su cuenta propia y el recorrido de la guía. Las pantallas pendientes y la revisión humana de publicación siguen vigentes. Documentación y recibo incluidos en esta entrega; sin nuevo despliegue web.
+
 ### 2026-11-15 · Cierre del backend del MVP: APIs privadas y PDF contextual reales
 - Código y despliegue: 42 rutas JWT, variantes persistentes con versiones, claims auditados, intención/lente sin reextraer, revisión explícita de presets, ask/analysis con pack del servidor y síntesis por IDs de citas/caché. API/worker/roles/tabla/bucket/colas reutilizados; no deploy web ni modificación de demo.
 - `docs/backend-smoke-2026-11-15.json` registra 38+57 comprobaciones HTTP reales con A/B. Proyecto `prj_c6888f85103d49a692cfae4119434ce0`: 51 registros, 2 estudios, 3 fuentes; pack v2/lente v3, 2 contextos PDF y 1 gap literal. A/B 404, variantes repetibles, versión de referencia conservada, intención mantiene SHA del pack, GET/PUT lente/publicación pasan. Ask conserva condición; analysis `ai`/4 frases, synthesis `ai`/5 extractos con ambos estudios; caché repetida estable.

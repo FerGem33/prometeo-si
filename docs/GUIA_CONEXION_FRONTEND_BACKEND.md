@@ -37,9 +37,18 @@ Estos identificadores son públicos. No poner claves AWS, perfiles SSO, contrase
 
 ### Desarrollo local y CORS
 
-El origen autorizado por defecto es CloudFront. `http://localhost:5173` y `http://127.0.0.1:5173` son orígenes distintos y no están autorizados automáticamente. Lo mismo sucede si Vite elige otro puerto.
+**Aplicado en AWS el 15-nov-2026:** API Gateway, Lambda y bucket de corpus permiten CloudFront, `http://localhost:5173` y `http://127.0.0.1:5173`. No hace falta pedir otra habilitación para esos dos orígenes. [Recibo de comprobación](cors-local-5173-2026-11-15.json): configuración leída de AWS, 11 preflight HTTP correctos y 3 solicitudes anónimas que siguen recibiendo `401` con CORS. Las 42 rutas de proyectos conservan JWT. Esto no sustituye probar login y una carga real desde el navegador.
 
-Antes de probar desde localhost, entregar a infraestructura el origen exacto. El operador puede ejecutar el comando documentado en [la entrega final](BACKEND_INTEGRACION_FINAL.md), con su sesión AWS:
+Para arrancar la web desde la raíz, con las dependencias ya instaladas:
+
+```bash
+VITE_API_URL=https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com \
+  npm run dev --prefix web -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+Abrir `http://127.0.0.1:5173`. `--strictPort` evita que Vite cambie a otro puerto no autorizado. Si se quiere abrir por `http://localhost:5173`, arrancar con `--host localhost` en lugar de `127.0.0.1`. El CORS permite conectar; las pantallas y el adaptador Cognito descritos más adelante todavía deben integrarse.
+
+CloudFront sigue siendo el origen por defecto de los scripts. Los dos hosts locales son distintos; otro puerto, HTTPS local o una IP de la red necesitan autorización adicional. Para otro origen, entregar a infraestructura su URL exacta. Para reproducir la configuración aplicada, el operador puede ejecutar el comando documentado en [la entrega final](BACKEND_INTEGRACION_FINAL.md), con su sesión AWS:
 
 ```bash
 EXTRA_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 \
@@ -48,7 +57,9 @@ api/.venv/bin/python -I infra/deploy_projects.py \
   --apply --contract-approved
 ```
 
-Este ajuste coordina CORS de API/Lambda y GET/PUT del bucket. Requiere el entorno del operador descrito en la entrega final; no es un comando de arranque para frontend. No usar `mode: "no-cors"`, extensiones del navegador ni comodines. Un `curl` exitoso no demuestra que CORS funcione en el navegador. Ejecutar el guion sin `EXTRA_ORIGINS` vuelve al origen CloudFront por defecto.
+Este ajuste coordina CORS de API/Lambda y GET/PUT del bucket y permanece aplicado en AWS; no depende de dejar abierta la terminal del operador. Requiere el entorno del operador descrito en la entrega final; no es un comando de arranque para frontend. No usar `mode: "no-cors"`, extensiones del navegador ni comodines. Un `curl` exitoso no demuestra que el recorrido completo funcione en el navegador.
+
+**Para conservar la configuración:** pasar `EXTRA_ORIGINS` en los siguientes despliegues de API/proyectos. `deploy_projects.py` sin esa variable restablece API, Lambda y bucket a CloudFront. `infra/20_api.sh` sin ella restablece API/Lambda, pero no actualiza CORS del bucket. No dejar ambos lados desalineados. Para retirar deliberadamente los orígenes locales, ejecutar el mismo comando de proyectos sin `EXTRA_ORIGINS`. El navegador puede conservar preflight durante 300 s; tras un cambio, esperar ese plazo si sigue mostrando el resultado anterior.
 
 ## 3. Autenticación: Cognito, antes de llamar a `/projects`
 
