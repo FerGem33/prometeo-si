@@ -10,6 +10,7 @@ import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesT
 import { Methods, References } from "./components/Methods";
 import { Provenance } from "./components/Provenance";
 import { MLCard } from "./components/MLCard";
+import { StudyCompare } from "./components/StudyCompare";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, writeUrl } from "./state";
@@ -179,10 +180,11 @@ function Report({ data }: { data: Data }) {
         </div>
 
         <MLCard />
+        <StudyCompare />
 
         <div className="row">
           <div className="body">
-            <h2 className="sec">5 · Sources</h2>
+            <h2 className="sec">6 · Sources</h2>
           </div>
         </div>
         <div className="row">
@@ -193,7 +195,7 @@ function Report({ data }: { data: Data }) {
 
         <div className="row">
           <div className="body">
-            <h2 className="sec">6 · Methods</h2>
+            <h2 className="sec">7 · Methods</h2>
             <Methods tableN={4} />
           </div>
           <aside className="side">
