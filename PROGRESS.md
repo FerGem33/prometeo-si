@@ -9,8 +9,8 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
-| Último commit verificado | T14 y T15 local: commit a crear; paquete web, API y agnostic checks en verde |
-| Siguiente paso exacto | T15: preparar README para jueces, ejecutar verificaciones completas y revisar URL pública. Dejar pendientes los puntos de aceptación que requieren que el dueño despliegue la UI final y pruebe en otra laptop/móvil. |
+| Último commit verificado | T15 (este commit): pruebas locales en verde; aceptación pública pendiente |
+| Siguiente paso exacto | Dueño: integrar cambios finales, publicar con `infra/deploy_web.sh`, revisar URL en privado/móvil, completar aceptación y confirmar T08/T11/T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -48,10 +48,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
-| T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | (este commit) | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
-| T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | (este commit) | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Captura `docs/screens/t13_study_compare.png`. |
-| T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | (este commit) | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
-| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | (inicio en este commit) | README para jueces y revisión local; URL pública final, pruebas en ventana privada/móvil y deploy quedan pendientes del dueño. |
+| T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | `b4f8ced` | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
+| T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Captura `docs/screens/t13_study_compare.png`. |
+| T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
+| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | (este commit) | README para jueces y revisión local; URL pública final, pruebas en ventana privada/móvil y deploy quedan pendientes del dueño. |
 
 ## Aceptación final (T15)
 
@@ -62,8 +62,16 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 - [ ] 5. Export PDF completo
 - [ ] 6. `/ask` cambia escenario; pregunta de contenido → mensaje de límite
 - [ ] 7. `/analysis` solo con fuentes; plantilla si la API cae
-- [ ] 8. `npm test`, `pytest api/`, `check_agnostic.sh` en verde
+- [x] 8. `npm test` (35), `pytest api/` (26 en `api/.venv`, Python 3.12.13), `check_agnostic.sh` en verde
 - [ ] 9. Deploy desde otra laptop sin duplicar recursos
+
+## Revisión final pendiente
+
+- **Deploy del dueño:** la UI de T11 y la comparación/ficha nuevas no se han publicado. HTTP 200 del CloudFront confirma respuesta del servidor, no versión ni render final. Revisar los ítems 1–7 y 9 de aceptación después del deploy final en navegador privado y móvil.
+- **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
+- **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
+- **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
+- **No desplegado:** se respetó la instrucción del dueño de reservar el deploy web final. No se modificaron recursos AWS en T12–T15.
 
 ## Bitácora de relevos
 
@@ -77,6 +85,12 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Verificación T15 local: web 35/35, API 26/26 en `api/.venv` (Python 3.12.13), build Vite/TS, `check_agnostic.sh`, sintaxis Python de T14 y `git diff --check` OK. `python3.12 -m pytest` del sistema falla por `No module named pytest`; se usó el entorno versionado local `api/.venv`.
 - URL actual: CloudFront responde HTTP 200 por HEAD, pero esa respuesta no comprueba el render ni contiene la UI final de este checkout. No se hizo deploy. GET al root de API responde 404, esperado porque no existe ruta raíz; los endpoints `/ask` y `/analysis` están previamente verificados en T10.
 - Siguiente paso exacto: revisar y subir el README de jueces y este estado T15. El dueño debe desplegar la UI integrada y revisar en navegador privado/móvil los ítems restantes de T08/T11/T15.
+
+### 2026-11-14 20:29 CST · Codex · T15 preparación de entrega
+- Hecho: README en inglés para jueces con URL, uso en tres pasos, fuentes/licencia, comportamiento determinista, límites del análisis y alcance del MVP.
+- Verificado: CloudFront `HEAD` HTTP 200; web 35/35 Vitest y build; API 26/26 con el entorno local Python 3.12; `check_agnostic.sh`; compilación sintáctica de `pipeline/induce_schema.py`; `git diff --check`.
+- Pendiente: el estado de CloudFront no demuestra que la UI de este checkout esté publicada. No se desplegó por instrucción del dueño. Los ítems públicos de T08/T11 y 1–7/9 de aceptación T15 siguen abiertos; ver lista Revisión final pendiente.
+- Siguiente paso exacto: el dueño integra cambios finales, ejecuta `infra/deploy_web.sh` y valida URL en privado y móvil, preguntas, análisis, procedencia y PDF; luego registra la evidencia y cierra T08/T11/T15.
 
 ### 2026-11-14 20:18 CST · Codex · T13 y comienzo T14
 - Hecho: T13 permite comparar dos estudios elegidos. Presenta título, objetivo/condiciones (expandibles cuando son extensos), subjects, instrumentos, DOI, valores de variables en unidades normalizadas, columnas/unidades originales y registros de test/campaña por separado con acceso a provenance.
