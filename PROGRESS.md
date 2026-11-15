@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
-| Último commit verificado | `55c18ed` (base de aceptación); fix posterior de sugerencia ya publicado, pendiente de commit |
+| Último commit verificado | `67a81e1` (corrección de sugerencia y prueba); web y Lambda publicados |
 | Siguiente paso exacto | En otra laptop, con su perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh`; comprobar que reutiliza los recursos y marcar el punto 9 para cerrar T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -90,7 +90,8 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **Cambio:** la sugerencia ahora pide aplicar O₂ 100 %, 0.293 atm y Nomex. La pregunta de comparación se reconoce como contenido no soportado y recibe el límite fijo sin invocar Bedrock; se añadió prueba de regresión y se actualizó la documentación del producto.
 - **Verificación:** `npm test --prefix web` (35/35), `api/.venv/bin/python -m pytest api/` (28/28), build Vite/TypeScript, `scripts/check_agnostic.sh` y `git diff --check` OK. En CloudFront, la sugerencia aplicada mostró O₂ 100, presión 0.293 atm y Nomex, con “Scenario updated”.
 - **Publicación:** web con invalidación `I5QRYPFRMSA2JOODN9490YBX46`; Lambda existente actualizada mediante `infra/20_api.sh` en `https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com`. No se crearon recursos AWS.
-- **Siguiente paso exacto:** commit y push de este arreglo y su bitácora; para cerrar T15 aún se requiere que otra laptop con perfil `prometeo` ejecute `bash infra/deploy_web.sh`.
+- **Commit:** `67a81e1` (`T15: fix spacesuit scenario question`).
+- **Siguiente paso exacto:** subir los commits locales; para cerrar T15 aún se requiere que otra laptop con perfil `prometeo` ejecute `bash infra/deploy_web.sh`.
 
 ### 2026-11-14 20:41 CST · Codex · publicación web y revisión de entrega
 - Preflight: `npm test --prefix web` (35/35), `npm run build --prefix web`, `scripts/check_agnostic.sh` y `python3.12 -I pipeline/validate_pack.py` OK (24 estudios, 1,986 registros, 22 fuentes). AWS STS con perfil `prometeo` confirmó la cuenta configurada; no se crearon recursos nuevos.
