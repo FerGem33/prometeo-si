@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · Codex / ferlr: lectura, perfilado y validación de propuestas locales. T18 pendiente de documentación (D9 decidida). |
+| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: verificación real, aprobación explícita y extracción local. T18 pendiente de documentación (D9 decidida). |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
 | Siguiente paso exacto | T32: revisión/aprobación, extracción y evaluación con Bedrock; ver `docs/T32_LECTURA_LOCAL.md`. Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -84,6 +84,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 01:13 CST · retoma T32 en laptop AWS
+- Base sincronizada `c9906c8`; `63b09cc` no existe en main. Se verifica el código existente sin restaurar corpus ni tocar frontend.
+- Python 3.12: 10 pruebas pipeline y 3 adaptador pasan. BASS-II parseada en `/tmp/prometeo-t32/`.
+- Trabajo autorizado: llamada real con MODEL_ID aprobado, revisión/aprobación explícita, extracción y evaluación local. Sin infraestructura, subidas ni cambios al pack. D7/D3 siguen pendientes.
 
 ### 2026-11-15 00:42 CST · regla persistente del modelo aprobado
 - **Decisión del dueño:** Haiku 4.5 es obligatorio para las siguientes tareas. `AGENTS.md` §6 exige conservar el perfil de `infra/config.env` en API, pipeline, extracción y deploy; cualquier migración necesita una nueva instrucción explícita del dueño.
