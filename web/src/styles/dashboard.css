@@ -5,13 +5,21 @@
 .dash-cols { display: block; }
 .dash-main { min-width: 0; }
 .dash-chat { margin-top: 32px; }
-.dash-levels { list-style: none; margin: 0 0 18px; padding: 0; font-family: var(--sans); font-size: 14px; }
+/* Wide engine tables and figures scroll inside the main column instead of overflowing under the chat. */
+.dash-scroll { overflow-x: auto; max-width: 100%; }
+.dash-levels { list-style: none; margin: 0 0 18px; padding: 0; font-family: var(--sans); font-size: 0.9rem; }
 .dash-levels li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.dash-levels li span { text-transform: none; }
+.dash-levels li b { font-weight: 700; font-variant-numeric: tabular-nums; }
 .dash-methods p { font-family: var(--serif); }
 .dash .hint { font-family: var(--sans); color: var(--ink-2); }
+/* The dashboard page reserves room for the main column plus the sticky chat, instead of the report's fixed columns. */
+.page.dash-page { max-width: 1180px; }
+/* The guided-tour launcher floats at the bottom right and would cover the chat column: hide it on the dashboard. */
+body:has(.dash-page) .tour-launch { display: none; }
 @media (min-width: 1100px) {
   .dash { width: min(1240px, 96vw); box-sizing: border-box; }
-  .dash-cols { display: grid; grid-template-columns: minmax(0, 760px) 340px; gap: 40px; align-items: start; }
+  .dash-cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: start; }
   .dash-chat { margin-top: 0; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
 }
 @media (max-width: 700px) { .dash { padding: 20px 16px 40px; } }

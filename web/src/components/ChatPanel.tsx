@@ -119,8 +119,8 @@ export function ChatPanel({ docs, scenario, isCustomCorpus, suggestions, onApply
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send(text); } }} />
       <div className="chat-actions">
-        <button type="submit" className="chip" disabled={busy || !text.trim()}>{busy ? t("Working…") : t("Send")}</button>
-        <button type="button" className="chip" onClick={clear} disabled={turns.length === 0 && !busy}>{t("Clear conversation")}</button>
+        <button type="submit" className="chip chat-send" disabled={busy || !text.trim()}>{busy ? t("Working…") : t("Send")}</button>
+        <button type="button" className="chat-clear" onClick={clear} disabled={turns.length === 0 && !busy}>{t("Clear conversation")}</button>
       </div>
     </form>
   </aside>;

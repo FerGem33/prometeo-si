@@ -2,7 +2,7 @@
 .chat-panel { border-top: 2px solid var(--ink); padding: 8px 0 12px; font-family: var(--sans); }
 .chat-panel h2.sec { margin-top: 4px; }
 .chat-log { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
-.chat-empty { color: var(--ink-3); font-size: .9em; margin: 0; }
+.chat-empty { color: var(--ink-3); font-size: 0.9rem; line-height: 1.4; margin: 0; }
 .chat-turn { border-left: 2px solid var(--rule); padding: 2px 0 2px 10px; }
 .chat-user { border-left-color: var(--ink-3); }
 .chat-assistant { border-left-color: var(--ink); }
@@ -13,12 +13,24 @@
 .chat-cites cite { font-style: normal; font-weight: 600; border-bottom: 1px dotted var(--ink-3); cursor: help; }
 .chat-quote { display: block; color: var(--ink-2); font-family: var(--serif); margin-top: 1px; }
 .chat-apply { margin: 4px 0 0; }
-.chat-suggest { margin: 6px 0; }
+.chat-suggest { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.chat-suggest .chip {
+  display: block; width: 100%; text-align: left; height: auto;
+  font-family: var(--sans); font-size: 0.85rem; line-height: 1.35;
+  border: 1px solid var(--rule); border-radius: 2px; box-shadow: none;
+  padding: 6px 10px; white-space: normal;
+}
 .chat-form { display: flex; flex-direction: column; gap: 4px; }
-.chat-form label { font-size: .8em; color: var(--ink-2); }
+.chat-form label { font-size: 0.85rem; color: var(--ink-2); }
 .chat-form textarea { width: 100%; box-sizing: border-box; font: inherit; font-family: var(--sans); background: var(--paper); color: var(--ink); border: 1px solid var(--rule-2); border-radius: 3px; padding: 6px 8px; resize: vertical; }
 .chat-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.chat-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.chat-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.chat-send { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); font-weight: 600; padding: 6px 16px; }
+.chat-send:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.chat-send:disabled { opacity: .5; cursor: not-allowed; }
+.chat-clear { font-family: var(--sans); font-size: 0.8rem; color: var(--ink-2); background: none; border: 0; padding: 6px 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.chat-clear:hover:not(:disabled) { color: var(--accent); }
+.chat-clear:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (min-width: 1100px) {
   .chat-panel { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }

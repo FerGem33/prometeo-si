@@ -151,7 +151,7 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
   return (
     <ProvCtx.Provider value={openProv}>
       <DataCtx.Provider value={{ pack, lens, mapping: draft.mapping }}>
-        <article className="page dash">
+        <article className="page dash dash-page">
           <header className="dash-head">
             <div className="kicker">
               <span>{t("Evidence dashboard")}</span>
@@ -175,7 +175,9 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
           <div className="dash-cols">
             <div className="dash-main">
               <h2 className="sec">{t("Answers to your purpose")}</h2>
-              {answerNodes.length ? answerNodes : <p className="hint">{t("No module could be built from the corpus for this purpose.")}</p>}
+              {answerNodes.length ? answerNodes.map((node, i) => (
+                <div className="dash-scroll" key={i}>{node}</div>
+              )) : <p className="hint">{t("No module could be built from the corpus for this purpose.")}</p>}
 
               <h2 className="sec">{t("Your case")}</h2>
               <VariableScoresModule
@@ -204,20 +206,20 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
                       </li>
                     ))}
                   </ul>
-                  <RankingTable results={r.ranking} scenario={caseScenario} />
+                  <div className="dash-scroll"><RankingTable results={r.ranking} scenario={caseScenario} /></div>
                   {canPlot && r.grid ? (
                     <>
-                      <MapFigure figure={mapFig} scenario={caseScenario} partition={r.part} axes={useAxes} onAxes={setAxes} onPick={onPick} />
-                      <HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} />
-                      <GapFigure figure={gapFig} grid={r.grid} scenario={caseScenario} axes={useAxes} onAxes={setAxes} onPick={onPick} />
+                      <div className="dash-scroll"><MapFigure figure={mapFig} scenario={caseScenario} partition={r.part} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
+                      <div className="dash-scroll"><HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
+                      <div className="dash-scroll"><GapFigure figure={gapFig} grid={r.grid} scenario={caseScenario} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
                     </>
                   ) : (
                     <>
                       <p className="hint">{t("Select at least two numeric variables to draw the map and the gap figure.")}</p>
-                      <HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} />
+                      <div className="dash-scroll"><HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
                     </>
                   )}
-                  <FindingsList findings={r.finds} />
+                  <div className="dash-scroll"><FindingsList findings={r.finds} /></div>
                 </>
               )}
 

@@ -1408,3 +1408,10 @@ details.vgroup-section > summary.vgroup-title small { color: var(--ink-3); font-
 .unit-view { display: inline-flex; gap: 6px; align-items: center; font-family: var(--sans); font-size: calc(12 * var(--fz)); color: var(--ink-2); }
 .unit-view select { font: inherit; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); color: var(--ink); }
 @media (max-width: 520px) { .doc-progress li { grid-template-columns: minmax(0, 1fr) 80px; } .doc-progress small { display: none; } }
+
+/* Wizard live preview of the most relevant variables (ScenarioStep): label left, score right. */
+ol.purpose-preview { list-style: none; margin: 0; padding: 0; font-family: var(--sans); font-size: 0.9rem; }
+ol.purpose-preview li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--rule-2); }
+ol.purpose-preview li:last-child { border-bottom: 0; }
+ol.purpose-preview li span { color: var(--ink); }
+ol.purpose-preview li b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }

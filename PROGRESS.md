@@ -70,7 +70,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (interfaz/datos) | stringbuilder | `08be856` + esta entrega | Backend listo: pack privado v2/lente v3 con 51 registros/2 estudios/3 fuentes, 2 contextos PDF y 1 gap; variantes/intención/ask/analysis/síntesis IA pasan. Restan pantallas y revisión científica del resto del corpus. |
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (pantalla pendiente) | stringbuilder | `08be856` + esta entrega | Backend listo: correcciones/conflictos/claims auditados, gap literal publicado, original PDF SHA/página 11 cotejado y revisión delegada explícita. Cambio de valor preservado se prueba con fixture; la prueba real previa confirmó el mismo valor sin inventar una corrección. Falta pantalla. |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha | stringbuilder | `777fb81` + esta entrega | Publicada en CloudFront tras policy consolidada; invalidación Completed y QA real desktop/móvil. CSV/datacard de 268 registros, SHA coincide, demo intacta y análisis IA200. Selector/editor de objetivo sigue en T27; docs/T38_DATASET_EXPORT.md |
-| T39 | Dashboard GenUI guiado por propósito: ranking determinista de variables, módulos por prompt, caso ≤10 variables, chat lateral (spec `docs/superpowers/specs/2026-11-15-genui-dashboard-por-proposito-design.md`) | fase 2 · C | en curso | laptop Daniel (orquestador + agentes) | — | F0: contratos `web/src/genui/types.ts` y stubs |
+| T39 | Dashboard GenUI guiado por propósito: ranking determinista de variables, módulos por prompt, caso ≤10 variables, chat lateral (spec `docs/superpowers/specs/2026-11-15-genui-dashboard-por-proposito-design.md`) | fase 2 · C | hecha (local; Lambda sin publicar) | laptop Daniel (orquestador + agentes Sonnet/DeepSeek) | ver bitácora 15-nov | tsc limpio; web 283 pasan/4 omitidas; API 195 pasan (venv con boto3); check_agnostic ampliado a genui OK. `/chat` y `/design` v2 listos en `api/handler.py` pero NO desplegados: esta laptop no tiene perfil `prometeo` (default = otra cuenta). Sin API el chat y el layout se rotulan como locales. |
 
 ## Aceptación final (T15)
 
@@ -102,7 +102,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 - **T30/D3:** aprobados; cargas/DELETE y lote/DLQ real comprobados. Memoria/duración observadas en muestra de 19 REPORT; costo facturado no certificado. Tope USD 30 y revisión si lote>USD 5 se mantienen. Worker habilitado para integración, con límites documentados y cierre mediante `--disable` cuando termine la ventana.
 - **D10/T37:** dos tablas y un PDF publicados con aprobación delegada/contexto acotado, más un gap literal; síntesis IA real. Backend de lente/variantes listo. Faltan revisión de las otras fuentes y pantallas; no declarar completado científicamente el corpus de 23 fuentes.
 
-## Bitácora de relevos
+## Bitácora
+
+### 2026-11-15 · T39 dashboard GenUI por propósito (laptop Daniel)
+- Flujo nuevo: `Documents` (ranking determinista de variables con motivos y cita) → `Purpose` (prompt) → dashboard GenUI (módulos validados) → "Your case" (máx. 10 variables con valores) → niveles, ranking, mapa, cercanía y huecos del motor solo cuando hay valores. Chat lateral con historial, modos rotulados y citas por página/fila.
+- Código: `web/src/genui/` (score, stats, compile, validate, case, retrieve, chat, registry), `web/src/components/genui/*`, `GenUIDashboard.tsx`, `ChatPanel.tsx`; `api/handler.py` con `/chat` y `/design` v2 (+ `api/test_genui_chat.py`).
+- Trampas: (1) vitest falla en bloque ("reading 'config'") si se ejecuta desde `d:\` en minúscula; correr desde `D:\` (PowerShell `Set-Location D:\CODING\Prometeo\web`). (2) El Python del sistema no tiene boto3; las pruebas API completas corren en un venv. (3) `pack()` de la API ahora lee con utf-8 (en Windows fallaba).
+- Siguiente paso exacto: con credenciales del perfil `prometeo`, `infra/20_api.sh` para publicar `/chat` y `/design` v2; luego revisión humana de la interfaz del dashboard contra AGENTS §5–§7 antes de `infra/deploy_web.sh`.
+ de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
 
