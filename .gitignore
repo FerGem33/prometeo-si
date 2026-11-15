@@ -17,3 +17,4 @@ tools/psi/data/datos_psi
 
 ## Corpus de PSI descargados (D9: fuera de git)
 tools/psi/data/
+.playwright-cli/
