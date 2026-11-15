@@ -1,4 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#FDFCF9"/>
-  <text x="32" y="48" text-anchor="middle" font-family="Georgia, serif" font-size="52" fill="#A3271B">P</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <mask id="c">
+      <rect width="64" height="64" fill="#000"/>
+      <circle cx="32" cy="32" r="32" fill="#fff"/>
+      <circle cx="29.4" cy="22.2" r="9.3" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="#1b2637"/>
+  <circle cx="32" cy="32" r="30.4" fill="none" stroke="#2f3f57" stroke-width=".9"/>
+  <circle cx="24.2" cy="26.4" r="11" fill="#c9a44c" mask="url(#c)"/>
+  <circle cx="45.6" cy="25.2" r="4.6" fill="#c9a44c"/>
+  <g stroke="#c9a44c" stroke-width="1.5" stroke-linecap="round">
+    <path d="M45.6 17.4v2.6M45.6 30.4v2.6M37.8 25.2h2.6M50.8 25.2h2.6"/>
+    <path d="M40.1 19.7l1.8 1.8M49.3 28.9l1.8 1.8M51.1 19.7l-1.8 1.8M41.9 28.9l-1.8 1.8"/>
+  </g>
+  <g fill="#c9a44c">
+    <path d="M17.8 41.4l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>
+    <path d="M46.6 40.6l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/>
+    <path d="M31.6 47.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/>
+  </g>
 </svg>

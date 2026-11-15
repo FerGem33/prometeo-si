@@ -1,6 +1,16 @@
 import type { Lens, Pack, Scenario } from "./engine";
 
 export type Axes = { x: string; y: string };
+export type Stage = "cover" | "scenario" | "processing" | "report" | "workspace";
+
+/** #scenario, #processing and #report are explicit; a bare link that carries scenario parameters opens the report. */
+export function stageFromUrl(hash: string, search: string): Stage {
+  if (hash === "#scenario") return "scenario";
+  if (hash === "#processing") return "processing";
+  if (hash === "#report") return "report";
+  if (hash === "#workspace") return "workspace";
+  return search.replace(/^\?/, "") ? "report" : "cover";
+}
 
 export function presetScenario(lens: Lens, id?: string): Scenario {
   const p = lens.presets.find((x) => x.id === (id ?? lens.default_preset)) ?? lens.presets[0];
@@ -48,4 +58,15 @@ export function matchingPreset(lens: Lens, s: Scenario): string {
     if (p.active.every((a) => p.values[a] === s.values[a])) return p.id;
   }
   return "";
+}
+
+/** A variable the user adds that the corpus schema does not have. It is listed with the scenario and never compared. */
+export type Extra = { id: string; name: string; unit: string; value: string };
+
+/** Keeps only well-formed entries, so stored data from an older or corrupt save cannot break the screen. */
+export function cleanExtras(raw: unknown): Extra[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((e): e is Extra => !!e && typeof e === "object" && typeof (e as Extra).id === "string" && typeof (e as Extra).name === "string")
+    .map((e) => ({ id: e.id, name: e.name, unit: typeof e.unit === "string" ? e.unit : "", value: typeof e.value === "string" ? e.value : "" }));
 }

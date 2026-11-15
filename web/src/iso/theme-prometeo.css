@@ -1,0 +1,416 @@
+/* Theme bridge for Frontend/prometeo-si: maps Anatomy isometric tokens to the editorial journal palette (report.css :root).
+   Import AFTER iso.css and put class="iso iso-prometeo" on the figure wrapper. */
+.iso.iso-prometeo {
+  --anatomy-page: var(--desk, #212120);
+  --anatomy-card: var(--surface-card, #333332);
+  --anatomy-text: var(--ink-2, #CDC9C0);
+  --anatomy-strong: var(--ink, #E9E6DF);
+  --anatomy-muted: var(--ink-3, #A39E94);
+  /* Untinted solids (bases, posts, rocks) are dark slate with light line work, so the tinted assemblies carry the figure. */
+  --anatomy-paper: #4A4946;
+  --anatomy-face: #55534F;
+  --anatomy-top: #4F4E4A;
+  --anatomy-shade-0: #2F2E2C;
+  --anatomy-shade-1: #373634;
+  --anatomy-shade-2: #3F3E3B;
+  --anatomy-shade-3: #474643;
+  --anatomy-lit-top: #5E5C57;
+  --anatomy-lit-shade: #434240;
+  --anatomy-hi: var(--ink, #E9E6DF);
+  --anatomy-mid: #BDB8AE;
+  --anatomy-lo: #8E897F;
+  --anatomy-faint: #66635C;
+  --anatomy-lit: var(--ink, #E9E6DF);
+  --anatomy-halo: #000000;
+  --anatomy-halo-opacity: 0;
+  --anatomy-dot: var(--ink, #E9E6DF);
+  --anatomy-red: var(--accent, #E8776A);
+  --anatomy-green: var(--grade-a, #78C29C);
+  --anatomy-blue: #86B4DE;
+  --anatomy-mono: var(--sans, "Fira Sans", "Helvetica Neue", Arial, sans-serif);
+}
+
+/* Inside the light washes below, signal lines go back to their deep print inks. */
+.iso.iso-prometeo :is([data-tint="solar"], [data-tint="cyan"], [data-tint="amber"], [data-tint="emerald"], [data-tint="coral"], [data-tint="violet"]) {
+  --anatomy-red: #A3271B;
+  --anatomy-green: #265C42;
+  --anatomy-blue: #2B5B84;
+}
+
+/* Ink-drawing line weights: outlines carry the form, creases stay quiet. No blurred ground shadow (identity: no shadows). */
+.iso.iso-prometeo { --anatomy-weight: 0.7px; }
+.iso.iso-prometeo .iso-edge { stroke-width: 0.95px; }
+.iso.iso-prometeo .iso-halo { display: none; }
+
+/* Functional washes for sub-assemblies: one restrained print family (steel, teal, sand, sage, slate) plus the accent.
+   Pure custom properties on <g data-tint="..."> — no filters, no extra DOM nodes. */
+.iso.iso-prometeo [data-tint="solar"] {
+  --anatomy-paper: #DCE5EE;
+  --anatomy-top: #E4ECF4;
+  --anatomy-face: #DCE5EE;
+  --anatomy-shade-0: #9FB4C9;
+  --anatomy-shade-1: #B1C3D5;
+  --anatomy-shade-2: #C3D2E0;
+  --anatomy-shade-3: #D3DFEA;
+  --anatomy-lit-top: #EEF3F8;
+  --anatomy-lit-shade: #C3D2E0;
+  --anatomy-lit: #1C3550;
+  --anatomy-hi: #1C3550;
+  --anatomy-mid: #2B4C6E;
+  --anatomy-lo: #5F7F9F;
+  --anatomy-faint: #93ABC2;
+  --anatomy-dot: #1C3550;
+}
+
+.iso.iso-prometeo [data-tint="cyan"] {
+  --anatomy-paper: #D5E6E6;
+  --anatomy-top: #DDECEC;
+  --anatomy-face: #D5E6E6;
+  --anatomy-shade-0: #93BDBF;
+  --anatomy-shade-1: #A7CACB;
+  --anatomy-shade-2: #BAD6D7;
+  --anatomy-shade-3: #CCE1E1;
+  --anatomy-lit-top: #E9F3F3;
+  --anatomy-lit-shade: #BAD6D7;
+  --anatomy-lit: #123E44;
+  --anatomy-hi: #123E44;
+  --anatomy-mid: #1F5A62;
+  --anatomy-lo: #52898F;
+  --anatomy-faint: #8DB5B9;
+  --anatomy-dot: #123E44;
+}
+
+.iso.iso-prometeo [data-tint="amber"] {
+  --anatomy-paper: #F3E4C6;
+  --anatomy-top: #F8ECD4;
+  --anatomy-face: #F3E4C6;
+  --anatomy-shade-0: #CFAE74;
+  --anatomy-shade-1: #DBBE8A;
+  --anatomy-shade-2: #E6CEA2;
+  --anatomy-shade-3: #EEDBB8;
+  --anatomy-lit-top: #FCF4E3;
+  --anatomy-lit-shade: #E3CA9C;
+  --anatomy-lit: #4E3305;
+  --anatomy-hi: #4E3305;
+  --anatomy-mid: #73500C;
+  --anatomy-lo: #A8803A;
+  --anatomy-faint: #CDAF78;
+  --anatomy-dot: #4E3305;
+}
+
+.iso.iso-prometeo [data-tint="emerald"] {
+  --anatomy-paper: #D6E6DC;
+  --anatomy-top: #DFECE4;
+  --anatomy-face: #D6E6DC;
+  --anatomy-shade-0: #97BFA8;
+  --anatomy-shade-1: #AACBB8;
+  --anatomy-shade-2: #BDD7C8;
+  --anatomy-shade-3: #CEE2D6;
+  --anatomy-lit-top: #EAF3EE;
+  --anatomy-lit-shade: #BDD7C8;
+  --anatomy-lit: #173D2A;
+  --anatomy-hi: #173D2A;
+  --anatomy-mid: #265C42;
+  --anatomy-lo: #568A6F;
+  --anatomy-faint: #93B9A4;
+  --anatomy-dot: #173D2A;
+}
+
+.iso.iso-prometeo [data-tint="coral"] {
+  --anatomy-paper: #EFC2B6;
+  --anatomy-top: #F4D0C6;
+  --anatomy-face: #EFC2B6;
+  --anatomy-shade-0: #C46A58;
+  --anatomy-shade-1: #D07F6E;
+  --anatomy-shade-2: #DC9686;
+  --anatomy-shade-3: #E7AD9F;
+  --anatomy-lit-top: #F9DDD5;
+  --anatomy-lit-shade: #E09F90;
+  --anatomy-lit: #5A110A;
+  --anatomy-hi: #5A110A;
+  --anatomy-mid: #A3271B;
+  --anatomy-lo: #B5483C;
+  --anatomy-faint: #D3877C;
+  --anatomy-dot: #A3271B;
+}
+
+.iso.iso-prometeo [data-tint="violet"] {
+  --anatomy-paper: #E2E1E6;
+  --anatomy-top: #EAE9EE;
+  --anatomy-face: #E2E1E6;
+  --anatomy-shade-0: #ADABB9;
+  --anatomy-shade-1: #BDBBC8;
+  --anatomy-shade-2: #CCCAD5;
+  --anatomy-shade-3: #D9D8E0;
+  --anatomy-lit-top: #F2F1F5;
+  --anatomy-lit-shade: #CCCAD5;
+  --anatomy-lit: #2B2838;
+  --anatomy-hi: #2B2838;
+  --anatomy-mid: #454058;
+  --anatomy-lo: #777289;
+  --anatomy-faint: #A9A6B8;
+  --anatomy-dot: #2B2838;
+}
+
+/* Glazing, photovoltaic cells and chamber interiors: the one dark fill, so windows and panels read at card size. */
+.iso.iso-prometeo [data-tint="glass"] {
+  --anatomy-paper: #25313C;
+  --anatomy-top: #33424F;
+  --anatomy-face: #2B3945;
+  --anatomy-shade-0: #1B242D;
+  --anatomy-shade-1: #212C36;
+  --anatomy-shade-2: #27333E;
+  --anatomy-shade-3: #2E3B47;
+  --anatomy-lit-top: #3C4D5C;
+  --anatomy-lit-shade: #2B3945;
+  --anatomy-lit: #8FA3B5;
+  --anatomy-hi: #8FA3B5;
+  --anatomy-mid: #8FA3B5;
+  --anatomy-lo: #8FA3B5;
+  --anatomy-faint: #5B6E80;
+  --anatomy-dot: #E9EEF2;
+  --anatomy-blue: #9CC3E4;
+  --anatomy-green: #9AD0B2;
+  --anatomy-red: #F0907F;
+}
+
+/* Combustion kernel: warm fills with ink-red outlines; it sits on the dark chamber interior, so no glow filter is needed. */
+.iso.iso-prometeo [data-part="flame"],
+.iso.iso-prometeo .bench-flame-kernel {
+  --anatomy-paper: #E2562A;
+  --anatomy-top: #F59E0B;
+  --anatomy-face: #E85D2A;
+  --anatomy-shade-0: #A3271B;
+  --anatomy-shade-1: #BD2B1B;
+  --anatomy-shade-2: #D9381E;
+  --anatomy-shade-3: #EC5828;
+  --anatomy-lit-top: #F9B233;
+  --anatomy-lit-shade: #E04F26;
+  --anatomy-lit: #4A0D07;
+  --anatomy-hi: #4A0D07;
+  --anatomy-mid: #A3271B;
+  --anatomy-lo: #C7321D;
+  --anatomy-faint: #F2A27A;
+  --anatomy-red: #F2A27A;
+  --anatomy-dot: #FFF3B0;
+}
+
+.iso.iso-prometeo [data-flame-layer="outer"] { opacity: 0.38; }
+
+.iso.iso-prometeo [data-flame-layer="core"] {
+  --anatomy-paper: #FDE68A;
+  --anatomy-top: #FFF9DB;
+  --anatomy-face: #FDE047;
+  --anatomy-shade-0: #F59E0B;
+  --anatomy-shade-1: #F9B233;
+  --anatomy-shade-2: #FCCB4B;
+  --anatomy-shade-3: #FDDC6C;
+  --anatomy-lit-top: #FFFBEB;
+  --anatomy-lit-shade: #FCD34D;
+  --anatomy-lit: #B4530A;
+  --anatomy-hi: #B4530A;
+}
+
+.iso.iso-prometeo .iso-flame-tongue {
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: iso-plume-flicker 0.85s ease-in-out infinite alternate;
+}
+.iso.iso-prometeo .iso-flame-tongue[data-tongue="main"] { fill: #E2562A; stroke: #5A110A; stroke-width: 0.9px; }
+.iso.iso-prometeo .iso-flame-tongue[data-tongue="side"] { fill: #C7321D; stroke: #5A110A; stroke-width: 0.8px; animation-duration: 0.7s; animation-direction: alternate-reverse; }
+.iso.iso-prometeo .iso-flame-tongue[data-tongue="inner"] { fill: #F9B233; stroke: #B4530A; stroke-width: 0.7px; animation-duration: 0.58s; animation-direction: alternate-reverse; }
+
+.iso.iso-prometeo [data-flame-layer="sparks"] circle {
+  fill: #F9B233;
+  stroke: none;
+  opacity: 1;
+}
+
+/* Glass reflections drawn over the chamber window. */
+.iso.iso-prometeo .iso-glint { fill: none; stroke: #E9EEF2; stroke-width: 0.8px; stroke-linecap: round; opacity: 0.5; }
+
+.iso.iso-prometeo .chamber-stage-fx {
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+.iso.iso-prometeo .chamber-stage-fx .iso-line {
+  stroke-width: 1.3px;
+}
+
+@keyframes iso-plume-flicker {
+  0% {
+    transform: scale(0.95, 0.94) skewX(2deg);
+  }
+  50% {
+    transform: scale(1.05, 1.08) skewX(-2.5deg);
+  }
+  100% {
+    transform: scale(0.98, 1.03) skewX(1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iso.iso-prometeo .iso-flame-tongue {
+    animation: none;
+  }
+}
+
+.habitat-fig {
+  display: block;
+  width: 100%;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.choice:hover .habitat-fig,
+.choice[aria-pressed="true"] .habitat-fig {
+  transform: translateY(-2px);
+}
+
+/* Filled glazing and pennants drawn on faces (windows, hatches, flag). */
+.iso.iso-prometeo .iso-pane { fill: #2B3945; stroke: #10161C; stroke-width: 0.8px; stroke-linejoin: round; }
+.iso.iso-prometeo .iso-flag { fill: var(--accent, #A3271B); stroke: #5A110A; stroke-width: 0.7px; stroke-linejoin: round; }
+.iso.iso-prometeo .iso-needle { stroke-width: 1.4px; }
+.iso.iso-prometeo .iso-needle-hub { fill: #A3271B; stroke: #5A110A; stroke-width: 0.6px; }
+.iso.iso-prometeo .iso-rail { stroke-width: 1.7px; }
+.iso.iso-prometeo .iso-flame-core { fill: #FFF3B0; stroke: #B4530A; stroke-width: 0.7px; }
+
+/* ── Scene plates and backdrops ─────────────────────────────────────────── */
+.iso.iso-prometeo .iso-plate-bg { stroke: none; }
+.iso.iso-prometeo .iso-plate-bg[data-scene="sky"] { fill: #191D24; }
+.iso.iso-prometeo .iso-plate-bg[data-scene="lab"] { fill: #22262B; }
+.iso.iso-prometeo .iso-plate-frame { fill: none; stroke: #454B54; stroke-width: 1px; }
+.iso.iso-prometeo .iso-stars circle { fill: #E3E8EE; }
+.iso.iso-prometeo .iso-gridline { fill: none; stroke: #2E343B; stroke-width: 0.6px; }
+.iso.iso-prometeo .iso-gridline[data-major] { stroke: #3C444D; stroke-width: 0.8px; }
+.iso.iso-prometeo .iso-orbit { fill: none; stroke: #4E5A68; stroke-width: 0.8px; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+/* Planets in flat tones: sea, land, highlands, ice, cloud bands, a two-step night side and an air rim. */
+.iso.iso-prometeo .iso-planet-body { stroke: none; }
+.iso.iso-prometeo .iso-planet-rim { fill: none; stroke-width: 0.8px; }
+.iso.iso-prometeo .iso-planet-night { fill: #0E141B; opacity: 0.58; }
+.iso.iso-prometeo .iso-planet-night[data-step="soft"] { opacity: 0.24; }
+.iso.iso-prometeo .iso-planet[data-planet="earth"] .iso-planet-body { fill: #2F5F85; }
+.iso.iso-prometeo .iso-planet[data-planet="earth"] .iso-planet-land { fill: #5E8F6C; }
+.iso.iso-prometeo .iso-planet[data-planet="earth"] .iso-planet-high { fill: #A39A6E; }
+.iso.iso-prometeo .iso-planet-ice { fill: #E4EBF0; }
+.iso.iso-prometeo .iso-planet-cloud { fill: none; stroke: #EEF3F6; stroke-linecap: round; opacity: 0.72; vector-effect: none; }
+.iso.iso-prometeo .iso-planet[data-planet="earth"] .iso-planet-rim { stroke: #A9D0EE; }
+.iso.iso-prometeo .iso-planet-air { fill: #5B93BD; opacity: 0.3; }
+.iso.iso-prometeo .iso-planet-air[data-air="far"] { opacity: 0.13; }
+.iso.iso-prometeo .iso-planet[data-planet="moon"] .iso-planet-body { fill: #A19E97; }
+.iso.iso-prometeo .iso-planet[data-planet="moon"] .iso-planet-land { fill: #85827C; }
+.iso.iso-prometeo .iso-planet-crater { fill: #8F8C85; stroke: #C2BEB5; stroke-width: 0.5px; }
+.iso.iso-prometeo .iso-planet[data-planet="moon"] .iso-planet-rim { stroke: #CFCBC2; }
+
+/* Ground with a curved horizon: lunar plain, Mars-like plain, launch site at night. */
+.iso.iso-prometeo .iso-ground-body { stroke: none; }
+.iso.iso-prometeo .iso-ground-band { fill: none; stroke-width: 9px; vector-effect: none; opacity: 0.5; }
+.iso.iso-prometeo .iso-ground-band[data-band="near"] { stroke-width: 5px; opacity: 0.28; }
+.iso.iso-prometeo .iso-ground-rim { fill: none; stroke-width: 1px; }
+.iso.iso-prometeo .iso-ground[data-ground="moon"] .iso-ground-body { fill: #807D77; }
+.iso.iso-prometeo .iso-ground[data-ground="moon"] .iso-ground-band { stroke: #6B6863; }
+.iso.iso-prometeo .iso-ground[data-ground="moon"] .iso-ground-rim { stroke: #B7B3AA; }
+.iso.iso-prometeo .iso-ground[data-ground="mars"] .iso-ground-body { fill: #A2573D; }
+.iso.iso-prometeo .iso-ground[data-ground="mars"] .iso-ground-band { stroke: #8A4530; }
+.iso.iso-prometeo .iso-ground[data-ground="mars"] .iso-ground-rim { stroke: #D08A66; }
+.iso.iso-prometeo .iso-ground[data-ground="pad"] .iso-ground-body { fill: #3A4148; }
+.iso.iso-prometeo .iso-ground[data-ground="pad"] .iso-ground-band { stroke: #30363C; }
+.iso.iso-prometeo .iso-ground[data-ground="pad"] .iso-ground-rim { stroke: #6A747E; }
+.iso.iso-prometeo .iso-plate-bg[data-scene="mars"] { fill: #2A1F1C; }
+.iso.iso-prometeo .iso-mesa { fill: #6E3A2A; stroke: #8A4A34; stroke-width: 0.7px; stroke-linejoin: round; }
+.iso.iso-prometeo .iso-moonlet { fill: #B9A99B; stroke: none; }
+
+/* Mars-like ground: rust, with dark ink for rocks, craters and tracks. */
+.iso.iso-prometeo [data-tint="mars"] {
+  --anatomy-paper: #A2573D;
+  --anatomy-top: #B56A4C;
+  --anatomy-face: #BE7353;
+  --anatomy-shade-0: #6B3323;
+  --anatomy-shade-1: #7A3C2A;
+  --anatomy-shade-2: #894532;
+  --anatomy-shade-3: #984E39;
+  --anatomy-lit-top: #C98061;
+  --anatomy-lit-shade: #8E4833;
+  --anatomy-lit: #3A180F;
+  --anatomy-hi: #3A180F;
+  --anatomy-mid: #4A2014;
+  --anatomy-lo: #7A3C2A;
+  --anatomy-faint: #8A4530;
+  --anatomy-dot: #55261A;
+  --anatomy-red: #3A180F;
+  --anatomy-green: #173D2A;
+  --anatomy-blue: #1C3550;
+}
+.iso.iso-prometeo [data-tint="mars"] .iso-crater { fill: #864330; stroke: #5E2C1E; }
+
+/* Asteroids drifting behind the station. */
+.iso.iso-prometeo .iso-asteroid { animation: iso-drift var(--dur, 22s) linear var(--delay, 0s) infinite; }
+.iso.iso-prometeo .iso-asteroid-spin { transform-box: fill-box; transform-origin: center; animation: iso-spin var(--spin, 14s) linear infinite; }
+.iso.iso-prometeo .iso-asteroid-body { fill: #8A8780; stroke: #3A3835; stroke-width: 0.8px; stroke-linejoin: round; }
+.iso.iso-prometeo .iso-asteroid-shade { fill: #5F5C57; stroke: none; }
+.iso.iso-prometeo .iso-asteroid-pit { fill: #6B6863; stroke: #4A4845; stroke-width: 0.5px; }
+@keyframes iso-drift { from { transform: translate(var(--ax0), var(--ay0)); } to { transform: translate(var(--ax1), var(--ay1)); } }
+@keyframes iso-spin { to { transform: rotate(360deg); } }
+
+/* Exhaust smoke at lift-off. */
+.iso.iso-prometeo .iso-smoke circle { fill: #8E9399; stroke: #5D6268; stroke-width: 0.7px; transform-box: fill-box; transform-origin: center; animation: iso-puff 2.6s ease-in-out var(--puff-at, 0s) infinite alternate; }
+.iso.iso-prometeo .iso-smoke circle[data-puff="1"] { fill: #A6ABB0; }
+.iso.iso-prometeo .iso-smoke circle[data-puff="2"] { fill: #777C82; }
+@keyframes iso-puff { from { transform: scale(0.86); } to { transform: scale(1.14); } }
+.iso.iso-prometeo .iso-flame-tongue[data-down] { transform-origin: 50% 0%; }
+
+/* The rover's wheels roll in their own face plane; the tether of the spacewalk. */
+.iso.iso-prometeo .iso-wheel-spin { animation: iso-spin 2s linear infinite; }
+.iso.iso-prometeo .iso-tether { fill: none; stroke: #D9D5CB; stroke-width: 1.2px; stroke-linecap: round; }
+
+@media (prefers-reduced-motion: reduce) {
+  .iso.iso-prometeo .iso-asteroid,
+  .iso.iso-prometeo .iso-asteroid-spin,
+  .iso.iso-prometeo .iso-smoke circle,
+  .iso.iso-prometeo .iso-wheel-spin { animation: none; }
+}
+
+/* Lunar ground details: rocks, craters and prints on the plain. */
+.iso.iso-prometeo [data-tint="regolith"] {
+  --anatomy-paper: #7A7772;
+  --anatomy-top: #83807A;
+  --anatomy-face: #8C8983;
+  --anatomy-shade-0: #4B4946;
+  --anatomy-shade-1: #56544F;
+  --anatomy-shade-2: #615E59;
+  --anatomy-shade-3: #6C6964;
+  --anatomy-lit-top: #999690;
+  --anatomy-lit-shade: #6A6762;
+  --anatomy-lit: #2A2927;
+  --anatomy-hi: #2A2927;
+  --anatomy-mid: #33312F;
+  --anatomy-lo: #5C5955;
+  --anatomy-faint: #6B6863;
+  --anatomy-dot: #3A3836;
+  --anatomy-red: #7A1B12;
+  --anatomy-green: #173D2A;
+  --anatomy-blue: #1C3550;
+}
+.iso.iso-prometeo .iso-crater { fill: #66635E; stroke: #45433F; stroke-width: 0.8px; }
+
+/* Numbered callouts on the chamber; the host's data-active-stage (0-based) lights the matching one. */
+.iso.iso-prometeo .iso-leader { fill: none; stroke: #8E897F; stroke-width: 0.8px; stroke-dasharray: 1.5 2.5; }
+.iso.iso-prometeo .iso-callout-dot { fill: #BDB8AE; stroke: none; }
+.iso.iso-prometeo .iso-callout-badge { fill: #22262B; stroke: #8E897F; stroke-width: 1px; }
+.iso.iso-prometeo .iso-callout-num { fill: #CDC9C0; font-family: var(--sans, "Fira Sans", Arial, sans-serif); font-size: 6.6px; font-weight: 600; }
+.iso.iso-prometeo[data-active-stage="0"] [data-callout="1"] .iso-callout-badge,
+.iso.iso-prometeo[data-active-stage="1"] [data-callout="2"] .iso-callout-badge,
+.iso.iso-prometeo[data-active-stage="2"] [data-callout="3"] .iso-callout-badge,
+.iso.iso-prometeo[data-active-stage="3"] [data-callout="4"] .iso-callout-badge { fill: var(--accent-fill, #B03A2E); stroke: var(--accent, #E8776A); }
+.iso.iso-prometeo[data-active-stage="0"] [data-callout="1"] .iso-callout-num,
+.iso.iso-prometeo[data-active-stage="1"] [data-callout="2"] .iso-callout-num,
+.iso.iso-prometeo[data-active-stage="2"] [data-callout="3"] .iso-callout-num,
+.iso.iso-prometeo[data-active-stage="3"] [data-callout="4"] .iso-callout-num { fill: var(--on-accent, #F7EFEA); }
+.iso.iso-prometeo[data-active-stage="0"] [data-callout="1"] .iso-leader,
+.iso.iso-prometeo[data-active-stage="1"] [data-callout="2"] .iso-leader,
+.iso.iso-prometeo[data-active-stage="2"] [data-callout="3"] .iso-leader,
+.iso.iso-prometeo[data-active-stage="3"] [data-callout="4"] .iso-leader { stroke: var(--accent, #E8776A); stroke-dasharray: none; }
+.iso.iso-prometeo[data-active-stage="0"] [data-callout="1"] .iso-callout-dot,
+.iso.iso-prometeo[data-active-stage="1"] [data-callout="2"] .iso-callout-dot,
+.iso.iso-prometeo[data-active-stage="2"] [data-callout="3"] .iso-callout-dot,
+.iso.iso-prometeo[data-active-stage="3"] [data-callout="4"] .iso-callout-dot { fill: var(--accent, #E8776A); }
