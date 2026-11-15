@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T12 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
+| Tarea en curso | T14 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
 | Último commit verificado | T10: 2bda497; T11 pruebas locales en este commit |
-| Siguiente paso exacto | T12: ficha descriptiva de outcomes sin combinar columnas heterogéneas; registrar limitación de criterios de idoneidad ML y después seguir T13 según plan |
+| Siguiente paso exacto | T14: inducir propuesta de mapeo desde encabezados y muestras reales, comparar contra mapping aprobado y documentar resultados en `docs/agnostic_proof.md`. Mantener pendiente el deploy web del dueño y revisión visual pública para cerrar T08/T11/T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -48,9 +48,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
-| T12 | Ficha de datos para ML | P2 | en curso | Codex · stringbuilder | este commit | Resúmenes por fuente/columna/kind; no combinar outcomes heterogéneos |
-| T13 | Comparar 2 estudios | P2 | pendiente | | | |
-| T14 | Prueba agnóstica | P3 | pendiente | | | |
+| T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | (este commit) | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
+| T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | (este commit) | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Captura `docs/screens/t13_study_compare.png`. |
+| T14 | Prueba agnóstica | P3 | en curso | Codex · stringbuilder | (inicio en este commit) | Propuesta Bedrock contra el mapping humano; falta ejecutar una vez y escribir evidencia con aciertos reales. |
 | T15 | Aceptación y entrega | P0 | pendiente | | | |
 
 ## Aceptación final (T15)
@@ -68,6 +68,18 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 20:18 CST · Codex · T13 y comienzo T14
+- Hecho: T13 permite comparar dos estudios elegidos. Presenta título, objetivo/condiciones (expandibles cuando son extensos), subjects, instrumentos, DOI, valores de variables en unidades normalizadas, columnas/unidades originales y registros de test/campaña por separado con acceso a provenance.
+- Verificado: `docs/screens/t13_study_compare.png` generado desde la versión local y revisado visualmente; muestra la comparación en dos columnas (ACME/Flame Design y BASS-II), citas DOI, valores, etiquetas y unidades. `npm test` 35/35, `npm run build` y `git diff --check` OK.
+- Siguiente paso exacto: T14, generar propuesta de esquema a partir de cinco filas de tablas reales, cotejar por columna con `mapping.json`, guardar aciertos y alcance del muestreo en `docs/agnostic_proof.md`.
+- Pendiente de revisión final: deploy y revisión visual en URL pública para T08/T11; cierre de checklist T15 después de que el dueño publique la UI final.
+
+### 2026-11-14 20:01 CST · Codex · T12 y comienzo T13
+- Hecho: T12 agrega ficha determinista de resultados aprobados por mapping, agrupados por estudio, fuente, columna literal y tipo. Presenta denominadores, datos completos, cobertura de unidades declaradas, frecuencias textuales y candidatos de filas exactas repetidas entre fuentes. Todos los registros candidatos permanecen incluidos.
+- Límite para revisión final: no hay en el contrato una definición de target/clase ni umbrales de idoneidad ML. La UI llama descriptivas a las frecuencias y no emite un veredicto de aptitud; el equipo debe definir criterios antes de usarla para elegir un modelo.
+- Verificado: Vitest 35/35, build de producción, `scripts/check_agnostic.sh` y `git diff --check` OK. Un primer assertion de orden en una prueba nueva falló; corregido para validar ambos tipos sin asumir orden y la corrida final pasó.
+- Siguiente paso exacto: T13, comparación lado a lado de dos estudios con unidades, citas y etiquetas; guardar captura. El deploy final web y la inspección pública continúan a cargo del dueño antes de cerrar T08/T11/T15.
 
 ### 2026-11-14 19:41 CST · Codex · T11 lista para deploy del dueño
 - Hecho: barra /ask con sugerencias de lens, validación de respuesta, chips que enfocan controles editables; Analysis con fuentes, debounce 800 ms, cancelación de solicitudes obsoletas y timeout 20 s; plantilla explícita ante error.
