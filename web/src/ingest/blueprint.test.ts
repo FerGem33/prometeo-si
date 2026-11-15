@@ -478,6 +478,12 @@ describe("buildLensFromBlueprint", () => {
     // Inherits stable base config like finding_priority and min_studies
     expect(lens.evidence.min_studies).toBe(2);
     expect(lens.finding_priority).toEqual(baseDemoLens.finding_priority);
+
+    // Custom corpus must synthesize corpus-specific sample questions and NOT inherit NASA O2/Nomex questions
+    const questions = lens.questions ?? [];
+    const joinedQ = questions.join(" ");
+    expect(joinedQ).not.toMatch(/Nomex|PMMA/i);
+    expect(questions.length).toBeGreaterThan(0);
   });
 
   it("handles empty or 0-numeric packs cleanly", () => {

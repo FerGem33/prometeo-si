@@ -86,6 +86,16 @@ const CANONICAL_UNITS: Record<string, string> = {
   ul: "µL",
   ug: "µg",
   umol: "µmol",
+  "kw/m2": "kW/m²",
+  "w/m2": "W/m²",
+  "w/(m*k)": "W/(m·K)",
+  "w/(m·k)": "W/(m·K)",
+  "w/mk": "W/(m·K)",
+  mm2: "mm²",
+  cm2: "cm²",
+  m2: "m²",
+  cm3: "cm³",
+  m3: "m³",
 };
 
 let cachedKnownUnits: { exact: Set<string>; lowerMap: Map<string, string> } | null =
@@ -176,8 +186,9 @@ export async function extractPdfPages(
   let doc: pdfjs.PDFDocumentProxy;
   let loadingTask: any;
   try {
+    // Clone input buffer so PDF.js worker transfer cannot detach the caller's bytes (needed for IndexedDB storage in browsers)
     loadingTask = pdfjs.getDocument({
-      data: bytes,
+      data: bytes.slice(),
       useWorkerFetch: false,
     });
     doc = await loadingTask.promise;
@@ -497,7 +508,7 @@ export function parsePaperPages(
   // 4. Candidate variable findings extraction
   const findings: ParsedPaperFinding[] = [];
   const { exact, lowerMap } = getKnownUnits();
-  const unitPattern = "[A-Za-z°µΩ%][A-Za-z0-9°µΩ%/()·\\-_]*";
+  const unitPattern = "[A-Za-z°µΩ%][A-Za-z0-9°µΩ%/()·*\\-_]*";
 
   for (const page of pages) {
     const text = page.text;

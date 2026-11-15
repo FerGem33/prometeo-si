@@ -169,6 +169,7 @@ export function interpretLocalQuestion(
       );
 
       const m = trimmed.match(pCat);
+      let matchedCat = false;
       if (m) {
         const candidate = m[1].trim();
         const matchedKnown = known.find(
@@ -176,14 +177,17 @@ export function interpretLocalQuestion(
         );
         if (matchedKnown) {
           values[catVar.id] = matchedKnown;
+          matchedCat = true;
         } else if (known.length === 0) {
           values[catVar.id] = candidate;
+          matchedCat = true;
         }
-      } else {
-        // Direct mention of a known category along with variable name anywhere
+      }
+      if (!matchedCat) {
+        // Direct mention of a known category (including multi-word categories) along with variable name
         for (const k of known) {
-          const kPattern = new RegExp(`\\b${escapeRegex(k)}\\b`, "i");
-          const vPattern = new RegExp(`\\b(?:${aliasRegexPart})\\b`, "i");
+          const kPattern = new RegExp(`(?:^|[^a-zA-Z0-9_])${escapeRegex(k)}(?=$|[^a-zA-Z0-9_])`, "i");
+          const vPattern = new RegExp(`(?:^|[^a-zA-Z0-9_])(?:${aliasRegexPart})\\b`, "i");
           if (kPattern.test(trimmed) && vPattern.test(trimmed)) {
             values[catVar.id] = k;
             break;

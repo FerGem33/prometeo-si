@@ -45,7 +45,7 @@ export function Provenance({ id, onClose }: { id: string; onClose: () => void })
         {r.confidence === "paper" || r.source.page !== undefined ? (
           <>
             <dt>{t("Page")}</dt>
-            <dd>Page {r.source.page ?? 1}</dd>
+            <dd>{r.source.page ?? 1}</dd>
           </>
         ) : (
           <>

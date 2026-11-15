@@ -37,8 +37,8 @@ body:has(.screen) { background: var(--paper); }
 .cover-facts dd { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-top: 6px; }
 
 /* steps */
-.step-main { width: 100%; max-width: 1040px; margin: 0 auto; padding: 36px 24px 48px; }
-.stepper { list-style: none; display: flex; margin-bottom: 44px; border-bottom: 1px solid var(--rule); }
+.step-main { width: 100%; max-width: 1040px; margin: 0 auto; padding: 24px 24px 88px; }
+.stepper { list-style: none; display: flex; margin-bottom: 26px; border-bottom: 1px solid var(--rule); }
 .stepper li { flex: 1; }
 .stepper button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--sans); font-size: 15px; color: var(--ink-3); background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 14px 8px; cursor: pointer; }
 .stepper button:disabled { cursor: default; }
@@ -48,7 +48,7 @@ body:has(.screen) { background: var(--paper); }
 .stepper li.done button { color: var(--ink-2); }
 
 .step-panel h1 { font-size: clamp(30px, 3.4vw, 42px); font-weight: 500; line-height: 1.15; }
-.step-lede { font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 720px; margin: 12px 0 34px; }
+.step-lede { font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 720px; margin: 8px 0 22px; }
 .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
 .choice { text-align: left; font: inherit; color: inherit; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 24px 24px 22px; cursor: pointer; display: flex; flex-direction: column; gap: 10px; }
 .choice b { font-size: 24px; font-weight: 500; }
@@ -88,7 +88,7 @@ body:has(.screen) { background: var(--paper); }
 .cond-ctl select { font-family: var(--sans); font-size: 16px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); min-width: 240px; }
 .cond-ctl .alt { font-family: var(--sans); font-size: 14px; color: var(--ink-3); }
 
-.step-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.step-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rule); }
 
 /* Isometric Habitat cards & showcase on Cover and ScenarioStep */
 .habitat-fig { display: block; width: 100%; max-width: 180px; margin: 0 auto; }

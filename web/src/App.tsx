@@ -132,17 +132,30 @@ function Flow({ data }: { data: Data }) {
   }, []);
 
   useEffect(() => {
-    if (stage === "cover") return;
+    if (stage === "cover" || activeCustomDraft?.isCustomCorpus || pendingDraft?.isCustomCorpus) return;
     try {
       const activeLens = activeCustomDraft?.isCustomCorpus ? activeCustomDraft.lens : lens;
       window.history.replaceState(null, "", writeUrl(activeLens, scenario, axes) + window.location.hash);
     } catch {
       // guarded against formatting error
     }
-  }, [lens, activeCustomDraft, scenario, axes, stage]);
+  }, [lens, activeCustomDraft, pendingDraft, scenario, axes, stage]);
 
   const go = (next: Stage) => {
-    window.location.hash = next === "cover" ? "" : next;
+    if (next === "cover") {
+      try {
+        if (window.location.search) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      } catch {
+        // guarded
+      }
+      window.location.hash = "";
+      setStage("cover");
+      return;
+    }
+    setStage(next);
+    window.location.hash = next;
   };
 
   const reportData = useMemo<Data>(() => {
@@ -245,6 +258,13 @@ function Flow({ data }: { data: Data }) {
             const x = defaultAxesList[0] && nums.includes(defaultAxesList[0]) ? defaultAxesList[0] : nums[0] ?? "";
             const y = defaultAxesList[1] && nums.includes(defaultAxesList[1]) ? defaultAxesList[1] : (nums.find((id) => id !== x) ?? nums[1] ?? x);
             setAxes({ x, y });
+            try {
+              if (window.location.search) {
+                window.history.replaceState(null, "", window.location.pathname + "#report");
+              }
+            } catch {
+              // guarded
+            }
           } else {
             setActiveCustomDraft(null);
           }
@@ -271,6 +291,11 @@ function Flow({ data }: { data: Data }) {
           onHome={() => {
             setActiveCustomDraft(null);
             setPendingDraft(null);
+            const resetDemo = readUrl(pack, lens, "");
+            setScenario(resetDemo.scenario);
+            setAxes(resetDemo.axes);
+            setExtras([]);
+            setGoal("");
             go("cover");
           }}
           onEdit={() => go("scenario")}
@@ -361,8 +386,9 @@ function Report({
 
   const unit = lens.unit_of_study ?? "study";
   const where = partitionPhrase(pack, lens, r.part?.value);
+  const packVarIds = new Set(pack.schema.variables.map((v) => v.id));
   const summary = scenario.active
-    .filter((id) => scenario.values[id] !== undefined && scenario.values[id] !== "")
+    .filter((id) => packVarIds.has(id) && scenario.values[id] !== undefined && scenario.values[id] !== "")
     .map((id) => `${varOf(pack, id).label} ${scenarioValueText(pack, id, scenario.values[id])}`)
     .concat(extras.map((e) => `${e.name} ${e.value} ${e.unit}`.trim()))
     .join(" · ");

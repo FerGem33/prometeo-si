@@ -150,4 +150,40 @@ describe("interpretLocalQuestion", () => {
     const unsupportedRes = interpretLocalQuestion("What is the weather?", oneNumPack);
     expect("unsupported" in unsupportedRes).toBe(true);
   });
+
+  it("matches multi-word known categorical values after 'to' / 'is'", () => {
+    const multiCatVar: CatVariable = { id: "mat", label: "Material", type: "cat" };
+    const multiPack: Pack = {
+      ...createMockPack([multiCatVar]),
+      records: [
+        {
+          id: "rec-mw-1",
+          study: "study-1",
+          label: "Sample 1",
+          kind: "test",
+          source: { id: "src-1", row: 1 },
+          confidence: "table",
+          quote: null,
+          flags: [],
+          values: { mat: "Carbon Fiber" },
+        },
+        {
+          id: "rec-mw-2",
+          study: "study-1",
+          label: "Sample 2",
+          kind: "test",
+          source: { id: "src-1", row: 2 },
+          confidence: "table",
+          quote: null,
+          flags: [],
+          values: { mat: "Stainless Steel" },
+        },
+      ],
+    };
+    const res = interpretLocalQuestion("Set Material to Carbon Fiber", multiPack);
+    expect("unsupported" in res).toBe(false);
+    if (!("unsupported" in res)) {
+      expect(res.values.mat).toBe("Carbon Fiber");
+    }
+  });
 });

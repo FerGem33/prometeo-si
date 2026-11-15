@@ -304,4 +304,15 @@ describe("extractPdfPages", () => {
       return true;
     });
   });
+
+  it("preserves caller Uint8Array byteLength and normalizes ASCII compound units W/(m*K) and kW/m2", async () => {
+    const pdfBytes = createMinimalPdfWithText("Heat Flux = 42 kW/m2 and Thermal Conductivity = 0.24 W/(m*K)");
+    const origLen = pdfBytes.byteLength;
+    const { pages } = await extractPdfPages(pdfBytes);
+    expect(pdfBytes.byteLength).toBe(origLen);
+    const parsed = parsePaperPages(pages, "ascii-units.pdf");
+    const units = parsed.findings.map((f) => f.unit);
+    expect(units).toContain("kW/m²");
+    expect(units).toContain("W/(m·K)");
+  });
 });

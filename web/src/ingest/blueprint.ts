@@ -613,6 +613,43 @@ export function buildLensFromBlueprint(
     .map((v) => v.id)
     .filter((id) => !default_axes.includes(id));
 
+  // 7. Dynamic example questions tailored to the corpus schema (avoid leaking NASA questions on custom corpora)
+  const isNasaSchema = ["o2", "p", "material"].every((id) => packVarMap.has(id));
+  let questions: string[];
+  if (isNasaSchema && baseLens?.questions?.length) {
+    questions = baseLens.questions;
+  } else {
+    const dynamicQuestions: string[] = [];
+    const numVars = pack.schema.variables.filter((v) => v.type === "num");
+    const catVars = pack.schema.variables.filter((v) => v.type === "cat");
+    if (numVars.length >= 1) {
+      const v0 = numVars[0];
+      const mid0 = Number(((v0.range[0] + v0.range[1]) / 2).toPrecision(3));
+      dynamicQuestions.push(
+        `Set ${v0.label} to ${mid0}${v0.unit ? ` ${v0.unit}` : ""}`
+      );
+    }
+    if (numVars.length >= 2) {
+      const v0 = numVars[0];
+      const v1 = numVars[1];
+      const m0 = Number((v0.range[0] + (v0.range[1] - v0.range[0]) * 0.75).toPrecision(3));
+      const m1 = Number((v1.range[0] + (v1.range[1] - v1.range[0]) * 0.25).toPrecision(3));
+      dynamicQuestions.push(
+        `Compare ${v0.label} at ${m0}${v0.unit ? ` ${v0.unit}` : ""} and ${v1.label} at ${m1}${v1.unit ? ` ${v1.unit}` : ""}`
+      );
+    }
+    if (catVars.length >= 1) {
+      const cv = catVars[0];
+      const firstCat = pack.records
+        .map((r) => r.values[cv.id])
+        .find((val): val is string => typeof val === "string" && val.trim().length > 0);
+      if (firstCat) {
+        dynamicQuestions.push(`Set ${cv.label} to ${firstCat}`);
+      }
+    }
+    questions = dynamicQuestions;
+  }
+
   return {
     title,
     kicker,
@@ -627,7 +664,7 @@ export function buildLensFromBlueprint(
     default_preset,
     default_axes,
     optional_variables,
-    questions: baseLens?.questions ?? [],
+    questions,
     evidence: baseLens?.evidence ?? { min_studies: 1 },
     finding_priority:
       baseLens?.finding_priority ?? [
