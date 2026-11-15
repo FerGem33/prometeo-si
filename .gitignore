@@ -7,3 +7,8 @@ __pycache__
 .venv
 *.pyc
 .DS_Store
+
+## Data Sample Files
+tools/psi/data/datos_psi/*
+tools/psi/data/datos_psi
+
