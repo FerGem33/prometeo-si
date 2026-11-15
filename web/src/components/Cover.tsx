@@ -10,7 +10,7 @@ const HOW: [string, string][] = [
  * Landing in article style. The hero fits one viewport; the explanation follows below.
  * Product copy is subject-agnostic; the example corpus is described only from lens and pack.
  */
-export function Cover({ onStart, onDemo }: { onStart: () => void; onDemo: () => void }) {
+export function Cover({ onStart, onDemo, onWorkspace }: { onStart: () => void; onDemo: () => void; onWorkspace: () => void }) {
   const { pack, lens } = useData();
   const unit = lens.unit_of_study ?? "study";
   const s = pack.meta.stats;
@@ -27,9 +27,14 @@ export function Cover({ onStart, onDemo }: { onStart: () => void; onDemo: () => 
           <span>
             <b>Prometeo</b> · Evidence portals
           </span>
-          <a href="#how" className="linkbtn">
-            How it works
-          </a>
+          <span className="bar-links">
+            <button type="button" className="linkbtn" onClick={onWorkspace}>
+              Workspace
+            </button>
+            <a href="#how" className="linkbtn">
+              How it works
+            </a>
+          </span>
         </header>
         <div className="hero-body">
           <img className="cover-logo" src="/logo-mark-float-512.png" alt="Prometeo emblem" width={220} height={220} />
