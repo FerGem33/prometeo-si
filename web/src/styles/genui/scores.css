@@ -1,0 +1,137 @@
+/* Variable scores module (owner: D7). Prefix gx-vs-. Article identity: no gradients, no shadows, radius <= 4px. */
+
+.gx-vs-selectline {
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--ink-2);
+  margin: 0 0 4px;
+}
+
+.gx-vs-limit {
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+.gx-vs-empty {
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.gx-vs-scroll {
+  overflow-x: auto;
+}
+
+.gx-vs-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--sans);
+  font-size: calc(12.5 * var(--fz));
+  line-height: 1.4;
+}
+
+.gx-vs-table th,
+.gx-vs-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule-2);
+  vertical-align: top;
+}
+
+.gx-vs-table th {
+  font-family: var(--sans-c);
+  font-size: calc(11 * var(--fz));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 2px solid var(--ink);
+}
+
+.gx-vs-row.gx-vs-selected {
+  border-left: 2px solid var(--accent);
+}
+
+.gx-vs-rank {
+  width: 2.6em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.gx-vs-check {
+  width: 2.2em;
+}
+
+.gx-vs-check input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.gx-vs-check input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.gx-vs-var {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gx-vs-unit {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.gx-vs-score {
+  white-space: nowrap;
+}
+
+.gx-vs-num,
+.gx-vs-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.gx-vs-bar {
+  display: inline-block;
+  width: 64px;
+  height: 3px;
+  margin-left: 8px;
+  background: var(--rule-2);
+  vertical-align: middle;
+}
+
+.gx-vs-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.gx-vs-why {
+  color: var(--ink-2);
+}
+
+.gx-vs-src {
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.gx-vs-toggle {
+  margin-top: 10px;
+  font-family: var(--sans);
+  font-size: calc(12.5 * var(--fz));
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.gx-vs-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}

@@ -16,6 +16,7 @@ import { Cover } from "./components/Cover";
 import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
 import type { EvaluationDraft } from "./components/ScenarioStep";
+import { GenUIDashboard } from "./components/GenUIDashboard";
 import { ProcessingStep } from "./components/ProcessingStep";
 import { ChamberFigure } from "./components/ChamberFigure";
 import { NasaApparatus } from "./components/NasaApparatus";
@@ -285,7 +286,31 @@ function Flow({ data }: { data: Data }) {
       />
     );
   } else {
-    screen = (
+    const goHome = () => {
+      setActiveCustomDraft(null);
+      setPendingDraft(null);
+      const resetDemo = readUrl(pack, lens, "");
+      setScenario(resetDemo.scenario);
+      setAxes(resetDemo.axes);
+      setExtras([]);
+      setGoal("");
+      go("cover");
+    };
+    screen = activeCustomDraft?.isCustomCorpus && activeCustomDraft.dashboard ? (
+      <DataCtx.Provider value={reportData}>
+        <GenUIDashboard
+          draft={activeCustomDraft}
+          axes={axes}
+          setAxes={setAxes}
+          onScenario={(s) => {
+            if (s) setScenario(s);
+          }}
+          onHome={goHome}
+          onEdit={() => go("scenario")}
+          onWorkspace={() => go("workspace")}
+        />
+      </DataCtx.Provider>
+    ) : (
       <DataCtx.Provider value={reportData}>
         <Report
           data={reportData}

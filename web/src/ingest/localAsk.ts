@@ -242,63 +242,30 @@ function inVarUnit(raw: string, unit: string | undefined, v: NumVariable): numbe
   return Math.round(applyConversion(n, conv) * 1e6) / 1e6;
 }
 
-/**
- * Read-only questions over the records of the pack (max, min, mean, count; studies under a numeric condition).
- * Deterministic: every answer lists the records it was computed from so the interface can open their sources.
- */
-export function answerLocalQuery(question: string, pack: Pack): LocalAnswer | { unsupported: string } {
-  const q = question.trim();
-  const unsupported = { unsupported: "Ask for the maximum, minimum, mean or count of a variable, or which studies tested a variable below, above or between values." };
-  const nums = (pack.schema?.variables ?? []).filter((v): v is NumVariable => v.type === "num");
-  const plain = stripAccents(q);
-  const mentions = (a: string) => {
-    const re = new RegExp(`(?:^|[^\\p{L}\\d_])${escapeRegex(a)}(?=$|[^\\p{L}\\d_])`, "iu");
-    return re.test(q) || re.test(plain);
-  };
-  // The longest alias mentioned wins, so "gravity level" beats "gravity".
-  const v = nums
-    .map((x) => ({ x, len: Math.max(0, ...getAliases(x).filter(mentions).map((a) => a.length)) }))
-    .filter((m) => m.len > 0)
-    .sort((a, b) => b.len - a.len)[0]?.x;
-  if (!v) return unsupported;
+const UNSUPPORTED_QUERY = { unsupported: "Ask for the maximum, minimum, mean or count of a variable, or which studies tested a variable below, above or between values." };
 
-  const measured = pack.records.flatMap((r) => {
-    const x = r.values[v.id];
+export function aliasesOf(v: Variable): string[] {
+  return getAliases(v);
+}
+
+function numericVariable(pack: Pack, id: string): NumVariable | undefined {
+  return (pack.schema?.variables ?? []).find((v): v is NumVariable => v.type === "num" && v.id === id);
+}
+
+function measuredRecords(pack: Pack, id: string) {
+  return pack.records.flatMap((r) => {
+    const x = r.values[id];
     return Array.isArray(x) ? [{ r, lo: x[0], hi: x[1] }] : [];
   });
+}
+
+/** Statistic (max, min, mean, count) of a numeric variable over the records of the pack. */
+export function statAnswer(pack: Pack, variable: string, stat: LocalStat): LocalAnswer | { unsupported: string } {
+  const v = numericVariable(pack, variable);
+  if (!v) return UNSUPPORTED_QUERY;
+  const measured = measuredRecords(pack, v.id);
   const unit = v.unit ?? null;
-
-  const between = q.match(new RegExp(`(?:between|entre)\\s*${NUM}${UNIT}\\s*(?:and|y|-)\\s*${NUM}${UNIT}`, "i"));
-  let filter: { op: LocalOp; bounds: number[] } | null = null;
-  if (between) {
-    const a = inVarUnit(between[1], between[2] ?? between[4], v);
-    const b = inVarUnit(between[3], between[4] ?? between[2], v);
-    filter = { op: "between", bounds: [Math.min(a, b), Math.max(a, b)] };
-  } else {
-    for (const [op, words] of OPS) {
-      const m = q.match(new RegExp(`(?:${words})\\s*${NUM}${UNIT}`, "i"));
-      if (m) {
-        filter = { op, bounds: [inVarUnit(m[1], m[2], v)] };
-        break;
-      }
-    }
-  }
-
-  if (filter) {
-    const [a, b] = filter.bounds;
-    // A record counts when any part of its tested range meets the condition.
-    const hit = measured.filter(({ lo, hi }) =>
-      filter!.op === "<" ? lo < a : filter!.op === "<=" ? lo <= a : filter!.op === ">" ? hi > a : filter!.op === ">=" ? hi >= a : lo <= b && hi >= a,
-    );
-    return {
-      kind: "filter", variable: v.id, op: filter.op, bounds: filter.bounds, unit,
-      studies: [...new Set(hit.map((h) => h.r.study))],
-      records: hit.map((h) => h.r.id),
-    };
-  }
-
-  const stat = STATS.find(([, re]) => re.test(q))?.[0];
-  if (!stat || measured.length === 0) return stat ? { kind: "stat", variable: v.id, stat, value: 0, unit, n: 0, records: [] } : unsupported;
+  if (measured.length === 0) return { kind: "stat", variable: v.id, stat, value: 0, unit, n: 0, records: [] };
   if (stat === "count") return { kind: "stat", variable: v.id, stat, value: measured.length, unit, n: measured.length, records: measured.map((m) => m.r.id) };
   if (stat === "mean") {
     const mean = measured.reduce((s, m) => s + (m.lo + m.hi) / 2, 0) / measured.length;
@@ -307,4 +274,64 @@ export function answerLocalQuery(question: string, pack: Pack): LocalAnswer | { 
   const value = stat === "max" ? Math.max(...measured.map((m) => m.hi)) : Math.min(...measured.map((m) => m.lo));
   const at = measured.filter((m) => (stat === "max" ? m.hi : m.lo) === value).map((m) => m.r.id);
   return { kind: "stat", variable: v.id, stat, value, unit, n: measured.length, records: at };
+}
+
+/** Studies and records whose tested range meets a numeric condition. */
+export function filterAnswer(pack: Pack, variable: string, op: LocalOp, bounds: number[]): LocalAnswer | { unsupported: string } {
+  const v = numericVariable(pack, variable);
+  if (!v || !bounds.length) return UNSUPPORTED_QUERY;
+  const [a, b] = bounds;
+  // A record counts when any part of its tested range meets the condition.
+  const hit = measuredRecords(pack, v.id).filter(({ lo, hi }) =>
+    op === "<" ? lo < a : op === "<=" ? lo <= a : op === ">" ? hi > a : op === ">=" ? hi >= a : lo <= b && hi >= a,
+  );
+  return {
+    kind: "filter", variable: v.id, op, bounds, unit: v.unit ?? null,
+    studies: [...new Set(hit.map((h) => h.r.study))],
+    records: hit.map((h) => h.r.id),
+  };
+}
+
+export type QueryParts =
+  | { variable: string; stat: LocalStat }
+  | { variable: string; op: LocalOp; bounds: number[] };
+
+/** Variable and statistic or condition that a read-only question asks for, or null when it asks for neither. */
+export function parseQueryParts(question: string, pack: Pack): QueryParts | null {
+  const q = question.trim();
+  const nums = (pack.schema?.variables ?? []).filter((v): v is NumVariable => v.type === "num");
+  const plain = stripAccents(q);
+  const mentions = (a: string) => {
+    const re = new RegExp(`(?:^|[^\p{L}\d_])${escapeRegex(a)}(?=$|[^\p{L}\d_])`, "iu");
+    return re.test(q) || re.test(plain);
+  };
+  // The longest alias mentioned wins, so "gravity level" beats "gravity".
+  const v = nums
+    .map((x) => ({ x, len: Math.max(0, ...getAliases(x).filter(mentions).map((a) => a.length)) }))
+    .filter((m) => m.len > 0)
+    .sort((a, b) => b.len - a.len)[0]?.x;
+  if (!v) return null;
+
+  const between = q.match(new RegExp(`(?:between|entre)\s*${NUM}${UNIT}\s*(?:and|y|-)\s*${NUM}${UNIT}`, "i"));
+  if (between) {
+    const a = inVarUnit(between[1], between[2] ?? between[4], v);
+    const b = inVarUnit(between[3], between[4] ?? between[2], v);
+    return { variable: v.id, op: "between", bounds: [Math.min(a, b), Math.max(a, b)] };
+  }
+  for (const [op, words] of OPS) {
+    const m = q.match(new RegExp(`(?:${words})\s*${NUM}${UNIT}`, "i"));
+    if (m) return { variable: v.id, op, bounds: [inVarUnit(m[1], m[2], v)] };
+  }
+  const stat = STATS.find(([, re]) => re.test(q))?.[0];
+  return stat ? { variable: v.id, stat } : null;
+}
+
+/**
+ * Read-only questions over the records of the pack (max, min, mean, count; studies under a numeric condition).
+ * Deterministic: every answer lists the records it was computed from so the interface can open their sources.
+ */
+export function answerLocalQuery(question: string, pack: Pack): LocalAnswer | { unsupported: string } {
+  const parts = parseQueryParts(question, pack);
+  if (!parts) return UNSUPPORTED_QUERY;
+  return "stat" in parts ? statAnswer(pack, parts.variable, parts.stat) : filterAnswer(pack, parts.variable, parts.op, parts.bounds);
 }

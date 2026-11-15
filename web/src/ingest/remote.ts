@@ -1,4 +1,6 @@
 import { postApi } from "../report/api";
+import { MODULE_TYPES } from "../genui/types";
+import type { VariableScore } from "../genui/types";
 import type {
   UploadedDoc,
   ExtractedVariable,
@@ -261,6 +263,38 @@ export async function requestRemoteDesign(
     return bp;
   } catch {
     return null;
+  } finally {
+    cleanup();
+  }
+}
+
+/**
+ * Requests an AI dashboard layout from `/design` (version 2). The reply is untrusted:
+ * the caller must validate every module. Throws on network, timeout or API errors.
+ */
+export async function requestRemoteDashboard(
+  purpose: string,
+  scores: VariableScore[],
+  signal: AbortSignal,
+): Promise<unknown> {
+  const cleanPurpose = purpose.trim().slice(0, 4000);
+  const payload = {
+    version: 2,
+    instruction: cleanPurpose,
+    purpose: cleanPurpose,
+    variables: scores.slice(0, 30).map((s) => ({
+      id: s.id,
+      label: s.label.slice(0, 120),
+      type: s.type,
+      unit: s.unit ? s.unit.slice(0, 40) : null,
+    })),
+    catalog: MODULE_TYPES,
+  };
+  if (getUtf8ByteLength(payload) > HARD_PAYLOAD_LIMIT_BYTES) throw new Error("Payload too large");
+
+  const { signal: reqSignal, cleanup } = createTimeoutSignal(signal);
+  try {
+    return await postApi("design", payload, reqSignal);
   } finally {
     cleanup();
   }

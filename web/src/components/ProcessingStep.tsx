@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { API_BASE } from "../report/api";
+import { requestRemoteDashboard } from "../ingest/remote";
+import { compileDashboard } from "../genui/compile";
 import { useData } from "./ctx";
 import { ChamberFigure } from "./ChamberFigure";
 import { Prefs } from "./Prefs";
@@ -33,6 +36,31 @@ export function ProcessingStep({
   const lens = draft?.lens ?? demoLens;
   const [currentStep, setCurrentStep] = useState(0);
   const s = pack.meta.stats;
+  // Optional AI layout (/design v2), requested while the animation runs; any failure keeps the local dashboard.
+  const enrichedRef = useRef<EvaluationDraft | null>(null);
+  useEffect(() => {
+    enrichedRef.current = null;
+    if (!API_BASE || !draft?.dashboard || !draft.purpose || !draft.scores) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const { purpose, scores } = draft;
+    (async () => {
+      try {
+        const remote = await requestRemoteDashboard(purpose!, scores!, controller.signal);
+        if (controller.signal.aborted || !remote) return;
+        enrichedRef.current = { ...draft, dashboard: compileDashboard(purpose!, draft.pack, scores!, remote) };
+      } catch {
+        // local dashboard stays
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [draft]);
+  const finish = () => onComplete(enrichedRef.current ?? draft ?? undefined);
   const effectiveFileCount = draft?.docs?.length ?? fileCount ?? 0;
 
   useEffect(() => {
@@ -43,7 +71,7 @@ export function ProcessingStep({
       }, stepDurationMs);
     } else if (!hold) {
       timer = setTimeout(() => {
-        onComplete(draft ?? undefined);
+        finish();
       }, 380);
     }
     return () => clearTimeout(timer);
@@ -112,7 +140,7 @@ export function ProcessingStep({
               </div>
 
               <div className="proc-actions">
-                <button type="button" className="cta" onClick={() => onComplete(draft ?? undefined)}>
+                <button type="button" className="cta" onClick={finish}>
                   {t("Skip to report →")}
                 </button>
               </div>

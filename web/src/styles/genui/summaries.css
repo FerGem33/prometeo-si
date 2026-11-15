@@ -1,0 +1,133 @@
+/* Template summaries module (owner: D6). Article identity, prefix gx-ds-. */
+
+.gx-ds-note {
+  margin: 0 0 12px;
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--ink-3);
+}
+
+.gx-ds-empty {
+  padding: 8px 0;
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.gx-ds-list {
+  border-top: 1px solid var(--ink);
+}
+
+.gx-ds-doc {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.gx-ds-details {
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.gx-ds-summary {
+  padding: 10px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gx-ds-summary::-webkit-details-marker {
+  display: none;
+}
+
+.gx-ds-summary::before {
+  content: "▸";
+  margin-right: 6px;
+  font-family: var(--sans);
+  color: var(--ink-3);
+}
+
+.gx-ds-details[open] > .gx-ds-summary::before {
+  content: "▾";
+}
+
+.gx-ds-heading {
+  display: inline;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: calc(18 * var(--fz));
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.gx-ds-body {
+  padding: 0 0 12px;
+}
+
+.gx-ds-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-top: 4px;
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--ink-3);
+}
+
+.gx-ds-year {
+  font-variant-numeric: tabular-nums;
+}
+
+.gx-ds-doi {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.gx-ds-doi:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.gx-ds-text {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.gx-ds-vars {
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-size: calc(12.5 * var(--fz));
+}
+
+.gx-ds-vars-label {
+  color: var(--ink-2);
+}
+
+.gx-ds-vars-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gx-ds-var {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.gx-ds-var-label {
+  color: var(--ink);
+}
+
+.gx-ds-var-passage {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

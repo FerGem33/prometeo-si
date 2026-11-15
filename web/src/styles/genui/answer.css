@@ -1,0 +1,114 @@
+/* Answer module (owner: D1). Prefix gx-ans-. Article identity: CSS variables only, no shadow, radius <= 4px. */
+
+.gx-ans {
+  padding: 4px 0;
+}
+
+.gx-ans-value-line {
+  margin: 0;
+  line-height: 1.05;
+}
+
+.gx-ans-value {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: 2.2rem;
+  color: var(--ink);
+}
+
+.gx-ans-unit {
+  font-family: var(--sans);
+  font-size: calc(15 * var(--fz));
+  color: var(--ink-2);
+}
+
+.gx-ans-stat-name {
+  margin: 4px 0 0;
+  font-family: var(--sans-c);
+  font-size: calc(13 * var(--fz));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.gx-ans-over {
+  margin: 2px 0 0;
+  font-family: var(--sans);
+  font-size: calc(13 * var(--fz));
+  color: var(--ink-3);
+}
+
+.gx-ans-count {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: 2.2rem;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.gx-ans-sentence {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.gx-ans-studies {
+  margin: 6px 0 0;
+  font-family: var(--sans);
+  font-size: calc(13 * var(--fz));
+  color: var(--ink-2);
+}
+
+.gx-ans-records {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gx-ans-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 2px 7px;
+  background: var(--paper);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.gx-ans-chip button.src {
+  font-size: inherit;
+}
+
+.gx-ans-more {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  color: var(--ink-3);
+}
+
+.gx-ans-none,
+.gx-ans-unsupported {
+  font-family: var(--serif);
+  font-size: calc(16 * var(--fz));
+  font-style: italic;
+  color: var(--ink-2);
+  padding: 6px 0 0;
+}
+
+.gx-ans-note {
+  margin-top: 12px;
+  font-family: var(--sans);
+  font-size: calc(11 * var(--fz));
+  color: var(--ink-3);
+}

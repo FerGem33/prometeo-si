@@ -1,0 +1,90 @@
+/* Case input form (owner: D8). Article identity, no shadows, radius <= 4px, one accent. */
+.gx-ci-empty {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.gx-ci-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+@media (max-width: 640px) {
+  .gx-ci-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gx-ci-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-2);
+}
+
+.gx-ci-label {
+  font-family: var(--sans);
+  font-size: calc(13 * var(--fz, 1px));
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gx-ci-field input[type="number"] {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: calc(13.5 * var(--fz, 1px));
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 5px 8px;
+}
+
+.gx-ci-select {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: calc(13.5 * var(--fz, 1px));
+  color: var(--ink);
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 5px 8px;
+}
+
+.gx-ci-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-family: var(--sans);
+  font-size: calc(11.5 * var(--fz, 1px));
+  color: var(--ink-3);
+}
+
+.gx-ci-unit {
+  white-space: nowrap;
+}
+
+.gx-ci-range {
+  white-space: nowrap;
+}
+
+.gx-ci-clear {
+  align-self: flex-start;
+  font-family: var(--sans);
+  font-size: calc(11.5 * var(--fz, 1px));
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gx-ci-clear:hover,
+.gx-ci-clear:focus-visible {
+  color: var(--ink);
+}

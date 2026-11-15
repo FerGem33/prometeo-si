@@ -1,0 +1,17 @@
+.dash { padding: 32px 40px 56px; }
+.dash-head h1 { margin: 6px 0 10px; }
+.dash-purpose { margin: 0 0 10px; padding: 0 0 0 14px; border-left: 2px solid var(--rule); font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 1.15em; }
+.dash-corpus { margin: 0 0 18px; font-family: var(--sans-c); font-size: 13px; color: var(--ink-3); }
+.dash-cols { display: block; }
+.dash-main { min-width: 0; }
+.dash-chat { margin-top: 32px; }
+.dash-levels { list-style: none; margin: 0 0 18px; padding: 0; font-family: var(--sans); font-size: 14px; }
+.dash-levels li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.dash-methods p { font-family: var(--serif); }
+.dash .hint { font-family: var(--sans); color: var(--ink-2); }
+@media (min-width: 1100px) {
+  .dash { width: min(1240px, 96vw); box-sizing: border-box; }
+  .dash-cols { display: grid; grid-template-columns: minmax(0, 760px) 340px; gap: 40px; align-items: start; }
+  .dash-chat { margin-top: 0; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+}
+@media (max-width: 700px) { .dash { padding: 20px 16px 40px; } }

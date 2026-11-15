@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Lens, Pack, Scenario } from "../engine";
-import { evidenceLevels } from "../engine";
-import {
-  compileUiBlueprint,
-  buildLensFromBlueprint,
-  suggestDesignPrompts,
-} from "../ingest/blueprint";
+import { compileUiBlueprint, buildLensFromBlueprint } from "../ingest/blueprint";
 import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
-import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
+import { requestRemoteProposals } from "../ingest/remote";
+import { MAX_CASE_VARIABLES } from "../genui/types";
 import type { CaseState, DashboardSpec, VariableScore } from "../genui/types";
+import { defaultSelection, scoreVariables } from "../genui/score";
+import { compileDashboard, suggestPurposes } from "../genui/compile";
+import { VariableScoresModule } from "./genui/VariableScoresModule";
 import { filesFromDrop } from "../ingest/folderDrop";
-import { compatibleUnits, groupVariables } from "../ingest/variableView";
-import { applyConversion, getConversion } from "../ingest/buildPack";
 import {
   createDocStore,
   detectMediaType,
@@ -27,30 +24,17 @@ import type {
   DesignPresetFlag,
   DocErrorCode,
   ExtractedVariable,
-  ReportSectionId,
   UiBlueprint,
   UploadedDoc,
   VariableProposalRemote,
 } from "../ingest/types";
 import { newId } from "../report/storage";
 import type { Extra } from "../state";
-import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
-import { NumField } from "./NumField";
 import { Prefs } from "./Prefs";
-import { LevelTag } from "./ScenarioPanel";
 import { useData, type Mapping } from "./ctx";
 import { t } from "../i18n";
 
-export const SCENARIO_STEPS = ["Documents", "Interface design", "Variables"] as const;
-
-const SECTION_LABELS: Record<ReportSectionId, string> = {
-  graphical_abstract: "Graphical abstract",
-  map: "Map of tests (Figure 1)",
-  heat: "Closeness by variable (Figure 2)",
-  gaps: "Coverage and gaps (Figure 3)",
-  graph: "Evidence graph",
-  data_methods: "Data, sources and methods",
-};
+export const SCENARIO_STEPS = ["Documents", "Purpose"] as const;
 
 const FILE_STAGES = ["Reading", "Hashing", "Parsing"] as const;
 type FileProgress = { name: string; stage: (typeof FILE_STAGES)[number] | "Done" };
@@ -129,9 +113,7 @@ function getDocErrorMessage(code?: DocErrorCode): string {
  */
 export function ScenarioStep({
   scenario,
-  onChange,
   extras,
-  onExtras,
   goal,
   onGoal,
   onBack,
@@ -174,19 +156,8 @@ export function ScenarioStep({
   const [aiStatus, setAiStatus] = useState<"idle" | "success" | "error">("idle");
   const [aiProposalsCount, setAiProposalsCount] = useState(0);
 
-  // GenUI design step state
-  const [instruction, setInstruction] = useState(() => initialDraft?.instruction ?? goal ?? "");
-  const [presetFlags, setPresetFlags] = useState<DesignPresetFlag[]>(() => initialDraft?.presetFlags ?? []);
-  const instructionRef = useRef<HTMLTextAreaElement>(null);
-  // Manual section order from the reorder list; overrides the compiled order when set.
-  const [sectionOverride, setSectionOverride] = useState<ReportSectionId[] | null>(() => initialDraft?.blueprint?.sectionOrder ?? null);
-  const [dragSection, setDragSection] = useState<number | null>(null);
-  const [remoteDesign, setRemoteDesign] = useState<Partial<UiBlueprint> | undefined>(undefined);
-  const [designStatus, setDesignStatus] = useState<"idle" | "busy" | "success" | "error">("idle");
-
-  // Variables step: search and display units (display only; stored values keep the source unit)
-  const [varQuery, setVarQuery] = useState("");
-  const [displayUnits, setDisplayUnits] = useState<Record<string, string>>({});
+  // Purpose step state
+  const [purpose, setPurpose] = useState(() => initialDraft?.purpose ?? initialDraft?.instruction ?? goal ?? "");
 
   // Categories helper from reference pack
   const cats = useMemo(() => {
@@ -254,50 +225,10 @@ export function ScenarioStep({
     return uploadedVariables;
   }, [scope, docs.length, demoVariables, uploadedVariables]);
 
-  // User override state for extracted variables (include toggle, custom label/values)
-  const [customVarState, setCustomVarState] = useState<Record<string, Partial<ExtractedVariable>>>(() => {
-    if (!initialDraft?.variables?.length) return {};
-    const map: Record<string, Partial<ExtractedVariable>> = {};
-    for (const v of initialDraft.variables) {
-      map[v.id] = {
-        label: v.label,
-        include: v.include,
-      };
-    }
-    return map;
-  });
+  const variables = baseVariables;
 
-  const variables = useMemo(() => {
-    return baseVariables.map((bv) => {
-      const override = customVarState[bv.id];
-      return override ? { ...bv, ...override } : bv;
-    });
-  }, [baseVariables, customVarState]);
-
-  // Live compiled UI blueprint
-  const compiledBlueprint = useMemo(() => {
-    return compileUiBlueprint(instruction, docs, variables, presetFlags, remoteDesign);
-  }, [instruction, docs, variables, presetFlags, remoteDesign]);
-  const blueprint = useMemo<UiBlueprint>(() => {
-    if (!sectionOverride) return compiledBlueprint;
-    const known = new Set(compiledBlueprint.sectionOrder);
-    const kept = sectionOverride.filter((s) => known.has(s));
-    return { ...compiledBlueprint, sectionOrder: [...kept, ...compiledBlueprint.sectionOrder.filter((s) => !kept.includes(s))] };
-  }, [compiledBlueprint, sectionOverride]);
-
-  // Suggestion prompts derived from corpus
-  const suggestions = useMemo(() => {
-    return suggestDesignPrompts(docs, variables);
-  }, [docs, variables]);
-
-  // Evidence levels for the variables
-  const levels = useMemo(() => {
-    try {
-      return evidenceLevels(pack, lens, scenario);
-    } catch {
-      return [];
-    }
-  }, [pack, lens, scenario]);
+  // Blueprint of the demo path only; the uploaded corpus compiles its own on submit.
+  const blueprint = useMemo<UiBlueprint>(() => compileUiBlueprint("", docs, variables, []), [docs, variables]);
 
   // File ingestion handler
   const addFiles = async (list: FileList | File[] | null) => {
@@ -460,38 +391,6 @@ export function ScenarioStep({
     setAiStatus("idle");
   };
 
-  // Optional remote layout (/design); the response is validated by compileUiBlueprint's allowlists.
-  const handleAiDesign = async () => {
-    if (designStatus === "busy") return;
-    setDesignStatus("busy");
-    const result = await requestRemoteDesign(instruction, docs, variables, new AbortController().signal);
-    if (result) {
-      setRemoteDesign(result);
-      setSectionOverride(null);
-      setDesignStatus("success");
-    } else {
-      setDesignStatus("error");
-    }
-  };
-
-  const insertIntoInstruction = (text: string) => {
-    const el = instructionRef.current;
-    const start = el?.selectionStart ?? instruction.length;
-    const end = el?.selectionEnd ?? instruction.length;
-    const before = instruction.slice(0, start);
-    const pad = before && !/\s$/.test(before) ? " " : "";
-    const next = before + pad + text + instruction.slice(end);
-    handleInstructionChange(next.slice(0, 4000));
-    const caret = before.length + pad.length + text.length;
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(caret, caret);
-    });
-  };
-
-  const moveSection = (from: number, to: number) => {
-    setSectionOverride(moveItem(blueprint.sectionOrder, from, to));
-  };
 
   // AI analysis button handler (/propose)
   const handleAiPropose = async () => {
@@ -519,257 +418,99 @@ export function ScenarioStep({
     }
   };
 
-  // Instruction & preset toggles
-  const handleInstructionChange = (text: string) => {
-    setInstruction(text);
-    onGoal(text);
-  };
-
-  const togglePresetFlag = (flag: DesignPresetFlag) => {
-    setPresetFlags((prev) =>
-      prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]
-    );
-  };
-
-  // Variable toggle & value edits
-  const toggleVariableInclude = (id: string) => {
-    const currentVar = variables.find((v) => v.id === id);
-    if (!currentVar) return;
-    const nextInclude = !currentVar.include;
-
-    setCustomVarState((prev) => ({
-      ...prev,
-      [id]: { ...(prev[id] ?? {}), include: nextInclude },
-    }));
-
-    const nextActive = nextInclude
-      ? Array.from(new Set([...scenario.active, id]))
-      : scenario.active.filter((a) => a !== id);
-
-    const nextValues = { ...scenario.values };
-    if (nextInclude && nextValues[id] === undefined) {
-      if (currentVar.type === "numeric") {
-        const min = currentVar.min ?? 0;
-        const max = currentVar.max ?? min + 100;
-        nextValues[id] = currentVar.median ?? (min + max) / 2;
-      } else {
-        nextValues[id] = currentVar.mode ?? currentVar.categories?.[0] ?? "";
-      }
-    }
-
-    onChange({
-      ...scenario,
-      active: nextActive,
-      values: nextValues,
-    });
-  };
-
-  const setVariableValue = (id: string, val: number | string) => {
-    onChange({
-      ...scenario,
-      values: { ...scenario.values, [id]: val },
-    });
-  };
-
-  const setVariableLabel = (id: string, newLabel: string) => {
-    setCustomVarState((prev) => ({
-      ...prev,
-      [id]: { ...(prev[id] ?? {}), label: newLabel },
-    }));
-  };
 
   const readyDocs = docs.filter((d) => d.status === "done");
   const hasOnlyFailedDocs = scope !== "demo" && docs.length > 0 && readyDocs.length === 0;
+  const isDemoScope = scope === "demo" || docs.length === 0;
+  const last = step === SCENARIO_STEPS.length - 1;
+
+  // Variables that can be scored: every extracted variable with a source citation (outcome columns are excluded by the extractor).
+  const scoringVars = useMemo(
+    () => (isDemoScope ? [] : variables.filter((v) => v.include !== false && v.citations.length > 0)),
+    [isDemoScope, variables],
+  );
+  const scores1 = useMemo(() => scoreVariables(readyDocs, scoringVars, ""), [readyDocs, scoringVars]);
+  const purposeScores = useMemo(
+    () => (purpose.trim().length > 0 ? scoreVariables(readyDocs, scoringVars, purpose) : scores1),
+    [readyDocs, scoringVars, purpose, scores1],
+  );
+  const purposeSuggestions = useMemo(() => suggestPurposes(scores1), [scores1]);
+
+  const handlePurposeChange = (text: string) => {
+    setPurpose(text);
+    onGoal(text);
+  };
 
   // Draft submission
   const handleSubmit = () => {
-    const activeVars = variables.filter((v) => v.include);
-    const activeVarIds = new Set(activeVars.map((v) => v.id));
     const isCustom = scope !== "demo" && readyDocs.length > 0;
 
-    const finalActive = isCustom
-      ? activeVars.map((v) => v.id)
-      : scenario.active.filter((id) => activeVarIds.has(id));
-
-    const finalValues = { ...scenario.values };
-    for (const v of activeVars) {
-      if (finalValues[v.id] === undefined) {
-        if (v.type === "numeric") {
-          const min = v.min ?? 0;
-          const max = v.max ?? min + 100;
-          finalValues[v.id] = v.median ?? (min + max) / 2;
-        } else {
-          finalValues[v.id] = v.mode ?? v.categories?.[0] ?? "";
+    if (!isCustom) {
+      // Demo corpus: the existing path to the reference report.
+      const activeVars = variables.filter((v) => v.include);
+      const activeVarIds = new Set(activeVars.map((v) => v.id));
+      const finalValues = { ...scenario.values };
+      for (const v of activeVars) {
+        if (finalValues[v.id] === undefined) {
+          if (v.type === "numeric") {
+            const min = v.min ?? 0;
+            const max = v.max ?? min + 100;
+            finalValues[v.id] = v.median ?? (min + max) / 2;
+          } else {
+            finalValues[v.id] = v.mode ?? v.categories?.[0] ?? "";
+          }
         }
       }
+      const built = buildPackFromDocs([], activeVars, { scope: "demo", demoPack: pack, demoMapping: mapping, title: blueprint.title });
+      const demoBlueprint = compileUiBlueprint(purpose, [], activeVars, []);
+      const draft: EvaluationDraft = {
+        docs,
+        scope,
+        instruction: purpose,
+        presetFlags: [],
+        variables,
+        blueprint: demoBlueprint,
+        pack: built.pack,
+        lens: buildLensFromBlueprint(demoBlueprint, built.pack, activeVars, lens),
+        mapping: built.mapping,
+        scenario: { values: finalValues, active: scenario.active.filter((id) => activeVarIds.has(id)) },
+        extras,
+        isCustomCorpus: false,
+      };
+      if (onSubmitDraft) onSubmitDraft(draft);
+      else if (onRun) onRun(docs.length);
+      return;
     }
 
-    const built = buildPackFromDocs(
-      scope === "demo" ? [] : docs,
-      activeVars,
-      {
-        scope,
-        demoPack: pack,
-        demoMapping: mapping,
-        title: blueprint.title,
-      }
-    );
-
-    const finalPack: Pack = {
-      ...built.pack,
-      schema: {
-        ...built.pack.schema,
-        variables: built.pack.schema.variables
-          .filter((pv) => activeVarIds.has(pv.id))
-          .map((pv) => {
-            const match = activeVars.find((v) => v.id === pv.id);
-            return match ? { ...pv, label: match.label, long: match.label } : pv;
-          }),
-      },
-    };
-
-    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens);
+    const built = buildPackFromDocs(docs, variables, { scope, demoPack: pack, demoMapping: mapping, title: purpose.trim().slice(0, 80) });
+    const packIds = new Set(built.pack.schema.variables.map((v) => v.id));
+    const scores = scoreVariables(readyDocs, scoringVars, purpose).filter((s) => packIds.has(s.id));
+    const dashboard = compileDashboard(purpose, built.pack, scores);
+    const customBlueprint = compileUiBlueprint(purpose, docs, variables, []);
+    const compiledLens = buildLensFromBlueprint(customBlueprint, built.pack, variables, lens);
 
     const draft: EvaluationDraft = {
       docs,
       scope,
-      instruction,
-      presetFlags,
+      instruction: purpose,
+      presetFlags: [],
       variables,
-      blueprint,
-      pack: finalPack,
+      blueprint: customBlueprint,
+      pack: built.pack,
       lens: compiledLens,
       mapping: built.mapping,
-      scenario: {
-        values: finalValues,
-        active: finalActive,
-      },
+      scenario: { values: {}, active: [] },
       extras,
-      isCustomCorpus: isCustom,
+      isCustomCorpus: true,
+      purpose,
+      scores,
+      dashboard,
+      caseState: { selected: defaultSelection(scores), values: {} },
     };
-
-    if (onSubmitDraft) {
-      onSubmitDraft(draft);
-    } else if (onRun) {
-      onRun(docs.length);
-    }
+    if (onSubmitDraft) onSubmitDraft(draft);
+    else if (onRun) onRun(docs.length);
   };
 
-  const includedCount = variables.filter((v) => v.include).length + extras.length;
-  const last = step === SCENARIO_STEPS.length - 1;
-
-  // Render variable row helper
-  const renderVarRow = (v: ExtractedVariable) => {
-    const x = scenario.values[v.id];
-    const lv = levels.find((l) => l.variable === v.id);
-    const citation = v.citations?.[0];
-    const isIncluded = v.include;
-
-    const min = v.min !== undefined ? v.min : 0;
-    const max = v.max !== undefined && v.max > min ? v.max : min + 100;
-    const numVal = typeof x === "number" ? x : (v.median ?? (min + max) / 2);
-
-    return (
-      <li key={v.id} className={`vrow ${!isIncluded ? "vrow-excluded" : ""}`}>
-        <div className="vrow-head">
-          <label className="vtoggle-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={isIncluded}
-              onChange={() => toggleVariableInclude(v.id)}
-              aria-label={t("Include {0}", v.label)}
-            />
-          </label>
-          <input
-            type="text"
-            className="vlabel-input"
-            value={v.label}
-            aria-label={t("Edit label for {0}", v.id)}
-            onChange={(e) => setVariableLabel(v.id, e.target.value)}
-          />
-          {v.unit && <small>{v.unit}</small>}
-          {lv && <LevelTag level={lv.level} />}
-          {citation && (
-            <span className="citation-badge" title={citation.quote}>
-              {citation.docName}
-              {citation.page ? ` · ${t("Page {0}", citation.page)}` : citation.row ? ` · ${t("Row {0}", citation.row)}` : ""}
-            </span>
-          )}
-          <button
-            type="button"
-            className="rm"
-            onClick={() => toggleVariableInclude(v.id)}
-          >
-            {isIncluded ? t("Exclude") : t("Include")}
-          </button>
-        </div>
-
-        {citation?.quote && (
-          <span className="citation-quote">“{citation.quote}”</span>
-        )}
-
-        {isIncluded && (
-          v.type === "numeric" ? (
-            <div className="cond-ctl">
-              <input
-                type="range"
-                aria-label={v.label}
-                min={min}
-                max={max}
-                step={(max - min) / 100 || 1}
-                value={numVal}
-                onChange={(e) => setVariableValue(v.id, Number(e.target.value))}
-              />
-              <NumField
-                label={t("{0} value", v.label)}
-                min={min}
-                max={max}
-                step={(max - min) / 100 || 1}
-                value={numVal}
-                onCommit={(n) => setVariableValue(v.id, n)}
-              />
-              {v.unit && <span className="alt">{v.unit}</span>}
-              {v.unit && compatibleUnits(v.unit).length > 0 && (
-                <span className="unit-view">
-                  <select
-                    aria-label={t("Display unit for {0}", v.label)}
-                    value={displayUnits[v.id] ?? ""}
-                    onChange={(e) => setDisplayUnits((prev) => ({ ...prev, [v.id]: e.target.value }))}
-                  >
-                    <option value="">{t("Show in…")}</option>
-                    {compatibleUnits(v.unit).map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                  {displayUnits[v.id] && (
-                    <output>
-                      = {Number(applyConversion(numVal, getConversion(v.unit, displayUnits[v.id])).toPrecision(4))} {displayUnits[v.id]}
-                    </output>
-                  )}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="cond-ctl">
-              <select
-                aria-label={v.label}
-                value={typeof x === "string" ? x : (v.mode ?? v.categories?.[0] ?? "")}
-                onChange={(e) => setVariableValue(v.id, e.target.value)}
-              >
-                {(v.categories ?? []).map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )
-        )}
-      </li>
-    );
-  };
 
   return (
     <div className="screen step">
@@ -1012,6 +753,17 @@ export function ScenarioStep({
               </ul>
             )}
 
+            {docs.some((d) => d.status === "done") && scope !== "demo" && scores1.length > 0 && (
+              <VariableScoresModule
+                scores={scores1}
+                selected={[]}
+                onToggle={() => {}}
+                limitHit={false}
+                limit={MAX_CASE_VARIABLES}
+                figure={1}
+              />
+            )}
+
             {/* Optional Bedrock /propose AI enrichment button */}
             {docs.some((d) => d.status === "done") && (
               <div className="ai-propose-bar">
@@ -1038,268 +790,58 @@ export function ScenarioStep({
           </section>
         )}
 
-        {/* STEP 2: INTERFACE DESIGN */}
-        {SCENARIO_STEPS[step] === "Interface design" && (
+        {/* STEP 2: PURPOSE */}
+        {SCENARIO_STEPS[step] === "Purpose" && (
           <section className="step-panel">
-            <h1>{t("Design your analysis interface")}</h1>
+            <h1>{t("What do you want to find out?")}</h1>
             <p className="step-lede">
-              {t("Describe how you want the dashboard structured, or select focus presets below. Prometeo compiles an interface blueprint tailored to your corpus.")}
+              {t("Prometeo builds a dashboard that answers your question from the documents you uploaded. The variables most relevant to your purpose are ranked from the evidence in those documents; nothing is predicted.")}
             </p>
 
             <div className="corpus-summary-badge">
-              {t("{0} documents, {1} variables extracted", docs.length, variables.length)}
+              {t("{0} documents, {1} variables extracted", readyDocs.length, scoringVars.length)}
             </div>
 
-            <label htmlFor="instruction" className="fieldlbl">
-              {t("Interface instructions")}
+            <label htmlFor="purpose" className="fieldlbl">
+              {t("What do you want to find out from these documents?")}
             </label>
             <textarea
-              ref={instructionRef}
-              id="instruction"
+              id="purpose"
               className="goal"
               rows={4}
               maxLength={4000}
-              value={instruction}
-              onChange={(e) => handleInstructionChange(e.target.value)}
-              placeholder={t("e.g. Highlight key parameters, compare studies, and prioritize gap analysis")}
+              required
+              value={purpose}
+              onChange={(e) => handlePurposeChange(e.target.value)}
+              placeholder={t("e.g. Which conditions were studied, and where is the evidence thin?")}
             />
 
-            {/* Variables that can be inserted into the instruction */}
-            {variables.length > 0 && (
+            {purposeSuggestions.length > 0 && (
               <div className="addvars">
-                <span>{t("Insert a variable")}</span>
-                {variables.filter((v) => v.include).slice(0, 24).map((v) => (
-                  <button key={v.id} type="button" className="chip" onClick={() => insertIntoInstruction(v.label)}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Quick focus presets */}
-            <div className="addvars">
-              <span>{t("Quick focus presets")}</span>
-              <button
-                type="button"
-                className={`chip ${presetFlags.includes("gaps") ? "add" : ""}`}
-                aria-pressed={presetFlags.includes("gaps")}
-                onClick={() => togglePresetFlag("gaps")}
-              >
-                {t("Gap analysis")}
-              </button>
-              <button
-                type="button"
-                className={`chip ${presetFlags.includes("compare") ? "add" : ""}`}
-                aria-pressed={presetFlags.includes("compare")}
-                onClick={() => togglePresetFlag("compare")}
-              >
-                {t("Study comparison")}
-              </button>
-              <button
-                type="button"
-                className={`chip ${presetFlags.includes("graph") ? "add" : ""}`}
-                aria-pressed={presetFlags.includes("graph")}
-                onClick={() => togglePresetFlag("graph")}
-              >
-                {t("Evidence graph")}
-              </button>
-              <button
-                type="button"
-                className={`chip ${presetFlags.includes("compact") ? "add" : ""}`}
-                aria-pressed={presetFlags.includes("compact")}
-                onClick={() => togglePresetFlag("compact")}
-              >
-                {t("Compact view")}
-              </button>
-            </div>
-
-            {/* Suggested design prompts from corpus */}
-            {suggestions.length > 0 && (
-              <div className="addvars">
-                <span>{t("Suggested design prompts")}</span>
-                {suggestions.slice(0, 4).map((sug) => (
-                  <button
-                    key={sug}
-                    type="button"
-                    className="chip"
-                    onClick={() => handleInstructionChange(sug)}
-                  >
+                <span>{t("Suggested purposes")}</span>
+                {purposeSuggestions.slice(0, 4).map((sug) => (
+                  <button key={sug} type="button" className="chip" onClick={() => handlePurposeChange(sug)}>
                     {sug}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Optional remote refinement (/design) */}
-            <div className="ai-propose-bar">
-              <button type="button" className="ghostbtn" onClick={handleAiDesign} disabled={designStatus === "busy"}>
-                {designStatus === "busy" ? t("Requesting AI layout...") : t("Refine with AI (/design)")}
-              </button>
-              {designStatus === "success" && <span className="ai-status ai-status-success">{t("AI layout applied (validated against the allowed sections and variables)")}</span>}
-              {designStatus === "error" && <span className="ai-status ai-status-error">{t("AI design unavailable, using the local blueprint")}</span>}
-            </div>
-
-            {/* Live UiBlueprint Preview */}
             <div className="genui-preview">
               <div className="genui-preview-head">
-                <h3>{blueprint.title || t("Live interface blueprint")}</h3>
-                <small>{blueprint.kicker}</small>
+                <h3>{t("Most relevant variables for this purpose")}</h3>
               </div>
-
-              <div className="genui-pills">
-                <span className="genui-pill">
-                  {t(
-                    "Layout: {0}",
-                    blueprint.variablesLayout === "grouped"
-                      ? t("Grouped")
-                      : blueprint.variablesLayout === "grid"
-                        ? t("Grid")
-                        : t("List")
-                  )}
-                </span>
-                <span className="genui-pill">
-                  {t("Density: {0}", blueprint.density === "compact" ? t("Compact") : t("Editorial"))}
-                </span>
-                <span className="genui-pill">
-                  {t("Default axes: {0}", blueprint.defaultAxes.join(", ") || t("None"))}
-                </span>
-                <span className="genui-pill">
-                  {t("Prioritized: {0}", blueprint.highlightedVariables.join(", ") || t("None"))}
-                </span>
-                <span className="genui-pill">
-                  {t("Sections: {0}", blueprint.sectionOrder.join(" → "))}
-                </span>
-              </div>
-
-              <b className="fieldlbl">{t("Section order (drag, or use the arrows)")}</b>
-              <ol className="section-order">
-                {blueprint.sectionOrder.map((sid, i) => (
-                  <li
-                    key={sid}
-                    draggable
-                    className={dragSection === i ? "dragging" : ""}
-                    onDragStart={() => setDragSection(i)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (dragSection !== null) moveSection(dragSection, i);
-                      setDragSection(null);
-                    }}
-                    onDragEnd={() => setDragSection(null)}
-                  >
-                    <span>{i + 1}. {t(SECTION_LABELS[sid])}</span>
-                    <button type="button" className="rm" disabled={i === 0} onClick={() => moveSection(i, i - 1)} aria-label={t("Move {0} up", t(SECTION_LABELS[sid]))}>
-                      ↑
-                    </button>
-                    <button type="button" className="rm" disabled={i === blueprint.sectionOrder.length - 1} onClick={() => moveSection(i, i + 1)} aria-label={t("Move {0} down", t(SECTION_LABELS[sid]))}>
-                      ↓
-                    </button>
-                  </li>
-                ))}
-              </ol>
-              {sectionOverride && (
-                <button type="button" className="linkbtn" onClick={() => setSectionOverride(null)}>
-                  {t("Reset to compiled order")}
-                </button>
-              )}
-
-              {blueprint.rationale && (
-                <p className="blueprint-rationale">
-                  {t("Rationale: {0}", blueprint.rationale)}
-                </p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* STEP 3: VARIABLES */}
-        {SCENARIO_STEPS[step] === "Variables" && (
-          <section className="step-panel">
-            <h1>{t("Review and adjust extracted variables")}</h1>
-            <p className="step-lede">
-              {t("Toggle variables to include in the evaluation, verify source citations, and set scenario values. A variable left out is not compared.")}
-            </p>
-
-            {variables.length === 0 && extras.length === 0 && (
-              <p className="empty">
-                {t("No variables found in the uploaded corpus. Add a variable below or switch to reference corpus.")}
-              </p>
-            )}
-
-            <input
-              type="search"
-              className="var-search"
-              value={varQuery}
-              onChange={(e) => setVarQuery(e.target.value)}
-              placeholder={t("Filter variables by name or unit")}
-              aria-label={t("Filter variables by name or unit")}
-            />
-            {(() => {
-              const groups = groupVariables(variables, blueprint, varQuery, t("Other variables"));
-              const listClass = blueprint.variablesLayout === "grid" ? "vlayout-grid" : "vlist";
-              if (varQuery.trim() && groups.length === 0) return <p className="empty">{t("No variable matches “{0}”.", varQuery.trim())}</p>;
-              return (
-                <div className="vlayout-grouped">
-                  {groups.map((g) => (
-                    <details key={g.id} className="vgroup-section" open>
-                      <summary className="vgroup-title">
-                        {g.label} <small>({g.variables.length})</small>
-                      </summary>
-                      <ul className={listClass}>{g.variables.map(renderVarRow)}</ul>
-                    </details>
+              {purposeScores.length === 0 ? (
+                <p className="empty">{t("No variable with a source citation was found in the uploaded documents.")}</p>
+              ) : (
+                <ol className="purpose-preview">
+                  {purposeScores.slice(0, MAX_CASE_VARIABLES).map((s) => (
+                    <li key={s.id}>
+                      <span>{s.label}</span> <b>{s.score.toFixed(2)}</b>
+                    </li>
                   ))}
-                </div>
-              );
-            })()}
-
-            {/* Extras (Manual Variables) */}
-            {extras.length > 0 && (
-              <ul className="vlist" style={{ marginTop: "18px" }}>
-                {extras.map((e) => (
-                  <li key={e.id} className="vrow">
-                    <div className="vrow-head">
-                      <b>{e.name}</b>
-                      {e.unit && <small>{e.unit}</small>}
-                      <ExtraTag />
-                      <button
-                        type="button"
-                        className="rm"
-                        onClick={() => onExtras(extras.filter((o) => o.id !== e.id))}
-                        aria-label={t("Remove {0}", e.name)}
-                      >
-                        {t("Remove")}
-                      </button>
-                    </div>
-                    <div className="cond-ctl">
-                      <input
-                        type="text"
-                        className="xval"
-                        aria-label={t("{0} value", e.name)}
-                        maxLength={40}
-                        value={e.value}
-                        onChange={(ev) =>
-                          onExtras(
-                            extras.map((o) => (o.id === e.id ? { ...o, value: ev.target.value } : o))
-                          )
-                        }
-                      />
-                      <span className="alt">{t(EXTRA_BASIS)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Add Extra Variable UI */}
-            <div className="addvars" style={{ marginTop: "24px" }}>
-              <AddExtra
-                known={variables.map((v) => ({ id: v.id, label: v.label }))}
-                onKnown={(id) => {
-                  const v = variables.find((x) => x.id === id);
-                  if (v && !v.include) toggleVariableInclude(id);
-                }}
-                onAdd={(e) => onExtras([...extras, e])}
-              />
+                </ol>
+              )}
             </div>
           </section>
         )}
@@ -1314,11 +856,15 @@ export function ScenarioStep({
             {step === 0 ? t("Back to start") : t("Back")}
           </button>
 
-          {!last ? (
+          {step === 0 && isDemoScope ? (
+            <button type="button" className="cta" onClick={handleSubmit}>
+              {t("Compare against the evidence")}
+            </button>
+          ) : !last ? (
             <button
               type="button"
               className="cta"
-              disabled={step === 0 && hasOnlyFailedDocs}
+              disabled={hasOnlyFailedDocs}
               onClick={() => setStep(step + 1)}
             >
               {t("Continue")}
@@ -1327,10 +873,10 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
-              disabled={includedCount === 0 || hasOnlyFailedDocs}
+              disabled={purpose.trim().length < 8 || hasOnlyFailedDocs}
               onClick={handleSubmit}
             >
-              {t("Compare against the evidence")}
+              {t("Generate dashboard")}
             </button>
           )}
         </div>

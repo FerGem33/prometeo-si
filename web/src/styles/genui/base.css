@@ -1,0 +1,92 @@
+/* GenUI modules — article identity. Prefix gx-; CSS variables only, no raw colours, no shadow, radius <= 4px. */
+
+.gx-frame {
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  margin: 22px 0 8px;
+}
+.gx-frame figcaption {
+  font-family: var(--sans-c);
+  font-size: calc(12.5 * var(--fz));
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin-top: 8px;
+}
+.gx-frame figcaption b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gx-origin {
+  display: block;
+  font-family: var(--sans);
+  font-size: calc(11 * var(--fz));
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+.gx-cite {
+  font-style: normal;
+  font-family: var(--sans);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.gx-module {
+  margin: 0 0 28px;
+}
+
+.gx-muted {
+  color: var(--ink-3);
+}
+
+.gx-note {
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.gx-big {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: calc(40 * var(--fz));
+  line-height: 1.05;
+}
+
+.gx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans-c);
+  font-size: calc(12.5 * var(--fz));
+  font-variant-numeric: tabular-nums;
+}
+.gx-table th,
+.gx-table td {
+  padding: 4px 8px 4px 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule-2);
+}
+.gx-table thead th {
+  font-weight: 600;
+  border-bottom: 1px solid var(--ink);
+}
+
+.gx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--sans);
+  font-size: calc(12 * var(--fz));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 2px 7px;
+  color: var(--ink-2);
+  background: var(--paper);
+  white-space: nowrap;
+}
+.gx-chip button.src {
+  font-size: inherit;
+}
