@@ -95,7 +95,19 @@ def validate_schema(schema, documents):
         require(isinstance(rows, list) and bool(rows) and all(type(r) is int for r in rows) and len(rows) == len(set(rows)) and set(rows) <= {r['row'] for r in doc['rows']}, 'explicit constant row scope required')
         require(isinstance(const.get('note'), str) and bool(const['note'].strip()) and const.get('semantic_support') == 'reviewed', 'constant scope requires human support review')
         require(ingest.verify_citation(const.get('citation'), documents)['verified'], 'constant citation rejected')
-        validate_value(const.get('value'), variables[const['variable']])
+        variable = variables[const['variable']]
+        validate_value(const.get('value'), variable)
+        validate_value(const.get('source_value'), variable)
+        require('source_unit' in const and 'convert' in const, 'constant source unit and conversion decision required')
+        conversion = const['convert']
+        if variable['type'] == 'cat':
+            require(const['source_unit'] is None and conversion is None, 'categorical constant conversion')
+            expected = const['source_value']
+        else:
+            require(conversion is None or isinstance(conversion, dict) and set(conversion) == {'factor', 'offset'} and all(ingest.finite_number(n) for n in conversion.values()) and conversion['factor'] != 0, 'invalid constant conversion')
+            require(const['source_unit'] == variable.get('unit') or conversion is not None, 'constant unit mismatch')
+            expected = sorted(n * conversion['factor'] + conversion['offset'] for n in const['source_value']) if conversion else const['source_value']
+        require(const['value'] == expected, 'constant value does not match explicit conversion')
     return variables
 
 
@@ -110,6 +122,78 @@ def validate_value(value, variable):
 def review_request(schema, documents):
     return {'stage': 'awaiting_review', 'base_version': schema['version'], 'base_schema_sha256': digest(schema),
             'documents': snapshot(documents), 'schema': copy.deepcopy(schema)}
+
+
+def edit_schema(schema, edits, version):
+    """Apply explicit reviewer edits atomically; every revision invalidates approval."""
+    require(type(version) is int and schema['version'] == version, 'stale schema version')
+    require(isinstance(edits, list) and bool(edits), 'nonempty edits required')
+    result = copy.deepcopy(schema)
+    for edit in edits:
+        require(isinstance(edit, dict), 'invalid edit')
+        op = edit.get('op')
+        variables = {v['id']: v for v in result['variables']}
+        if op == 'set_status':
+            require(edit.get('status') in ('proposed', 'approved', 'flagged', 'rejected'), 'invalid review status')
+            if edit.get('target') == 'variable':
+                require(edit.get('id') in variables, 'unknown variable')
+                target = variables[edit['id']]
+            else:
+                require(edit.get('target') == 'column', 'invalid status target')
+                targets = [c for c in result['columns'] if c['doc_id'] == edit.get('doc_id') and c['column'] == edit.get('id')]
+                require(len(targets) == 1, 'unknown column')
+                target = targets[0]
+            target['status'] = edit['status']
+            if 'note' in edit:
+                require(isinstance(edit['note'], str), 'invalid note')
+                target['note'] = edit['note']
+        elif op in ('map_column', 'set_convert'):
+            targets = [c for c in result['columns'] if c['doc_id'] == edit.get('doc_id') and c['column'] == edit.get('column')]
+            require(len(targets) == 1, 'unknown column')
+            if op == 'map_column':
+                require(edit.get('variable') is None or edit['variable'] in variables, 'unknown variable')
+                targets[0]['variable'] = edit.get('variable')
+            else:
+                conversion = edit.get('convert')
+                require(conversion is None or isinstance(conversion, dict) and set(conversion) == {'factor', 'offset'} and all(ingest.finite_number(n) for n in conversion.values()) and conversion['factor'] != 0, 'invalid conversion')
+                targets[0].update(convert=conversion, unit=edit.get('unit'))
+            targets[0]['status'] = 'proposed'
+        elif op == 'merge':
+            into, source_ids = edit.get('into'), edit.get('from')
+            require(into in variables and isinstance(source_ids, list) and bool(source_ids), 'invalid merge')
+            require(all(isinstance(key, str) and key in variables and key != into for key in source_ids) and len(set(source_ids)) == len(source_ids), 'invalid merge sources')
+            target = variables[into]
+            require(all(variables[key]['type'] == target['type'] and variables[key].get('unit') == target.get('unit') for key in source_ids), 'review units/types before merge')
+            target['merged_from'] = list(dict.fromkeys(target.get('merged_from', []) + source_ids))
+            for key in source_ids:
+                target.setdefault('evidence', []).extend(variables[key].get('evidence', []))
+            target['status'] = 'proposed'
+            for col in result['columns']:
+                if col.get('variable') in source_ids:
+                    col.update(variable=into, status='proposed')
+            for const in result['constants']:
+                if const.get('variable') in source_ids:
+                    const['variable'] = into
+            result['variables'] = [v for v in result['variables'] if v['id'] not in source_ids]
+        elif op in ('rename', 'set_unit', 'set_role', 'set_sigma'):
+            require(edit.get('variable') in variables, 'unknown variable')
+            target = variables[edit['variable']]
+            field = {'rename': 'label', 'set_unit': 'unit', 'set_role': 'role', 'set_sigma': 'sigma'}[op]
+            value = edit.get(field)
+            if field in ('label', 'unit'):
+                require(isinstance(value, str) and bool(value.strip()), 'invalid ' + field)
+            elif field == 'role':
+                require(value in (None, 'partition'), 'invalid role')
+            else:
+                require(ingest.finite_number(value) and value > 0, 'invalid sigma')
+            target[field] = value
+            target['status'] = 'proposed'
+        else:
+            raise ValueError('unsupported edit operation')
+    result.update(version=version + 1, status='proposed')
+    result.pop('approved_by', None)
+    result.pop('approved_at', None)
+    return result
 
 
 def approve(request, reviewed, documents, version, reviewer):
@@ -180,7 +264,9 @@ def extract_tables(approval, documents):
                     rejected.append({'record_id': record['id'], 'variable': key, 'citation': citation, 'reason': str(exc)})
             for const in schema['constants']:
                 if const['doc_id'] == doc['id'] and row['row'] in const['rows']:
-                    candidates.setdefault(const['variable'], []).append({'value': const['value'], 'citation': const['citation'], 'scope_note': const['note'], 'flagged': True})
+                    candidates.setdefault(const['variable'], []).append({'value': const['value'], 'citation': const['citation'],
+                        'source_value': const['source_value'], 'source_unit': const['source_unit'], 'convert': const['convert'],
+                        'scope_rows': const['rows'], 'scope_note': const['note'], 'flagged': True})
             for key, choices in candidates.items():
                 if len(choices) > 1:
                     conflicts.append({'record_id': record['id'], 'variable': key, 'status': 'open', 'candidates': choices})
@@ -234,6 +320,8 @@ def main():
     parser.add_argument('--version', type=int)
     parser.add_argument('--reviewer')
     parser.add_argument('--paper-response', type=Path)
+    parser.add_argument('--doc-id', help='requested paper document ID')
+    parser.add_argument('--pages', nargs='+', type=int, help='requested physical pages')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     try:
@@ -257,7 +345,8 @@ def main():
             result = extract_tables(schema, docs)
         else:
             require(args.paper_response is not None, 'paper-response required')
-            result = verify_paper_candidates(load(args.paper_response), schema, docs)
+            require(args.doc_id in docs and docs[args.doc_id]['kind'] == 'paper' and bool(args.pages), 'requested paper doc-id and pages required')
+            result = verify_paper_candidates(load(args.paper_response), schema, docs, args.doc_id, args.pages)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with args.output.open('x', encoding='utf-8') as stream:
             json.dump(result, stream, ensure_ascii=False, indent=2, allow_nan=False)

@@ -77,7 +77,7 @@ class ReviewExtractTests(unittest.TestCase):
         self.schema['constants'] = [{'doc_id': self.doc['id'], 'variable': 'amount', 'value': [3, 3], 'note': 'all'}]
         with self.assertRaises(ValueError): self.approval()
         c = self.schema['constants'][0]
-        c.update(rows=[2], semantic_support='reviewed', citation={'kind': 'table', 'doc_id': self.doc['id'], 'row': 2, 'column': 'amount', 'text': '1.5'})
+        c.update(rows=[2], source_value=[3, 3], source_unit='cm', convert=None, semantic_support='reviewed', citation={'kind': 'table', 'doc_id': self.doc['id'], 'row': 2, 'column': 'amount', 'text': '1.5'})
         result = m.extract_tables(self.approval(), self.docs)
         self.assertEqual(len(result['conflicts']), 1)
         self.assertNotIn('amount', result['records'][0]['values'])
@@ -112,6 +112,7 @@ class ReviewExtractTests(unittest.TestCase):
                               'kind': 'paper', 'pages': [{'page': 2, 'text': 'This sample is 4 cm.'}]}
         self.schema['columns'][0]['status'] = 'rejected'
         self.schema['constants'] = [{'doc_id': self.doc['id'], 'variable': 'amount', 'value': [4, 4],
+            'source_value': [0.04, 0.04], 'source_unit': 'm', 'convert': {'factor': 100, 'offset': 0},
             'rows': [2], 'note': 'Reviewer established sample scope', 'semantic_support': 'reviewed',
             'citation': {'kind': 'paper', 'doc_id': 'paper', 'page': 2, 'quote': 'This sample is 4 cm.'}}]
         result = m.extract_tables(self.approval(), self.docs)
@@ -119,6 +120,9 @@ class ReviewExtractTests(unittest.TestCase):
         self.assertEqual(provenance['sha256'], 'paper-hash')
         self.assertEqual(provenance['path'], 'article.pdf')
         self.assertEqual(provenance['target_sha256'], self.doc['sha256'])
+        self.assertEqual(provenance['source_unit'], 'm')
+        self.schema['constants'][0]['value'] = [400, 400]
+        with self.assertRaises(ValueError): self.approval()
 
     def test_invalid_bool_nonfinite_values_and_unreviewed_units_rejected(self):
         for value in ([True, True], [float('nan'), 1], [2, 1]):

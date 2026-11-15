@@ -228,3 +228,65 @@ python3.12 -I pipeline/ingest.py /tmp/t32-pdfs-new --output /tmp/papers-parsed.j
 
 El último PDF no tiene capa de texto en la descarga probada. El parser lo registra sin OCR;
 no se sustituye silenciosamente por un documento ajeno. Ver los SHA en el informe.
+
+## Recorrido unificado y reanudable
+
+Crea un manifiesto **local** con rutas absolutas, documentos y páginas físicas opcionales:
+
+```json
+{"documents":[
+ {"path":"/ruta/PSI-25_Experimental table_BASS-II.csv"},
+ {"path":"/ruta/20150023456.pdf","pages":[16]}
+]}
+```
+
+Una propuesta conjunta requiere un vocabulario revisado explícito. Puede generarse desde el pack existente:
+
+```bash
+python3.12 -c 'import json; p=json.load(open("web/public/demo/pack.json")); json.dump([{k:v[k] for k in ("id","label","type","unit") if k in v} for v in p["schema"]["variables"]], open("/tmp/prometeo-t32/vocabulary.json","w"), indent=2)'
+export AWS_PROFILE=prometeo
+source infra/config.env
+python3.12 -I pipeline/ingest_run.py run --manifest /tmp/prometeo-t32/manifest.json \
+  --work-dir /tmp/prometeo-t32/run --vocabulary /tmp/prometeo-t32/vocabulary.json \
+  --import-results /tmp/prometeo-t32/tables-final --import-results /tmp/prometeo-t32/papers-real
+```
+
+Por omisión no hace llamadas. Reusa solo respuestas crudas cuyo modelo, prompt y contenido
+coincidan exactamente. `--invoke` autoriza llamadas para solicitudes sin caché; un error se
+registra por documento y pide `--retry-failed` para un nuevo intento. Cambiar fuente, parser,
+versión de Poppler, páginas, vocabulario o prompt crea una clave nueva. Los artefactos se
+conservan por hash; `state.json` apunta al estado vigente. El bloqueo evita dos escritores
+sobre el mismo workspace. Copia el workspace al archivarlo: los paths y fuentes son locales.
+
+La salida normal queda en `awaiting_review`; los IDs de variables se prefijan con el hash del
+documento. Coincidencias de nombre/unidad aparecen en `possible_merges` y no se fusionan solas.
+Una persona edita `state.json`-referenciado `schema_file` o exporta JSON, luego registra cada
+decisión con `edit` (la versión se incrementa y cualquier aprobación/extracción previa se
+invalida). Ejemplo: `{"op":"set_status","target":"variable","id":"v_...","status":"approved"}`.
+Operaciones soportadas: `set_status`, `rename`, `merge`, `set_unit`, `set_convert`,
+`map_column`, `set_role`, `set_sigma`. La fusión solo acepta tipo y unidad iguales; equivalencias
+distintas requieren decisión y conversión explícitas.
+
+```bash
+python3.12 -I pipeline/ingest_run.py edit --work-dir /tmp/prometeo-t32/run \
+  --version 1 --edits /tmp/prometeo-t32/revision-1.json
+# revisar la nueva versión y completar variables, columnas y constantes antes de aprobar
+python3.12 -I pipeline/ingest_run.py approve --work-dir /tmp/prometeo-t32/run \
+  --version 2 --reviewer 'Nombre del revisor'
+python3.12 -I pipeline/ingest_run.py run --manifest /tmp/prometeo-t32/manifest.json \
+  --work-dir /tmp/prometeo-t32/run --vocabulary /tmp/prometeo-t32/vocabulary.json
+```
+
+El revisor debe tomar cada decisión usando su identidad; el CLI local guarda el nombre declarado,
+pero no autentica una cuenta. No aprueba respuestas del modelo en automático. El hash del
+manifiesto y de cada original se vuelve a comprobar antes de aprobar. Un documento fallido
+conserva el resto del lote y bloquea la aprobación; corrige la fuente o quítala explícitamente
+del manifiesto revisado. La extracción aprobada genera artefactos de borrador separados del pack.
+Los PDF requieren páginas seleccionadas en el manifiesto; candidatos verificados por texto
+quedan en `awaiting_semantic_review`, sin entrar a registros tabulares. La aprobación de tabla
+no convierte una cita PDF en soporte semántico.
+
+Las constantes locales requieren filas destino, `source_value`, `source_unit`, `convert`,
+valor canónico, nota, cita y `semantic_support: "reviewed"`. El revisor documenta el alcance;
+la extracción rechaza valores que no correspondan a la conversión y retiene ambos documentos
+cuando la evidencia proviene de otra fuente.

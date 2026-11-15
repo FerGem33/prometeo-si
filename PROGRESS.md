@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: integración de CLI reanudable, propuesta conjunta y constantes revisables; D7/PDF pendientes. T18 pendiente de documentación (D9 decidida). |
+| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: flujo reanudable probado, edición/versionado conjunto; D7/PDF pendientes. T18 pendiente de documentación (D9 decidida). |
 | Último commit verificado | Base `6851fb1`; verificación T32 de esta entrega en `docs/T32_EVALUACION.md`; API/web publicadas sin cambios |
 | Siguiente paso exacto | T32: persona revisa discrepancias D7 y candidatos PDF en `docs/T32_EVALUACION.md`, decide esquema/unidades/alcance y aprueba mediante `pipeline/README.md`; repetir tras decisiones. D3 sigue abierta. T31 no se ejecutó en este relevo; no desplegar por inferencia. Interfaz: T21–T29 con su equipo. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -86,6 +86,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 01:49 CST · T32 CLI conjunta y reanudable
+- **Workflow:** `pipeline/ingest_run.py` conecta parseo/perfiles, propuestas conjuntas, edición versionada, gate de aprobación, extracción y evaluación PDF. IDs de propuestas namespaced por documento; posibles equivalencias se ofrecen para revisión, no fusión automática. Cache content-addressed por hash de fuente/parser/Poppler/modelo/prompt/payload; las respuestas crudas se revalidan y los reintentos necesitan `--retry-failed`.
+- **Constantes:** ahora requieren filas, valor/unidad fuente, conversión explícita, cita y soporte semántico marcado por revisor; discrepancias se rechazan; trazabilidad de documento de evidencia y destino. `verify-paper` CLI requiere documento/páginas solicitados.
+- **Prueba local del workflow:** 22 respuestas guardadas importadas, 0 llamadas; reejecución: 22 cache parse, 22 respuestas reused. Mapping aprobado: 1984 filas, 4505 valores y 287 celdas retenidas/rechazadas. PDF: 4 resultados reusados, 1 archivo sin texto deja el lote con estado fallido.
+- **Bedrock nuevo:** una invocación para FLEX página 16; respuesta guardada y la próxima ejecución reutiliza su request key. 3 candidatos en verificación de texto, 3 rechazados por ubicación. No se repitieron las 3 llamadas PDF exitosas.
+- **Pruebas:** API/pipeline 72, web 54, validate_pack y check_agnostic pasan. T32 sigue en curso; no desplegar ni modificar pack.
 
 ### 2026-11-15 01:38 CST · continuación T32: integración y reanudación
 - Base `3f081e9` sincronizada; se conservan corpus/artefactos locales y resultados reales. No repetir llamadas exitosas cuando entradas coincidan.

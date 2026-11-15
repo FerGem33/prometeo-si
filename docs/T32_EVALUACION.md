@@ -218,3 +218,37 @@ Estas discrepancias no están resueltas. `null` significa sin variable/unidad as
 | s22 | Tad (K) | None/None | None/K |
 | s22 | burn time (sec) | None/None | None/sec |
 | s22 | Peak burner T (C ) | None/None | None/C |
+
+## Continuación: workflow integrado y caché
+
+`pipeline/ingest_run.py` ahora integra parseo, perfilado, propuestas por documento, consolidación,
+revisión, aprobación y extracción en un workspace local. Los IDs se prefijan por documento;
+las coincidencias de nombre/unidad son `possible_merges` y esperan decisión del revisor.
+La edición con `edit` incrementa la versión; cada aprobación y extracción queda enlazada a
+hash del esquema, manifiesto y fuentes. Cambiar fuente o revisión invalida etapas posteriores.
+Cada llamada requiere `--invoke`, y `--retry-failed` se exige si no quedó respuesta cruda.
+Artefactos de estado, raw y respuestas viven fuera de git y del corpus.
+
+Probado sobre las 22 tablas usando los 22 `raw.json` reales ya guardados: **0 invocaciones**,
+22 respuestas reusadas. La segunda corrida reportó **22 lecturas parseadas reusadas y 22
+respuestas reusadas**. Una tabla corrupta de prueba no interrumpió las otras; sí bloqueó la
+aprobación. Las pruebas borran/alteran respuestas y fuentes para verificar reintento e
+invalidación. La edición de una fuente invalidó aprobación/extracción y conservó las respuestas
+cuyo contenido seguía siendo idéntico. El modelo y respuesta cruda no se repiten para obtener
+el mismo payload.
+
+Para PDF se probó una petición **nueva** de FLEX, página 16, que muestra tablas de ensayos en
+aire de cabina y enriquecidos con CO₂ con presión por ensayo en atm. Haiku 4.5 respondió una
+vez (1322 tokens de entrada, 941 de salida); la segunda corrida importó/reusó el raw, con 0
+llamadas nuevas. De tres candidatos, cero pasaron la verificación literal de ubicación; se
+conservaron sus tres rechazos. Este resultado demuestra la puerta de caché/reanudación, no
+la validez de las citas anteriores ni soporte semántico. Las tres invocaciones PDF anteriores
+quedaron reusadas desde sus raw reales. Un documento continúa sin capa de texto.
+
+Se reforzó la revisión de constantes: declara filas destino, valor y unidad fuente, conversión,
+valor canónico y cita. El valor canónico debe igualar la conversión; el artefacto guarda por
+separado el hash/ruta de la evidencia y el destino. El CLI `verify-paper` requiere el documento
+y las páginas solicitadas.
+
+Pruebas tras estos cambios: Python 3.12 API/pipeline 72, web 54, `validate_pack.py` y
+`check_agnostic.sh` pasan. D7/PDF semántico siguen pendientes. No se actualizó el pack.
