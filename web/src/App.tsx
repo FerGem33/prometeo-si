@@ -5,6 +5,7 @@ import { DataCtx, ProvCtx } from "./components/ctx";
 import type { Data, Mapping } from "./components/ctx";
 import { AssistantPanel } from "./components/AssistantPanel";
 import { ScenarioPanel } from "./components/ScenarioPanel";
+import { VariantsPanel } from "./components/VariantsPanel";
 import { MapFigure } from "./components/MapFigure";
 import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesTable } from "./components/Tables";
 import { Methods, References } from "./components/Methods";
@@ -143,6 +144,8 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEd
         )}
 
         <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
+
+        <VariantsPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
 
         <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
 
