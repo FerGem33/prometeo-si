@@ -1,0 +1,102 @@
+# T33: entrega local de identidad y proyectos
+
+Estado: implementación local parcial. No desplegada. T33 no está hecha.
+T30/D3 siguen pendientes; no habilitar cargas ni interpretar esta entrega como
+aprobación del contrato. No hubo llamadas AWS ni cambios al pack publicado.
+
+## Rutas implementadas
+
+`api/handler.py` deriva `/projects` a `api/projects.py`. Se implementaron:
+
+| Método/ruta | Resultado |
+|---|---|
+| `POST /projects` | Crea draft vacío, responde 201 |
+| `GET /projects?limit=20&cursor=…` | Lista del usuario; límite 1–100 y cursor opaco |
+| `GET /projects/{id}` | Consulta propia; ajena/inexistente devuelve 404 |
+| `PATCH /projects/{id}` | Edita name/intent de draft sin documentos; responde 200 |
+
+Cuerpo POST: `{"name":"…","intent":"…"}`. PATCH acepta uno o ambos campos.
+No acepta `uid`, estado, versiones ni campos adicionales. Nombre 1–200 e
+intención 1–4000 caracteres tras quitar espacios exteriores; cuerpo máximo
+16000 bytes. Estas son validaciones locales de API, no límites D3 del corpus.
+
+Crear con `Idempotency-Key` (1–128 caracteres alfanuméricos o `_.:-`) reutiliza
+el proyecto para ese usuario y payload; misma clave con payload diferente da
+409. La escritura condicional evita duplicados concurrentes. PATCH conserva
+campos omitidos; repetición sin cambio no altera fecha; revisión interna evita
+sobrescribir cambios concurrentes. Claves DynamoDB `U#sub`/`P#project_id`.
+Campos internos no aparecen en respuestas. El cursor solo permite la partición
+del usuario autenticado y claves de proyecto.
+
+**Límite explícito:** cambiar intención de un proyecto procesado/publicado
+devuelve 409 hasta implementar la regeneración de lente. Un draft vacío conserva
+`lens_version=null`; no se simula una lente regenerada. DELETE y subrutas de
+documentos/esquema aún no están implementadas.
+
+## Identidad y frontera de confianza
+
+Solo se leen claims de `requestContext.authorizer.jwt.claims`, que debe insertar
+un authorizer JWT de API Gateway tras validar firma y vigencia. No se decodifica
+ni se confía en `Authorization` dentro de Lambda. Además se comprueban issuer,
+audiencia, expiración finita, `token_use=id` y `sub`. Sin configuración responde
+503; sin claims adecuados 401. Errores internos no exponen mensajes del SDK.
+
+Variables nuevas: `DATA_TABLE`, `COGNITO_ISSUER`, `USER_POOL_CLIENT_ID`.
+Las rutas deben tener authorizer JWT con issuer/audience del pool/cliente de
+`infra/outputs.env`. Cualquier invocador directo de Lambda capaz de fabricar
+el evento también puede fabricar estos claims: no conceder invocación pública
+o directa a clientes; restringir permisos de invocación al API autorizado.
+
+Referencia de firma/claims del authorizer:
+https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
+
+## Preparar configuración sin desplegar
+
+```bash
+source infra/config.env
+source infra/outputs.env
+python3.12 -I infra/prepare_projects.py --output-dir /tmp/prometeo-t33-config
+# Repetir produce la misma configuración; si cambió, usar otro directorio/revisar.
+```
+
+Se generan cuatro JSON sin secretos: política DynamoDB acotada a tabla;
+authorizer; fragmento de variables; lista de rutas JWT. Son artefactos para
+revisión, no un despliegue. El fragmento de variables se debe **combinar** con
+MODEL_ID/CF_URL y otras variables existentes, no reemplazar el entorno completo.
+
+Antes de despliegue, el implementador de infra debe:
+
+1. Incluir `api/projects.py` en el paquete Lambda (el script MVP actual copia
+   solo handler y verify). Se añadió dependencia explícita boto3 1.44.3.
+2. Configurar permisos DynamoDB GetItem/PutItem/Query solo para la tabla.
+3. Crear/reutilizar authorizer y proteger cada ruta; configurar integración y
+   permisos de invocación acotados. No exponer una ruta alternativa sin auth.
+4. Añadir CORS Gateway GET/POST/PATCH/OPTIONS y headers Authorization,
+   Content-Type e Idempotency-Key solo para CF_URL. El handler ya responde esos
+   headers para proyectos, pero eso no configura el Gateway.
+5. Integrar estas configuraciones en un script idempotente sin perder las
+   rutas/variables del MVP, y probar dos usuarios reales antes de publicar UI.
+
+`infra/20_api.sh` todavía no activa proyectos: no ejecutarlo suponiendo que
+esta funcionalidad quedará disponible. El despliegue final lo hará el dueño.
+
+## Pruebas y pendientes para interfaz
+
+```bash
+api/.venv/bin/python -m pytest api/ -q
+npm test --prefix web
+python3.12 -I pipeline/validate_pack.py
+bash scripts/check_agnostic.sh
+```
+
+Pruebas de proyectos usan dobles locales de tabla y claims. Comprueban
+aislamiento A/B, ausencia de claims, emisor/audiencia/expiración/tipo inválidos,
+validación de entrada, reintentos con clave, concurrencia, paginación,
+errores sanitizados y CORS. **No demuestran** firma JWT real, IAM ni aislamiento
+del despliegue AWS. Validación real con Cognito/API Gateway/DynamoDB pendiente.
+
+La interfaz puede preparar lista/creación/consulta/edición de draft con el
+contrato `Project` y `Page<Project>`, conservando estados de carga y errores
+401/404/409. Falta login/registro Cognito, rutas DELETE, uploads D3, worker y
+lente de proyectos procesados. No conectar estas pantallas a producción hasta
+que exista backend desplegado y verificado.

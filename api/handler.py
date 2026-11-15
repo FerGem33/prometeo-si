@@ -172,6 +172,17 @@ def handler(event, context=None):
     origin = event.get('headers', {}).get('origin', '')
     method = event.get('requestContext', {}).get('http', {}).get('method', '')
     path = event.get('rawPath', '')
+    if path == '/projects' or path.startswith('/projects/'):
+        try:
+            from .projects import handle
+        except ImportError:
+            from projects import handle
+        status, output = (204, {}) if method == 'OPTIONS' else handle(event)
+        response = reply(status, output, origin)
+        if origin == os.environ.get('CF_URL'):
+            response['headers'].update({'access-control-allow-methods': 'GET, POST, PATCH, OPTIONS',
+                                        'access-control-allow-headers': 'content-type, authorization, idempotency-key'})
+        return response
     if path not in ('/ask', '/analysis'):
         return reply(404, {'error': 'Not found'}, origin)
     if method == 'OPTIONS':

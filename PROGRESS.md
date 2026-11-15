@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T33 preparación local · stringbuilder: identidad verificada por authorizer y proyectos draft. T32 revisión humana D7/PDF pendiente. T31 hecha. |
 | Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Una persona revisa D7 y los candidatos PDF de `docs/T32_EVALUACION.md`; aprobar/corregir contrato T30 y límites D3 antes de iniciar T33. T21–T29 siguen a cargo del equipo de interfaz. |
+| Siguiente paso exacto | Continuar T33 local: convertir configuración preparada en despliegue idempotente de rutas JWT/paquete/permisos; implementar registro/login y luego pruebas A/B reales antes de activar UI. Cargas esperan aprobación T30/D3; D7/PDF espera revisor. Ver `docs/T33_API_PROYECTOS.md`. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -61,8 +61,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
-| T33 (avance local) | Identidad y proyectos draft | fase 2 · C | en curso | stringbuilder | esta entrega | Autorizado preparar código/pruebas independientes; cargas y activación AWS esperan T30/D3. No implica completar T33 |
+| T33 | Cuenta y proyectos (avance local) | fase 2 · C | en curso | stringbuilder | esta entrega | GET/POST/GET-id/PATCH de drafts, claims JWT de authorizer, DynamoDB, idempotencia/paginación. Configuración preparada; falta login, despliegue real, A/B real y cargas T30/D3 |
+| T34–T37 | Worker, revisión y publicación | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus); revisión T32/D7 pendiente |
 
 ## Aceptación final (T15)
 
@@ -95,6 +95,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 proyectos locales y configuración revisable
+- `api/projects.py` implementa creación/listado/consulta/edición de drafts vacíos; partición DynamoDB por sub, 404 ajeno, escrituras condicionales, Idempotency-Key por usuario/payload y cursor limitado a su partición. `handler.py` deriva rutas y responde CORS de proyectos. Boto3 1.44.3 es dependencia explícita.
+- Identidad solo desde claims de authorizer JWT; comprueba emisor/audiencia/token_use/expiración finita y rechaza si falta configuración. El Gateway aún debe verificar firma y proteger rutas antes de desplegar. La primera prueba detectó aceptación de expiración NaN; corregida y repetida con éxito.
+- `infra/prepare_projects.py` genera cuatro JSON de revisión (política acotada, authorizer, fragmento de variables y rutas); dos ejecuciones locales coherentes en `/tmp/prometeo-t33-config`. No hace llamadas AWS. Documentación para backend/interfaz y límites en `docs/T33_API_PROYECTOS.md`.
+- Verificación Python 3.12: API 63 pruebas; web 54 pruebas; validate_pack, check_agnostic y diff-check pasan. Los tests nuevos de identidad/almacenamiento son dobles locales, no prueba Cognito/IAM/DynamoDB real. Pack publicado sin cambios.
+- T33 sigue en curso: no se desplegó, no incluye registro/login, DELETE ni uploads. PATCH solo draft vacío hasta implementar regeneración real de lente. Activación y cargas esperan T30/D3; revisión D7/PDF sigue pendiente.
 
 ### 2026-11-15 · Guía para integración y despliegue final
 - `docs/GUIA_INTEGRACION_DEPLOY_FINAL.md` entrega inventario T31, responsabilidades de interfaz/backend/revisor/dueño, requisitos T30/D3 y D7, configuración pública/privada y guion de aceptación y despliegue final. Enlazada desde `infra/README.md`.
