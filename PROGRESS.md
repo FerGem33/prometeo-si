@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Relevo a la laptop con AWS.** Decisiones humanas cerradas salvo la revisión semántica de los PDF de T32. T33: DELETE implementado (sin desplegar); falta desplegarlo y correr el smoke real con `--cleanup`. T34: worker y despliegue listos, sin ejecutar en AWS. Corpus D10 generado. |
+| Tarea en curso | **Relevo AWS en ejecución · stringbuilder.** Base 7cdeacc sincronizada. Preparación → T33 DELETE/smoke cleanup → T34 despliegue/lote/DLQ. Revisión PDF T32 y esquema ebullición aprobables por delegación explícita de DECISIONES_CIERRE §8. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
 | Siguiente paso exacto | Seguir **`docs/RELEVO_LAPTOP_AWS.md`** en orden: 0 preparación y corpus; 1 API con DELETE y CORS solo CloudFront; 2 smoke T33 `--cleanup` (Daniel con contraseñas A/B); 3 desplegar el worker; 4 lote de 10 + corrupto y DLQ; 5 (en paralelo) tabla precargada de los PDF de T32 para que Daniel la firme. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -97,6 +97,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Retoma del relevo Daniel en laptop AWS
+- `git pull --rebase` trajo main hasta 7cdeacc; lectura de AGENTS, relevo, decisiones y D7 completada. Único corpus previo sin seguimiento permanece fuera de Git.
+- Dueño instruye seguir RELEVO_LAPTOP_AWS y continuar T35, T37, T38 y T36. Aplica delegación de DECISIONES_CIERRE §8 a PDF T32 y versiones de esquema de ebullición: criterio conservador, versión/hashes y frase explícita de aprobación delegada, sin presentarla como revisión experta.
+- Tope Bedrock USD 30 y parada/revisión si lote >USD 5; no reenvío automático desde DLQ, no borrar/reemplazar recursos AWS ni cambiar modelo. Se inicia preparación y verificación T33 antes de habilitar consumidor.
 
 ### 2026-11-15 · Claude · laptop Daniel (Windows) · DELETE de T33, carga por lotes y relevo
 - **T33 DELETE:** `api/deletions.py`.
