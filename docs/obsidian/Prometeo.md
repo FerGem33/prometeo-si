@@ -6,13 +6,15 @@ tags:
   - module
   - documentation
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
 status: stable
 language: "typescript | python"
 source_files:
   - "web/src/components/ScenarioPanel.tsx"
   - "web/src/components/AssistantPanel.tsx"
   - "api/handler.py"
+  - "pipeline/review_extract.py"
+  - "api/ingest_propose.py"
 related:
   - "[[trabajo-diario/2026-11-14]]"
 ---
@@ -43,3 +45,17 @@ Informe interactivo que compara un escenario propuesto con registros de experime
 - API publicada en Haiku 4.5 con Anthropic SDK 2.8.0. D6 cerrada por el dueño el 15-nov: se conserva Haiku 4.5 y se descarta la migración a 5.5.
 - Revisión pública: CloudFront en Chrome incógnito, viewport responsive 400 × 899, preguntas de escenario y de contenido, favicon HTTP 200 y vista de impresión de 16 páginas.
 - T16 publicó API y web desde otra laptop con los recursos existentes; el punto 9 de aceptación quedó verificado.
+
+## T32: revisión y extracción fuera de línea
+
+El flujo local `pipeline/ingest.py` → `api/ingest_propose.py` → `pipeline/review_extract.py`
+conserva propuestas sin aprobar hasta una decisión explícita del operador. La extracción
+conserva citas, unidades, conversiones y procedencia; los candidatos de artículos siguen
+pendientes de soporte semántico. No publica ni modifica el pack de demo.
+
+Interfaces y ejemplos: [pipeline/README.md](../../pipeline/README.md). Evidencia real y
+limitaciones: [T32_EVALUACION.md](../T32_EVALUACION.md). D7 y D3 siguen abiertas.
+
+Pruebas T32 y regresiones: 64 API/pipeline con Python 3.12 (incluyen dobles), 54 web,
+`check_agnostic.sh` y `validate_pack.py` pasan. Las llamadas reales se cuentan por separado
+en el informe; no prueban por sí solas precisión científica ni aprobación humana.

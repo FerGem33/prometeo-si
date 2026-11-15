@@ -254,7 +254,7 @@ def main():
     checks = [{'citation': c, **verify_citation(c, index)} for c in citations]
     summary = {s: sum(d['status'] == s for d in docs) for s in ('done', 'failed', 'skipped')}
     summary.update(citations_verified=sum(c['verified'] for c in checks), citations_rejected=sum(not c['verified'] for c in checks))
-    artifact = {'version': 1, 'stage': 'parse_profile_verify', 'summary': summary, 'documents': docs, 'profiles': [profile_document(d) for d in index.values()],
+    artifact = {'version': 1, 'corpus_root': str(root), 'stage': 'parse_profile_verify', 'summary': summary, 'documents': docs, 'profiles': [profile_document(d) for d in index.values()],
                 'proposal_check': proposal_check, 'citation_checks': checks,
                 'limitations': ['Text matching does not establish semantic support for an extracted value.',
                                 'Proposals require human review; no extraction, approval or publication is performed.']}

@@ -1,6 +1,10 @@
 # T32 — Primera etapa local: lectura y citas
 
-2026-11-15. T32 sigue en curso: este resultado no mide extracción con Bedrock.
+2026-11-15. Registro histórico de la primera laptop: este resultado no mide extracción con Bedrock.
+
+**Continuación en laptop AWS:** [T32_EVALUACION.md](T32_EVALUACION.md) contiene las llamadas reales,
+la aprobación/extracción local y los pendientes actuales. Las rutas y limitaciones de acceso
+que siguen describen la primera sesión, no el estado de la laptop AWS.
 
 Comando sobre la descarga local, sin versionar fuentes ni texto extraído:
 

@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: verificación real, aprobación explícita y extracción local. T18 pendiente de documentación (D9 decidida). |
-| Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | T32: revisión/aprobación, extracción y evaluación con Bedrock; ver `docs/T32_LECTURA_LOCAL.md`. Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
+| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: flujo local implementado y evaluación real registrada; pendiente D7 y revisión semántica PDF. T18 pendiente de documentación (D9 decidida). |
+| Último commit verificado | Base `6851fb1`; verificación T32 de esta entrega en `docs/T32_EVALUACION.md`; API/web publicadas sin cambios |
+| Siguiente paso exacto | T32: persona revisa discrepancias D7 y candidatos PDF en `docs/T32_EVALUACION.md`, decide esquema/unidades/alcance y aprueba mediante `pipeline/README.md`; repetir tras decisiones. D3 sigue abierta. T31 no se ejecutó en este relevo; no desplegar por inferencia. Interfaz: T21–T29 con su equipo. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -60,7 +60,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
 | T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | `infra/30_data.sh` escrito y probado con simulador; falta ejecutarlo con perfil `prometeo` |
-| T32 | Extracción fuera de línea | fase 2 · C | en curso | Codex · ferlr | | Lectura, perfiles, adaptador Bedrock y validación de propuestas listos localmente; falta revisión/extracción y evaluación real D7. `docs/T32_LECTURA_LOCAL.md` |
+| T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
 | T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
 ## Aceptación final (T15)
@@ -77,6 +77,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 ## Revisión final pendiente
 
+- **T32:** revisar las discrepancias listadas en `docs/T32_EVALUACION.md` y los 15 candidatos PDF antes de cualquier aprobación nueva. El 92.1 % es acuerdo de asignación con el mapping vigente, no precisión científica; D7 sigue pendiente. Un PDF requiere texto/OCR revisado. La aprobación local no autentica al operador.
+
 - **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
 - **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
@@ -84,6 +86,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 01:33 CST · T32: extracción local y evaluación real
+- **Recuperación:** `63b09cc` no existía; se continuó desde `c9906c8` por instrucción del dueño. Inicio `6851fb1`. Corpus y artefactos fuera de git; sin tocar `frontend`, infraestructura ni pack publicado.
+- **Implementado:** guardado de respuesta SDK/tokens previo a rechazo; JSON Markdown completo sin relajar validación; revisión/aprobación explícita por versión/corpus, extracción con citas, conversiones y conflictos; constantes requieren alcance revisado y conservan ambos orígenes. Candidatos PDF no se convierten automáticamente en valores aprobados.
+- **AWS real:** STS correcto; modelo D6 Haiku 4.5 y SDK 2.8.0. Primera BASS-II rechazada por envoltura Markdown, corregida y revalidada localmente. Corrida inicial 15/22 válidas; reintento 6/7; corrida final homogénea **22/22 válidas**, **209/227 asignaciones (92.1 %)** y **148/227 con unidad exacta (65.2 %)**. No prueba precisión científica ni cierra D7.
+- **PDF:** cinco originales oficiales evaluados; cuatro llamadas, 23 candidatos, 15 con formato/cita verificados, 8 rechazados; un PDF sin capa de texto. Pendientes soporte semántico, alcance y revisión; no se atribuyó presión a filas de tablas.
+- **Verificación local:** Python 3.12: 64 pruebas API/pipeline y 32 subtests; web 54; agnostic, validate_pack y diff-check pasan. Extractor determinista sobre mapping humano vigente: 1984 filas con 4505 valores, 287 celdas retenidas/rechazadas, 0 conflictos. No es precisión del modelo.
+- **Corrección del evaluador:** se alinearon de forma unívoca cabeceras con espacios externos frente al mapping publicado; citas originales intactas. Métricas recalculadas desde respuestas guardadas, sin nuevas llamadas.
+- **Informe y relevo:** `docs/T32_EVALUACION.md` conserva métricas, errores, lista D7, fuentes, hashes, tokens y comandos. `pipeline/README.md` explica entorno, aprobación y extracción. T32 permanece **en curso**; personas revisan D7 y PDF antes de seguir con extracción aprobada/publicación. D3 sigue abierta; no se ejecutó T31.
 
 ### 2026-11-15 01:13 CST · retoma T32 en laptop AWS
 - Base sincronizada `c9906c8`; `63b09cc` no existe en main. Se verifica el código existente sin restaurar corpus ni tocar frontend.
