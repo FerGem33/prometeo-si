@@ -452,7 +452,7 @@ function Report({
 
         <div className="kicker">
           <span>{lens.kicker ?? t("Scenario assessment")}</span>
-          <span className="verify">{summary}</span>
+          <span className="verify" title={summary}>{summary}</span>
           <span className="sep" />
           <div className="kicker-actions noprint">
             <SaveExploration

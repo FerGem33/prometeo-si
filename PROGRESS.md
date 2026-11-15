@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Cierre local T36 y retoma AWS · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. Dueño autoriza volver a AWS después de pruebas; comprobar de nuevo permisos T34 antes de crear/habilitar worker. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Retomar AWS: comprobar permisos T34, validar condición IAM y seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). T35/originales suman15rutas JWT al aplicarse, luego prueba de aprobación/extracción. Pendientes locales: publicación autenticada T37 y persistencia de revisión T36; no se marcan completas por tener CLI. |
+| Siguiente paso exacto | Publicar pendiente.md §1–3: `infra/20_api.sh` (handler con /propose y /design para 30 docs) y `infra/deploy_web.sh`, con confirmación humana. Luego retomar AWS: permisos T34 para el worker SQS (pendiente.md §4.2) y RELEVO §3–4. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -99,6 +99,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · pendiente.md §1–3 (frontend) y §1.1 backend
+- Hecho y verificado con el lote real (`~/Descargas/lote`, 23 archivos → 23 procesados, 135 variables): límite de 30 por lote con aviso de excedentes; progreso por archivo, "Clear all documents", arrastre de carpetas; chips de variables, reordenar secciones (arrastre + botones), botón `/design`; buscador, grupos colapsables y conversión de unidades solo de visualización; detección NASA (`ingest/nasaDetect.ts`) con figura isométrica en panel, resumen gráfico y fold "Experimental apparatus"; guardar/reabrir evaluaciones propias (IndexedDB `prometeo-custom-db`) con historial en Workspace; apéndice de impresión (Tablas A1/A2), BibTeX real desde DOIs, descarga `prometeo.pack.json`; preguntas locales (máx/mín/media/conteo y filtros) con procedencia. Pruebas: 212 web, 162 API, check_agnostic OK, build OK.
+- Backend: `/propose` admite 30 documentos y rechaza 31; reservas de subida aceptan 30 y la 31 da 422. `infra/20_api.sh` ya enruta `/propose` y `/design` (`$default`), con IAM Bedrock, CORS y throttling.
+- Falta: volver a ejecutar `infra/20_api.sh` para publicar el `handler.py` actual y `infra/deploy_web.sh` para la UI (requieren AWS y confirmación); worker SQS sigue bloqueado por T34. Emojis previos en Cover, ScenarioPanel (what-if) y ProcessingStep sin tocar.
+- **Trampas:** con localhost la API responde sin CORS (esperado: solo orígenes CloudFront). El resumen del kicker con 100+ variables ahora se recorta a 3 líneas (texto completo en `title` e impresión).
 
 ### 2026-11-15 · T36 revisión local y acceso a originales
 - CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.

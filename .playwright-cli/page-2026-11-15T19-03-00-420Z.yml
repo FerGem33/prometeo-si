@@ -1,0 +1,79 @@
+- generic [ref=e2]:
+  - generic [ref=e1745]:
+    - banner [ref=e1746]:
+      - generic [ref=e1747]: Prometeo · Harmonizing evidence
+      - generic [ref=e1748]:
+        - group "Interface preferences" [ref=e1749]:
+          - group "Language" [ref=e1750]:
+            - button "EN" [pressed] [ref=e1751] [cursor=pointer]
+            - button "ES" [ref=e1752] [cursor=pointer]
+          - group "Theme" [ref=e1753]:
+            - button "Light" [ref=e1754] [cursor=pointer]
+            - button "Dark" [pressed] [ref=e1755] [cursor=pointer]
+        - button "Back to scenario" [ref=e1756] [cursor=pointer]
+    - main [ref=e1757]:
+      - status [ref=e1758]:
+        - paragraph [ref=e1759]: Isometric Chamber · Evidence Harmonization
+        - heading "Preparing your evidence report" [level=1] [ref=e1760]
+        - paragraph [ref=e1761]: "23 staged document(s) and Synthesised from 23 documents (23 studies): 23 investigations, 1,067 individual combustion tests."
+        - generic [ref=e1762]:
+          - generic [ref=e1763]:
+            - generic [ref=e1764]:
+              - generic [ref=e1765]: ISS CIR / BASS · NASA PSI
+              - generic [ref=e1766]: O₂ 21–30% · P 0.5–1.0 atm · 0g
+            - 'img "Microgravity combustion chamber in a rack bay: gas bottles and manifold, a windowed vessel with a flame kernel inside, a diagnostics ring on two columns, a camera and a telemetry console with a dial." [ref=e1768]':
+              - generic [ref=e2441]: "1"
+              - generic [ref=e2445]: "2"
+              - generic [ref=e2449]: "3"
+              - generic [ref=e2454]: "4"
+            - region "Stage 2 diagnostic telemetry" [ref=e2458]:
+              - generic [ref=e2459]:
+                - generic [ref=e2460]:
+                  - generic [ref=e2461]: STAGE 02 · OPTICAL INTERFEROMETRY · Twin-Column Laser Sheet & Radiometer Ring
+                  - heading "Canonical Variable Mapping & Envelope Audit" [level=4] [ref=e2462]
+                  - paragraph [ref=e2463]: Sweeps the dual-column optical ring along the specimen axis to map raw experiment columns to canonical units without imputing missing values.
+                - generic [ref=e2464]:
+                  - generic [ref=e2465]:
+                    - term [ref=e2466]: Mapped Variables
+                    - definition [ref=e2467]:
+                      - generic [ref=e2468]: 5 canonical
+                      - generic [ref=e2469]: O₂ · Pressure · Flow · Gravity · Fuel
+                  - generic [ref=e2470]:
+                    - term [ref=e2471]: Solid O₂ Ceiling
+                    - definition [ref=e2472]:
+                      - generic [ref=e2473]: 22.2 % max
+                      - generic [ref=e2474]: BASS-II (140 of 268 solid tests)
+                  - generic [ref=e2475]:
+                    - term [ref=e2476]: Solid P Coverage
+                    - definition [ref=e2477]:
+                      - generic [ref=e2478]: 0 / 268 tests
+                      - generic [ref=e2479]: Critical gap detected in solid pool
+              - generic [ref=e2480]:
+                - group "Stage sub-mode inspector" [ref=e2481]:
+                  - button "O₂ Envelope (σ = 5 %)" [pressed] [ref=e2482] [cursor=pointer]
+                  - button "Pressure Audit (σ = 0.25 atm)" [ref=e2483] [cursor=pointer]
+                  - button "Forced Flow (σ = 8 cm/s)" [ref=e2484] [cursor=pointer]
+                - paragraph [ref=e2485]: "Active readout: Tested across 13.6–22.2 % O₂ in solid fuels and up to 100 % O₂ in gaseous/droplet partitions."
+            - generic [ref=e2486]: STAGE 02 · OPTICAL LASER SCAN · VARIABLES O₂ / P / V
+          - generic [ref=e2489]:
+            - list "Harmonization steps" [ref=e2490]:
+              - listitem [ref=e2491]:
+                - generic [aria-hidden] [ref=e2492]: ✓
+                - generic [ref=e2493]: Reading documents and source tables
+              - listitem [ref=e2494]:
+                - generic [aria-hidden] [ref=e2495]: "2"
+                - generic [ref=e2496]: Detecting experimental variables and canonical units
+              - listitem [ref=e2497]:
+                - generic [aria-hidden] [ref=e2498]: "3"
+                - generic [ref=e2499]: Harmonizing test records across partitions
+              - listitem [ref=e2500]:
+                - generic [aria-hidden] [ref=e2501]: "4"
+                - generic [ref=e2502]: Computing σ-distance, study grades (A–D) and findings
+            - generic [ref=e2503]:
+              - progressbar "Analysis progress" [ref=e2504]
+              - generic [ref=e2506]: 25%
+            - button "Skip to report →" [ref=e2508] [cursor=pointer]
+    - contentinfo [ref=e2509]: "Prometeo compares conditions; it does not predict whether a material ignites or a flame spreads. Data: NASA Physical Sciences Informatics (psi.nasa.gov), CC0. Not an official NASA product."
+  - complementary "Contest judge presentation tour" [ref=e54]:
+    - button "3-Min Pitch Tour · For Judges" [ref=e55] [cursor=pointer]:
+      - generic [aria-hidden] [ref=e57]: ▶

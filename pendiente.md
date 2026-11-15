@@ -42,7 +42,7 @@
 ## 2. Flujo de "New Evaluation" (`#scenario`)
 
 ### 2.1. Gestión de archivos en el Paso 1 (`Documents`)
-- [ ] **Barra de progreso por archivo durante la carga:**
+- [x] **Barra de progreso por archivo durante la carga:**
   - Cuando se suben 30 archivos a la vez, mostrar una barra de progreso individual o spinner en cada fila de documento mientras se calculan el hash SHA-256 y se parsea el texto.
 - [x] **Acción de limpieza total ("Borrar todos"):**
   - Botón "Limpiar lista" (`Clear all`) implementado en `ScenarioStep.tsx` para restablecer la selección rápidamente.
@@ -50,11 +50,11 @@
   - Implementado en `web/src/ingest/folderDrop.ts` y cableado al botón "Subir carpeta" y zona de arrastre.
 
 ### 2.2. Mejoras en el Diseñador de GenUI en el Paso 2 (`Interface design`)
-- [ ] **Generador de instrucciones guiadas con sugerencias clicables:**
+- [x] **Generador de instrucciones guiadas con sugerencias clicables:**
   - Permitir hacer clic en las variables sugeridas para insertarlas directamente en el `<textarea>` de instrucciones (ej. `"Comparar temperatura y gravedad"`).
-- [ ] **Previsualización interactiva del árbol de secciones:**
+- [x] **Previsualización interactiva del árbol de secciones:**
   - Permitir reordenar visualmente las secciones del reporte arrastrando tarjetas (Drag & Drop) en lugar de depender únicamente del texto escrito.
-- [ ] **Conexión opcional con endpoint remoto Bedrock `/design`:**
+- [x] **Conexión opcional con endpoint remoto Bedrock `/design`:**
   - Cuando el backend AWS Lambda esté activo con credenciales válidas, realizar llamada asíncrona a `POST /design` para generar descripciones y agrupaciones semánticas aún más ricas.
 
 ### 2.3. Control de Variables en el Paso 3 (`Variables`)
@@ -62,7 +62,7 @@
   - Implementado en `web/src/ingest/variableView.ts` y en `ScenarioStep.tsx` con input de búsqueda en tiempo real y filtro por tipo (`numéricas` / `categóricas`).
 - [x] **Agrupación colapsable por documento de origen o por grupo temático:**
   - Implementado con recuento dinámico de variables activas por archivo de procedencia.
-- [ ] **Conversión automática de unidades en la interfaz:**
+- [x] **Conversión automática de unidades en la interfaz:**
   - Permitir al usuario cambiar la unidad de visualización de una variable (ej. de `K` a `°C`, o de `kPa` a `atm`) mediante un menú desplegable en la tarjeta de la variable.
 
 ---
@@ -76,7 +76,7 @@
   - La vista `#workspace` muestra evaluaciones personalizadas junto con las predefinidas, con etiquetas de fecha y conteo de fuentes.
 
 ### 3.2. Exportación y Dossier Académico
-- [ ] **Exportación completa a PDF imprimible (`Export PDF`):**
+- [x] **Exportación completa a PDF imprimible (`Export PDF`):**
   - Adaptar la hoja de estilos de impresión (`@media print`) para incluir la carátula adaptativa, la tabla de variables del corpus subido y el desglose de los hasta 30 estudios.
 - [x] **Dossier modal con citas BibTeX reales:**
   - Implementado en `web/src/report/dossier.ts` y `web/src/components/DossierModal.tsx`, generando entradas BibTeX a partir de los documentos cargados.
@@ -92,22 +92,19 @@
 ## 4. Pendientes en el Backend AWS (`api/` e `infra/`)
 
 ### 4.1. Despliegue de Endpoints `/propose` y `/design`
-- [ ] **Actualización de AWS SAM / Terraform / CDK:**
+- [x] **Rutas `/propose` y `/design`:** ya cubiertas: `infra/20_api.sh` crea un HTTP API con ruta `$default` hacia la Lambda. Falta volver a ejecutar `infra/20_api.sh` para publicar el `handler.py` actual (AWS, requiere confirmación humana).
+  - (original) **Actualización de AWS SAM / Terraform / CDK:**
   - Incorporar en la plantilla de infraestructura de AWS Lambda los nuevos métodos HTTP `POST /propose` y `POST /design` definidos en `api/handler.py`.
-- [ ] **Permisos IAM para Amazon Bedrock:**
+- [x] **Permisos IAM para Amazon Bedrock:** ya en `infra/20_api.sh` (`bedrock:InvokeModel` acotado al perfil de `MODEL_ID`).
+  - (original)
   - Asignar la política `bedrock:InvokeModel` al rol de ejecución de la Lambda para invocar el modelo `anthropic.claude-haiku-4-5-20251001-v1:0`.
-- [ ] **CORS y cuotas en API Gateway:**
+- [x] **CORS y cuotas en API Gateway:** ya en `infra/20_api.sh` (orígenes CloudFront, throttling burst 10 / rate 5).
+  - (original)
   - Configurar límites de frecuencia (rate limiting) y cabeceras CORS para el dominio de producción del frontend.
 
 ### 4.2. Trabajador SQS Asíncrono para Lotes Pesados (`ingest_worker.py`)
-- [ ] **Procesamiento en segundo plano de lotes grandes:**
-  - Para usuarios autenticados con colecciones superiores a 30 documentos o PDFs extensos, habilitar el worker SQS (`api/ingest_worker.py`) que procesa archivos directamente en Amazon S3.
-  - Asignar la política `bedrock:InvokeModel` al rol de ejecución de la Lambda para invocar el modelo `anthropic.claude-haiku-4-5-20251001-v1:0`.
-- [ ] **CORS y cuotas en API Gateway:**
-  - Configurar límites de frecuencia (rate limiting) y cabeceras CORS para el dominio de producción del frontend.
-
-### 4.2. Trabajador SQS Asíncrono para Lotes Pesados (`ingest_worker.py`)
-- [ ] **Procesamiento en segundo plano de lotes grandes:**
+- [ ] **Procesamiento en segundo plano de lotes grandes:** BLOQUEADO por T34 (AccessDenied en `iam:GetRole` / `iam:SimulateCustomPolicy`); requiere permisos de una persona.
+  - (original)
   - Para usuarios autenticados con colecciones superiores a 30 documentos o PDFs extensos, habilitar el worker SQS (`api/ingest_worker.py`) que procesa archivos directamente en Amazon S3.
 
 ---

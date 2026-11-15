@@ -147,7 +147,7 @@ function LocalAnswerView({ answer }: { answer: LocalAnswer }) {
   const { pack } = useData();
   const v = pack.schema.variables.find((x) => x.id === answer.variable);
   const label = v?.label ?? answer.variable;
-  const unit = answer.unit ?? "";
+  const unit = answer.unit ? ` ${answer.unit}` : ""; // leading space only when there is a unit
   const study = (id: string) => pack.studies.find((s) => s.id === id)?.short ?? id;
   let text: string;
   if (answer.kind === "stat") {
@@ -155,12 +155,12 @@ function LocalAnswerView({ answer }: { answer: LocalAnswer }) {
       ? t("No record gives a value for {0}.", label)
       : answer.stat === "count"
         ? t("{0} of {1}: {2}.", t(STAT_TEXT.count), label, answer.value)
-        : t("{0} of {1}: {2} {3}, over {4} records with a value.", t(STAT_TEXT[answer.stat]), label, num(answer.value), unit, answer.n);
+        : t("{0} of {1}: {2}{3}, over {4} records with a value.", t(STAT_TEXT[answer.stat]), label, num(answer.value), unit, answer.n);
   } else {
     const bounds = answer.bounds.map((b) => num(b)).join(t(" and "));
     text = answer.studies.length === 0
-      ? t("No study records {0} {1} {2} {3}.", label, t(OP_TEXT[answer.op]), bounds, unit)
-      : t("{0} studies record {1} {2} {3} {4}: {5}.", answer.studies.length, label, t(OP_TEXT[answer.op]), bounds, unit, answer.studies.map(study).join(", "));
+      ? t("No study records {0} {1} {2}{3}.", label, t(OP_TEXT[answer.op]), bounds, unit)
+      : t("{0} studies record {1} {2} {3}{4}: {5}.", answer.studies.length, label, t(OP_TEXT[answer.op]), bounds, unit, answer.studies.map(study).join(", "));
   }
   return <div className="local-answer" role="status">
     <p className="tblnote">{t("Computed locally from the corpus records · not AI")}</p>

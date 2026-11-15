@@ -1,0 +1,117 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]: Prometeo · New evaluation
+      - generic [ref=e6]:
+        - group "Interface preferences" [ref=e7]:
+          - group "Language" [ref=e8]:
+            - button "EN" [pressed] [ref=e9] [cursor=pointer]
+            - button "ES" [ref=e10] [cursor=pointer]
+          - group "Theme" [ref=e11]:
+            - button "Light" [ref=e12] [cursor=pointer]
+            - button "Dark" [pressed] [ref=e13] [cursor=pointer]
+        - button "Cancel" [ref=e14] [cursor=pointer]
+    - main [ref=e15]:
+      - list "Progress" [ref=e16]:
+        - listitem [ref=e17]:
+          - button "1 Documents" [ref=e18] [cursor=pointer]:
+            - generic [ref=e19]: "1"
+            - text: Documents
+        - listitem [ref=e20]:
+          - button "2 Interface design" [ref=e21] [cursor=pointer]:
+            - generic [ref=e22]: "2"
+            - text: Interface design
+        - listitem [ref=e23]:
+          - button "3 Variables" [ref=e24] [cursor=pointer]:
+            - generic [ref=e25]: "3"
+            - text: Variables
+      - generic [ref=e59]:
+        - heading "Design your analysis interface" [level=1] [ref=e60]
+        - paragraph [ref=e61]: Describe how you want the dashboard structured, or select focus presets below. Prometeo compiles an interface blueprint tailored to your corpus.
+        - generic [ref=e62]: 23 documents, 135 variables extracted
+        - generic [ref=e63]: Interface instructions
+        - textbox "Interface instructions" [ref=e64]:
+          - /placeholder: e.g. Highlight key parameters, compare studies, and prioritize gap analysis
+        - generic [ref=e65]:
+          - generic [ref=e66]: Insert a variable
+          - button "Properties" [ref=e67] [cursor=pointer]
+          - button "Liquid Density" [ref=e68] [cursor=pointer]
+          - button "Vapor Density" [ref=e69] [cursor=pointer]
+          - button "Liquid Specific Heat" [ref=e70] [cursor=pointer]
+          - button "Vapor Specific Heat" [ref=e71] [cursor=pointer]
+          - button "Latent Heat" [ref=e72] [cursor=pointer]
+          - button "Liquid Viscosity" [ref=e73] [cursor=pointer]
+          - button "Vapor Viscosity" [ref=e74] [cursor=pointer]
+          - button "Liquid Thermal Conductivity" [ref=e75] [cursor=pointer]
+          - button "Vapor Thermal Conductivity" [ref=e76] [cursor=pointer]
+          - button "Surface Tension" [ref=e77] [cursor=pointer]
+          - button "Case" [ref=e78] [cursor=pointer]
+          - button "Gravity (g/ge)" [ref=e79] [cursor=pointer]
+          - button "T_bulk (C)" [ref=e80] [cursor=pointer]
+          - button "T_wall (C)" [ref=e81] [cursor=pointer]
+          - button "Delta_Tsub (C)" [ref=e82] [cursor=pointer]
+          - button "Delta_Tsup" [ref=e83] [cursor=pointer]
+          - button "Findings" [ref=e84] [cursor=pointer]
+          - button "A*" [ref=e85] [cursor=pointer]
+          - button "Experiment number" [ref=e86] [cursor=pointer]
+          - button "POWER" [ref=e87] [cursor=pointer]
+          - button "Cooler setpoint (C)" [ref=e88] [cursor=pointer]
+          - button "PT cooler setpoint (C)" [ref=e89] [cursor=pointer]
+          - button "Heater setpoint (C)" [ref=e90] [cursor=pointer]
+        - generic [ref=e91]:
+          - generic [ref=e92]: Quick focus presets
+          - button "Gap analysis" [ref=e93] [cursor=pointer]
+          - button "Study comparison" [ref=e94] [cursor=pointer]
+          - button "Evidence graph" [ref=e95] [cursor=pointer]
+          - button "Compact view" [ref=e96] [cursor=pointer]
+        - generic [ref=e97]:
+          - generic [ref=e98]: Suggested design prompts
+          - button "Prioritize gap analysis and knowledge graph for Properties and Liquid Density" [ref=e99] [cursor=pointer]
+          - button "Compact executive view comparing studies with Properties" [ref=e100] [cursor=pointer]
+          - 'button "Deep-dive research view: highlight Vapor Density and correlation heat map" [ref=e101] [cursor=pointer]'
+          - button "Priorizar mapa de brechas y relaciones entre estudios para Properties" [ref=e102] [cursor=pointer]
+        - button "Refine with AI (/design)" [ref=e104] [cursor=pointer]
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - heading "PSI 138 PSI 138 Experimental table FC72 Working Fluid Properties Evidence Synthesis" [level=3] [ref=e107]
+            - generic [ref=e108]: Scenario assessment
+          - generic [ref=e109]:
+            - generic [ref=e110]: "Layout: Grouped"
+            - generic [ref=e111]: "Density: Editorial"
+            - generic [ref=e112]: "Default axes: case, gravity"
+            - generic [ref=e113]: "Prioritized: properties, liquid_density, vapor_density, liquid_specific_heat, vapor_specific_heat, latent_heat, liquid_viscosity, vapor_viscosity, liquid_thermal_conductivity, vapor_thermal_conductivity, surface_tension, case, gravity, t_bulk, t_wall, delta_tsub, delta_tsup, findings, a, experiment_number, power, cooler_setpoint, pt_cooler_setpoint, heater_setpoint, test, working_fluid, bubble_length, heat_input, key_results, pm_4, pm_7, croscopic_view_surveillance_camera_images, fig_4, fig_6, w_heater_input_in_microgravity_figure_13, fig_16, g_fig_17, fig_18, testnumber, testmatrixnumber, fbmheaterincreamentdelaytime, maxwaitingtime, moduleinlettemperature, saturationtemperature, subcooling, quality, massvelocity, moduleinletpressure, bulkheaterauxpower, numbulkheatercartridges120, bulkheatertemperature, fbmheatersenabled, fbmheaterpower1, fbmheaterpower2, fbmheaterpower3, fbmheaterpower4, fbmheaterpower5, fbmheaterpower6, fbmheaterpower7, fbmheaterpower8, fbmheaterpower9, fbmheaterpower10, fbmheaterpower11, fbmheaterpower12, script, day_gmt, tests_run, array, pressure, bulk_liquid_temperature, no_of_microheaters, microheater_temperature, comments, quid_c_condensation_isomer_of_c6f14_tsat, tw, that_the_a_power_law_coefficient_of_msdb, d_early_onset_of_jump_at_transition_and_m, figure_4, n_a_dt, dt, and_ar, figure_7, abstract_a_microscale_heater_array_2, each_of_these_elements_was_0, the_large_200_kx_resistor_at_the_top_of_0, the_video_shutter_speed_was_1, wing_on_fc_72_using_in_a_kc_135_using_a_2, pixels_with_a_shutter_speed_of_1, surface_tension_retards_bubble_heater_19, test_article, d_superheat, superheat, low_g_50_w_cm_2_0_hi_g_tbulk, and_hi_g_35_tbulk, ug_tbulk, g_2_tbulk, g_25_tbulk, high_g_20_tbulk, m_dtw, dtw, cg, experiment_type, gravity_level, system_pressure, liquid_subcooling, wall_superheat, bubble_departure_diameter, bubble_growth_period, maximum_heat_flux, key_observations, variable, the_strain_gage_11_mm_and_width, nal_resistance_of_120_ohms_total_length, height, heater_width, dissolved_gas_content, reduction_and_uncertainty_system_pressure, mission, run_no, heat_flux, nucleation_delay_time, mean_heater_surface_superheat_at_nucleation, boiling_propagation_category, behavior, alculated_saturation_conditions_figure_32, figure_8, figure_11, figure_28, figure_29, elapsed_time_figure_11, final_figure_28, substrate, npfhflowrate, modulewaterflowrate, condenserwaterflowrate"
+            - generic [ref=e114]: "Sections: graphical_abstract → map → heat → gaps → graph → data_methods"
+          - generic [ref=e115]: Section order (drag, or use the arrows)
+          - list [ref=e116]:
+            - listitem [ref=e117]:
+              - generic [ref=e118]: 1. Graphical abstract
+              - button "Move Graphical abstract up" [disabled] [ref=e119] [cursor=pointer]: ↑
+              - button "Move Graphical abstract down" [ref=e120] [cursor=pointer]: ↓
+            - listitem [ref=e121]:
+              - generic [ref=e122]: 2. Map of tests (Figure 1)
+              - button "Move Map of tests (Figure 1) up" [ref=e123] [cursor=pointer]: ↑
+              - button "Move Map of tests (Figure 1) down" [ref=e124] [cursor=pointer]: ↓
+            - listitem [ref=e125]:
+              - generic [ref=e126]: 3. Closeness by variable (Figure 2)
+              - button "Move Closeness by variable (Figure 2) up" [ref=e127] [cursor=pointer]: ↑
+              - button "Move Closeness by variable (Figure 2) down" [ref=e128] [cursor=pointer]: ↓
+            - listitem [ref=e129]:
+              - generic [ref=e130]: 4. Coverage and gaps (Figure 3)
+              - button "Move Coverage and gaps (Figure 3) up" [ref=e131] [cursor=pointer]: ↑
+              - button "Move Coverage and gaps (Figure 3) down" [ref=e132] [cursor=pointer]: ↓
+            - listitem [ref=e133]:
+              - generic [ref=e134]: 5. Evidence graph
+              - button "Move Evidence graph up" [ref=e135] [cursor=pointer]: ↑
+              - button "Move Evidence graph down" [ref=e136] [cursor=pointer]: ↓
+            - listitem [ref=e137]:
+              - generic [ref=e138]: 6. Data, sources and methods
+              - button "Move Data, sources and methods up" [ref=e139] [cursor=pointer]: ↑
+              - button "Move Data, sources and methods down" [disabled] [ref=e140] [cursor=pointer]: ↓
+          - paragraph [ref=e141]: "Rationale: Configured adaptive view prioritizing graphical_abstract & map with editorial density based on directives."
+      - generic [ref=e50]:
+        - button "Back" [ref=e142] [cursor=pointer]
+        - button "Continue" [active] [ref=e52] [cursor=pointer]
+    - contentinfo [ref=e53]: "Prometeo compares conditions; it does not predict whether a material ignites or a flame spreads. Data: NASA Physical Sciences Informatics (psi.nasa.gov), CC0. Not an official NASA product."
+  - complementary "Contest judge presentation tour" [ref=e54]:
+    - button "3-Min Pitch Tour · For Judges" [ref=e55] [cursor=pointer]:
+      - generic [aria-hidden] [ref=e57]: ▶
