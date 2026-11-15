@@ -166,6 +166,6 @@ Asignen quién responde cada bloque, para no pisarse. Si no saben algo, lo dicen
   |---|---|---|
   | 1–4 | Web publicada | En línea con la interfaz nueva (publicada el 15-nov a las 9:04). Falta corregir lo del §9.2 del plan: la llama, los textos escritos a mano y el estilo |
   | 5, versiones | T37 y la pantalla de "qué cambió" (T24) | El servidor ya publica versiones (v1 y v2 probadas en AWS). Falta la pantalla |
-  | 6, segundo dominio | T37 con el lote de ebullición | Dos tablas de ebullición (51 registros) publicadas en privado en AWS. Faltan el resto de las fuentes y las pantallas |
+  | 6, segundo dominio | T37 con el lote de ebullición | Dos tablas y un PDF de ebullición (51 registros, 2 estudios) publicados en privado en AWS, con contexto del PDF y un hueco declarado por los autores. Faltan el resto de las fuentes y las pantallas |
   | Q&A "¿escala?" | T34, cola y DLQ | Comprobado en AWS: de 10 documentos y uno corrupto, 8 propuestas válidas; el corrupto y 2 PDF quedaron apartados sin detener el lote |
-  | Síntesis con IA | T37 | La prueba real salió en modo plantilla. Mientras no haya una corrida con IA verificada, no se presenta como IA |
+  | Síntesis con IA | T37 | Comprobada en AWS en modo IA: el análisis eligió 4 frases y la síntesis 5 extractos citados de los dos estudios. En vivo se muestra como IA solo si la respuesta dice `mode: ai` |
