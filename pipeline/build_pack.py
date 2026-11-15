@@ -33,7 +33,7 @@ FACTOR = {"pct": None, "frac": 100.0, "atm": None, "mmhg": round(cc.ATM_POR_MMHG
 
 SCHEMA = {
     "variables": [
-        {"id": "o2", "label": "O₂", "long": "Oxygen concentration", "unit": "%", "type": "num", "sigma": 5, "range": [0, 100], "step": 0.5,
+        {"id": "o2", "label": "O₂", "long": "Oxygen concentration", "unit": "%", "delta_unit": "percentage points", "type": "num", "sigma": 5, "range": [0, 100], "step": 0.5,
          "risk": {"direction": "up", "note": "Higher oxygen concentration makes materials much more flammable.",
                   "source": "NASA Space Apps 2026, Flame in Freefall challenge statement"}},
         {"id": "p", "label": "Pressure", "long": "Ambient pressure", "unit": "atm", "type": "num", "sigma": 0.3, "range": [0, 5], "step": 0.01,

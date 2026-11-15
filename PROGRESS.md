@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T05 (Claude · laptop ferlr) |
-| Último commit verificado | T04 |
-| Siguiente paso exacto | T05: portar report/index.html a componentes React llenados desde pack y lens |
+| Tarea en curso | T08 (Claude · laptop ferlr) |
+| Último commit verificado | T07 |
+| Siguiente paso exacto | T08: correr infra/10_web.sh y infra/deploy_web.sh con el perfil prometeo (BLOQUEADO en laptop ferlr: no existe el perfil). Mientras, seguir con T09 |
 | URL pública (CloudFront) | _sin desplegar_ |
 | API (`API_URL`) | _sin desplegar_ |
 | `MODEL_ID` confirmado | _pendiente (infra/00_check.sh)_ |
@@ -39,10 +39,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T02 | Scaffold + `00_check.sh` | P0 | hecha | Claude · ferlr | (este commit) | build, test y check_agnostic en verde. Falta que un humano corra infra/00_check.sh y anote MODEL_ID (esta laptop no tiene perfil prometeo) |
 | T03 | Pack de demo | P0 | hecha | Claude · ferlr | (este commit) | Ruta rápida: SPECS del corpus del compañero. Pack completo: 24 estudios, 1,986 registros (1,889 pruebas + 97 campañas), 22 fuentes, 147 con bandera. g=0 solo en investigaciones de microgravedad (5 son de tierra) |
 | T04 | Motor + vectores | P0 | hecha | Claude · ferlr | (este commit) | 22 vectores en verde con los valores de la guía §6.6/§6.7 (C4 D20, d=1.56/2.18/4.24, +7.8, 0/268, 36/107/11, 91 PMMA). tested_elsewhere usa la tolerancia (0.25σ) |
-| T05 | Esqueleto del informe | P0 | en curso | Claude · ferlr |  |  |
-| T06 | Escenario y figuras | P0 | pendiente | | | |
-| T07 | Procedencia, PDF y URL | P0 | pendiente | | | |
-| T08 | Infra web (CloudFront) | P0 | pendiente | | | |
+| T05 | Esqueleto del informe | P0 | hecha | Claude · ferlr | (este commit) | Informe React llenado desde pack/lens/mapping: Key findings, abstract por plantilla, Tables 1–4, Methods, References. Captura docs/screens/t05_report.png |
+| T06 | Escenario y figuras | P0 | hecha | Claude · ferlr | (este commit) | Panel de escenario (sliders, selector, presets), Fig. 1 mapa, Fig. 2 cercanía, Fig. 3 huecos, niveles con icono+texto. Preset lunar: O₂ Near/not covered, presión Not studied, PMMA Studied. ~42 ms por paso de slider |
+| T07 | Procedencia, PDF y URL | P0 | hecha | Claude · ferlr | (este commit) | Panel de procedencia (archivo, fila, valor original, conversión, DOI, SHA-256), Export PDF (9 páginas A4, docs/screens/t07_export.pdf), escenario en la URL. Sin desbordes a 400 px |
+| T08 | Infra web (CloudFront) | P0 | en curso | Claude · ferlr |  |  |
 | T09 | Lambda `/ask` y `/analysis` | P1 | pendiente | | | |
 | T10 | Infra API | P1 | pendiente | | | |
 | T11 | UI de preguntas y análisis | P1 | pendiente | | | |
