@@ -4,7 +4,8 @@ import type { DataRecord, Finding, OverallEvidence, Pack, Range, Scenario, Study
 import { useData } from "./ctx";
 import { FINDING_LEVEL, findingText, findingTitle, OVERALL, whyText } from "../report/text";
 import { matchingHabitatPreset, allHabitatPresets } from "./HabitatFigure";
-import { num, scenarioValueText, varOf } from "../report/format";
+import { scenarioValueText, varOf } from "../report/format";
+import { generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
 
 export type ExportScope = "all" | "comparable" | "graded";
 
@@ -137,45 +138,27 @@ export function DossierModal({
     [pack, scope, comparable, ranking],
   );
 
-  const buildPlainText = () => {
-    const dateStr = new Date().toISOString().slice(0, 10);
-    let txt = `PROMETEO · EVIDENCE DOSSIER · ${dateStr}\n`;
-    txt += `${lens.title} (${lens.byline})\n`;
-    txt += `Scenario: ${scenarioSummary}\n`;
-    if (goal.trim()) txt += `Question: ${goal.trim()}\n`;
-    txt += `Overall evidence: ${OVERALL[overall.level]}\n`;
-    txt += `Grades: A ${overall.counts.A} · B ${overall.counts.B} · C ${overall.counts.C} · D ${overall.counts.D} (across ${pack.studies.length} ${lens.unit_of_study ?? "study"}s)\n\n`;
-
-    txt += `NEAREST STUDIES\n`;
-    for (const r of top6) {
-      const st = pack.studies.find((s) => s.id === r.study);
-      const distStr = r.distance === null ? "no distance" : `d = ${num(r.distance)}`;
-      const whyStr = r.why.map((w) => whyText(pack, lens, w)).join("; ");
-      const rec = r.nearest ? pack.records.find((x) => x.id === r.nearest) : null;
-      const srcStr = rec ? ` [Source: ${r.study}, test ${rec.id}, row ${rec.source.row ?? "–"}]` : "";
-      txt += `- Grade ${r.grade} · ${st?.short ?? r.study} (${r.study}) · ${distStr} · ${whyStr}${srcStr}\n`;
-    }
-
-    txt += `\nFINDINGS\n`;
-    for (const f of findings) {
-      txt += `- [${FINDING_LEVEL[f.level]}] ${findingTitle(pack, f)}: ${findingText(pack, lens, f)}\n`;
-    }
-
-    txt += `\nDISCLAIMER\n${lens.disclaimer}\n`;
-    return txt;
-  };
-
-  const handleCopy = () => {
-    const text = buildPlainText();
+  const handleCopyMarkdown = () => {
+    const text = generateExecutiveMarkdown(pack, lens, scenario, goal, overall, ranking, findings);
     const notify = (msg: string) => {
       setToast(msg);
       window.setTimeout(() => setToast(null), 2000);
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(() => notify("Dossier copied to clipboard"));
+      navigator.clipboard.writeText(text).then(() => notify("Executive Markdown copied to clipboard"));
     } else {
       notify("Clipboard unavailable");
     }
+  };
+
+  const handleDownloadMarkdown = () => {
+    const text = generateExecutiveMarkdown(pack, lens, scenario, goal, overall, ranking, findings);
+    downloadFile(`prometeo-executive-brief-${dateTag}.md`, text, "text/markdown;charset=utf-8");
+  };
+
+  const handleDownloadJson = () => {
+    const text = generateDossierJson(pack, lens, scenario, overall, ranking, findings);
+    downloadFile(`prometeo-evidence-pack-${dateTag}.json`, text, "application/json;charset=utf-8");
   };
 
   const dateTag = new Date().toISOString().slice(0, 10);
@@ -200,14 +183,20 @@ export function DossierModal({
             </p>
           </div>
           <div className="dossier-actions noprint">
-            <button type="button" className="chip" onClick={handleCopy}>
-              Copy text
+            <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title="Copy Executive Summary formatted for Flight Directors">
+              📋 Copy Markdown Brief
             </button>
-            <button type="button" className="chip" onClick={() => window.print()}>
-              Print / PDF
+            <button type="button" className="chip" onClick={handleDownloadMarkdown} title="Download Markdown Dossier">
+              💾 Download .md
+            </button>
+            <button type="button" className="chip" onClick={handleDownloadJson} title="Export full JSON evidence pack">
+              📦 Export JSON
+            </button>
+            <button type="button" className="chip" onClick={() => window.print()} title="Print or save as official NASA PDF">
+              📄 Print / PDF
             </button>
             <button type="button" className="chip" onClick={onClose}>
-              Close
+              Close ✕
             </button>
           </div>
         </header>
@@ -319,7 +308,7 @@ export function DossierModal({
               onClick={() =>
                 downloadFile(
                   `prometeo_${pack.meta.id}_dossier_${dateTag}.md`,
-                  buildPlainText(),
+                  generateExecutiveMarkdown(pack, lens, scenario, goal, overall, ranking, findings),
                   "text/markdown;charset=utf-8",
                 )
               }

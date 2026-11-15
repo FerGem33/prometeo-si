@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { NumVariable, Scenario, VariableEvidence } from "../engine";
 import { useData, Src } from "./ctx";
 import { LEVELS, levelBasis } from "../report/text";
@@ -7,6 +7,7 @@ import { ChangeSummary } from "./ChangeSummary";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
+import { BASELINE_PROFILES, computeWhatIfDelta } from "../report/whatif";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
   const l = LEVELS[level];
@@ -54,10 +55,14 @@ export function ScenarioPanel({
   onExtras: (e: Extra[]) => void;
 }) {
   const { pack, lens } = useData();
+  const [selectedBaseline, setSelectedBaseline] = useState<string>("earth_std");
   const vars = pack.schema.variables.filter((v) => !(v.type === "cat" && v.role === "partition"));
   const presets = useMemo(() => allHabitatPresets(lens), [lens]);
   const preset = matchingHabitatPreset(lens, scenario);
   const activePresetObj = presets.find((p) => p.id === preset);
+
+  const baselineObj = BASELINE_PROFILES.find((b) => b.id === selectedBaseline) ?? BASELINE_PROFILES[0];
+  const delta = useMemo(() => computeWhatIfDelta(scenario, baselineObj.scenario), [scenario, baselineObj]);
 
   const catOptions = useMemo(() => {
     const out: Record<string, { value: string; n: number }[]> = {};
@@ -149,6 +154,57 @@ export function ScenarioPanel({
           {activePresetObj?.source && <small className="design-hero-src">Reference: {activePresetObj.source}</small>}
         </div>
       </aside>
+
+      {/* Real-time What-If Delta Simulation against baseline */}
+      <div className="whatif-panel noprint" role="region" aria-label="What-if baseline comparison">
+        <div className="whatif-head">
+          <div className="whatif-title-group">
+            <span className="whatif-kicker">NASA Comparative Flammability Engine</span>
+            <h4>What-If Simulator vs. Baseline Atmosphere</h4>
+          </div>
+          <div className="whatif-selector">
+            <label htmlFor="whatif-base-select">Compare against:</label>
+            <select
+              id="whatif-base-select"
+              value={selectedBaseline}
+              onChange={(e) => setSelectedBaseline(e.target.value)}
+            >
+              {BASELINE_PROFILES.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.description})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="whatif-cards">
+          <div className="whatif-card">
+            <span className="whatif-label">Δ O₂ Concentration</span>
+            <span className={`whatif-val ${delta.o2Delta > 0 ? "whatif-up" : delta.o2Delta < 0 ? "whatif-down" : ""}`}>
+              {delta.o2Delta > 0 ? `+${delta.o2Delta.toFixed(1)}%` : `${delta.o2Delta.toFixed(1)}%`}
+            </span>
+          </div>
+          <div className="whatif-card">
+            <span className="whatif-label">Δ Cabin Pressure</span>
+            <span className={`whatif-val ${delta.pDelta > 0 ? "whatif-up" : delta.pDelta < 0 ? "whatif-down" : ""}`}>
+              {delta.pDelta > 0 ? `+${delta.pDelta.toFixed(2)} atm` : `${delta.pDelta.toFixed(2)} atm`}
+            </span>
+          </div>
+          <div className="whatif-card">
+            <span className="whatif-label">Δ Flammability Index</span>
+            <span className={`whatif-val ${delta.flammabilityIndexChangePct > 0 ? "whatif-risk-high" : "whatif-risk-low"}`}>
+              {delta.flammabilityIndexChangePct > 0 ? `+${delta.flammabilityIndexChangePct}%` : `${delta.flammabilityIndexChangePct}%`}
+            </span>
+          </div>
+          <div className={`whatif-summary-badge whatif-badge-${delta.riskTendency}`}>
+            <span className="whatif-icon" aria-hidden="true">
+              {delta.riskTendency === "elevated" ? "⚠️" : delta.riskTendency === "reduced" ? "🛡️" : "⚖️"}
+            </span>
+            <span>{delta.riskSummary}</span>
+          </div>
+        </div>
+      </div>
 
       <div className="scn-layout">
         <div className="scn-table-col">

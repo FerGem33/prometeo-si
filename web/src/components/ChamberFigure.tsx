@@ -3,6 +3,7 @@ import "../iso/iso.css";
 import "../iso/theme-prometeo.css";
 import { chamberSvg, CHAMBER_VECTORS } from "../iso/chamber/build";
 import { useInView, useLoop, spring, type Spring } from "../iso/react/live";
+import { playChamberStageChirp, playTelemetryClick } from "../report/sound";
 
 export interface ChamberFigureProps {
   /** Current processing step (0..4). */
@@ -319,7 +320,10 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
                 type="button"
                 className="chip"
                 aria-pressed={activeStep === idx}
-                onClick={() => setLocalStep(idx)}
+                onClick={() => {
+                  setLocalStep(idx);
+                  playChamberStageChirp(idx);
+                }}
               >
                 {lbl}
               </button>
@@ -361,7 +365,10 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
                 type="button"
                 className="chip proc-plus-chip"
                 aria-pressed={activeModeIdx === i}
-                onClick={() => setSelectedModes((prev) => ({ ...prev, [activeStep]: i }))}
+                onClick={() => {
+                  setSelectedModes((prev) => ({ ...prev, [activeStep]: i }));
+                  playTelemetryClick();
+                }}
               >
                 {m.label}
               </button>

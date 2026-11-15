@@ -7,6 +7,7 @@ import { num, scenarioValueText } from "../report/format";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
+import { NASA_MISSION_PRESETS } from "./presets";
 
 const STEPS = ["Setting", "Variables", "Question", "Documents"];
 
@@ -118,6 +119,26 @@ export function ScenarioStep({
             </li>
           ))}
         </ol>
+
+        <div className="quick-mission-bar noprint">
+          <span className="quick-mission-title">🚀 1-Click NASA Missions:</span>
+          {NASA_MISSION_PRESETS.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className="quick-mission-chip"
+              onClick={() => {
+                onChange({
+                  values: { ...m.scenario },
+                  active: ["o2", "p", ...(m.scenario.flow !== undefined ? ["flow"] : []), "material"],
+                });
+              }}
+            >
+              <span className="chip-badge">{m.badge.split(" ")[0]}</span>
+              <span>{m.name}</span>
+            </button>
+          ))}
+        </div>
 
         {step === 0 && (
           <section className="step-panel">

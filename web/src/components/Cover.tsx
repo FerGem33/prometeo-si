@@ -1,10 +1,13 @@
 import { useState } from "react";
+import type { Scenario } from "../engine";
 import { useData } from "./ctx";
 import { ChamberFigure } from "./ChamberFigure";
 import { allHabitatPresets, HabitatFigure, habitatScenario } from "./HabitatFigure";
 import { IsoBenchFigure } from "./IsoBenchFigure";
 import { LaunchButton } from "./LaunchButton";
 import { scenarioValueText } from "../report/format";
+import { NASA_MISSION_PRESETS } from "./presets";
+import { getSoundEnabled, playTelemetryClick, setSoundEnabled } from "../report/sound";
 
 const HOW: [string, string][] = [
   [
@@ -29,11 +32,12 @@ export function Cover({
   onDemo,
   onWorkspace,
 }: {
-  onStart: () => void;
+  onStart: (presetScenario?: Scenario) => void;
   onDemo: () => void;
   onWorkspace: () => void;
 }) {
   const { pack, lens } = useData();
+  const [soundOn, setSoundOn] = useState<boolean>(() => getSoundEnabled());
   const [plateMode, setPlateMode] = useState<"chamber" | "habitats" | "bench">("chamber");
   const presets = allHabitatPresets(lens);
   const [selectedHab, setSelectedHab] = useState<string>(presets[0]?.id ?? "lunar_base");
@@ -57,6 +61,19 @@ export function Cover({
             <b>Prometeo</b> · Evidence portals
           </span>
           <span className="bar-links">
+            <button
+              type="button"
+              className="linkbtn sound-toggle"
+              onClick={() => {
+                const next = !soundOn;
+                setSoundOn(next);
+                setSoundEnabled(next);
+                if (next) playTelemetryClick();
+              }}
+              title={soundOn ? "Mute telemetry sounds" : "Enable telemetry sounds"}
+            >
+              {soundOn ? "🔊 SFX ON" : "🔇 SFX OFF"}
+            </button>
             <button type="button" className="linkbtn" onClick={onWorkspace}>
               Workspace
             </button>
@@ -79,11 +96,58 @@ export function Cover({
             Bring your papers and say what you want to do. Prometeo builds a portal around it: what has been studied under your conditions, how solid it is, and where nobody has looked.
           </p>
           <div className="cover-ctas">
-            <LaunchButton label="Begin evaluation" className="cta big" onLaunch={onStart} autoFocus />
+            <LaunchButton label="Begin evaluation" className="cta big" onLaunch={() => onStart()} autoFocus />
             <button type="button" className="ghostbtn big" onClick={onDemo}>
               See the example report
             </button>
           </div>
+        </div>
+      </section>
+
+      <section className="mission-profiles-sec">
+        <div className="section-head">
+          <p className="cover-kicker">NASA Reference Profiles</p>
+          <h2>One-Click Mission Evaluations</h2>
+          <p className="section-desc">
+            Select a verified space exploration mission setting to evaluate its flammability regime and empirical evidence coverage instantly against the 1,889 NASA PSI tests.
+          </p>
+        </div>
+        <div className="mission-profiles-grid">
+          {NASA_MISSION_PRESETS.map((m) => (
+            <div key={m.id} className="mission-profile-card">
+              <div className="mission-card-top">
+                <span className="mission-badge">{m.badge}</span>
+                <span className="mission-dest">{m.destination}</span>
+              </div>
+              <div className="mission-card-body">
+                <div className="mission-card-visual">
+                  <HabitatFigure name={m.designId} size="sm" />
+                </div>
+                <div className="mission-card-text">
+                  <h4>{m.name}</h4>
+                  <p>{m.tagline}</p>
+                </div>
+              </div>
+              <div className="mission-card-params">
+                <span><b>O₂:</b> {m.scenario.o2}%</span>
+                <span><b>Pressure:</b> {m.scenario.p} atm</span>
+                <span><b>Material:</b> {m.scenario.material}</span>
+              </div>
+              <button
+                type="button"
+                className="mission-launch-btn"
+                onClick={() => {
+                  const s: Scenario = {
+                    values: { ...m.scenario },
+                    active: ["o2", "p", ...(m.scenario.flow !== undefined ? ["flow"] : []), "material"],
+                  };
+                  onStart(s);
+                }}
+              >
+                Evaluate profile →
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -201,7 +265,7 @@ export function Cover({
         </div>
 
         <div className="cover-ctas">
-          <LaunchButton label="Begin evaluation" className="cta" onLaunch={onStart} />
+          <LaunchButton label="Begin evaluation" className="cta" onLaunch={() => onStart()} />
         </div>
       </section>
 

@@ -20,6 +20,8 @@ import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
 import { KnowledgeGraph } from "./components/KnowledgeGraph";
+import { JudgeTour } from "./components/JudgeTour";
+import "./styles/tour.css";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
@@ -71,6 +73,7 @@ function Flow({ data }: { data: Data }) {
   const [extras, setExtras] = useState<Extra[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [fileCount, setFileCount] = useState(0);
+  const [dossierTrigger, setDossierTrigger] = useState(false);
   const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
 
   useEffect(() => {
@@ -89,10 +92,21 @@ function Flow({ data }: { data: Data }) {
   const go = (next: Stage) => {
     window.location.hash = next === "cover" ? "" : next;
   };
-  if (stage === "cover")
-    return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} onWorkspace={() => go("workspace")} />;
-  if (stage === "workspace")
-    return (
+
+  let screen: React.ReactNode = null;
+  if (stage === "cover") {
+    screen = (
+      <Cover
+        onStart={(presetScenario) => {
+          if (presetScenario) setScenario(presetScenario);
+          go("scenario");
+        }}
+        onDemo={() => go("report")}
+        onWorkspace={() => go("workspace")}
+      />
+    );
+  } else if (stage === "workspace") {
+    screen = (
       <Workspace
         onBack={() => go("cover")}
         onOpen={(p, e) => {
@@ -107,8 +121,8 @@ function Flow({ data }: { data: Data }) {
         }}
       />
     );
-  if (stage === "scenario")
-    return (
+  } else if (stage === "scenario") {
+    screen = (
       <ScenarioStep
         scenario={scenario}
         onChange={setScenario}
@@ -123,23 +137,41 @@ function Flow({ data }: { data: Data }) {
         }}
       />
     );
-  if (stage === "processing")
-    return <ProcessingStep fileCount={fileCount} onBack={() => go("scenario")} onComplete={() => go("report")} />;
+  } else if (stage === "processing") {
+    screen = <ProcessingStep fileCount={fileCount} onBack={() => go("scenario")} onComplete={() => go("report")} />;
+  } else {
+    screen = (
+      <Report
+        data={data}
+        scenario={scenario}
+        setScenario={setScenario}
+        extras={extras}
+        setExtras={setExtras}
+        axes={axes}
+        setAxes={setAxes}
+        goal={goal}
+        projectId={projectId}
+        onHome={() => go("cover")}
+        onEdit={() => go("scenario")}
+        onWorkspace={() => go("workspace")}
+        initialDossierOpen={dossierTrigger}
+        onDossierConsumed={() => setDossierTrigger(false)}
+      />
+    );
+  }
+
   return (
-    <Report
-      data={data}
-      scenario={scenario}
-      setScenario={setScenario}
-      extras={extras}
-      setExtras={setExtras}
-      axes={axes}
-      setAxes={setAxes}
-      goal={goal}
-      projectId={projectId}
-      onHome={() => go("cover")}
-      onEdit={() => go("scenario")}
-      onWorkspace={() => go("workspace")}
-    />
+    <>
+      {screen}
+      <JudgeTour
+        currentStage={stage}
+        onNavigate={go}
+        onOpenDossier={() => {
+          setDossierTrigger(true);
+          go("report");
+        }}
+      />
+    </>
   );
 }
 
@@ -156,6 +188,8 @@ function Report({
   onHome,
   onEdit,
   onWorkspace,
+  initialDossierOpen,
+  onDossierConsumed,
 }: {
   data: Data;
   scenario: Scenario;
@@ -169,11 +203,20 @@ function Report({
   onHome: () => void;
   onEdit: () => void;
   onWorkspace: () => void;
+  initialDossierOpen?: boolean;
+  onDossierConsumed?: () => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
   const [dossierOpen, setDossierOpen] = useState(false);
   const openProv = useCallback((id: string) => setProv(id), []);
+
+  useEffect(() => {
+    if (initialDossierOpen) {
+      setDossierOpen(true);
+      onDossierConsumed?.();
+    }
+  }, [initialDossierOpen, onDossierConsumed]);
 
   const r = useMemo(() => {
     const part = partitionOf(pack, scenario);

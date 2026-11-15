@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
+import { playMissionIgnition } from "../report/sound";
 
 export interface LaunchButtonProps {
   onLaunch: () => void;
@@ -39,6 +40,7 @@ export function LaunchButton({
     const y = b.top + b.height / 2;
     const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) + 80;
     setOrigin({ x, y, r });
+    playMissionIgnition();
     timer.current = window.setTimeout(() => {
       setOrigin(null);
       onLaunch();

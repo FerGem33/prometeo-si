@@ -814,4 +814,273 @@ body:has(.screen) { background: var(--paper); }
 @media (prefers-reduced-motion: reduce) {
   .flame, .flame-ember, .proc-chamber-dot { animation: none; }
 }
+/* ── 1-Click NASA Mission Profiles Showcase ────────────────────────── */
+.mission-profiles-sec {
+  max-width: 1180px;
+  margin: 0 auto 56px;
+  padding: 0 24px;
+}
+.mission-profiles-sec .section-head {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 28px;
+}
+.mission-profiles-sec .section-head h2 {
+  font-family: var(--font-serif, "EB Garamond", serif);
+  font-size: 30px;
+  font-weight: 500;
+  margin: 4px 0 8px;
+  color: var(--ink, #1D1C1A);
+}
+.mission-profiles-sec .section-desc {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--muted, #62605B);
+  margin: 0;
+}
+.mission-profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+.mission-profile-card {
+  background: var(--surface-card, #F1EFEA);
+  border: 1px solid var(--rule, #D3D0C8);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.mission-profile-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent, #94251B);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+.mission-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  border-bottom: 1px solid var(--rule-light, #E3E0D8);
+  padding-bottom: 8px;
+}
+.mission-badge {
+  font-weight: 600;
+  color: var(--ink, #1D1C1A);
+}
+.mission-dest {
+  color: var(--muted, #62605B);
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+}
+.mission-card-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mission-card-visual {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background: var(--paper, #EAE8E3);
+  border: 1px solid var(--rule-light, #E3E0D8);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.mission-card-text h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink, #1D1C1A);
+}
+.mission-card-text p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted, #62605B);
+}
+.mission-card-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  background: var(--paper, #EAE8E3);
+  padding: 6px 10px;
+  border-radius: 4px;
+  color: var(--ink, #1D1C1A);
+}
+.mission-launch-btn {
+  margin-top: auto;
+  background: var(--surface-control, #DFDDD7);
+  border: 1px solid var(--rule, #D3D0C8);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink, #1D1C1A);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+.mission-launch-btn:hover {
+  background: var(--accent, #94251B);
+  color: #FFF;
+  border-color: var(--accent, #94251B);
+}
+
+/* ── Quick Mission Selector Bar in Scenario Step ───────────────────── */
+.quick-mission-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--surface-card, #F1EFEA);
+  border: 1px solid var(--rule, #D3D0C8);
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin-bottom: 20px;
+}
+.quick-mission-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted, #62605B);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.quick-mission-chip {
+  background: var(--paper, #EAE8E3);
+  border: 1px solid var(--rule-light, #E3E0D8);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink, #1D1C1A);
+  transition: all 0.15s ease;
+}
+.quick-mission-chip:hover {
+  background: var(--accent, #94251B);
+  color: #FFF;
+  border-color: var(--accent, #94251B);
+}
+
+/* ── Real-time What-If Delta Simulator ─────────────────────────────── */
+.whatif-panel {
+  background: var(--surface-card, #F1EFEA);
+  border: 1px solid var(--rule, #D3D0C8);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.whatif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule-light, #E3E0D8);
+  padding-bottom: 10px;
+}
+.whatif-kicker {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted, #62605B);
+  font-weight: 600;
+}
+.whatif-title-group h4 {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink, #1D1C1A);
+}
+.whatif-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink, #1D1C1A);
+}
+.whatif-selector select {
+  background: var(--paper, #EAE8E3);
+  border: 1px solid var(--rule, #D3D0C8);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--ink, #1D1C1A);
+}
+.whatif-cards {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.whatif-card {
+  background: var(--paper, #EAE8E3);
+  border: 1px solid var(--rule-light, #E3E0D8);
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 120px;
+}
+.whatif-label {
+  font-size: 11px;
+  color: var(--muted, #62605B);
+  text-transform: uppercase;
+}
+.whatif-val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: var(--ink, #1D1C1A);
+}
+.whatif-val.whatif-up {
+  color: #B23B2A;
+}
+.whatif-val.whatif-down {
+  color: #2D7A4D;
+}
+.whatif-val.whatif-risk-high {
+  color: #B23B2A;
+}
+.whatif-val.whatif-risk-low {
+  color: #2D7A4D;
+}
+.whatif-summary-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-left: auto;
+}
+.whatif-badge-elevated {
+  background: #FCE8E6;
+  border: 1px solid #F1B0A8;
+  color: #8C1D18;
+}
+.whatif-badge-reduced {
+  background: #E6F4EA;
+  border: 1px solid #A8DAB5;
+  color: #137333;
+}
+.whatif-badge-equivalent {
+  background: var(--surface-control, #DFDDD7);
+  border: 1px solid var(--rule, #D3D0C8);
+  color: var(--ink, #1D1C1A);
+}
+
 @media print { .screen { display: none; } }
