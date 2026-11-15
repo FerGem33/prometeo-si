@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T17 bloqueada por acceso Bedrock a Haiku 5.5; T16 y T19 hechas |
-| Último commit verificado | `3720861` en `main`; UI y Lambda publicadas desde esta laptop con recursos existentes |
+| Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
 | Siguiente paso exacto | Resolver el 403 de Bedrock para `us.anthropic.claude-haiku-5-5`; después validar el modelo con SDK 2.8.0 y cerrar T17/D6. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -54,9 +54,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
 | T15 | Aceptación y entrega | P0 | hecha | Codex · stringbuilder | `55c18ed`, `07231c3` | Puntos 1–9 aceptados; T16 verificó el deploy desde otro equipo y la reutilización de recursos. |
 | T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | hecha | Codex · laptop actual | `07231c3` | API/web publicados; bucket, distribución, Lambda, rol y API existentes conservaron sus IDs; hash público/local `index-Ben2isQ8.js`. |
-| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | bloqueada | Codex · laptop actual | por registrar | `/ask` pasa con Haiku 4.5 y SDK 2.8.0; D6 requiere Haiku 5.5, denegado con 403 para esta cuenta. |
+| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | bloqueada | Codex · laptop actual | `0813d37` | `/ask` pasa con Haiku 4.5 y SDK 2.8.0; D6 requiere Haiku 5.5, denegado con 403 para esta cuenta. |
 | T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
-| T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
+| T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
@@ -97,6 +97,11 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **D6:** Haiku 5.5 aparece `ACTIVE` en Bedrock, pero la invocación real con SDK 2.8.0 recibió `403 PermissionDeniedError: anthropic.claude-haiku-5-5 is not available for this account`. Se restauró `MODEL_ID` a Haiku 4.5 y se volvió a desplegar la Lambda para mantener el servicio funcional. T17 queda bloqueada por acceso a Haiku 5.5.
 - **T19:** `/analysis` con `analysis_lunar.json` respondió HTTP 200, `mode: ai`, tres oraciones con fuentes y `dropped: 0`.
 - **Siguiente paso exacto:** el dueño habilita el modelo Haiku 5.5 para la cuenta AWS; después repetir `/ask`, `/analysis` y cerrar T17/D6. No se crearon recursos y `tools/datos_psi/` permanece local.
+
+### 2026-11-15 00:00 CST · Codex · registro del relevo
+- **Commit:** `0813d37` (`T17: retain gravity in scenario requests`), incluye el ejemplo de gravedad en `ASK_SYSTEM`, la regresión, SDK 2.8.0 y actualización de la documentación.
+- **Estado:** `main` y `origin/main` se sincronizarán con este registro. T16/T15 y T19 están hechas; T17/D6 sigue bloqueada por el 403 de acceso Haiku 5.5.
+- **Siguiente paso exacto:** una vez habilitado Haiku 5.5 en la cuenta, desplegarlo con `infra/20_api.sh` y repetir las verificaciones de §7. La API actual permanece operativa con Haiku 4.5.
 
 ### 2026-11-14 23:20 CST · Claude · ferlr · fase 2 sin AWS: motor, API en código y contratos
 - **Decisión del dueño:** la fusión de `frontend` la hace su equipo; no está en este plan. Motor, API, infra y contratos siguen en `main`.
