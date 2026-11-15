@@ -85,6 +85,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 ## Revisión final pendiente
 
+- **Interfaz nueva (§9.2):** los commits remotos 2bc00e8/c4bccf4 llegaron después del deploy T38. La revisión humana contra AGENTS §5–§7 sigue pendiente; la QA automatizada de descargas no la sustituye. Antes de otra publicación web debe registrarla una persona. No se han fusionado cambios de frontend.
+
 - **T32:** revisión D7 cerrada por el dueño y PDF por delegación; métrica revisada 148/172 conjunta,86,05%, no precisión científica. Decisión/hashes en docs/T32_PDF_DECISIONES.md. Un PDF conserva exclusión de extracción automática por texto mal codificado; no bloquea ni añade condiciones al pack. Las aprobaciones locales no autentican al operador.
 
 - **T31:** terminada con dos corridas reales e idempotentes usando SSO en la cuenta `352818909129`. `infra/outputs.env` versiona los IDs/ARNs/URLs de tabla, bucket privado, cola/DLQ, user pool y cliente público. No contiene credenciales ni secretos. El rol para T31 no concede permisos de Lambda ni worker; T33/T34 deberán definir y probar permisos separados.
@@ -107,6 +109,7 @@ Una entrada por sesión de agente, la más reciente arriba.
 - git pull --rebase sin cambios de main; solo referencia frontend actualizada, sin merge. STS pasa con perfil/cuenta/rol esperados. GetQueueAttributes ingest pasa: visibilidad de 960 s, redrive de 3 intentos a DLQ y 2 mensajes preexistentes. ListBucket web pasa (consulta maxkeys=0, no implica bucket vacío). DLQ: 0 visibles y 0 no visibles.
 - GetRole worker devuelve NoSuchEntity y GetFunctionConfiguration ResourceNotFound: rol y función aún no existen. Preparados JSON en /tmp/prometeo-t34-live-d0308e9 y ZIP /tmp/prometeo-worker-d0308e9.zip (Linux arm64/Python3.12); no se aplican antes del prerrequisito administrativo.
 - SimulateCustomPolicy todavía devuelve AccessDenied. El relevo exige validación administrativa de CreateMappingOnlyForWorker; se pidió confirmar allowed para ARN exacto e implicitDeny para otro. No se cambió perfil ni se concedió permiso global para eludir ese paso. Trabajos independientes continúan.
+- Comandos administrativos exactos preparados en docs/T34_SIMULACION_IAM.md, con declaración aislada y controles positivo/negativo. No requieren crear recursos; pendiente respuesta del administrador a la consulta de validación.
 - deploy_web terminó 0; invalidación IAAD71RW5QYWP8IJPPZV0H6U19 Completed. Mismos bucket/CF. Pack/lens/mapping remotos coinciden byte a byte después del sync.
 - Durante el push llegaron 2bc00e8/c4bccf4. Se integran por rebase conservando ambas bitácoras; nueva regla de revisión humana UI y una sola lógica recibida. El deploy se creó a14:50:18UTC, antes del commit del gate a14:52:42UTC. La QA automática no equivale a revisión humana contra §5–§7: queda pendiente §9.2 y no habrá otra publicación web sin esa revisión registrada. Delegaciones T32/esquema ratificadas por dueño; no se reabren.
 - QA real en CloudFront con Chrome a 1280×900/390×844, sin dobles HTTP: descarga CSV de 268 registros y datacard de 22 fuentes, SHA coincide, unidades/outcomes presentes. Sin overlay/errores de consola ni desborde horizontal. Análisis real HTTP 200, mode=ai, tres frases citadas. Es otra solicitud real de análisis; no hay llamadas de lote T34 ni gasto facturado inferido.
