@@ -1,4 +1,10 @@
-# T33: reservas de carga preparadas, aún deshabilitadas
+# T33: cargas desplegadas, verificación completa pendiente
+
+**Estado más reciente:** se publicó API y se aplicó --uploads correctamente.
+Get/Put CORS ya autorizados y preflight real S3 HTTP 200 permite PUT con
+content-type/if-none-match desde CloudFront. Falta smoke de archivo real y el
+consumidor worker no está desplegado: complete deja mensajes en cola pendientes.
+Las notas de bloqueo anteriores documentan el estado previo.
 
 **Actualización 15-nov:** el dueño aprobó D3 con los límites de este documento
 (20.000.000 bytes, 60 páginas, 30 documentos). Las secciones de propuesta/costo
@@ -42,9 +48,9 @@ sin confirmar, trabajos terminados y leases aún activos.
 
 No hay límites de producción implícitos: sin `UPLOADS_ENABLED=true` y sin
 `UPLOAD_LIMITS_JSON` completo con enteros positivos, el servicio responde 503.
-La configuración no se ha aplicado a Lambda. Tampoco se agregaron rutas JWT
-de documentos ni permisos S3/actualización de tabla en AWS. La API desplegada
-continúa con el alcance de proyectos vacíos.
+La configuración ya se aplicó a Lambda junto con rutas JWT de documentos,
+permisos S3/tabla/cola y límites D3. Sigue pendiente comprobar el flujo de
+archivo real; la configuración de la API no crea un consumidor SQS.
 
 Ejemplo **para revisión**, no aprobación ni instrucción de activación:
 
@@ -59,7 +65,7 @@ operación de cancelación/limpieza para devolver cupo; no está implementada.
 demuestra que el archivo llegó a S3. El hash permanece null, stage upload y
 status queued; no es confirmación ni evidencia de extracción.
 
-## Lo que falta antes de habilitar
+## Lo que falta para verificar la etapa completa
 
 1. D3 está aprobada. Mantener revisión de contrato/datos consolidada en
    `REVISION_FINAL_PENDIENTE.md`, sin aprobación automática de esquemas/datos.
@@ -116,15 +122,15 @@ límites y carrera por último cupo, repetición/conflicto y estados. También S
 S3 real generando firma sin red con credenciales ficticias solo de test para
 comprobar headers y caducidad. No prueba enforcement S3 ni transacciones AWS.
 
-## Despliegue y smoke pendientes de CORS
+## Despliegue aplicado y smoke pendiente
 
 El script `infra/deploy_projects.py --uploads` agrega las rutas JWT de tickets,
 complete/listado/jobs/resume y permisos de ejecución de tabla, prefijo raw y
 SendMessage de la cola existente. Antes de habilitar variables aplica CORS PUT
-con if-none-match; AWS rechazó ese paso con AccessDenied (exit 254). Falta añadir
-s3:GetBucketCORS/s3:PutBucketCORS para el bucket concreto al permission set.
+con if-none-match; el primer intento fue rechazado. Tras actualizar permisos,
+la aplicación terminó con código 0 y el preflight real S3 fue HTTP 200.
 
-Después de actualizarlo, probar primero con el dueño y una fuente real:
+Guion de despliegue aplicado y comprobación con una fuente real aún pendiente:
 
 ```bash
 source infra/config.env

@@ -1,6 +1,11 @@
 # T33: permisos pendientes para desplegar
 
-## Bloqueo actual: CORS para cargas
+## CORS para cargas: resuelto
+
+Tras actualizar el permission set, GetBucketCors y aplicación --uploads
+terminaron correctamente. OPTIONS real S3 respondió HTTP 200 con PUT y
+content-type/if-none-match desde CloudFront. La declaración de abajo ya está
+comprobada; los rechazos descritos corresponden al intento previo.
 
 El intento `deploy_projects.py --uploads` fue rechazado con AccessDenied al
 ejecutar s3api put-bucket-cors (exit 254). No habilitó rutas/variables de cargas.

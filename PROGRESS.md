@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33 cargas completas localmente hasta confirmación/encolado/progreso; despliegue detenido por s3:PutBucketCORS. T34 worker local hasta propuesta, empaquetado sin deploy. Drafts A/B reales comprobados; T31 hecha. |
+| Tarea en curso | T33 API de cargas/complete/progreso desplegada; CORS S3 actualizado y preflight real 200. Falta smoke de archivo/confirmación. T34 worker local hasta propuesta, sin deploy/consumidor. Drafts A/B comprobados; T31 hecha. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Añadir declaración CORS del bucket en `docs/T33_PERMISOS_DESPLIEGUE.md`, reprovisionar/renovar SSO, desplegar API con --uploads y ejecutar smoke de archivo real. Después preparar provisión/rol/asociación SQS de T34 y lote real. Decisiones humanas consolidadas en `docs/REVISION_FINAL_PENDIENTE.md`; no aprobar datos automáticamente. |
+| Siguiente paso exacto | Ejecutar smoke de archivo real T33 con las dos sesiones; PUT/overwrite/complete/aislamiento. La cola todavía no tiene consumidor: preparar provisión/rol/asociación SQS de T34 y lote real después. Decisiones humanas en `docs/REVISION_FINAL_PENDIENTE.md`; no aprobar datos automáticamente. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -96,6 +96,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · CORS confirmado y etapa API de cargas desplegada
+- Dueño actualizó permission set. GetBucketCors real correcto; se publicó API actual (`20_api.sh`, código 0) y se aplicó configuración --uploads (`deploy_projects.py`, código 0). Despliegue acotado a endpoints operativos autorizado por la instrucción de avanzar/desplegar etapas; no aprueba contenido científico ni publica packs.
+- Lectura posterior confirma origen CloudFront, método PUT, if-none-match y headers anteriores. OPTIONS real a S3 con Origin web y headers content-type/if-none-match: HTTP 200, Access-Control-Allow-Origin correcto, Allow-Methods PUT y Allow-Headers content-type, if-none-match.
+- T33 habilita reservas/complete/listado/jobs/resume en API, con gate configurado y límites D3 aprobados. Worker todavía no está desplegado ni asociado a la cola: los mensajes quedarán pendientes hasta esa etapa. No se afirma procesamiento completo.
+- Preflight local: API 98 passed, 1 skipped (PDF worker no instalado en api/.venv); prueba completa worker de la entrega anterior fue 99 con requirements-worker. Sin cambios de código en esta confirmación; falta smoke de archivo real.
 
 ### 2026-11-15 · T33 complete/colas/progreso y T34 worker local
 - Autorización del dueño: avanzar/desplegar por etapas y reunir decisiones humanas para revisión final. `docs/REVISION_FINAL_PENDIENTE.md` conserva D7/PDF/T30/ML/D10 y gate de aprobación; D3 sigue aprobada.
