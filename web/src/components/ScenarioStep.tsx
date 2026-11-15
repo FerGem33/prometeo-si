@@ -5,7 +5,7 @@ import {
   buildLensFromBlueprint,
   suggestDesignPrompts,
 } from "../ingest/blueprint";
-import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
+import { buildPackFromDocs, extractVariablesFromDocs, variablesFromPack } from "../ingest/buildPack";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
 import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
@@ -198,35 +198,18 @@ export function ScenarioStep({
     return out;
   }, [pack]);
 
-  // Demo fallback variables
-  const demoVariables = useMemo<ExtractedVariable[]>(() => {
-    return pack.schema.variables
-      .filter((v) => !(v.type === "cat" && v.role === "partition"))
-      .map((v) => {
-        const isNum = v.type === "num";
-        return {
-          id: v.id,
-          label: v.long ?? v.label,
-          type: isNum ? "numeric" : "categorical",
-          unit: isNum ? (v.unit ?? null) : null,
-          min: isNum ? v.range[0] : undefined,
-          max: isNum ? v.range[1] : undefined,
-          median: isNum ? (v.range[0] + v.range[1]) / 2 : undefined,
-          categories: !isNum ? (cats[v.id]?.map((c) => c.value) ?? []) : undefined,
-          mode: !isNum ? cats[v.id]?.[0]?.value : undefined,
-          include: scenario.active.includes(v.id),
-          citations: [
-            {
-              docId: "nasa-psi-pack",
-              docName: "NASA PSI Reference Pack",
-              kind: "table" as const,
-              column: v.id,
-              quote: `${v.label} from NASA PSI database (${pack.records.length} records)`,
-            },
-          ],
-        };
-      });
-  }, [pack, cats, scenario.active]);
+  // Reference-pack candidates, cited to real source rows (or labelled as normalized pack records).
+  const packVariables = useMemo(() => variablesFromPack(pack), [pack]);
+  const demoVariables = useMemo<ExtractedVariable[]>(
+    () =>
+      packVariables.map((v) => ({
+        ...v,
+        // Most frequent category first, as before.
+        mode: v.type === "categorical" ? (cats[v.id]?.[0]?.value ?? v.mode) : undefined,
+        include: scenario.active.includes(v.id),
+      })),
+    [packVariables, cats, scenario.active],
+  );
 
   // Variables extracted from uploaded documents
   const uploadedVariables = useMemo(() => {
@@ -723,7 +706,9 @@ export function ScenarioStep({
           </div>
         )}
         {citation?.quote && (
-          <span className="citation-quote">“{citation.quote}”</span>
+          <span className="citation-quote">
+            {citation.basis === "approved_pack" ? `${t("Approved pack record (normalized, not a literal source quotation):")} ` : ""}“{citation.quote}”
+          </span>
         )}
       </li>
     );

@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { evidenceLevels, type Lens, type Pack } from "../engine";
 import { COVERAGE_LETTER } from "../components/CaseModules";
-import { extractVariablesFromDocs } from "./buildPack";
+import { extractVariablesFromDocs, variablesFromPack } from "./buildPack";
 import { compileUiBlueprint } from "./blueprint";
 import { extractCaseFeatures } from "./caseNotes";
 import { parseTabularDocument } from "./csv";
@@ -19,17 +19,22 @@ const pack = JSON.parse(readFileSync("public/demo/pack.json", "utf-8")) as Pack;
 const lens = JSON.parse(readFileSync("public/demo/lens.json", "utf-8")) as Lens;
 const PURPOSE = lens.purpose_example!;
 
-// The wizard's view of the reference pack: one candidate per schema variable, cited to the pack.
-const packVars: ExtractedVariable[] = pack.schema.variables
-  .filter((v) => !(v.type === "cat" && v.role === "partition"))
-  .map((v) => ({
-    id: v.id,
-    label: v.long ?? v.label,
-    type: v.type === "num" ? "numeric" : "categorical",
-    unit: v.type === "num" ? v.unit : null,
-    include: true,
-    citations: [{ docId: "pack", docName: "pack", kind: "table", column: v.id, quote: v.label }],
-  }));
+// The wizard's view of the reference pack: one candidate per schema variable, cited to real source rows.
+const packVars: ExtractedVariable[] = variablesFromPack(pack);
+
+describe("reference-pack provenance", () => {
+  it("cites real source files with a row or page; normalized records are labelled as such", () => {
+    const names = new Set(pack.sources.map((s) => s.name));
+    for (const v of packVars) {
+      expect(v.citations.length).toBeGreaterThan(0);
+      for (const c of v.citations) {
+        expect(names.has(c.docName)).toBe(true);
+        expect(c.row ?? c.page).toBeDefined();
+        if (c.basis === "approved_pack") expect(c.recordId && c.variableId === v.id).toBeTruthy();
+      }
+    }
+  });
+});
 
 describe("variable score (§3.2)", () => {
   it("proposes the known variables of the PSI corpus for the example purpose, with reasons", () => {
@@ -145,7 +150,7 @@ describe("case notes and free chat guards (§3.6, §3.7)", () => {
   });
 });
 
-const LOTE = "/home/alexteori/Descargas/lote";
+const LOTE = process.env.PROMETEO_LOTE_DIR ?? "/home/alexteori/Descargas/lote";
 describe.skipIf(!existsSync(LOTE))("variable score on the real batch", () => {
   it("orders the batch variables with reasons and provenance", async () => {
     const docs: UploadedDoc[] = [];

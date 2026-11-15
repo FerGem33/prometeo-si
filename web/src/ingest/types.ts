@@ -91,6 +91,11 @@ export interface VariableCitation {
   row?: number;
   column?: string;
   quote: string;
+  doi?: string;
+  /** "approved_pack": a normalized pack record, not a literal quotation of the source. */
+  basis?: "approved_pack";
+  recordId?: string;
+  variableId?: string;
 }
 
 export interface ExtractedVariable {

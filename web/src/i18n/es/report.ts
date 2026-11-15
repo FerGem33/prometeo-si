@@ -742,4 +742,8 @@ export const REPORT: Record<string, string> = {
   "Numeric": "Numérica",
   "Categorical": "Categórica",
   "; and {0} more reasons (Table 1).": "; y {0} motivos más (Tabla 1).",
+  "Unit for {0}": "Unidad de {0}",
+  "Enter a finite number, using a compatible unit.": "Introduce un número finito, con una unidad compatible.",
+  "Outside the range recorded in the corpus.": "Fuera del rango registrado en el corpus.",
+  "Enter at least one condition for your case.": "Introduce al menos una condición de tu caso.",
 };

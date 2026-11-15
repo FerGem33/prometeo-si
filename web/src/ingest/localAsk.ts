@@ -88,7 +88,8 @@ function getKnownCategories(pack: Pack, catId: string): string[] {
  */
 export function interpretLocalQuestion(
   question: string,
-  pack: Pack
+  pack: Pack,
+  strict = false,
 ): Scenario | { unsupported: string } {
   const trimmed = question.trim();
   if (!trimmed || !pack.schema?.variables?.length) {
@@ -143,15 +144,17 @@ export function interpretLocalQuestion(
 
       if (matchedNum !== null && !isNaN(matchedNum)) {
         let finalNum = matchedNum;
+        if (matchedUnit && /^(and|y|with|con|for|para|at|en)$/i.test(matchedUnit)) matchedUnit = null;
         if (matchedUnit && numVar.unit) {
           const conv = getConversion(matchedUnit, numVar.unit);
           if (conv) {
             finalNum = applyConversion(finalNum, conv);
-          }
+          } else if (strict && matchedUnit !== numVar.unit) continue;
         }
 
         // Clamp to variable range
         if (Array.isArray(numVar.range) && numVar.range.length === 2) {
+          if (strict && (finalNum < numVar.range[0] || finalNum > numVar.range[1])) continue;
           finalNum = Math.min(numVar.range[1], Math.max(numVar.range[0], finalNum));
         }
 

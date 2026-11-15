@@ -527,6 +527,57 @@ export function extractVariablesFromDocs(
     .map((x) => x.v);
 }
 
+/**
+ * Candidate variables of an approved pack (reference corpus), cited to real source rows or pages.
+ * Without a literal text for the variable, the record is cited as a normalized pack record (basis "approved_pack").
+ */
+export function variablesFromPack(pack: Pack): ExtractedVariable[] {
+  return pack.schema.variables
+    .filter((v) => !(v.type === "cat" && v.role === "partition"))
+    .map((v) => {
+      const records = pack.records.filter((r) => r.values[v.id] !== undefined);
+      const citations: VariableCitation[] = [];
+      const seen = new Set<string>();
+      for (const r of records) {
+        const source = pack.sources.find((s) => s.id === r.source.id);
+        const original = r.orig?.[v.id];
+        const literal = r.confidence === "paper" ? r.quote : original?.text;
+        const quote = literal || JSON.stringify(r.values[v.id]);
+        if (!source || !quote || (r.source.row === undefined && r.source.page === undefined)) continue;
+        const key = `${source.id}:${r.source.row ?? r.source.page}:${original?.column}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const study = pack.studies.find((s) => s.id === r.study);
+        citations.push({
+          docId: source.id,
+          docName: source.name,
+          kind: r.confidence === "paper" ? "paper" : "table",
+          row: r.source.row,
+          page: r.source.page,
+          column: original?.column ?? undefined,
+          quote,
+          doi: study?.publications?.find((p) => p.doi)?.doi ?? study?.links.find((l) => l.kind === "doi")?.url,
+          ...(!literal ? { basis: "approved_pack" as const, recordId: r.id, variableId: v.id } : {}),
+        });
+      }
+      const categories = [...new Set(records.map((r) => r.values[v.id]).filter((x): x is string => typeof x === "string"))].sort();
+      return {
+        id: v.id,
+        label: v.long ?? v.label,
+        type: v.type === "num" ? ("numeric" as const) : ("categorical" as const),
+        unit: v.type === "num" ? v.unit : null,
+        min: v.type === "num" ? v.range[0] : undefined,
+        max: v.type === "num" ? v.range[1] : undefined,
+        median: v.type === "num" ? (v.range[0] + v.range[1]) / 2 : undefined,
+        sigma: v.type === "num" ? v.sigma : undefined,
+        categories: v.type === "cat" ? categories : undefined,
+        mode: v.type === "cat" ? categories[0] : undefined,
+        include: true,
+        citations,
+      };
+    });
+}
+
 /** Readable study name from a file name: drops the extension, a repeated "ID__ID_" prefix and underscores. */
 export function studyShortName(fileName: string): string {
   const base = fileName.replace(/\.[^.]+$/, "");

@@ -321,4 +321,5 @@ export const FLOW: Record<string, string> = {
   "Write the purpose to continue.": "Escribe el propósito para continuar.",
   "Select the variables": "Selecciona las variables",
   "Variables are ordered by a deterministic relevance score computed from your documents and your purpose; the reasons are shown under each one. Select the ones to include. No value is set here: you describe your case in the report.": "Las variables se ordenan con una puntuación de relevancia determinista calculada con tus documentos y tu propósito; los motivos aparecen bajo cada una. Selecciona las que quieras incluir. Aquí no se fija ningún valor: tu caso se describe en el informe.",
+  "Approved pack record (normalized, not a literal source quotation):": "Registro normalizado del pack aprobado (no es una cita literal de la fuente):",
 };

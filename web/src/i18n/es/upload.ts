@@ -1,5 +1,9 @@
 // Spanish entries for document upload, GenUI design, and variable inspection.
 export const UPLOAD: Record<string, string> = {
+  "Purpose of this paper": "Propósito de este informe",
+  "Purpose": "Propósito",
+  "Explain what you want to understand or decide from the documents. The purpose determines proposed variables and modules; focus presets remain secondary adjustments.": "Explique qué quiere comprender o decidir a partir de los documentos. El propósito determina las variables y módulos propuestos; los enfoques siguen como ajustes secundarios.",
+  "Select variables to include and inspect their relevance scores and source citations. Enter values later, when describing your case in the paper.": "Seleccione las variables e inspeccione su puntuación de relevancia y sus citas. Introduzca los valores después, al describir su caso en el informe.",
   "Display unit for {0}": "Unidad de visualización para {0}",
   "Show in…": "Mostrar en…",
   "Drop PDF, CSV, TSV or JSON files or whole folders here (or click to browse)":

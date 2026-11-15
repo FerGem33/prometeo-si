@@ -1,5 +1,5 @@
-import { useMemo, useState, type ComponentType } from "react";
-import { evidenceLevels, explainRank, type Scenario, type StudyResult, type VariableEvidence } from "../engine";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { evidenceLevels, explainRank, type NumVariable, type Scenario, type StudyResult, type VariableEvidence } from "../engine";
 import type { ModuleSpec, ModuleType } from "../ingest/modules";
 import { extractCaseFeatures, type CaseFeature } from "../ingest/caseNotes";
 import { answerLocalQuery, isPredictionQuestion, type LocalAnswer } from "../ingest/localAsk";
@@ -10,7 +10,8 @@ import { originalPack } from "../i18n/localize";
 import type { Extra } from "../state";
 import { EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { LocalAnswerView } from "./AssistantPanel";
-import { NumField } from "./NumField";
+import { caseFromFields } from "../contracts/case";
+import { compatibleUnits } from "../ingest/variableView";
 import { LevelTag } from "./ScenarioPanel";
 import { Src, useData } from "./ctx";
 import { t } from "../i18n";
@@ -62,6 +63,58 @@ function CatInput({ id, label, value, onPick }: { id: string; label: string; val
   );
 }
 
+function NumCaseField({ v, value, onValue }: { v: NumVariable; value: number | undefined; onValue: (n: number) => void }) {
+  const { pack } = useData();
+  const [text, setText] = useState(value === undefined ? "" : String(value));
+  const [unit, setUnit] = useState(v.unit);
+  const units = [v.unit, ...compatibleUnits(v.unit)];
+  // Input validation and unit conversion live in contracts/case.ts; levels stay with the engine.
+  const check = caseFromFields(pack, [v.id], { [v.id]: { value: text, unit } });
+  // A value set elsewhere (confirmed case notes, the scenario panel) replaces what the field shows.
+  const shown = check.scenario.values[v.id];
+  useEffect(() => {
+    if (value !== undefined && (typeof shown !== "number" || Math.abs(shown - value) > 1e-9 * Math.max(1, Math.abs(value)))) {
+      setText(String(value));
+      setUnit(v.unit);
+    }
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  const commit = (nextText: string, nextUnit: string) => {
+    setText(nextText);
+    setUnit(nextUnit);
+    const r = caseFromFields(pack, [v.id], { [v.id]: { value: nextText, unit: nextUnit } });
+    const x = r.scenario.values[v.id];
+    if (typeof x === "number") onValue(x);
+  };
+  const error = text.trim() ? check.errors[v.id] : undefined;
+  const warning = check.warnings[v.id];
+  return (
+    <label className="mod-field">
+      <span>{v.long ?? v.label}</span>
+      <span className="mod-input">
+        <input aria-label={t("{0} value", v.label)} aria-invalid={!!error} inputMode="decimal" value={text} onChange={(e) => commit(e.target.value, unit)} />
+        {units.length > 1 ? (
+          <select aria-label={t("Unit for {0}", v.label)} value={unit} onChange={(e) => commit(text, e.target.value)}>
+            {units.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <small>{v.unit}</small>
+        )}
+      </span>
+      {unit !== v.unit && typeof value === "number" && !error && <small>= {num(value)} {v.unit}</small>}
+      {error && <small className="mod-out" role="alert">{t(error)}</small>}
+      <small className={warning ? "mod-out" : ""}>
+        {warning
+          ? t("Outside the range found in the documents ({0}–{1} {2}).", num(v.range[0]), num(v.range[1]), v.unit)
+          : t("Range in the documents: {0}–{1}", num(v.range[0]), num(v.range[1]))}
+      </small>
+    </label>
+  );
+}
+
 function ScenarioInput({ spec, scenario, setScenario, extras, setExtras }: ModuleProps) {
   const { pack } = useData();
   const vars = spec.variables.map((id) => pack.schema.variables.find((v) => v.id === id)).filter((v) => !!v);
@@ -69,21 +122,7 @@ function ScenarioInput({ spec, scenario, setScenario, extras, setExtras }: Modul
     <div className="mod-form">
       {vars.map((v) => {
         const x = scenario.values[v.id];
-        if (v.type === "num") {
-          const out = typeof x === "number" && (x < v.range[0] || x > v.range[1]);
-          return (
-            <label key={v.id} className="mod-field">
-              <span>{v.long ?? v.label}</span>
-              <NumField label={t("{0} value", v.label)} min={-1e12} max={1e12} value={typeof x === "number" ? x : undefined} onCommit={(n) => setValue(setScenario, v.id, n)} />
-              <small>{v.unit}</small>
-              <small className={out ? "mod-out" : ""}>
-                {out
-                  ? t("Outside the range found in the documents ({0}–{1} {2}).", num(v.range[0]), num(v.range[1]), v.unit)
-                  : t("Range in the documents: {0}–{1}", num(v.range[0]), num(v.range[1]))}
-              </small>
-            </label>
-          );
-        }
+        if (v.type === "num") return <NumCaseField key={v.id} v={v} value={typeof x === "number" ? x : undefined} onValue={(n) => setValue(setScenario, v.id, n)} />;
         return (
           <label key={v.id} className="mod-field">
             <span>{v.long ?? v.label}</span>

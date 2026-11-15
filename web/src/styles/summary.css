@@ -257,3 +257,4 @@ h2.sec.more { margin-top: 40px; border-top: 2px solid var(--ink); }
 .vscore { font-family: "Fira Sans", sans-serif; font-size: 12px; border: 1px solid var(--ink); border-radius: 2px; padding: 0 5px; }
 .vreasons { font-family: "Fira Sans", sans-serif; font-size: 12px; color: var(--muted); margin: 2px 0 4px; }
 @media (max-width: 700px) { .mod-table { display: block; overflow-x: auto; } }
+.mod-input { display: flex; gap: 6px; align-items: center; }

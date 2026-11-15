@@ -9,7 +9,7 @@ import { sha256Hex, detectMediaType } from "./storage";
 import type { UploadedDoc } from "./types";
 import { evidenceLevels, rank, findings, gaps, graph } from "../engine";
 
-const LOTE_DIR = "/home/alexteori/Descargas/lote";
+const LOTE_DIR = process.env.PROMETEO_LOTE_DIR ?? "/home/alexteori/Descargas/lote";
 
 describe("Real dataset validation: /home/alexteori/Descargas/lote", () => {
   it("successfully parses all 23 files in the lote dataset", async () => {
