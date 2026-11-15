@@ -13,6 +13,7 @@ import { Cover } from "./components/Cover";
 import { ScenarioStep } from "./components/ScenarioStep";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
+import { KnowledgeGraph } from "./components/KnowledgeGraph";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
@@ -217,6 +218,12 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEd
         <div className="row">
           <div className="wide">
             <FindingsList findings={r.finds} />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="wide">
+            <KnowledgeGraph figure={4} scenario={scenario} />
           </div>
         </div>
 
