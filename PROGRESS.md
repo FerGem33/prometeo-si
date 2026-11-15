@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **T34 · laptop AWS.** Política consolidada aplicada; lecturas SQS/S3 pasan. T38 publicada y verificada en CloudFront. Worker espera confirmación de la simulación administrativa del mapping exigida por RELEVO §0; paquete/JSON preparados. |
 | Último commit verificado | API desplegada `2745d85` (12 rutas JWT, original CSV real); T38 publicada desde `d0308e9`; bundle T37 `8f23050`; T32 delegada `cc61d95`. 148 API/40 pipeline/106 web/6 helper pasan. |
-| Siguiente paso exacto | Confirmar simulación CreateMappingOnlyForWorker (allowed ARN worker, implicitDeny otro ARN). Perfil operativo no permite SimulateCustomPolicy. Luego aplicar infra/deploy_worker.py dos veces, primero deshabilitado; lote10+corrupto, métricas/DLQ y deshabilitar. T35 aún sin activar; pendientes de código T37/T36 documentados. |
+| Siguiente paso exacto | Ruta corta autorizada: verificar reutilización worker, ventana de lote10+corrupto/DLQ y deshabilitar. Activar esquema T35; conectar revisión persistente y publicación/síntesis T36/T37 y smoke real de dos tablas. Se omite simulación administrativa por instrucción del dueño; validadores/aislamiento/presupuesto se mantienen. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -104,6 +104,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Ruta corta autorizada: T34 en AWS y APIs T35–T37
+- Dueño pide avanzar contra reloj con validaciones esenciales de funcionamiento. Se omite la simulación administrativa pendiente como comprobación procedimental; no se registra como pasada. Se conservan IAM acotado, creación inicialmente deshabilitada, citas/hashes, aislamiento, validación de respuestas, presupuesto USD30 y parada de lote>USD5.
+- Primera aplicación real del worker terminó0: rol/Lambda y mapping01099ec2-85e7-4271-9a74-9ac80f6289fe creados por script, deshabilitado. Segunda corrida de reutilización en curso/comprobada antes de habilitar. infra/outputs.env agrega solo ARN/UUID.
+- Ruta de entrega: lote10+corrupto mientras se conectan persistencia de correcciones, publicación privada por versión y síntesis citada. No se toca frontend ni se vuelve a publicar web sin gate de revisión humana nuevo.
 
 ### 2026-11-15 · Política aplicada: web publicada y preflight T34
 - git pull --rebase sin cambios de main; solo referencia frontend actualizada, sin merge. STS pasa con perfil/cuenta/rol esperados. GetQueueAttributes ingest pasa: visibilidad de 960 s, redrive de 3 intentos a DLQ y 2 mensajes preexistentes. ListBucket web pasa (consulta maxkeys=0, no implica bucket vacío). DLQ: 0 visibles y 0 no visibles.
