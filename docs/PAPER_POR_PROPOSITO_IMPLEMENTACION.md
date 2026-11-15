@@ -1,5 +1,7 @@
 # Paper guiado por propósito: implementación y relevo
 
+> Verificación más reciente del merge y límites de publicación: [Prueba de integración en nasa2genui](PRUEBA_INTEGRACION_NASA2GENUI.md).
+
 > **Estado tras la integración (15-nov, merge en `nasa2genui`).** El dueño eligió como base la implementación completa de alexteori14 y confirmó las cuatro decisiones de §7 (escala A–D de cobertura, chat solo sobre el corpus, variable manual = D, caso guardado con la evaluación). De esta entrega se conservaron: procedencia con filas reales del pack (`variablesFromPack` en `ingest/buildPack.ts`, con `basis: "approved_pack"` rotulado), validación del caso (`contracts/case.ts`, usada por `scenario_input`; un valor fuera del rango registrado ahora es aviso y no error, para poder clasificarlo como no cubierto), `PROMETEO_LOTE_DIR` y el modo `strict` de `interpretLocalQuestion`. Se retiraron por duplicar la implementación base: `relevance.ts`, `PurposeModules.tsx`, `ManualVariable.tsx` y `purpose.css`. La puntuación vigente está en `ingest/variableScore.ts` y sus pesos en `docs/PUNTUACION_VARIABLES.md`; los módulos en `ingest/modules.ts` y `components/CaseModules.tsx`. El resto de este documento describe la entrega parcial original.
 
 Fecha: 15-nov-2026. Rama: `nasa2genui`. Referencia: [especificación recibida](SPEC_PAPER_INTELIGENTE_POR_PROPOSITO.md).

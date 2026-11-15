@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Paper inteligente guiado por propósito (spec) integrado en nasa2genui.** Base: implementación de alexteori14 (completa con las decisiones §7 confirmadas por el dueño); se incorporaron de la de stringbuilder la procedencia con filas reales del pack, la validación del caso (`contracts/case.ts`) y `PROMETEO_LOTE_DIR`. |
-| Último commit verificado | merge de origin/nasa2genui (9cf6d4e) sobre `2b8e5a0`. Main `9d55771` ya integrado. Ver bitácora para conteos de pruebas. T38 web sigue en `d0308e9`; no se volvió a publicar. |
-| Siguiente paso exacto | Revisión visual humana del paso Interface design, Variables, módulos y reporte contra AGENTS §5–§7; luego `infra/20_api.sh` (/design con módulos, /propose) y `infra/deploy_web.sh` con confirmación humana. No declarar aceptado todo el corpus. |
+| Tarea en curso | Integración local de frontend y backend en `nasa2genui`, verificada; publicación pendiente. |
+| Último commit verificado | Integración `1762ae5`: incluye `origin/nasa2genui` 2c4c34e y `origin/main` 0d6f11c. 188 API, 234 web pasan (1 omitida), build y validadores pasan. |
+| Siguiente paso exacto | Ejecutar aceptación manual de integración y revisión humana de UI; seguir docs/PRUEBA_INTEGRACION_NASA2GENUI.md. No se ha desplegado ni creado un entorno AWS aislado para la rama. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -104,6 +104,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Pull y merge final de integración local
+- Pull de `origin/nasa2genui` conservando ambos historiales; resueltos conflictos de bitácora, handler y pruebas. Se conserva el contrato de módulos de la interfaz remota y el preflight privado localhost. Merge de `origin/main` 0d6f11c en 1762ae5. No se mueve main ni se incorporan sus cambios sin commit.
+- Verificación: 188 API pasan; 234 web pasan y 1 omitida por ruta fija Linux en nasaDetect.test.ts. Lote real y bundle externo sí ejecutados. Build con API_URL de outputs, check_agnostic y validate_pack correctos; aviso existente de bundle >500 kB. Scripts de deploy pasan bash -n.
+- Sin publicación ni prueba contra Bedrock en vivo. Procedimiento y límites en docs/PRUEBA_INTEGRACION_NASA2GENUI.md. Esta verificación no declara completa toda la spec de chat/síntesis.
 
 ### 2026-11-15 · Continuación backend de integración
 - Se corrigió el preflight privado de Lambda para aplicar las cabeceras de autorización a los orígenes locales explícitamente permitidos. 189 pruebas API pasan, incluido el nuevo control para localhost y 127.0.0.1. Cambio local pendiente de commit; sin despliegue.
