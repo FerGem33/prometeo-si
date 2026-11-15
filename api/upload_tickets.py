@@ -137,6 +137,32 @@ class UploadTickets:
         return {'doc_id': item['id'], 'upload': {'url': url, 'method': 'PUT',
                 'headers': {'content-type': item['media_type'], 'if-none-match': '*'}, 'expires_in': 300}}
 
+    def original_url(self, uid, pid, did, data):
+        parent = self.projects.get(uid, pid)
+        item = self.get(pid, did)
+        if not item or item['status'] == 'deleting' or parent['status'] == 'deleting':
+            fail(404, 'not_found', 'Document not found')
+        if not isinstance(data, dict) or set(data)-{'page'}:
+            fail(400, 'invalid_request', 'Expected optional page')
+        if not item.get('expected_sha256') or not item.get('object_etag'):
+            fail(409, 'conflict', 'Complete the upload before opening the original')
+        expected = f'u/{uid}/p/{pid}/raw/{did}'
+        if item['object_key'] != expected:
+            fail(409, 'conflict', 'Unexpected original location')
+        page = data.get('page')
+        if 'page' in data:
+            if item['kind'] != 'paper' or type(page) is not int or page < 1:
+                fail(400, 'invalid_request', 'Page must be a positive integer for a PDF')
+            if not item.get('pages'):
+                fail(409, 'conflict', 'Wait for PDF parsing before opening a cited page')
+            if page > item['pages']:
+                fail(400, 'invalid_request', 'Page exceeds the original PDF')
+        url = self.s3.generate_presigned_url('get_object', Params={
+            'Bucket': self.bucket, 'Key': expected, 'ResponseContentType': item['media_type'],
+            'ResponseContentDisposition': 'inline', 'ResponseCacheControl': 'private, no-store'},
+            ExpiresIn=300, HttpMethod='GET')
+        return {'url': url+(f'#page={page}' if page is not None else ''), 'expires_in': 300}
+
     def list(self, uid, pid, query):
         self.projects.get(uid, pid)
         if set(query) - {'limit', 'cursor'}:

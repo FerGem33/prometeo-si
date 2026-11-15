@@ -122,6 +122,7 @@ export type Preset = {
 };
 
 export type Lens = {
+  ml_thresholds?: import("./dataset").DatasetThresholds;
   title: string;
   kicker?: string;
   subject?: string;

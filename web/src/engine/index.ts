@@ -3,3 +3,4 @@ export * from "./types";
 export * from "./core";
 export * from "./interpret";
 export * from "./extend";
+export * from "./dataset";

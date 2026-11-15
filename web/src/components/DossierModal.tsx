@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { pool } from "../engine";
-import type { DataRecord, Finding, OverallEvidence, Pack, Range, Scenario, StudyResult } from "../engine";
+import type { DataRecord, Finding, OverallEvidence, Pack, Scenario, StudyResult } from "../engine";
 import { useData } from "./ctx";
+import type { Mapping } from "./ctx";
 import { FINDING_LEVEL, findingText, findingTitle, overallText, whyText } from "../report/text";
 import { matchingHabitatPreset, allHabitatPresets } from "./HabitatFigure";
 import { scenarioValueText, varOf } from "../report/format";
 import { generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
+import { datasetCsv, datasetExport, variableColumns } from "../report/dataset-export";
 import { t, many } from "../i18n";
 
 export type ExportScope = "all" | "comparable" | "graded";
@@ -28,47 +30,8 @@ export function scopeRecords(pack: Pack, scope: ExportScope, comparable: DataRec
   return pack.records;
 }
 
-export function harmonizedCsv(pack: Pack, records: DataRecord[] = pack.records): string {
-  const nums = pack.schema.variables.filter((v) => v.type === "num");
-  const cats = pack.schema.variables.filter((v) => v.type === "cat");
-  const part = cats.find((v) => v.role === "partition");
-  const others = cats.filter((v) => v !== part);
-  const head = [
-    "record_id",
-    "study_id",
-    "study_short",
-    "kind",
-    ...(part ? [part.id] : []),
-    ...nums.flatMap((v) => [`${v.id}_min`, `${v.id}_max`]),
-    ...others.map((v) => v.id),
-    "confidence",
-    "source_file",
-    "source_row",
-    "source_page",
-    "quote",
-    "flags",
-  ];
-  const shorts = new Map(pack.studies.map((s) => [s.id, s.short]));
-  const files = new Map(pack.sources.map((s) => [s.id, s.name]));
-  const rows = records.map((r): unknown[] => [
-    r.id,
-    r.study,
-    shorts.get(r.study),
-    r.kind,
-    ...(part ? [r.values[part.id]] : []),
-    ...nums.flatMap((v) => {
-      const x = r.values[v.id] as Range | undefined;
-      return (Array.isArray(x) ? [x[0], x[1]] : ["", ""]) as unknown[];
-    }),
-    ...others.map((v) => r.values[v.id]),
-    r.confidence,
-    files.get(r.source.id),
-    r.source.row,
-    r.source.page,
-    r.quote,
-    r.flags.join("|"),
-  ]);
-  return csv([head, ...rows]);
+export function harmonizedCsv(pack: Pack, records: DataRecord[] = pack.records, mapping?: Mapping): string {
+  return datasetCsv(pack, records, mapping);
 }
 
 /** The same records as `harmonizedCsv`, as JSON: values keep their engine shape (numeric ranges as [min, max]). */
@@ -108,7 +71,7 @@ export function dataDictionary(pack: Pack) {
       range: v.type === "num" ? v.range : null,
       sigma: v.type === "num" ? v.sigma : null,
       display_units: v.type === "num" ? (v.display_units ?? []) : [],
-      csv_columns: v.type === "num" ? [`${v.id}_min`, `${v.id}_max`] : [v.id],
+      csv_columns: variableColumns(v),
       records_with_value: has(v.id),
     })),
     thresholds: pack.schema.thresholds,
@@ -120,7 +83,8 @@ export function dataDictionary(pack: Pack) {
     })),
     notes: [
       "An empty cell means the source does not record the value; it is not a zero.",
-      "Numeric variables are ranges in the canonical unit: <id>_min and <id>_max.",
+      "Numeric variables are ranges in the canonical unit: <id>_min [unit] and <id>_max [unit].",
+      "<id>_original columns keep the value before a reviewer correction; <id>_source_text and <id>_source_unit keep the cell as the source wrote it.",
       ...(part ? [`${part.id} separates records that are never compared with each other.`] : []),
       "source_file, source_row and source_page point to the origin of each record; flags are separated by |.",
     ],
@@ -184,7 +148,8 @@ export function DossierModal({
   findings: Finding[];
   onClose: () => void;
 }) {
-  const { pack, lens } = useData();
+  const { pack, lens, mapping } = useData();
+  const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [scope, setScope] = useState<ExportScope>("comparable");
 
@@ -212,6 +177,18 @@ export function DossierModal({
     () => scopeRecords(pack, scope, comparable, ranking),
     [pack, scope, comparable, ranking],
   );
+
+  const handleDatacard = async () => {
+    setExporting(true);
+    try {
+      const { datacard } = await datasetExport(pack, mapping, lens, scopedRecords);
+      downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}_datacard.json`, JSON.stringify(datacard, null, 2), "application/json;charset=utf-8");
+    } catch (error: unknown) {
+      setToast(error instanceof Error ? error.message : t("Dataset export failed."));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleCopyMarkdown = () => {
     const text = generateExecutiveMarkdown(pack, lens, scenario, goal, overall, ranking, findings);
@@ -353,7 +330,7 @@ export function DossierModal({
           <div className="dossier-export-bar">
             <label>
               {t("Scope:")}{" "}
-              <select value={scope} onChange={(e) => setScope(e.target.value as ExportScope)}>
+              <select disabled={exporting} value={scope} onChange={(e) => setScope(e.target.value as ExportScope)}>
                 <option value="comparable">{t("Comparable tests (")}{comparable.length})</option>
                 <option value="graded">{t("Graded A–C studies")}</option>
                 <option value="all">{t("Full corpus (")}{pack.records.length})</option>
@@ -362,12 +339,20 @@ export function DossierModal({
             <button
               type="button"
               className="chip"
-              onClick={() =>
-                downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}.csv`, harmonizedCsv(pack, scopedRecords))
-              }
+              onClick={() => {
+                try {
+                  downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}.csv`, harmonizedCsv(pack, scopedRecords, mapping));
+                } catch (error: unknown) {
+                  setToast(error instanceof Error ? error.message : t("Dataset export failed."));
+                }
+              }}
             >
               {t("Download records CSV (")}{scopedRecords.length})
             </button>
+            <button type="button" className="chip" disabled={exporting} onClick={handleDatacard}>
+              {exporting ? t("Preparing datacard…") : t("Download datacard JSON")}
+            </button>
+            <p>{t("Dataset export: split by study. Predictive performance is not assessed.")}</p>
             <button
               type="button"
               className="chip"

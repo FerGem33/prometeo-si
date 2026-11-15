@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "authority": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea",
+  "scope": "Prueba local acotada: dos tablas; no aceptación del lote completo de 23 documentos ni extracción PDF",
+  "id": "psi-boiling-local",
+  "title": "Boiling and phase-change evidence — local reviewed subset",
+  "by": "Revisor técnico delegado por el dueño",
+  "decision_date": "2026-11-15",
+  "sigma_note": "Escalas de comparación explícitas elegidas para esta lente de demostración, no errores de medición ni límites físicos. No se usan conversiones ni fusiones entre potencia y flujo de calor.",
+  "thresholds": {"grade_a": 1, "tolerance": 0.25, "closeness_reach": 3},
+  "documents": [
+    {
+      "study": "PSI-46",
+      "kind": "test",
+      "kind_column": "Test",
+      "kind_note": "Filas identificadas por Test, con Key Results explícitos; registros resumidos de pruebas, no series temporales independientes. Una fila no constituye un estudio independiente.",
+      "variables": [
+        {"column": "Substrate", "id": "substrate", "label": "Substrate", "type": "cat", "unit": null},
+        {"column": "Working Fluid", "id": "working_fluid", "label": "Working fluid", "type": "cat", "unit": null},
+        {"column": "Bubble Length (mm)", "id": "bubble_length", "label": "Bubble length", "type": "num", "unit": "mm", "sigma": 10},
+        {"column": "Heat Input (W)", "id": "heat_input", "label": "Heat input", "type": "num", "unit": "W", "sigma": 0.5}
+      ],
+      "rejected_note": "Identificador Test no es una condición física. Key Results permanece en la fuente; no se infieren etiquetas objetivo ni relaciones causales de su prosa. N/A numérico se conserva como rechazo y no se rellena."
+    },
+    {
+      "study": "PSI-87",
+      "kind": "test",
+      "kind_column": "Run No.",
+      "kind_note": "Filas Mission/Run No. con nucleation delay y behavior observados; un resumen por corrida, no una serie temporal. Todas las misiones de esta investigación comparten group_id PSI-87.",
+      "variables": [
+        {"column": "Heat Flux (w/cm²)", "id": "heat_flux", "label": "Heat flux", "type": "num", "unit": "W/cm²", "sigma": 1},
+        {"column": "Subcooling (℉)", "id": "subcooling", "label": "Subcooling (temperature difference)", "type": "num", "unit": "°F difference", "sigma": 5},
+        {"column": "Nucleation Delay Time (sec)", "id": "nucleation_delay", "label": "Nucleation delay time", "type": "num", "unit": "s", "sigma": 5},
+        {"column": "Mean Heater Surface Superheat at Nucleation (°C)", "id": "surface_superheat", "label": "Mean heater surface superheat at nucleation", "type": "num", "unit": "°C difference", "sigma": 5}
+      ],
+      "rejected_note": "Mission/Run No. son identificadores, no condiciones. Behavior y categoría no se convierten en clases de entrenamiento sin definición de objetivo. Subcooling/superheat son diferencias de temperatura: se conserva la escala de origen; no se aplica offset absoluto."
+    }
+  ],
+  "excluded_scope": {
+    "PSI-4": "Faltan unidades explícitas en cabeceras; requiere documentos de unidades antes de aprobación cuantitativa.",
+    "PSI-45": "Setpoints y potencia requieren revisar semántica/alcance de filas y columnas antes de unirlas con mediciones.",
+    "PSI-81": "Fila de unidades separada: requiere adaptación de encabezado con procedencia antes de extracción.",
+    "PSI-85": "Rangos en prosa y posible duplicación tabla/resumen; no se normalizan automáticamente.",
+    "PSI-138": "Propiedades transpuestas y simulaciones, sin equipararlas a ensayos experimentales.",
+    "papers": "Las 13 fuentes PDF se reservan para extracción y revisión contextual del lote completo; no se propagan condiciones a tablas."
+  }
+}

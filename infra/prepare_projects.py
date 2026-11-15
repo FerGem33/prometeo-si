@@ -10,7 +10,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', required=True)
     parser.add_argument('--uploads', action='store_true', help='Include approved D3 upload routes/configuration')
+    parser.add_argument('--schema', action='store_true', help='Include T35 schema review routes (requires --uploads)')
+    parser.add_argument('--originals', action='store_true', help='Include T36 short-lived original document URLs (requires --uploads)')
     args = parser.parse_args()
+    if args.schema and not args.uploads:
+        parser.error('--schema requires --uploads')
+    if args.originals and not args.uploads:
+        parser.error('--originals requires --uploads')
     table = os.environ['DATA_TABLE_ARN']
     pool = os.environ['USER_POOL_ID']
     client = os.environ['USER_POOL_CLIENT_ID']
@@ -53,6 +59,15 @@ def main():
             'POST /projects/{id}/documents', 'GET /projects/{id}/documents',
             'POST /projects/{id}/documents/{doc_id}/complete', 'GET /projects/{id}/jobs',
             'POST /projects/{id}/ingest/resume', 'DELETE /projects/{id}', 'DELETE /projects/{id}/documents/{doc_id}'))
+    if args.schema:
+        bucket = os.environ['CORPUS_BUCKET']
+        documents['projects-policy.json']['Statement'].extend([
+            {'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:PutObject'], 'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/schema/*'},
+            {'Effect': 'Allow', 'Action': 's3:GetObject', 'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/text/*'}])
+        documents['projects-routes.json'].extend({'RouteKey': key, 'AuthorizationType': 'JWT'} for key in (
+            'GET /projects/{id}/schema', 'PATCH /projects/{id}/schema', 'POST /projects/{id}/schema/approve'))
+    if args.originals:
+        documents['projects-routes.json'].append({'RouteKey': 'POST /projects/{id}/documents/{doc_id}/url', 'AuthorizationType': 'JWT'})
     for filename, value in documents.items():
         path = output / filename
         encoded = json.dumps(value, indent=2) + '\n'

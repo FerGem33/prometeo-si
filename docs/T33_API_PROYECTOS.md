@@ -1,9 +1,12 @@
 # T33: entrega local de identidad y proyectos
 
-Estado: API de proyectos vacíos desplegada el 15-nov con aprobación acotada
-del dueño. Registro/confirmación/login SRP y A/B con dos usuarios reales pasaron;
-ver `T33_PRUEBA_USUARIOS.md`. T33 no está hecha: faltan cargas y gestión completa.
-T30 completo/D3 siguen pendientes; no habilitar cargas. Pack sin cambios.
+Estado al 15-nov, después del relevo: 11 rutas JWT desplegadas, incluidas cargas
+y DELETE. Registro/confirmación/login SRP, A/B y 19/19 comprobaciones reales de
+cargas/DELETE pasaron. Recibo: `t33-upload-smoke-2026-11-15.json`.
+T33 cumple la verificación del relevo. El worker T34 sigue sin desplegar;
+la regeneración de lente en proyectos procesados y las pantallas siguen pendientes.
+T30/D3 aprobados; pack público sin cambios. Las limitaciones históricas siguientes
+se leen con esta actualización.
 
 ## Rutas implementadas
 
@@ -37,7 +40,7 @@ devuelve 409 hasta implementar la regeneración de lente. Un draft vacío conser
 `lens_version=null`; no se simula una lente regenerada. Las subrutas de esquema
 aún no están implementadas.
 
-**DELETE (implementado el 15-nov, sin desplegar todavía):** `api/deletions.py`.
+**DELETE (desplegado y verificado el 15-nov):** `api/deletions.py`.
 
 - **`DELETE /projects/{id}/documents/{doc_id}`** responde 204. Solo antes de publicar.
   1. Marca el documento `deleting`.

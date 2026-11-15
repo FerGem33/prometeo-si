@@ -248,6 +248,11 @@ export const FLOW: Record<string, string> = {
   "Graded A–C studies": "Estudios con nota A–C",
   "Full corpus (": "Corpus completo (",
   "Download records CSV (": "Descargar CSV de registros (",
+  "Download datacard JSON": "Descargar ficha de datos (JSON)",
+  "Preparing datacard…": "Preparando ficha de datos…",
+  "Dataset export: split by study. Predictive performance is not assessed.":
+    "Exportación del conjunto de datos: dividida por estudio. No se evalúa el desempeño predictivo.",
+  "Dataset export failed.": "Falló la exportación del conjunto de datos.",
   "Download ranking CSV": "Descargar CSV de la clasificación",
   "Download records JSON": "Descargar registros en JSON",
   "Download data dictionary (.md)": "Descargar diccionario de datos (.md)",

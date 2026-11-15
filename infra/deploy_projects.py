@@ -131,9 +131,12 @@ def main():
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--contract-approved', action='store_true', help='Only after actual T30 approval is recorded')
     parser.add_argument('--uploads', action='store_true', help='Enable upload/complete stage after D3 approval')
+    parser.add_argument('--schema', action='store_true', help='Configure versioned schema review and approval')
+    parser.add_argument('--originals', action='store_true', help='Configure short-lived original document URLs')
     args = parser.parse_args()
     subprocess.run([sys.executable, '-I', str(Path(__file__).with_name('prepare_projects.py')),
-                    '--output-dir', args.output_dir, *(['--uploads'] if args.uploads else [])], check=True)
+                    '--output-dir', args.output_dir, *(['--uploads'] if args.uploads else []),
+                    *(['--schema'] if args.schema else []), *(['--originals'] if args.originals else [])], check=True)
     if not args.apply:
         print('Prepare only: no AWS calls. Review artifacts and T30 before --apply.')
         return

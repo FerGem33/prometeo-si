@@ -1,0 +1,6 @@
+{
+  "source": "docs/DECISIONES_CIERRE.md §2 (15-nov-2026)",
+  "ready": {"records": 200, "input_presence": 0.9, "unconverted": 0, "studies": 3, "duplicates": 0.01, "class_count": 20, "minority": 0.1},
+  "cleaning": {"records": 50, "input_presence": 0.6, "unconverted": 0.2, "studies": 2, "duplicates": 0.1, "class_count": 10, "minority": 0.05},
+  "volume": {"classical_first": 1000, "deep_minimum": 10000}
+}

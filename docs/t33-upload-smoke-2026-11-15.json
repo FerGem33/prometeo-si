@@ -1,0 +1,104 @@
+[
+  {
+    "check": "create_project",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "foreign_ticket_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "reserve",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "reserve_repeat",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "s3_put",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "s3_overwrite_rejected",
+    "http": 412,
+    "expected": 412
+  },
+  {
+    "check": "foreign_complete_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "complete",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "complete_repeat",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "complete_hash_conflict",
+    "http": 409,
+    "expected": 409
+  },
+  {
+    "check": "list",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "foreign_list_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "jobs",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "foreign_delete_document_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "foreign_delete_project_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "delete_document",
+    "http": 204,
+    "expected": 204
+  },
+  {
+    "check": "list_after_delete",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "delete_project",
+    "http": 204,
+    "expected": 204
+  },
+  {
+    "check": "project_gone",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "project_id": "prj_4709a95ad3a9435eb3ed7b8dff23c9ba",
+    "doc_id": "doc_9d4f0b02796d13f392ea12b502dc1b743754db95440b28e7cd54cd2af6ab1479",
+    "sha256_expected": "40e88bbe8d63371dc57eeee095017f53e4b93307256a1e18f36d78dfef208e2f",
+    "sha256_observed": null,
+    "cleanup": "Deleted through API"
+  }
+]

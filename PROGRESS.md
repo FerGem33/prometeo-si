@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Relevo AWS en ejecución · stringbuilder.** Base 7cdeacc sincronizada. Preparación → T33 DELETE/smoke cleanup → T34 despliegue/lote/DLQ. Revisión PDF T32 y esquema ebullición aprobables por delegación explícita de DECISIONES_CIERRE §8. |
+| Tarea en curso | **Cierre local T36 y retoma AWS · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. Dueño autoriza volver a AWS después de pruebas; comprobar de nuevo permisos T34 antes de crear/habilitar worker. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Seguir **`docs/RELEVO_LAPTOP_AWS.md`** en orden: 0 preparación y corpus; 1 API con DELETE y CORS solo CloudFront; 2 smoke T33 `--cleanup` (Daniel con contraseñas A/B); 3 desplegar el worker; 4 lote de 10 + corrupto y DLQ; 5 (en paralelo) tabla precargada de los PDF de T32 para que Daniel la firme. |
+| Siguiente paso exacto | Retomar AWS: comprobar permisos T34, validar condición IAM y seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). T35/originales suman15rutas JWT al aplicarse, luego prueba de aprobación/extracción. Pendientes locales: publicación autenticada T37 y persistencia de revisión T36; no se marcan completas por tener CLI. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18 está hecha. T21–T29 corresponden al equipo de interfaz. T32 sigue en curso por revisión D7/PDF. D3 aprobada por el dueño (20 MB/60 páginas/30 documentos); faltan implementación/verificación de cargas. T31 hecha.
+- D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy; no se intentó crear recursos. Dueño pidió continuar localmente y AWS después.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -60,11 +60,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | hecha | Claude · ferlr; Claude · Daniel | esta entrega | Dueño aprobó §5 completo el 15-nov y se añadió §5.10 (exportación para ML → T38). D1–D5, D7, D8 y D10 cerradas; ver `docs/DECISIONES_CIERRE.md` |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
-| T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder; Claude · Daniel | `4268b90` + esta entrega | A/B real pasa (verificación del plan). Cargas/complete/jobs/resume desplegados. DELETE de proyecto y documento implementado con tombstone, borrado S3 acotado y transacción de cupo (11 pruebas con dobles), **sin desplegar**. Smoke con `--cleanup` listo. Falta: desplegar y smoke real (RELEVO §1–2). Regenerar la lente al editar sigue pendiente (llega con T35/T37) |
+| T32 | Extracción fuera de línea | fase 2 · C | hecha | laptop AWS · stringbuilder | esta entrega | D7 aprobada por dueño; revisión PDF aprobada por delegación con hashes: 12 contextuales/3 excluidos, 0 añadidos a tablas. Métrica D7: 154/172 asignación; 148/172 conjunta (86,05%). No equivale a precisión científica. `docs/T32_PDF_DECISIONES.md` |
+| T33 | Cuenta y proyectos | fase 2 · C | hecha (verificación relevo) | stringbuilder; Claude · Daniel | esta entrega | A/B previo y 19 comprobaciones reales de cargas/DELETE pasan; 11 rutas JWT desplegadas y recursos reutilizados. Recibo docs/t33-upload-smoke-2026-11-15.json. Edición de intención procesada/lente y pantallas siguen en T35/T37/interfaz; no se declara completo ese recorrido |
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
-| T35–T37 | Revisión y publicación | fase 2 · C | pendiente | | | D10 resuelta: corpus de ebullición, lote de 23 documentos dentro de D3 (`docs/t37/manifest_ebullicion.csv`). T37 se sube con `cli.mjs batch`. La aprobación científica sigue siendo humana |
-| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | pendiente | | | Contrato §5.10 aprobado 15-nov: CSV con unidad, DOI, `group_id` por estudio, valor original y `datacard.json`; sin AWS |
+| T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
+| T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
+| T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (local) | stringbuilder | esta entrega | CLI versionada de correcciones/conflictos/claims, 7 pruebas; originales GET firmados300s con ownership/páginas, 10 pruebas. Borrador real51registros preparado sin corregir datos. Faltan APIs persistentes, publicación corregida y pantalla; docs/T36_REVISION_LOCAL.md |
+| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | esta entrega | CSV y datacard conectados al modal; demo y bundle T37 pasan con mismo código, D4 determinista y QA Chrome desktop/móvil. Deploy pospuesto; selector/editor de objetivo y criterios sigue en T27. docs/T38_DATASET_EXPORT.md |
 
 ## Aceptación final (T15)
 
@@ -80,23 +82,28 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 ## Revisión final pendiente
 
-- **T32:** revisar las discrepancias listadas en `docs/T32_EVALUACION.md` y los 15 candidatos PDF antes de cualquier aprobación nueva. El 92.1 % es acuerdo de asignación con el mapping vigente, no precisión científica; D7 sigue pendiente. Un PDF requiere texto/OCR revisado. La aprobación local no autentica al operador.
+- **T32:** revisión D7 cerrada por el dueño y PDF por delegación; métrica revisada 148/172 conjunta,86,05%, no precisión científica. Decisión/hashes en docs/T32_PDF_DECISIONES.md. Un PDF conserva exclusión de extracción automática por texto mal codificado; no bloquea ni añade condiciones al pack. Las aprobaciones locales no autentican al operador.
 
 - **T31:** terminada con dos corridas reales e idempotentes usando SSO en la cuenta `352818909129`. `infra/outputs.env` versiona los IDs/ARNs/URLs de tabla, bucket privado, cola/DLQ, user pool y cliente público. No contiene credenciales ni secretos. El rol para T31 no concede permisos de Lambda ni worker; T33/T34 deberán definir y probar permisos separados.
 
-- **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
-- **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
+- **ML (T12/T27/T38):** D4 define los umbrales y el motor los calcula determinísticamente. Falta el selector/editor T27; exportar sin candidato explícito indica not_assessed, no un veredicto inventado. Los resultados originales y frecuencias no son clases científicas validadas.
+- **Mapeo (T14/D7):** el informe histórico conserva el experimento inicial; D7_DECISIONES.md cierra las discrepancias con criterio aprobado y sin alterar la referencia. No extrapolar acuerdo con el mapping a precisión científica.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
 
 - **Revisión humana T12 (ML):** definir clases destino y umbrales de aptitud antes de interpretar frecuencias descriptivas como decisión de selección de modelo. Responsable: equipo/persona dueña del uso ML. Evidencia: criterios aprobados y anotados en `PROGRESS.md`.
 - **Revisión humana T14/T32 (D7):** la persona que conoce las tablas (autor de `construir_corpus.py`) debe resolver las 79 diferencias de `docs/agnostic_proof.md` y revisar la lista de discrepancias en `docs/T32_EVALUACION.md`. Conservar mapping vigente hasta aprobación explícita; el porcentaje no sustituye esta decisión.
 - **Revisión semántica PDF T32:** revisar cada candidato literal y su página/contexto en los cinco PDF enumerados en `docs/T32_EVALUACION.md`, incluyendo alcance experimental; rechazar los que no respalden valor, unidad y población de pruebas. El archivo sin texto requiere fuente legible/OCR revisado.
-- **Aprobación T30 / D3:** aprobar o corregir el contrato §5 y confirmar límites de carga (20 MB, 60 páginas, 30 documentos), tras revisar la medición de costos exigida por el plan. Sin esa decisión no iniciar T33–T36. D1/D2 están decididas; D3 no.
-- **D10/T37:** elegir segundo dominio con tablas públicas y pocas variables y asignar quién consigue su corpus antes de evaluar la prueba agnóstica.
+- **T30/D3:** aprobados; cargas/DELETE verificadas. Medición real del costo/memoria/lote T34 pendiente de permisos y ventana AWS. Tope operativo USD30 y revisión si lote>USD5 se mantienen.
+- **D10/T37:** ebullición decidida y corpus de23 fuentes regenerado. Revisión delegada acotada de2 tablas y bundle local verificados; lote completo/publicación/síntesis aún pendientes.
 
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · rama frontend · merge de main (T32–T38 hasta 2745d85)
+- Conflictos resueltos en `PROGRESS.md` (bitácora: se conservan las entradas de ambas ramas) y `DossierModal.tsx` (i18n de `frontend` + exportación de datacard de `main`). Los textos nuevos del datacard van en `t()` con traducción en `i18n/es/flow.ts`.
+- Choque no marcado por git: `main` cambió las columnas del CSV (`<id>_min [unidad]`, `_original_*`, `_source_*`) y el diccionario de datos seguía anunciando `<id>_min`. Ahora ambos usan `variableColumns` de `report/dataset-export.ts`.
+- Verificado: tsc, 110 tests web (2 omitidos) y `check_agnostic.sh`. No se probó en navegador.
 
 ### 2026-11-15 · rama frontend · tema claro/oscuro e idioma inglés/español
 - Hecho: selector de idioma (EN/ES) y tema (Claro/Oscuro) en todas las cabeceras (`components/Prefs.tsx`); la elección queda en este navegador. El oscuro sigue por defecto; el claro usa la paleta del artículo.
@@ -122,6 +129,44 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Verificado: tsc, 60 tests web, build Vite y `check_agnostic.sh`. NO se probó en navegador: diseño, foco de teclado y vista de impresión sin revisar.
 - Ojo: la Tabla 4 colisionaba entre "Sources ranked" y Methods; Methods pasó a la Tabla 6. La numeración global de tablas no sigue el orden de aparición en la página.
 - Brechas que siguen requiriendo backend: ver `docs/Prometeo — Brechas del frontend y contratos del backend.md`.
+
+### 2026-11-15 · T36 revisión local y acceso a originales
+- CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.
+- Claims exigen literal PDF verificado e identidad de estudio revisada; el respaldo semántico es una declaración del revisor. Siete pruebas pasan, incluidas citas falsas, variantes, tipos, versiones y cambios de parseado. Preparación real sobre el subset T37:51registros,0conflictos; ninguna corrección ni claim científico aplicado.
+- Ruta original_url preparada: propiedad antes de firma, subida completa, prefijo exacto, GET300s, página PDF validada y fragmento#page. Diez pruebas nuevas de API pasan; preflight/deploy con dobles comprueba11/12/14/15rutas según flags. API total148 pasan. No está desplegada aún; README T36 identifica persistencia/API/pantallas/puente de publicación pendientes.
+- El dueño inicialmente pidió AWS después y luego autorizó retomarlo al cerrar lo local. Mantener límites/perfil/modelo; volver a comprobar IAM antes de crear worker, sin saltar simulación exigida por relevo.
+- Verificación final local:148 API,40 pipeline (10+10+8+5+7),106 web con bundle y6 helper Cognito pasan. validate_pack del demo y del subset pasa; check_agnostic/diff-check pasan. Build pasa con aviso de chunk629kB; demo sin cambios. Solo se preparó el estado de revisión real, sin correcciones científicas ni llamadas de modelo nuevas.
+
+### 2026-11-15 · T38 exportación y criterios D4
+- Implementado CSV con unidades/DOI/group_id, originales/correcciones y resultados fuente separados; datacard con versiones/hashes, conversiones, rechazos, licencias desconocidas explícitas y criterios D4. Registros excluidos/citas PDF no verificadas nunca se exportan.
+- Motor puro assessDataset con límites D4 y entradas/objetivo explícitos. La ficha sin candidato indica not_assessed; no inventa objetivo, versión ni capacidad predictiva. Nuevas lentes T37 incluyen ml_thresholds; editor/selector T27 sigue con interfaz.
+- Modal existente conecta CSV y datacard, con errores visibles y estado de preparación. Pruebas con demo y bundle T37 usan el mismo código. QA Chrome 1280×900/390×844: descargas reales268 registros, hash CSV igual al de ficha,22 fuentes, sin overlay/desborde. Análisis aislado con doble HTTP mode=template; no AWS, después del CORS local esperado de primera corrida. Capturas/scripts solo en /tmp. Aplicadas guías React y frontend-testing-debugging; detalles en docs/T38_DATASET_EXPORT.md.
+- Verificación:106 web pasan con bundle, build pasa (aviso chunk>500kB), check_agnostic pasa; pack público intacto. Se corrigió forma del resumen/contadores del bundle local para coincidir con tipos de Study, sin crear datos científicos; cinco pruebas de publicación pasan. Despliegue sigue pospuesto por el dueño.
+
+### 2026-11-15 · T37 constructor local y aprobación delegada acotada
+- `publish_bundle.py` exige esquema aprobado y metadatos revisados con hashes; recalcula extracción tabular, exige identidad de estudio/DOI/kind sustentado, sigma positivo y presets citados, bloquea conflictos y genera pack/lens/mapping/recibo en carpeta nueva fuera de demo.
+- Aplicada revisión delegada v1 `docs/t37/revision_local.json` solo a PSI-46/PSI-87. Autoridad explícita del dueño, sin revisión humana línea por línea. Otras fuentes/prosa/PDF/simulaciones permanecen fuera de esta prueba; no se aprueba el lote completo ni se confunde potencia con flujo de calor.
+- Datos reales locales: 6+45=51 registros, dos estudios, ocho variables, cinco celdas ambiguas rechazadas sin relleno, cero conflictos. Cero llamadas Bedrock/tokens de esta prueba. Hashes/artifactos completos en /tmp/prometeo-t37-local-v1; no se suben datos extraídos a Git.
+- Cuatro pruebas del constructor pasan con Python3.12. validate_pack del bundle final: OK (2/51/2), /tmp/prometeo-t37-local-v1-final. Una prueba de integración ejecuta el motor existente y pasa; check_agnostic pasa. Añadido hash del documento parseado para invalidar también cambios de celdas que conservaran el campo SHA del original: 136 API pasan. 99 web pasan con bundle; build pasa tras npm ci (faltaba framer-motion instalado), con aviso de chunk >500kB. Detalles reproducibles y límites en docs/T37_PUBLICACION_LOCAL.md. T37 sigue en curso: faltan API/síntesis/lote/pantallas; AWS después por instrucción del dueño.
+
+### 2026-11-15 · Cierre del smoke T33; T34 pendiente de permisos
+- `infra/20_api.sh` y `deploy_projects.py --uploads --apply --contract-approved` terminaron0. API ve5oqmsyie, Lambda prometeo-hack-api y rol existentes conservados; 11 rutas JWT. CORS solo CloudFront; DELETE permitido.
+- `/ask` HTTP200: o2=25,p=0.5,material=Nomex. `/analysis` HTTP200, mode=ai, tres frases citadas, dropped=0. OPTIONS HTTP204, allow-origin CloudFront, métodos DELETE/GET/OPTIONS/PATCH/POST. Dos invocaciones reales de regresión al modelo D6; no son extracción de corpus.
+- Smoke con CSV PSI-87 real y dos sesiones SRP: **19/19 comprobaciones pasan**: create/reserve/repeat201; PUT200; overwrite412; complete/repeat200; hash409; list/jobs200; todos los accesos ajenos404; DELETE propio documento/proyecto204; GET borrado404. Recibo saneado en docs/t33-upload-smoke-2026-11-15.json. El SHA observado es null porque el consumidor sigue sin desplegar, no se afirma verificado por worker. El proyecto temporal fue limpiado vía API.
+- Paquete worker Linux arm64/Python3.12 generado en /tmp/prometeo-worker-949f729.zip. IAM devolvió AccessDenied para GetRole sobre prometeo-hack-worker-role y SimulateCustomPolicy. La primera simulación del documento completo superó límite de2000caracteres; la sentencia aislada pasó ese límite pero fue denegada por IAM. No se creó ni habilitó worker/mapping; cero llamadas de lote. Dueño pidió **continuar localmente; AWS después**.
+
+### 2026-11-15 · T35 backend local y recuperación de acceso AWS
+- Implementadas GET/PATCH/approve de esquema con versiones inmutables, hash de fuentes/artefacto, control de revisión, edición que revoca aprobación y despacho recuperable a SQS. Extracción tabular determinista con leases, citas por celda, conversiones y rechazos/conflictos conservados; no publica el pack.
+- Configuración optativa `--schema` añade tres rutas JWT y permisos por prefijo; T33 sin el flag conserva 11 rutas. Paquetes API/worker incluyen los validadores estándar de T32. Ver docs/T35_REVISION_API.md y límites allí detallados.
+- Python 3.12: **135 API pasan** (incluye dobles de revisión/extracción/despliegue); **98 web pasan**, validate_pack y check_agnostic pasan, bash-n y diff-check pasan. `web/public/demo` sin cambios. Las pruebas nuevas no prueban AWS real; T35 no se marca hecha.
+- STS volvió a responder con cuenta352818909129 y rol SSO Prometeo-T31 al ejecutarlo fuera del sandbox. Se retoma relevo; no hace falta cambiar perfil ni modelo. `20_api.sh` terminó0 y reutilizó API/Lambda/rol existentes. `deploy_projects.py --uploads` terminó0; regresión y smoke en curso. No hay llamadas nuevas de extracción ni costes de lote todavía.
+
+### 2026-11-15 · T32 revisión delegada y preparación del relevo
+- T32: revisión conservadora de 15 candidatos con originales/páginas; 12 aceptados como contexto (aproximaciones/máximos/figura concreta), tres excluidos (material redundante, supuesto P=1 atm y fase del modelo). Ninguno se propaga a tablas; ocho rechazos iniciales permanecen. Aprobación delegada explícita, no revisión experta; versión/hashes en docs/T32_PDF_DECISIONES.json.
+- PDF 20120015928 renderizado visualmente legible en página 1, aunque texto extraído mal codificado; solo metadatos, sin condiciones nuevas. Render FLEX figura4 confirma O2/1atm solo de esa secuencia. No se cierra el hueco de presión 0/268 de sólidos ni se cambia el pack.
+- D7: informe correcto es tables-final/report-corrected.json, que alinea espacios de bordes del builder. Excluir 55 columnas reglaA deja154/172 asignación89,53% y148/172 conjunta86,05%. T32 hecha bajo criterio aprobado, con límites documentados y cero llamadas Bedrock nuevas.
+- Preparación: 120 API, 98 web, 28 pipeline y validate_pack/check_agnostic pasan. Corpus regenerado: 23/23 documentos coinciden en SHA, bytes, DOI y páginas con manifiesto de Daniel; descargas fuera de Git.
+- AWS: STS/GetRole fallan antes de operación con GetRoleCredentials503, incluso tras aws sso login exitoso. El intento de20_api.sh terminó254 antes de desplegar. Sin escrituras AWS; continuar local y reintentar cuando vuelva el servicio/credencial. Consulta al dueño presentada; no usar otro perfil/root.
 
 ### 2026-11-15 · Retoma del relevo Daniel en laptop AWS
 - `git pull --rebase` trajo main hasta 7cdeacc; lectura de AGENTS, relevo, decisiones y D7 completada. Único corpus previo sin seguimiento permanece fuera de Git.

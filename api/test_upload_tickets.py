@@ -62,6 +62,71 @@ def upload():
 DATA = {'name': 'original.csv', 'media_type': 'text/csv', 'bytes': 20}
 
 
+def original_fixture(upload, paper=True):
+    service, repo, s3 = upload
+    data = {**DATA, 'name': 'original.pdf', 'media_type': 'application/pdf'} if paper else DATA
+    ticket = service.reserve('owner', 'prj_test', data, 'original')
+    item = next(iter(repo.items.values()))
+    item.update(expected_sha256='a'*64, object_etag='"etag"', status='done', pages=5)
+    s3.calls.clear()
+    return service, repo, s3, ticket['doc_id'], item
+
+
+def test_original_url_is_owned_short_lived_and_opens_the_cited_page(upload):
+    service, _, s3, did, _ = original_fixture(upload)
+    result = service.original_url('owner', 'prj_test', did, {'page': 3})
+    assert result == {'url': 'https://upload.test/temporary#page=3', 'expires_in': 300}
+    args, kwargs = s3.calls[0]
+    assert args == ('get_object',) and kwargs['ExpiresIn'] == 300 and kwargs['HttpMethod'] == 'GET'
+    assert kwargs['Params']['Key'] == 'u/owner/p/prj_test/raw/'+did
+    assert kwargs['Params']['ResponseContentType'] == 'application/pdf'
+    assert service.original_url('owner', 'prj_test', did, {})['url'] == 'https://upload.test/temporary'
+
+
+@pytest.mark.parametrize('data', [{'page': x} for x in (0, -1, True, None, '2', 6)] + [{'extra': 1}])
+def test_invalid_original_page_never_signs(upload, data):
+    service, _, s3, did, _ = original_fixture(upload)
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, data)
+    assert exc.value.status == 400 and not s3.calls
+
+
+def test_original_url_denies_foreign_missing_deleted_uncompleted_and_changed_keys(upload):
+    service, _, s3, did, item = original_fixture(upload)
+    for uid, document in [('other', did), ('owner', 'doc_'+'0'*32)]:
+        with pytest.raises(ApiError) as exc:
+            service.original_url(uid, 'prj_test', document, {})
+        assert exc.value.status == 404 and not s3.calls
+    item['status'] = 'deleting'
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, {})
+    assert exc.value.status == 404
+    item['status'] = 'done'
+    item['object_key'] = 'u/other/p/prj_test/raw/'+did
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, {})
+    assert exc.value.status == 409 and not s3.calls
+    item['object_key'] = 'u/owner/p/prj_test/raw/'+did
+    item.pop('object_etag')
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, {})
+    assert exc.value.status == 409 and not s3.calls
+
+
+def test_page_requires_parsed_pdf_but_csv_original_can_be_opened_without_page(upload):
+    service, _, s3, did, item = original_fixture(upload, paper=False)
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, {'page': 1})
+    assert exc.value.status == 400 and not s3.calls
+    assert service.original_url('owner', 'prj_test', did, {})['expires_in'] == 300
+    item['kind'] = 'paper'
+    item.pop('pages')
+    s3.calls.clear()
+    with pytest.raises(ApiError) as exc:
+        service.original_url('owner', 'prj_test', did, {'page': 1})
+    assert exc.value.status == 409 and not s3.calls
+
+
 def test_limits_no_implicit_defaults(monkeypatch):
     monkeypatch.delenv('UPLOADS_ENABLED', raising=False)
     with pytest.raises(ApiError) as e:
