@@ -474,7 +474,7 @@ def handler(event, context=None, source_pack=None):
         response = reply(status, output, origin)
         if status == 204:
             response['body'] = ''
-        if origin == os.environ.get('CF_URL'):
+        if response['headers'].get('access-control-allow-origin') == origin and origin:
             response['headers'].update({'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
                                         'access-control-allow-headers': 'content-type, authorization, idempotency-key'})
         return response

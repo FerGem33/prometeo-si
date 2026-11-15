@@ -396,3 +396,15 @@ def test_malformed_modules_preserve_the_base_blueprint():
     assert result['modules'] == []
     assert result['discardedModules']
     assert result['sectionOrder']
+
+
+def test_private_preflight_keeps_localhost_authorization_headers(monkeypatch):
+    monkeypatch.setenv('CF_URL', 'https://example.com')
+    monkeypatch.setenv('EXTRA_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
+    for origin in ('http://localhost:5173', 'http://127.0.0.1:5173'):
+        event = {'rawPath': '/projects', 'requestContext': {'http': {'method': 'OPTIONS'}}, 'headers': {'origin': origin}}
+        response = h.handler(event)
+        assert response['statusCode'] == 204
+        assert response['headers']['access-control-allow-origin'] == origin
+        assert 'authorization' in response['headers']['access-control-allow-headers']
+        assert 'GET' in response['headers']['access-control-allow-methods']

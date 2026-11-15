@@ -105,6 +105,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · Continuación backend de integración
+- Se corrigió el preflight privado de Lambda para aplicar las cabeceras de autorización a los orígenes locales explícitamente permitidos. 189 pruebas API pasan, incluido el nuevo control para localhost y 127.0.0.1. Cambio local pendiente de commit; sin despliegue.
+- El backend de main y /design y /propose están integrados localmente en 905f24e, pero origin/nasa2genui avanzó en paralelo; el push fue rechazado y no se sobrescribió. Falta reconciliar ambos historiales y completar chat libre y resúmenes citados de la spec.
+
 ### 2026-11-15 · Integración de backend en nasa2genui (en curso)
 - Integración de main en nasa2genui: se preservan /design y /propose junto con las rutas privadas y su backend vigente. 188 pruebas API pasan; 223 web pasan y 1 omitida; check_agnostic pasa. Sin despliegue.
 - Pendiente para completar la spec: chat libre sobre corpus con citas, resúmenes narrativos verificados, integración y pruebas de extremo a extremo. No marcar terminada ni desplegar. Main y sus cambios locales se conservan.
