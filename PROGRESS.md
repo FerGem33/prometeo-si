@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T32 en curso · Codex / ferlr: lectura local CSV/PDF y verificación de citas. T18 pendiente de documentación (D9 decidida). |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
+| Siguiente paso exacto | T32: perfilado, propuesta de esquema y extracción revisable; ver `docs/T32_LECTURA_LOCAL.md`. Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (operativo con SDK 2.8.0); Haiku 5.5 devolvió 403 en esta cuenta |
@@ -20,7 +20,7 @@
 - [23:56] La cuenta devuelve 403 al invocar `us.anthropic.claude-haiku-5-5` (“not available for this account”). El dueño de AWS debe habilitar el acceso; mientras tanto la API opera con Haiku 4.5.
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- T18 sigue bloqueada por D9 y no se restauró `data/psi`; T21–T29 siguen asignadas al equipo de interfaz; T31–T37 esperan D1–D3.
+- D9 decidida: `data/psi` permanece fuera de git; T18 pendiente de documentación. T21–T29 corresponden al equipo de interfaz. T32 en curso local; D7 pendiente para evaluar el mapeo. D3 sigue abierta para las subidas.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -61,7 +61,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
 | T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | `infra/30_data.sh` escrito y probado con simulador; falta ejecutarlo con perfil `prometeo` |
-| T32–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
+| T32 | Extracción fuera de línea | fase 2 · C | en curso | Codex · ferlr | | Lectura CSV/PDF y verificación local listas; falta perfilado, Bedrock y evaluación D7. `docs/T32_LECTURA_LOCAL.md` |
+| T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
 ## Aceptación final (T15)
 
@@ -85,6 +86,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Codex · T32 lectura local y verificación de citas
+- Implementado `pipeline/ingest.py`: CSV con celdas originales y filas lógicas, PDF por página con Poppler, SHA-256, duplicados, errores por documento; verificador de citas con ubicación exacta. No llama a AWS ni modifica el pack.
+- Prueba local: 30 CSV y 45 PDF únicos leídos, 3 PDF sin texto extraíble, 2 duplicados. 75 citas de control verificadas; no es precisión de extracción. Informe en `docs/T32_LECTURA_LOCAL.md`.
+- Verificación: 7 pruebas unitarias y `git diff --check` pasan. Python disponible 3.14.4; pendiente 3.12.
+- T32 NO terminada: faltan perfilado, propuesta Bedrock, extracción aprobada y evaluación de 22 tablas/5 PDF; D7 sigue pendiente.
+- Git pull/push fallaron por permisos de `/etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf`; commits locales. Descarga y artefactos permanecen fuera de git.
+- Siguiente paso: implementar perfilado/propuesta con validación y revisión explícita antes de extraer; luego medición con Bedrock.
+
 
 ### 2026-11-15 00:40 CST · Claude · ferlr · se levanta la restricción del bloque C; T31 escrita
 - **Decisión del dueño (D1):** se retira la prohibición de Cognito, SQS y DynamoDB. `AGENTS.md` §8 ahora exige que cada recurso esté en un script aprobado de `infra/` y con permisos acotados.
