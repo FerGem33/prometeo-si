@@ -6,6 +6,7 @@ import type { Data, Mapping } from "./components/ctx";
 import { AssistantPanel } from "./components/AssistantPanel";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { MapFigure } from "./components/MapFigure";
+import { SourcesRanked } from "./components/SourcesRanked";
 import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesTable } from "./components/Tables";
 import { Methods, References } from "./components/Methods";
 import { Provenance } from "./components/Provenance";
@@ -238,6 +239,7 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEd
         <div className="row">
           <div className="wide">
             <SourcesTable n={3} />
+            <SourcesRanked n={4} ranking={r.ranking} closeness={r.close} scenario={scenario} />
           </div>
         </div>
 
