@@ -34,6 +34,7 @@ export const REPORT: Record<string, string> = {
   Abstract: "Resumen",
   "Scenario values": "Valores del escenario",
   "sliders, presets and your own variables": "controles, escenarios predefinidos y variables propias",
+  "sliders and your own variables": "controles y variables propias",
   "Scenario summary, questions and analysis": "Resumen del escenario, preguntas y análisis",
   "Current scenario": "Escenario actual",
   "No variable is part of the scenario.": "Ninguna variable forma parte del escenario.",

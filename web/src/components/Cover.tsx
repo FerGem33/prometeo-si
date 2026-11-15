@@ -75,7 +75,7 @@ export function Cover({
               }}
               title={soundOn ? t("Mute telemetry sounds") : t("Enable telemetry sounds")}
             >
-              {soundOn ? t("🔊 SFX ON") : t("🔇 SFX OFF")}
+              {soundOn ? t("SFX on") : t("SFX off")}
             </button>
             <button type="button" className="linkbtn" onClick={onWorkspace}>
               {t("Workspace")}

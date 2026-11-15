@@ -172,6 +172,8 @@ span.nowrap { white-space: nowrap; }
 .cov-strip { position: relative; display: inline-block; width: 64px; height: 7px; background: var(--rule-2); border: 1px solid var(--rule); border-radius: 1px; vertical-align: middle; margin-right: 8px; }
 .cov-band { position: absolute; top: 0; bottom: 0; background: var(--grade-a); opacity: .35; }
 .cov-pin { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--accent); }
+/* In the ranking table the strip sits under its line: full scale of the variable, this source's tested range, scenario pin. */
+.sranked .why li .cov-strip { display: block; width: 100%; max-width: 240px; height: 8px; margin: 5px 0 3px; }
 
 .methods-chamber-wrap { margin: 10px 0 16px; max-width: 680px; }
 

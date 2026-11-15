@@ -4,7 +4,7 @@ import type { Lens, Pack, Scenario } from "./engine";
 import { DataCtx, ProvCtx } from "./components/ctx";
 import type { Data, Mapping } from "./components/ctx";
 import { AssistantPanel } from "./components/AssistantPanel";
-import { LevelTag, ScenarioPanel } from "./components/ScenarioPanel";
+import { HabitatPanel, LevelTag, ScenarioPanel } from "./components/ScenarioPanel";
 import { VariantsPanel } from "./components/VariantsPanel";
 import { MapFigure } from "./components/MapFigure";
 import { SourcesRanked } from "./components/SourcesRanked";
@@ -339,7 +339,9 @@ function Report({
             <KeyFindings findings={r.finds} />
           </div>
 
-          <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
+          <HabitatPanel scenario={scenario} onChange={setScenario} />
+
+          <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders and your own variables")}>
             <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
           </Fold>
 

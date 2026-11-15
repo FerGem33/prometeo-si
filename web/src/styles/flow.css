@@ -972,115 +972,44 @@ body:has(.screen) { background: var(--paper); }
 }
 
 /* ── Real-time What-If Delta Simulator ─────────────────────────────── */
-.whatif-panel {
-  background: var(--surface-card, #F1EFEA);
-  border: 1px solid var(--rule, #D3D0C8);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-}
-.whatif-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--rule-light, #E3E0D8);
-  padding-bottom: 10px;
-}
-.whatif-kicker {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted, #62605B);
-  font-weight: 600;
-}
-.whatif-title-group h4 {
-  margin: 2px 0 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink, #1D1C1A);
-}
-.whatif-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  color: var(--ink, #1D1C1A);
-}
-.whatif-selector select {
-  background: var(--paper, #EAE8E3);
-  border: 1px solid var(--rule, #D3D0C8);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--ink, #1D1C1A);
-}
-.whatif-cards {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.whatif-card {
-  background: var(--paper, #EAE8E3);
-  border: 1px solid var(--rule-light, #E3E0D8);
-  border-radius: 6px;
-  padding: 8px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 120px;
-}
-.whatif-label {
-  font-size: 11px;
-  color: var(--muted, #62605B);
-  text-transform: uppercase;
-}
-.whatif-val {
-  font-size: 16px;
-  font-weight: 700;
-  font-family: var(--font-mono, monospace);
-  color: var(--ink, #1D1C1A);
-}
-.whatif-val.whatif-up {
-  color: #B23B2A;
-}
-.whatif-val.whatif-down {
-  color: #2D7A4D;
-}
-.whatif-val.whatif-risk-high {
-  color: #B23B2A;
-}
-.whatif-val.whatif-risk-low {
-  color: #2D7A4D;
-}
-.whatif-summary-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  font-weight: 500;
-  margin-left: auto;
-}
-.whatif-badge-elevated {
-  background: #FCE8E6;
-  border: 1px solid #F1B0A8;
-  color: #8C1D18;
-}
-.whatif-badge-reduced {
-  background: #E6F4EA;
-  border: 1px solid #A8DAB5;
-  color: #137333;
-}
-.whatif-badge-equivalent {
-  background: var(--surface-control, #DFDDD7);
-  border: 1px solid var(--rule, #D3D0C8);
-  color: var(--ink, #1D1C1A);
+/* Habitat panel in the report: a small isometric figure beside its conditions, then the baseline comparison. */
+.hab-panel { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 12px 0 14px; margin: 4px 0 18px; }
+.hab-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 10px; }
+.hab-head h2 { font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; margin: 0; }
+.hab-head .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.hab-body { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; align-items: center; }
+.hab-fig .habitat-fig { max-width: 180px; }
+.hab-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hab-kicker { font-family: var(--sans-c); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.hab-info h3 { font-family: var(--serif); font-size: 22px; font-weight: 500; line-height: 1.15; margin: 0; color: var(--ink); }
+.hab-info p { font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); margin: 0; }
+.hab-vals { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 4px 0 0; font-family: var(--sans); font-size: 12.5px; }
+.hab-vals div { display: flex; gap: 5px; }
+.hab-vals dt { color: var(--ink-3); }
+.hab-vals dd { margin: 0; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hab-src { font-family: var(--sans); font-size: 11.5px; color: var(--ink-3); }
+.hab-whatif { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--rule-2); }
+.hab-whatif-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.hab-whatif-head h4 { margin: 0; font-family: var(--sans); font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.hab-whatif-sel { margin-left: auto; font-family: var(--sans); font-size: 12px; color: var(--ink-2); }
+.hab-whatif-sel select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 2px 6px; max-width: 100%; }
+.hab-deltas { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 0; margin-top: 8px; }
+.hab-deltas dl { display: flex; margin: 0; }
+.hab-deltas dl div { padding: 0 16px; border-left: 1px solid var(--rule-2); }
+.hab-deltas dl div:first-child { padding-left: 0; border-left: 0; }
+.hab-deltas dt { font-family: var(--sans-c); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.hab-deltas dd { margin: 2px 0 0; font-family: var(--sans); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+.hab-deltas dd.up { color: var(--accent); }
+.hab-deltas dd.down { color: var(--grade-a); }
+.hab-tend { flex: 1 1 220px; margin: 0; padding-left: 16px; border-left: 1px solid var(--rule-2); font-family: var(--sans); font-size: 12.5px; line-height: 1.4; color: var(--ink-2); }
+.hab-tend span { font-size: 10px; margin-right: 3px; }
+.hab-tend-elevated span { color: var(--accent); }
+.hab-tend-reduced span { color: var(--grade-a); }
+@media (max-width: 640px) {
+  .hab-body { grid-template-columns: 1fr; justify-items: center; }
+  .hab-info { width: 100%; }
+  .hab-whatif-sel { margin-left: 0; }
+  .hab-tend { padding-left: 0; border-left: 0; flex-basis: 100%; }
 }
 
 @media print { .screen { display: none; } }

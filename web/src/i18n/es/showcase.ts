@@ -158,24 +158,24 @@ export const SHOWCASE: Record<string, string> = {
 
   // ---- mission presets
   "Artemis Lunar Base Alpha": "Base lunar Artemis Alfa",
-  "🌕 Moon · Surface": "🌕 Luna · Superficie",
+  "Moon · Surface": "Luna · Superficie",
   "Shackleton Crater Rim": "Borde del cráter Shackleton",
   "Reduced-pressure enriched oxygen habitat with dustlock seal": "Hábitat de presión reducida y oxígeno enriquecido, con sello contra el polvo",
   "Optimized for minimal decompression sickness during EVA preparation (NASA-STD-3001).":
     "Optimizado para reducir al mínimo la enfermedad por descompresión al preparar una EVA (NASA-STD-3001).",
   "ISS Microgravity Laboratory": "Laboratorio de microgravedad de la ISS",
-  "🛰️ Low Earth Orbit": "🛰️ Órbita terrestre baja",
+  "Low Earth Orbit": "Órbita terrestre baja",
   "400 km Orbital Altitude": "Altitud orbital de 400 km",
   "Standard sea-level atmospheric pressure with active micro-convection": "Presión atmosférica estándar a nivel del mar, con microconvección activa",
   "Long-baseline reference environment for microgravity combustion investigations (BASS/CIR).":
     "Entorno de referencia de larga trayectoria para investigaciones de combustión en microgravedad (BASS/CIR).",
   "EVA Suit Ingress Airlock": "Esclusa de acceso del traje de EVA",
-  "🧑‍🚀 Ingress Airlock": "🧑‍🚀 Esclusa de acceso",
+  "Ingress Airlock": "Esclusa de acceso",
   "Lunar / Gateway Airlock": "Esclusa lunar / Gateway",
   "High-oxygen pre-breathe environment with stagnant air envelope": "Entorno de prerrespiración con oxígeno alto y aire estancado",
   "Critical flammability boundary conditions with elevated O₂ concentration.": "Condiciones límite de inflamabilidad críticas, con concentración de O₂ elevada.",
   "Lunar Terrain Rover (LTV)": "Rover de terreno lunar (LTV)",
-  "🚜 Mobile Habitat": "🚜 Hábitat móvil",
+  "Mobile Habitat": "Hábitat móvil",
   "Artemis Extended Traverses": "Recorridos extendidos de Artemis",
   "Compact pressurized cabin with high structural polymer shielding": "Cabina presurizada compacta con blindaje estructural de polímero",
   "Fast-ingress rapid-traverse architecture with low convective ventilation.": "Arquitectura de acceso y recorrido rápidos, con baja ventilación convectiva.",

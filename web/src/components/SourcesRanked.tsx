@@ -6,6 +6,7 @@ import { doiOf, num, plural, scenarioValueText, studyShort, varOf } from "../rep
 import { explainAll, nextSort, sortKeyOf, sortStable, valueWithUnit } from "../report/ranking";
 import type { Dir, RankKey, StudyExplain, VarExplain } from "../report/ranking";
 import { whyText } from "../report/text";
+import { RangeStrip } from "./ScenarioPanel";
 import { t, many } from "../i18n";
 
 function VarLine({ pack, v }: { pack: Pack; v: VarExplain }) {
@@ -37,6 +38,7 @@ function VarLine({ pack, v }: { pack: Pack; v: VarExplain }) {
       {cite}
       {v.status === "covered" ? t(": a record covers the scenario value") : t(": nearest record is {0} {1} away", num(v.gap ?? 0), du)}
       {v.tested ? t("; tested range {0}", valueWithUnit(v.tested, unit)) : ""}{t(". Closeness")} {v.score}/100.
+      {typeof v.scenarioValue === "number" && <RangeStrip v={def as NumVariable} tested={v.tested} value={v.scenarioValue} />}
     </li>
   );
 }

@@ -71,6 +71,80 @@ export function harmonizedCsv(pack: Pack, records: DataRecord[] = pack.records):
   return csv([head, ...rows]);
 }
 
+/** The same records as `harmonizedCsv`, as JSON: values keep their engine shape (numeric ranges as [min, max]). */
+export function harmonizedJson(pack: Pack, records: DataRecord[] = pack.records): string {
+  const shorts = new Map(pack.studies.map((s) => [s.id, s.short]));
+  const files = new Map(pack.sources.map((s) => [s.id, s.name]));
+  return JSON.stringify(
+    {
+      pack: pack.meta.id,
+      created_at: pack.meta.created_at,
+      source_note: pack.meta.source_note,
+      records: records.map((r) => ({ ...r, study_short: shorts.get(r.study) ?? null, source_file: files.get(r.source.id) ?? null })),
+    },
+    null,
+    2,
+  );
+}
+
+/** Column-by-column description of the harmonized export, so the CSV can be used without reading the code. */
+export function dataDictionary(pack: Pack) {
+  const part = pack.schema.variables.find((v) => v.type === "cat" && v.role === "partition");
+  const has = (id: string) => pack.records.filter((r) => r.values[id] !== undefined && r.values[id] !== "").length;
+  const flags = [...new Set(pack.records.flatMap((r) => r.flags))].sort();
+  return {
+    pack: pack.meta.id,
+    title: pack.meta.title,
+    created_at: pack.meta.created_at,
+    source_note: pack.meta.source_note,
+    license: pack.meta.license ?? null,
+    records: pack.records.length,
+    variables: pack.schema.variables.map((v) => ({
+      id: v.id,
+      label: v.long ?? v.label,
+      type: v.type,
+      unit: v.type === "num" ? v.unit : null,
+      role: v.type === "cat" ? (v.role ?? null) : null,
+      range: v.type === "num" ? v.range : null,
+      sigma: v.type === "num" ? v.sigma : null,
+      display_units: v.type === "num" ? (v.display_units ?? []) : [],
+      csv_columns: v.type === "num" ? [`${v.id}_min`, `${v.id}_max`] : [v.id],
+      records_with_value: has(v.id),
+    })),
+    thresholds: pack.schema.thresholds,
+    flags: flags.map((id) => ({
+      id,
+      label: pack.schema.flags?.[id]?.label ?? null,
+      note: pack.schema.flags?.[id]?.note ?? null,
+      records: pack.records.filter((r) => r.flags.includes(id)).length,
+    })),
+    notes: [
+      "An empty cell means the source does not record the value; it is not a zero.",
+      "Numeric variables are ranges in the canonical unit: <id>_min and <id>_max.",
+      ...(part ? [`${part.id} separates records that are never compared with each other.`] : []),
+      "source_file, source_row and source_page point to the origin of each record; flags are separated by |.",
+    ],
+  };
+}
+
+export function dataDictionaryMd(pack: Pack): string {
+  const d = dataDictionary(pack);
+  const cell = (s: unknown) => String(s ?? "").replace(/\|/g, "\\|");
+  return [
+    `# Data dictionary · ${d.title}`,
+    "",
+    `${d.source_note}. Pack \`${d.pack}\`, ${d.created_at}, ${d.records} records.`,
+    "",
+    "| CSV columns | Variable | Type | Canonical unit | Range | Records with value |",
+    "|---|---|---|---|---|---|",
+    ...d.variables.map((v) => `| \`${v.csv_columns.join("`, `")}\` | ${cell(v.label)} | ${v.role ?? v.type} | ${cell(v.unit)} | ${v.range ? v.range.join("–") : ""} | ${v.records_with_value} |`),
+    "",
+    ...(d.flags.length ? ["| Flag | Meaning | Records |", "|---|---|---|", ...d.flags.map((f) => `| \`${f.id}\` | ${cell(f.label ?? f.note)} | ${f.records} |`), ""] : []),
+    ...d.notes.map((n) => `- ${n}`),
+    "",
+  ].join("\n");
+}
+
 export function caseResultCsv(pack: Pack, ranking: StudyResult[]): string {
   const shorts = new Map(pack.studies.map((s) => [s.id, s.short]));
   return csv([
@@ -185,19 +259,19 @@ export function DossierModal({
           </div>
           <div className="dossier-actions noprint">
             <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title={t("Copy Executive Summary formatted for Flight Directors")}>
-              {t("📋 Copy Markdown Brief")}
+              {t("Copy Markdown brief")}
             </button>
             <button type="button" className="chip" onClick={handleDownloadMarkdown} title={t("Download Markdown Dossier")}>
-              {t("💾 Download .md")}
+              {t("Download .md")}
             </button>
             <button type="button" className="chip" onClick={handleDownloadJson} title={t("Export full JSON evidence pack")}>
-              {t("📦 Export JSON")}
+              {t("Export JSON")}
             </button>
             <button type="button" className="chip" onClick={() => window.print()} title={t("Print or save as official NASA PDF")}>
-              {t("📄 Print / PDF")}
+              {t("Print / PDF")}
             </button>
             <button type="button" className="chip" onClick={onClose}>
-              {t("Close ✕")}
+              {t("Close")}
             </button>
           </div>
         </header>
@@ -302,6 +376,33 @@ export function DossierModal({
               }
             >
               {t("Download ranking CSV")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_${scope}_${dateTag}.json`, harmonizedJson(pack, scopedRecords), "application/json;charset=utf-8")
+              }
+            >
+              {t("Download records JSON")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_data_dictionary.md`, dataDictionaryMd(pack), "text/markdown;charset=utf-8")
+              }
+            >
+              {t("Download data dictionary (.md)")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                downloadFile(`prometeo_${pack.meta.id}_data_dictionary.json`, JSON.stringify(dataDictionary(pack), null, 2), "application/json;charset=utf-8")
+              }
+            >
+              {t("Download data dictionary (.json)")}
             </button>
             <button
               type="button"

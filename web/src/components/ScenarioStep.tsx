@@ -127,7 +127,7 @@ export function ScenarioStep({
         </ol>
 
         <div className="quick-mission-bar noprint">
-          <span className="quick-mission-title">{t("🚀 1-Click NASA Missions:")}</span>
+          <span className="quick-mission-title">{t("1-Click NASA Missions:")}</span>
           {NASA_MISSION_PRESETS.map((m) => (
             <button
               key={m.id}
