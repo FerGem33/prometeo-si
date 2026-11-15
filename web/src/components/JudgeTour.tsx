@@ -1,37 +1,25 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { evidenceLevels, findings } from "../engine";
 import type { Lens, Pack, Scenario } from "../engine";
 import type { Stage } from "../state";
 import { useData } from "./ctx";
 import { habitatScenario } from "./HabitatFigure";
-import { findingText, LEVELS } from "../report/text";
-import { scenarioValueText, varOf } from "../report/format";
+import { LEVELS } from "../report/text";
 import { t, tx, many, lazy } from "../i18n";
 
 /**
- * What a stop can say about the loaded corpus. Counts come from the pack, settings from the lens, and levels and
- * findings from the engine run on those settings; nothing is written in this file.
+ * What a stop can say about the loaded example. Counts come from the pack and settings from the lens; the text of
+ * the stops stays general, because the tour presents Prometeo, not one field of research.
  */
 export interface TourContext {
   studies: number;
   units: string;
   sources: number;
-  subject: string;
-  /** The reference case of the lens, the one the pitch is about. */
+  /** The reference case of the lens; the tour loads it to show the report being recomputed. */
   presetId: string;
   presetLabel: string;
-  presetBlurb: string;
-  /** Another setting of the lens, shown first so that loading the reference case visibly rewrites the report. */
+  /** Another setting of the lens, shown first so that loading the reference case visibly changes the report. */
   baseId: string;
   baseLabel: string;
-  baseBlurb: string;
-  /** The first finding of the engine for the reference case, as the report words it. */
-  hook: string;
-  /** Each variable of the reference case with its value and level, as the report words them. */
-  levels: string;
-  /** The first variable of the reference case, whose source the tour opens. */
-  firstVar: string;
-  question: string;
 }
 
 /** A control: a selector, or one that depends on the settings of the lens. */
@@ -43,6 +31,7 @@ export interface TourStep {
   /** Short name shown next to the number of the stop. */
   name: string;
   title: string;
+  /** Two or three short sentences about what is outlined on the page, for an audience from any field. */
   pitch: (c: TourContext) => string;
   /** The element on the page the stop talks about; it is outlined and scrolled into view. */
   target: string;
@@ -53,33 +42,17 @@ export interface TourStep {
   leave?: string;
 }
 
-const lower = (s: string) => (/^.[a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
-
 export function tourContext(pack: Pack, lens: Lens): TourContext {
   const preset = lens.presets.find((p) => p.id === lens.default_preset) ?? lens.presets[0];
   const base = lens.presets.find((p) => p.id !== preset?.id);
-  const scenario = habitatScenario(lens, preset?.id);
-  const levels = evidenceLevels(pack, lens, scenario);
-  const first = findings(pack, lens, scenario)[0];
-  const label = (id: string) => {
-    const v = varOf(pack, id);
-    return v.long ?? v.label;
-  };
   return {
     studies: pack.studies.length,
     units: many(lens.unit_of_study ?? "study"),
     sources: pack.meta.stats.sources ?? pack.sources.length,
-    subject: lens.subject ?? t("tests"),
     presetId: preset?.id ?? "",
     presetLabel: preset?.label ?? "",
-    presetBlurb: preset?.blurb ?? "",
     baseId: base?.id ?? "",
     baseLabel: base?.label ?? "",
-    baseBlurb: base?.blurb ?? "",
-    hook: first ? findingText(pack, lens, first) : "",
-    levels: levels.map((lv) => `${label(lv.variable)} ${scenarioValueText(pack, lv.variable, lv.value)}: ${LEVELS[lv.level].label}`).join("; "),
-    firstVar: levels[0] ? lower(label(levels[0].variable)) : "",
-    question: lens.questions?.[0] ?? "",
   };
 }
 
@@ -97,114 +70,110 @@ export const TOUR_STEPS: TourStep[] = lazy([
     id: 1,
     stage: "cover",
     name: tx("Problem"),
-    title: tx("A simple question, an answer spread over the literature"),
+    title: tx("Research starts by finding what is already known"),
     pitch: (c: TourContext) =>
       t(
-        "{0}: {1} Before designing it, a researcher needs to know what has been tested under those conditions. The answer is spread over {2} {3} and {4} data tables, each with its own columns and units.",
-        c.presetLabel,
-        c.presetBlurb,
+        "Before a new experiment or design, researchers must find out what has already been tested. That evidence is scattered across papers and data tables, each with its own format and units. The example in this demo: {0} {1} and {2} data tables.",
         c.studies,
         c.units,
         c.sources,
-      ) + (c.hook ? ` ${t("Read side by side, they show something uncomfortable: {0}", c.hook)}` : ""),
+      ),
     target: ".cover .example",
-    takeaway: tx("Finding that gap by hand means reading every paper and converting every value."),
+    takeaway: tx("Gathering that evidence by hand takes weeks."),
   },
   {
     id: 2,
     stage: "processing",
     name: tx("Prometeo"),
-    title: tx("All that literature, turned into one verifiable paper"),
-    pitch: (c: TourContext) =>
+    title: tx("One verifiable paper, for any research topic"),
+    pitch: () =>
       t(
-        "Prometeo is a tool for the research community. It reads the {0} source tables, converts every value to one canonical unit, keeps comparable {1} together and computes, with a deterministic engine, what has been studied and what has not. The same inputs always produce the same report.",
-        c.sources,
-        c.subject,
+        "Prometeo reads the papers and tables, converts every value to common units and calculates what has been studied and what has not. It is not tied to one field: the same steps work for any experimental topic.",
       ),
     target: ".proc-status-col",
-    takeaway: tx("Levels, grades and findings are computed, not generated: they can be audited and reproduced."),
+    takeaway: tx("Results are calculated, not written by AI, so anyone can check and reproduce them."),
   },
   {
     id: 3,
     stage: "report",
     name: tx("Report"),
-    title: tx("The format a researcher already reads"),
+    title: tx("Results in the format researchers already read"),
     pitch: (c: TourContext) =>
-      t("An abstract, key findings, numbered figures and tables, methods and references, read in layers from the top down.") +
-      (c.baseLabel ? ` ${t("The tour opens it first on a familiar setting, “{0}”: {1}", c.baseLabel, c.baseBlurb)}` : ""),
+      t("The answer is a scientific paper: abstract, key findings, figures, tables and references. The most important results come first; the details follow below.") +
+      (c.baseLabel ? ` ${t("It opens on a familiar example: “{0}”.", c.baseLabel)}` : ""),
     target: ".page .top",
     click: (c: TourContext) => preset(c.baseId),
-    takeaway: tx("There is no new interface to learn: it reads like a paper, from the key findings down."),
+    takeaway: tx("Nothing new to learn: it reads like any paper."),
   },
   {
     id: 4,
     stage: "report",
     name: tx("Scenario"),
-    title: tx("Load the case, and the whole report is recomputed"),
+    title: tx("Your scenario, compared with what has been tested"),
     pitch: (c: TourContext) =>
       t(
-        "The tour has loaded “{0}”, and every level, figure and finding has been recomputed in the browser: {1}. Panel a shows why: each value against the range that the comparable tests cover.",
+        "The tour has switched to the example “{0}”, and the whole report updated at once. In the outlined panel, each band is the range already covered by experiments and the mark is the scenario. Inside a band: {1}. Just outside: {2}. No band: {3}.",
         c.presetLabel,
-        c.levels,
+        LEVELS.studied.label,
+        LEVELS.near.label,
+        LEVELS.not_studied.label,
       ),
     target: ".page figure.ga .ga-a",
     click: (c: TourContext) => preset(c.presetId),
-    takeaway: tx("Prometeo does not predict outcomes: it states what the record supports and what it does not."),
+    takeaway: tx("Prometeo does not predict results: it shows what the evidence covers and where the gaps are."),
   },
   {
     id: 5,
     stage: "report",
     name: tx("Sources"),
-    title: tx("Every number leads back to its source"),
-    pitch: (c: TourContext) =>
+    title: tx("Every number has a source"),
+    pitch: () =>
       t(
-        "The tour has opened the record behind the level of {0}: the file, the row, the original value and unit, the conversion applied, the DOI and the SHA-256 of the table. Any underlined value in the report opens its record the same way.",
-        c.firstVar,
+        "Any underlined value opens its origin: the original file, the row, the value as published and the DOI of the dataset. The tour has opened one. Nothing is shown without a source.",
       ),
     target: ".prov",
     click: ".page figure.ga .src",
     leave: ".prov header button",
-    takeaway: tx("Nothing appears without a source: any number can be checked in one click."),
+    takeaway: tx("Every claim can be checked in one click."),
   },
   {
     id: 6,
     stage: "report",
     name: tx("Question"),
-    title: tx("Ask in plain language; the engine still decides"),
-    pitch: (c: TourContext) =>
+    title: tx("Ask in plain words"),
+    pitch: () =>
       t(
-        "The tour has typed a suggested question: “{0}”. Apply question sends it to the model live. The model only turns the words into scenario values, which are validated before use; the engine recomputes the levels, and the written analysis keeps only sentences that match a computed finding, each with its sources. If the service fails, a template text is shown and labeled as such.",
-        c.question,
+        "The tour has written a suggested question in the box; Apply question sends it to the AI live. The AI only turns the words into conditions. Prometeo then calculates the results, and the AI's written text is checked against the data.",
       ),
     target: ".page .assistant-panel",
     click: ".page .assistant-panel .presets .chip",
-    takeaway: tx("The AI translates and writes; it never sets a level, a grade or a finding."),
+    takeaway: tx("AI helps to ask and to explain; it never decides the results."),
   },
   {
     id: 7,
     stage: "dossier",
     name: tx("Export"),
-    title: tx("A dossier and datasets ready for review"),
+    title: tx("Take the evidence with you"),
     pitch: () =>
       t(
-        "The report goes out as PDF or Markdown. The harmonized records go out as CSV with units, DOI and a study group for leakage-free splits, together with a datacard that lists conversions, rejected columns and what was not assessed.",
+        "The report downloads as PDF. The data behind it downloads as a CSV file with units and a source on every row, plus a data card that explains how it was built.",
       ),
     target: ".dossier-export-bar",
-    takeaway: tx("The same corpus serves a design review and a machine-learning dataset, with its provenance intact."),
+    takeaway: tx("The same evidence serves a review, a proposal or a new dataset."),
   },
   {
     id: 8,
     stage: "report",
     name: tx("Any field"),
-    title: tx("Nothing in the engine is written for this field"),
+    title: tx("Works for any field of research"),
     pitch: () =>
       t(
-        "Variables, units, partitions and level rules come from two files that describe the corpus: the evidence pack and its lens. The engine that computes levels, grades and findings contains no vocabulary of any field; an automated check enforces it, and the same engine has run unchanged on a second corpus from another field.",
+        "Nothing in the engine of Prometeo is specific to this topic. Each field is described by its own data files; an automated test keeps the engine free of field-specific terms, and the same engine has already run on data from a second field.",
       ),
     target: "#methods .side",
-    click: '#methods > .fold-head',
+    click: "#methods > .fold-head",
     leave: '#methods > .fold-head[aria-expanded="true"]',
-    takeaway: tx("Another field needs a new pack and lens, not a new engine."),
+    takeaway: tx("A new field needs new data, not new software."),
   },
   {
     id: 9,
@@ -213,10 +182,10 @@ export const TOUR_STEPS: TourStep[] = lazy([
     title: tx("Start from the gap"),
     pitch: () =>
       t(
-        "Back to the key findings: the largest gaps come first, each with its sources. Reading dozens of papers to find a gap takes weeks; with Prometeo, a researcher starts from the gap.",
+        "The key findings put what is missing first, each with its sources. Instead of reading for weeks to find a gap, a researcher starts from it.",
       ),
     target: ".page .keys",
-    takeaway: tx("One living, verifiable paper: what has been studied, what has not, and where every number comes from."),
+    takeaway: tx("One living, verifiable paper: what is known, what is not, and where each number comes from."),
   },
 ]);
 

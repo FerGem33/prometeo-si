@@ -111,7 +111,13 @@ Una entrada por sesión de agente, la más reciente arriba.
   7. Exportación (dossier).
   8. Cualquier área: abre Methods y señala la nota de reproducibilidad.
   9. Cierre en Key findings.
-- Los textos del tour toman del motor (`tourContext`) el primer hallazgo y los niveles del preset por defecto; ya no hay cifras escritas a mano. `tour.test.ts` comprueba con el pack real lo que cita el pitch: 0 de 268 registran presión, O₂ 30 % *Near, not covered*, presión *Not studied*, PMMA *Studied*.
+- Textos (revisión del dueño):
+  - generales, cortos y sin vocabulario del corpus, para jueces de cualquier área;
+  - cada parada describe lo que está resaltado en pantalla;
+  - la parada 4 explica la banda (rango ya cubierto), la marca (escenario) y los tres niveles con las mismas palabras de la interfaz.
+
+  El ejemplo solo aparece por sus conteos (pack) y los nombres de sus presets (lente). `tour.test.ts` comprueba que ningún texto use el sujeto ni las etiquetas de variables del pack, y que cada texto tenga 60 palabras o menos.
+- Móvil: la cabecera de la portada desbordaba a 390 px y el panel del tour se cortaba en la parada 1. Ahora `.screen-bar` y `.bar-links` hacen salto de línea por debajo de 700 px.
 - Cambios de soporte:
   - `data-preset` en los chips de `HabitatPanel`;
   - `id="methods"` en el pliegue de Methods;
