@@ -15,6 +15,9 @@ El 15-nov se aplicó el alcance de proyectos vacíos con autorización del dueñ
 API y cuatro rutas JWT desplegadas, 401 sin sesión/token inválido y CORS 204
 comprobados. Falta la prueba con dos usuarios válidos para cerrar T33.
 
+Para obtener esas sesiones y ejecutar A/B: [herramienta Cognito local](../tools/cognito/README.md).
+Para conocer lo que falta de infraestructura y backend: [estado AWS/backend](../docs/ESTADO_AWS_BACKEND.md).
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net

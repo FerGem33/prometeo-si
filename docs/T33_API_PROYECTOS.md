@@ -152,6 +152,12 @@ que exista backend desplegado y verificado.
 
 ## Comprobación HTTP real y prueba A/B pendiente
 
+Para obtener las sesiones mediante registro/confirmación/login SRP, usar
+[`tools/cognito/README.md`](../tools/cognito/README.md). Su modo `ab` evita copiar
+tokens a la terminal o al chat: inicia ambas sesiones y pasa los ID tokens
+al entorno del smoke en memoria. Cliente local implementado; flujos reales aún
+pendientes de las dos cuentas del dueño.
+
 `api/check_projects_live.py` comprobó 401 sin sesión, 401 con token inválido y
 204 en CORS. `/ask` y `/analysis` regresaron 200; analysis fue mode=ai con tres
 oraciones citadas. Authorizer `m6kz2q`, integración `ga1agdj`, cuatro rutas JWT;

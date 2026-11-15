@@ -1,0 +1,7 @@
+{
+  "name": "prometeo-cognito-check",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test"},
+  "dependencies": {"amazon-cognito-identity-js": "6.3.22"}
+}

@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33 API de proyectos vacíos desplegada; JWT/rutas comprobados sin sesión y con token inválido. Pendientes registro/login y prueba A/B con dos sesiones reales. T32 D7/PDF pendiente. T31 hecha. |
-| Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Completar registro/login y obtener dos sesiones de usuario distintas para ejecutar `api/check_projects_live.py` con T33_TOKEN_A/B solo en el entorno local; nunca compartirlas en chat/Git. Cerrar aislamiento A/B real antes de dar T33 por hecha. Cargas esperan D3; D7/PDF espera revisor. |
+| Tarea en curso | T33 API drafts desplegada; herramienta local registro/confirmación/login SRP y A/B implementada. Falta ejecutarla con dos cuentas reales y confirmar aislamiento remoto. T32 D7/PDF pendiente. T31 hecha. |
+| Último commit verificado | T33 despliegue `4268b90` (JWT/HTTP y regresión MVP); T31 `56e42d5`. Verificación nueva local de cliente Cognito en esta entrega; no se presume A/B real. |
+| Siguiente paso exacto | Dueño: seguir `tools/cognito/README.md`, registrar/confirmar dos correos propios, ejecutar login y `node tools/cognito/cli.mjs ab` con entradas ocultas; revisar recibo `/tmp/prometeo-t33-ab.json` sin tokens. Después cerrar A/B real y preparar cargas/worker tras D3. Pendientes generales en `docs/ESTADO_AWS_BACKEND.md`. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -61,7 +61,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33 | Cuenta y proyectos (avance local) | fase 2 · C | en curso | stringbuilder | esta entrega | GET/POST/GET-id/PATCH de drafts, claims JWT de authorizer, DynamoDB, idempotencia/paginación. Configuración preparada; falta login, despliegue real, A/B real y cargas T30/D3 |
+| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | API drafts desplegada; helper local register/confirm/login SRP y A/B listo. Falta registro/login real, A/B remoto y cargas T30/D3; no declarar hecha |
 | T34–T37 | Worker, revisión y publicación | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus); revisión T32/D7 pendiente |
 
 ## Aceptación final (T15)
@@ -95,6 +95,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 herramienta de registro/login y estado AWS/backend
+- `tools/cognito/` añade SDK Cognito 6.3.22 fijado, wrapper en memoria, CLI de registro/confirmación/login SRP y ejecución A/B con dos sesiones en entorno del proceso hijo. Entradas de contraseña/código ocultas, tokens fuera de argumentos/logs/archivos. No modifica componentes ni dependencias web ni flujos del pool.
+- Registro envía correo solo cuando el dueño ejecuta el comando con su dirección; no se registraron cuentas ni se hicieron llamadas Cognito en esta entrega. La herramienta detecta desafíos MFA/contraseña temporal y detiene la operación; no implementa su interacción. Limpiar memoria local no revoca tokens globalmente.
+- `tools/cognito/README.md` documenta comandos operativos, límites, IDs de drafts de prueba y recepción segura de sesiones. `docs/ESTADO_AWS_BACKEND.md` separa recursos hechos de API/cargas/worker/revisión/publicación pendientes y decisiones del dueño.
+- Seis pruebas del helper pasan (SDK real construido sin red y dobles para flujos/aislamiento); instalación npm reportó 0 vulnerabilidades. Prueba real de correos/login/aislamiento sigue pendiente de dos cuentas confirmadas. T33 permanece en curso.
 
 ### 2026-11-15 · T33 API de proyectos desplegada y comprobaciones HTTP
 - Tras actualizar permisos SSO y autorización del dueño, se publicó código en Lambda existente y se configuraron las cuatro rutas JWT. Primer intento parcial falló: waiter FunctionUpdatedV2 usa GetFunction, no GetFunctionConfiguration. Se corrigieron scripts a FunctionUpdated/FunctionActive (comprobado con modelo botocore) para usar el permiso ya aprobado.
