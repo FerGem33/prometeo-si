@@ -65,6 +65,11 @@ def configure(root, env, call=aws):
         raise ValueError('Unexpected unconsumed route page')
     known = {r['RouteKey']: r for r in routes.get('Items', [])}
     target = 'integrations/' + matches[0]['IntegrationId']
+    for route in documents['projects-routes.json']:
+        old = known.get(route['RouteKey'])
+        if old and (old.get('Target') != target or old.get('AuthorizationType') != 'JWT'
+                    or old.get('AuthorizerId') != authorizer_id):
+            raise ValueError('Existing project route differs; review ' + route['RouteKey'])
     # Configure protection before enabling service variables. No unprotected project route.
     for route in documents['projects-routes.json']:
         key = route['RouteKey']

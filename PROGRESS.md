@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33 preparación local · stringbuilder: identidad verificada por authorizer y proyectos draft. T32 revisión humana D7/PDF pendiente. T31 hecha. |
+| Tarea en curso | T33: despliegue solicitado por dueño; preflight AWS detenido por AccessDenied en lambda:GetFunctionConfiguration del rol SSO T31. Código local listo para proyectos draft; identidad JWT real pendiente. T32 revisión humana D7/PDF pendiente. T31 hecha. |
 | Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Continuar T33 con registro/login Cognito e integración de sesión; tras aprobación T30, el dueño publica paquete y configura rutas con `infra/deploy_projects.py --apply --contract-approved`, y verifica dos usuarios reales. Cargas esperan D3; D7/PDF espera revisor. Ver `docs/T33_API_PROYECTOS.md`. |
+| Siguiente paso exacto | Administrador revisa/añade `infra/t33-deployer-policy.json` al permission set del perfil prometeo y reprovisiona; dueño renueva SSO. Registrar aprobación del alcance cuentas/proyectos y reanudar preflight/despliegue T33 y pruebas reales A/B. Ver `docs/T33_PERMISOS_DESPLIEGUE.md`. Cargas esperan D3; D7/PDF espera revisor. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -95,6 +95,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 intento de preflight para despliegue por etapas
+- El dueño autorizó desplegar y revisar tarea por tarea. `git pull --rebase`: main al día. STS real confirma cuenta `352818909129`, rol `AWSReservedSSO_Prometeo-T31_e5fccb7bc636c4a5/prometeo-admin`.
+- `lambda get-function-configuration` fue rechazado con AccessDeniedException por falta de `lambda:GetFunctionConfiguration` sobre la Lambda existente. No se ejecutaron operaciones de escritura AWS ni se atribuye un despliegue exitoso.
+- Se preparó `infra/t33-deployer-policy.json` para revisión del administrador y `docs/T33_PERMISOS_DESPLIEGUE.md` con pasos de permission set/reprovisión. El script API ahora consulta rol/función concretos y reutiliza API_ID, evitando permisos de listado global para este despliegue.
+- Se reforzó el preflight de rutas existentes: integración/authorizer/auth distintos detienen el script antes de sobrescribir rutas. Prueba de colisión agregada.
+- Verificación: API 71 pruebas pasan con Python 3.12; bash -n de script API, sintaxis JSON y diff-check correctos. Política aún sin validación IAM remota; estos tests no prueban acceso ni despliegue AWS.
+- Pendientes: permiso SSO adicional, aprobación concreta cuentas/proyectos, login/registro e integración A/B reales. D3 de cargas y D7/PDF siguen abiertas. No se modifica infraestructura con root ni se asignan permisos desde esta sesión.
 
 ### 2026-11-15 · T33 despliegue preparable y protección de configuración
 - Sincronización trajo `9c2abcb` con cambios del equipo de interfaz; se conservaron. Esta entrega modifica solo infraestructura, pruebas de API y documentación.

@@ -50,13 +50,15 @@ projects=bool(env.get('COGNITO_ISSUER'))
     'AllowMethods':['GET','POST','PATCH','OPTIONS'] if projects else ['POST','OPTIONS'],
     'AllowHeaders':['content-type','authorization','idempotency-key'] if projects else ['content-type'],'MaxAge':300}))
 PY
-ROLE_ARN=$(aws iam list-roles --query "Roles[?RoleName=='${ROLE_NAME}'].Arn | [0]" --output text)
-if [[ "$ROLE_ARN" == None ]]; then
+if aws iam get-role --role-name "$ROLE_NAME" > "$TMP/role.json" 2> "$TMP/error"; then
+  ROLE_ARN=$("$PYTHON" -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["Role"]["Arn"])' "$TMP/role.json")
+else
+  grep -q NoSuchEntity "$TMP/error" || { cat "$TMP/error" >&2; exit 1; }
   ROLE_ARN=$(aws iam create-role --role-name "$ROLE_NAME" --assume-role-policy-document "file://$TMP/trust.json" --query Role.Arn --output text)
 fi
 aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 aws iam put-role-policy --role-name "$ROLE_NAME" --policy-name "${PROJECT}-bedrock" --policy-document "file://$TMP/policy.json"
-FUNCTION_ARN=$(aws lambda list-functions --query "Functions[?FunctionName=='${NAME}'].FunctionArn | [0]" --output text)
+FUNCTION_ARN=$("$PYTHON" -I -c 'import json,sys; print(json.load(open(sys.argv[1])).get("FunctionArn","None"))' "$TMP/existing-function.json")
 if [[ "$FUNCTION_ARN" == None ]]; then
   # IAM puede tardar en propagar el trust; repetir solo ese error conocido.
   for attempt in 1 2 3 4 5 6; do
@@ -72,7 +74,11 @@ else
   aws lambda update-function-configuration --function-name "$NAME" --runtime python3.12 --handler handler.handler --role "$ROLE_ARN" --timeout 29 --memory-size 512 --environment "file://$TMP/env.json" > /dev/null
   aws lambda wait function-updated-v2 --function-name "$NAME"
 fi
-API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='${NAME}'].ApiId | [0]" --output text)
+API_ID=${API_ID:-None}
+if [[ "$API_ID" != None ]]; then
+  aws apigatewayv2 get-api --api-id "$API_ID" > "$TMP/api.json"
+  "$PYTHON" -I -c 'import json,sys; assert json.load(open(sys.argv[1]))["Name"] == sys.argv[2], "API distinta de outputs"' "$TMP/api.json" "$NAME"
+fi
 if [[ "$API_ID" == None ]]; then
   API_ID=$(aws apigatewayv2 create-api --name "$NAME" --protocol-type HTTP --target "$FUNCTION_ARN" --cors-configuration "file://$TMP/cors.json" --query ApiId --output text)
 else

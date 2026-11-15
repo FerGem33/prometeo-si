@@ -47,7 +47,9 @@ class AWS:
             return a
         if action == 'create-route':
             assert opts['--authorization-type'] == 'JWT'
-            self.routes.append({'RouteKey': opts['--route-key'], 'RouteId': 'r'+str(len(self.routes))})
+            self.routes.append({'RouteKey': opts['--route-key'], 'RouteId': 'r'+str(len(self.routes)),
+                                'Target': opts['--target'], 'AuthorizationType': 'JWT',
+                                'AuthorizerId': opts['--authorizer-id']})
         elif action == 'update-route':
             assert opts['--authorization-type'] == 'JWT'
         elif action == 'add-permission':
@@ -128,3 +130,13 @@ def test_refuses_changed_permission_and_no_env_activation(config):
     with pytest.raises(ValueError, match='permission differs'):
         deploy_projects.configure(root, env, aws)
     assert not any(a[1] == 'update-function-configuration' for a in aws.writes)
+
+
+def test_refuses_unexpected_route_integration(config):
+    root, env, aws = config
+    deploy_projects.configure(root, env, aws)
+    aws.routes[0]['Target'] = 'integrations/another-service'
+    aws.writes.clear()
+    with pytest.raises(ValueError, match='project route differs'):
+        deploy_projects.configure(root, env, aws)
+    assert not aws.writes
