@@ -84,6 +84,18 @@ def test_ask_converts_units_in_code(monkeypatch):
     assert ask_with(monkeypatch, [{'variable':'p','value':'70.3','unit':'kPa'}])['values'] == {'p': 0.6938}
 
 
+def test_ask_prompt_explicitly_maps_gravity_g(monkeypatch):
+    data = case('ask'); data['question'] = 'What if the base used PMMA at 0.17 g?'
+    prompts = []
+    def model(system, user):
+        prompts.append(system)
+        return {'conditions': [{'variable':'g','value':0.17,'unit':'g'}]}
+    monkeypatch.setattr(h, 'model_json', model)
+    body = json.loads(call('/ask', data)['body'])
+    assert body['values'] == {'g': 0.17}
+    assert '"0.17 g" is variable "g", value 0.17, unit "g"' in prompts[0]
+
+
 def test_ask_keeps_gravity_and_flow(monkeypatch):
     out = ask_with(monkeypatch, [{'variable':'g','value':0.17,'unit':'g'}, {'variable':'flow','value':5,'unit':'cm/s'}])
     assert out['values'] == {'g': 0.17, 'flow': 5} and out['active'] == ['g', 'flow']

@@ -30,15 +30,16 @@ Informe interactivo que compara un escenario propuesto con registros de experime
 ## Especificación técnica
 
 - En pantallas de 600 px o menos, los controles pasan de una tabla de cuatro columnas a filas apiladas; los encabezados siguen disponibles para tecnologías de asistencia.
-- Las solicitudes de escenario se validan contra el esquema. Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción, propagación o búsqueda de condiciones experimentales cercanas reciben una respuesta fija de alcance no admitido. Las sugerencias de `/ask` deben solicitar cambios de escenario, no consultas de ranking o recuperación de estudios.
+- Las solicitudes de escenario se validan contra el esquema. El prompt de `/ask` incluye el mapeo explícito de gravedad (`0.17 g` → variable `g`, valor `0.17`, unidad `g`). Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción, propagación o búsqueda de condiciones experimentales cercanas reciben una respuesta fija de alcance no admitido. Las sugerencias de `/ask` deben solicitar cambios de escenario, no consultas de ranking o recuperación de estudios.
 - Cada oración del análisis debe referir un hallazgo y sus fuentes aprobadas; ante un error de API se conserva la plantilla determinista.
 - El informe no requiere cuenta ni guarda escenarios en el servidor.
 
 ## Validación y pruebas
 
-- `npm test --prefix web`: 35 pruebas aprobadas.
+- `npm test --prefix web`: 54 pruebas aprobadas.
 - `npm run build --prefix web`: compilación TypeScript y Vite aprobada.
-- `api/.venv/bin/python -m pytest api/`: 27 pruebas aprobadas.
+- `api/.venv/bin/python -m pytest api/`: 39 pruebas aprobadas.
 - `scripts/check_agnostic.sh`: aprobado.
+- API publicada en Haiku 4.5 con Anthropic SDK 2.8.0; Haiku 5.5 permanece pendiente de acceso de cuenta (Bedrock 403).
 - Revisión pública: CloudFront en Chrome incógnito, viewport responsive 400 × 899, preguntas de escenario y de contenido, favicon HTTP 200 y vista de impresión de 16 páginas.
-- El despliegue desde otra laptop sigue pendiente como verificación externa de aceptación.
+- T16 publicó API y web desde otra laptop con los recursos existentes; el punto 9 de aceptación quedó verificado.

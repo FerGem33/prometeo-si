@@ -8,19 +8,19 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T16 (Codex · laptop actual); T17 y T19 listas para validación real |
-| Último commit verificado | `3720861` en `main` (fase 2, aún sin desplegar desde este equipo); lo publicado sigue siendo `67a81e1` |
-| Siguiente paso exacto | Ejecutar el guion de `docs/PLAN_FASE2.md` §7 con perfil `prometeo`; confirmar reutilización de recursos, respuestas `/ask` y `/analysis`, y hash de bundle público. |
+| Tarea en curso | T17 bloqueada por acceso Bedrock a Haiku 5.5; T16 y T19 hechas |
+| Último commit verificado | `3720861` en `main`; UI y Lambda publicadas desde esta laptop con recursos existentes |
+| Siguiente paso exacto | Resolver el 403 de Bedrock para `us.anthropic.claude-haiku-5-5`; después validar el modelo con SDK 2.8.0 y cerrar T17/D6. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
-| `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
+| `MODEL_ID` desplegado | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (operativo con SDK 2.8.0); Haiku 5.5 devolvió 403 en esta cuenta |
 
 ## Bloqueos
 
-- [23:33] T16 requiere perfil AWS `prometeo` en esta laptop y comprobación de que ambos scripts reutilizan la infraestructura existente.
+- [23:56] La cuenta devuelve 403 al invocar `us.anthropic.claude-haiku-5-5` (“not available for this account”). El dueño de AWS debe habilitar el acceso; mientras tanto la API opera con Haiku 4.5.
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
+- T18 sigue bloqueada por D9 y no se restauró `data/psi`; T21–T29 siguen asignadas al equipo de interfaz; T31–T37 esperan D1–D3.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -52,11 +52,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | `b4f8ced` | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
 | T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e`, `2e40fb6` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Se corrigió el anidamiento HTML inválido en enlaces expandibles y se regeneró `docs/screens/t13_study_compare.png`. |
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
-| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | `55c18ed` | Puntos 1–8 aceptados y documentados abajo. Falta comprobar `infra/deploy_web.sh` desde otra laptop con perfil AWS configurado (punto 9). |
-| T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | en curso | Codex · laptop actual | `3720861` | Verificar AWS, reutilización de bucket/distribución/Lambda/API y hash del bundle; seguir §7. |
-| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | en curso | Claude · ferlr | este commit | Código y 10 pruebas hechos; falta desplegar y probar con Bedrock |
+| T15 | Aceptación y entrega | P0 | hecha | Codex · stringbuilder | `55c18ed`, `07231c3` | Puntos 1–9 aceptados; T16 verificó el deploy desde otro equipo y la reutilización de recursos. |
+| T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | hecha | Codex · laptop actual | `07231c3` | API/web publicados; bucket, distribución, Lambda, rol y API existentes conservaron sus IDs; hash público/local `index-Ben2isQ8.js`. |
+| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | bloqueada | Codex · laptop actual | por registrar | `/ask` pasa con Haiku 4.5 y SDK 2.8.0; D6 requiere Haiku 5.5, denegado con 403 para esta cuenta. |
 | T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
-| T19 | Análisis con más contenido | fase 2 · A | en curso | Claude · ferlr | este commit | `tested_elsewhere` y valor extremo; falta desplegar |
+| T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
@@ -71,12 +71,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 - [x] 5. Chrome Print Preview de la URL pública muestra 16 páginas con escenario, hallazgos, Methods y References.
 - [x] 6. `/ask` aplicó O₂ 25 %, presión 0.5 atm y Nomex. La sugerencia de traje actualiza a O₂ 100 %, 0.293 atm y Nomex; la pregunta de comparación original devuelve `Only scenario changes are supported.` sin invocar el modelo. Preguntas de ignición reciben el mismo límite.
 - [x] 7. `/analysis` mostró frases de hallazgo con fuentes verificadas. `pytest api/` valida que errores de API dejan plantilla (modo `template`); no se forzó caída en el sitio público.
-- [x] 8. `npm test --prefix web` (35), `api/.venv/bin/python -m pytest api/` (28), build Vite/TypeScript y `scripts/check_agnostic.sh` en verde.
-- [ ] 9. Deploy desde otra laptop sin duplicar recursos
+- [x] 8. `npm test --prefix web` (54), `api/.venv/bin/python -m pytest api/` (39), build Vite/TypeScript y `scripts/check_agnostic.sh` en verde.
+- [x] 9. Deploy desde otra laptop sin duplicar recursos: bucket `prometeo-hack-web-352818909129`, CloudFront `E2SO4K789H7YOQ`, Lambda `prometeo-hack-api`, rol `prometeo-hack-api-role` y API `ve5oqmsyie` conservaron sus IDs; hash público/local `index-Ben2isQ8.js`.
 
 ## Revisión final pendiente
 
-- **Aceptación operativa pendiente:** el punto 9 requiere que una segunda laptop con perfil AWS `prometeo` ejecute `bash infra/deploy_web.sh`. En esta sesión se ejecutó dos veces desde el mismo equipo sobre el mismo bucket y distribución, sin crear recursos duplicados.
+- **Modelo Haiku 5.5 pendiente (D6/T17):** Bedrock lista `us.anthropic.claude-haiku-5-5` como activo, pero la invocación real devuelve HTTP 403: “not available for this account”. La Lambda se restauró a Haiku 4.5 con SDK 2.8.0 para mantener el servicio. Reintentar cuando el dueño habilite el modelo.
 - **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
 - **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
@@ -89,6 +89,14 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **Inicio:** `git fetch` y `git pull --rebase` confirmaron que `main` coincide con `origin/main` en `3720861`; no había cambios versionados locales. Se conserva `tools/datos_psi/` fuera de Git según D9.
 - **Tarea en curso:** T16. T17 y T19 tienen código y pruebas locales, pero esperan despliegue y validación con Bedrock real.
 - **Siguiente paso exacto:** cargar `AWS_PROFILE=prometeo`, `infra/config.env` y `infra/outputs.env`; correr primero las pruebas de §7 y después `infra/20_api.sh` y `infra/deploy_web.sh`. Confirmar que no se crean recursos y ejecutar los cuatro casos `/ask` más `/analysis`.
+
+### 2026-11-14 23:56 CST · Codex · cierre T16/T19 y bloqueo de acceso Haiku 5.5
+- **T16/T15:** STS autenticó el perfil `prometeo`. Preflight confirmó bucket, CloudFront `Deployed`, Lambda, rol, API y perfil Bedrock existentes. `infra/20_api.sh` y `infra/deploy_web.sh` reutilizaron los IDs; invalidación `I10YEYBHUBAGG1RHJVA56BX425` terminó `Completed`. CloudFront devolvió HTTP 200 y sirvió el mismo `index-Ben2isQ8.js` que generó el deploy. Punto 9 y T15 quedan hechos.
+- **Pruebas locales:** `npm test --prefix web` (54/54), `api/.venv/bin/python -m pytest api/ -q` (39/39), `npm run build --prefix web`, `scripts/check_agnostic.sh` y `git diff --check` OK.
+- **T17:** las cuatro sugerencias de `/ask`, la presión en psi, `0.17 g` y la pregunta de ignición fueron probadas contra la API. Con Haiku 4.5 y SDK 2.8.0 todas devolvieron HTTP 200; gravedad se conserva como `g: 0.17` e ignición devuelve el límite fijo. Se añadió un ejemplo explícito de gravedad a `ASK_SYSTEM` y su prueba de regresión.
+- **D6:** Haiku 5.5 aparece `ACTIVE` en Bedrock, pero la invocación real con SDK 2.8.0 recibió `403 PermissionDeniedError: anthropic.claude-haiku-5-5 is not available for this account`. Se restauró `MODEL_ID` a Haiku 4.5 y se volvió a desplegar la Lambda para mantener el servicio funcional. T17 queda bloqueada por acceso a Haiku 5.5.
+- **T19:** `/analysis` con `analysis_lunar.json` respondió HTTP 200, `mode: ai`, tres oraciones con fuentes y `dropped: 0`.
+- **Siguiente paso exacto:** el dueño habilita el modelo Haiku 5.5 para la cuenta AWS; después repetir `/ask`, `/analysis` y cerrar T17/D6. No se crearon recursos y `tools/datos_psi/` permanece local.
 
 ### 2026-11-14 23:20 CST · Claude · ferlr · fase 2 sin AWS: motor, API en código y contratos
 - **Decisión del dueño:** la fusión de `frontend` la hace su equipo; no está en este plan. Motor, API, infra y contratos siguen en `main`.

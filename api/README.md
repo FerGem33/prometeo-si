@@ -1,9 +1,11 @@
 # API · T09
 
 Lambda Python 3.12, HTTP API payload v2; entrypoint `handler.handler`.
-El modelo viene de MODEL_ID. SDK oficial `AnthropicBedrock`, versión 0.75.0
-fijada por compatibilidad del protocolo Bedrock con Haiku 4.5.
-Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v0.75.0
+El modelo viene de `MODEL_ID` en `infra/config.env`; esta cuenta todavía opera
+con `us.anthropic.claude-haiku-4-5-20251001-v1:0`. Haiku 5.5 figura activo en
+Bedrock, pero la invocación real fue denegada para esta cuenta (HTTP 403).
+SDK oficial `AnthropicBedrock`, versión 2.8.0, para el Messages API de Bedrock.
+Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v2.8.0
 
 ## Contratos
 
@@ -44,11 +46,10 @@ El despliegue debe incluir `pack.json` desde web/public/demo/pack.json junto con
 handler.py, verify.py y las dependencias para Linux; no copiar el venv de macOS.
 Mantener el pack de API sincronizado con el de web cuando cambien datos/esquema.
 
-Verificado 2026-11-14: 26 tests, /ask y /analysis por SDK real responden 200;
-analysis devuelve mode=ai y el hecho 0/268 con fuentes PSI reales. Esta prueba
-local todavía no verifica Lambda/API Gateway ni la UI desplegada.
+La verificación local de /ask y /analysis usa `api/smoke.py`; las llamadas son
+reales y facturables. La validación desplegada se registra en `PROGRESS.md`.
 
-## Cambios de la fase 2 (en `main`, sin desplegar)
+## Cambios de la fase 2
 
 Contrato completo en `docs/CONTRATOS_FASE2.md` §4.
 
