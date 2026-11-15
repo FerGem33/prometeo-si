@@ -529,4 +529,94 @@ describe("ScenarioStep 3-step redesign & zero-scenarios check", () => {
     const hasOnlyFailedDocsMixed = (scope as string) !== "demo" && mixedDocs.length > 0 && mixedReady.length === 0;
     expect(hasOnlyFailedDocsMixed).toBe(false);
   });
+
+  it("restores custom corpus draft state from initialDraft without resetting user overrides", () => {
+    const customDocs: UploadedDoc[] = [
+      {
+        id: "doc-custom",
+        name: "battery_test.csv",
+        kind: "table",
+        mediaType: "text/csv",
+        bytes: 4096,
+        sha256: "hash-battery",
+        status: "done",
+        uploadedAt: new Date().toISOString(),
+      },
+    ];
+
+    const draft: EvaluationDraft = {
+      docs: customDocs,
+      scope: "combine",
+      instruction: "Focus on battery capacity and voltage",
+      presetFlags: ["compact", "compare"],
+      variables: [
+        {
+          id: "cap",
+          label: "Custom Capacity Label",
+          type: "numeric",
+          unit: "mAh/g",
+          include: false,
+          citations: [],
+        },
+        {
+          id: "volt",
+          label: "Terminal Voltage",
+          type: "numeric",
+          unit: "V",
+          include: true,
+          citations: [],
+        },
+      ],
+      blueprint: {
+        title: "Battery Report",
+        kicker: "Custom",
+        variablesLayout: "list",
+        density: "compact",
+        highlightedVariables: ["cap"],
+        variableGroups: [],
+        defaultAxes: ["volt"],
+        sectionOrder: ["graphical_abstract", "map"],
+        foldedSections: { map: true },
+        hiddenSections: [],
+        rationale: "Rationale",
+      },
+      pack: {
+        contract: "prometeo.pack/1",
+        meta: { id: "p1", title: "P1", created_at: "", source_note: "", stats: {} },
+        schema: { variables: [], thresholds: { grade_a: 1, tolerance: 0.1, closeness_reach: 3 } },
+        sources: [],
+        studies: [],
+        records: [],
+        claims: [],
+      },
+      lens: { title: "L1", presets: [], default_axes: [], evidence: { min_studies: 1 } },
+      mapping: { approved_by: "tester", approved_at: "2026-11-15", tables: [], synonyms: {} },
+      scenario: { values: { volt: 3.7 }, active: ["volt"] },
+      extras: [],
+      isCustomCorpus: true,
+    };
+
+    expect(draft.docs.length).toBe(1);
+    expect(draft.docs[0].id).toBe("doc-custom");
+    expect(draft.scope).toBe("combine");
+    expect(draft.instruction).toBe("Focus on battery capacity and voltage");
+    expect(draft.presetFlags).toEqual(["compact", "compare"]);
+
+    const customVarState: Record<string, Partial<ExtractedVariable>> = {};
+    for (const v of draft.variables) {
+      customVarState[v.id] = {
+        label: v.label,
+        include: v.include,
+      };
+    }
+
+    expect(customVarState["cap"]).toEqual({
+      label: "Custom Capacity Label",
+      include: false,
+    });
+    expect(customVarState["volt"]).toEqual({
+      label: "Terminal Voltage",
+      include: true,
+    });
+  });
 });

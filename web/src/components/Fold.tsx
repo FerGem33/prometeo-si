@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { t } from "../i18n";
 
 /** A section that opens on demand. The content stays in the page so that printing always includes it.
@@ -7,6 +7,9 @@ export function Fold({ title, hint, children, open: initial = false, controlled,
   title: React.ReactNode; hint?: React.ReactNode; children: React.ReactNode; open?: boolean; controlled?: boolean; onOpenChange?: (open: boolean) => void; id?: string;
 }) {
   const [own, setOwn] = useState(initial);
+  useEffect(() => {
+    setOwn(initial);
+  }, [initial]);
   const open = controlled ? initial : own;
   const toggle = () => {
     if (!controlled) setOwn(!open);

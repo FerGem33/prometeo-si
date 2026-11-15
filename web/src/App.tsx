@@ -163,6 +163,7 @@ function Flow({ data }: { data: Data }) {
         onStart={(presetScenario) => {
           if (presetScenario) {
             setActiveCustomDraft(null);
+            setPendingDraft(null);
             setScenario(presetScenario);
             setAxes(defaultAxesFrom(pack, lens));
             go("processing");
@@ -172,6 +173,7 @@ function Flow({ data }: { data: Data }) {
         }}
         onDemo={() => {
           setActiveCustomDraft(null);
+          setPendingDraft(null);
           const initialDemo = readUrl(pack, lens, "");
           setScenario(initialDemo.scenario);
           setAxes(initialDemo.axes);
@@ -206,6 +208,7 @@ function Flow({ data }: { data: Data }) {
         goal={goal}
         onGoal={setGoal}
         onBack={() => go("cover")}
+        initialDraft={pendingDraft ?? activeCustomDraft}
         onRun={(count) => {
           setFileCount(count ?? 0);
           go("processing");
@@ -265,7 +268,11 @@ function Flow({ data }: { data: Data }) {
           setAxes={setAxes}
           goal={goal}
           projectId={projectId}
-          onHome={() => go("cover")}
+          onHome={() => {
+            setActiveCustomDraft(null);
+            setPendingDraft(null);
+            go("cover");
+          }}
           onEdit={() => go("scenario")}
           onWorkspace={() => go("workspace")}
           initialDossierOpen={dossierTrigger}

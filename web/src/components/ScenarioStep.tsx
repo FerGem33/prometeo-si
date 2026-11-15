@@ -62,6 +62,7 @@ export interface ScenarioStepProps {
   onBack: () => void;
   onRun?: (count?: number) => void;
   onSubmitDraft?: (draft: EvaluationDraft) => void;
+  initialDraft?: EvaluationDraft | null;
 }
 
 function formatSize(bytes: number): string {
@@ -104,21 +105,23 @@ export function ScenarioStep({
   onBack,
   onRun,
   onSubmitDraft,
+  initialDraft,
 }: ScenarioStepProps) {
   const { pack, lens, mapping } = useData();
   const [step, setStep] = useState(0);
 
   // Ingestion & documents state
-  const [docs, setDocs] = useState<UploadedDoc[]>([]);
-  const [scope, setScope] = useState<CorpusScope>("demo");
+  const [docs, setDocs] = useState<UploadedDoc[]>(() => initialDraft?.docs ?? []);
+  const [scope, setScope] = useState<CorpusScope>(() => initialDraft?.scope ?? (initialDraft?.docs?.length ? "uploaded" : "demo"));
   const [dragOver, setDragOver] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [duplicateNotices, setDuplicateNotices] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docStore = useMemo(() => createDocStore(), []);
 
-  // Hydrate stored documents on mount
+  // Hydrate stored documents on mount only if initialDraft was not provided or empty
   useEffect(() => {
+    if (initialDraft?.docs && initialDraft.docs.length > 0) return;
     let active = true;
     docStore.list().then((list) => {
       if (active && list.length > 0) {
@@ -129,7 +132,7 @@ export function ScenarioStep({
     return () => {
       active = false;
     };
-  }, [docStore]);
+  }, [docStore, initialDraft]);
 
   // AI proposals enrichment state
   const [remoteProposals, setRemoteProposals] = useState<VariableProposalRemote[] | undefined>(undefined);
@@ -138,8 +141,8 @@ export function ScenarioStep({
   const [aiProposalsCount, setAiProposalsCount] = useState(0);
 
   // GenUI design step state
-  const [instruction, setInstruction] = useState(goal || "");
-  const [presetFlags, setPresetFlags] = useState<DesignPresetFlag[]>([]);
+  const [instruction, setInstruction] = useState(() => initialDraft?.instruction ?? goal ?? "");
+  const [presetFlags, setPresetFlags] = useState<DesignPresetFlag[]>(() => initialDraft?.presetFlags ?? []);
 
   // Categories helper from reference pack
   const cats = useMemo(() => {
@@ -208,7 +211,17 @@ export function ScenarioStep({
   }, [scope, docs.length, demoVariables, uploadedVariables]);
 
   // User override state for extracted variables (include toggle, custom label/values)
-  const [customVarState, setCustomVarState] = useState<Record<string, Partial<ExtractedVariable>>>({});
+  const [customVarState, setCustomVarState] = useState<Record<string, Partial<ExtractedVariable>>>(() => {
+    if (!initialDraft?.variables?.length) return {};
+    const map: Record<string, Partial<ExtractedVariable>> = {};
+    for (const v of initialDraft.variables) {
+      map[v.id] = {
+        label: v.label,
+        include: v.include,
+      };
+    }
+    return map;
+  });
 
   const variables = useMemo(() => {
     return baseVariables.map((bv) => {
