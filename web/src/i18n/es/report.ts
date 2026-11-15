@@ -159,6 +159,7 @@ export const REPORT: Record<string, string> = {
   Show: "Mostrar",
 
   // ---- graphical abstract
+  "No variables available for closeness comparison.": "No hay variables disponibles para la comparación de cercanía.",
   "not recorded": "no registrado",
   "Closeness of {0} to the scenario: {1}.": "Cercanía de {0} al escenario: {1}.",
   "{0} of 100": "{0} de 100",
@@ -224,6 +225,12 @@ export const REPORT: Record<string, string> = {
   "Drag a node to rearrange the network · select one to open it": "Arrastre un nodo para reordenar la red · seleccione uno para abrirlo",
   "Selected {0}": "{0} {seleccionado|seleccionada}",
   Figure: "Figura",
+  "Distribution map.": "Mapa de distribución.",
+  "At least two numeric variables are required to display the distribution map.":
+    "Se requieren al menos dos variables numéricas para mostrar el mapa de distribución.",
+  "Coverage and gaps.": "Cobertura y lagunas.",
+  "At least two numeric variables are required to display coverage and gaps.":
+    "Se requieren al menos dos variables numéricas para mostrar la cobertura y las lagunas.",
   "| Evidence network of the": "| Red de evidencia de {los|las}",
   "Size, letter and outline give the grade against the active scenario;": "El tamaño, la letra y el contorno dan la nota frente al escenario activo; {los|las}",
   "without a comparable record (grade D) stay visible, small and dashed. Links are":
@@ -379,6 +386,8 @@ export const REPORT: Record<string, string> = {
   "Close source panel": "Cerrar el panel de la fuente",
   close: "cerrar",
   File: "Archivo",
+  Page: "Página",
+  "Verbatim excerpt:": "Extracto textual:",
   Row: "Fila",
   "(header is row 1)": "(la cabecera es la fila 1)",
   Record: "Registro",

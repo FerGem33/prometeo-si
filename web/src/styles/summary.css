@@ -192,3 +192,27 @@ h2.sec.more { margin-top: 40px; border-top: 2px solid var(--ink); }
 .gap-detail b { color: var(--ink); font-weight: 600; }
 .gap-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 @media print { .gap-detail { display: none; } }
+
+/* ---------- density compact modifier ---------- */
+.cols.density-compact { row-gap: 8px; }
+.cols.density-compact .abstract-card { padding: 10px 16px 6px; margin: 2px 0 12px; }
+.cols.density-compact .top { margin: 8px 0; gap: 12px; }
+.cols.density-compact .fold { padding: 0; }
+.cols.density-compact .fold-head { padding: 6px 0; font-size: 12.5px; }
+.cols.density-compact .fold-body { padding: 2px 0 10px; }
+.cols.density-compact figure.fig { margin-top: 8px; margin-bottom: 8px; }
+.cols.density-compact .row { margin-top: 8px; margin-bottom: 8px; }
+.cols.density-compact .row > .side { margin: 4px 0 8px; padding: 1px 0 1px 8px; }
+.cols.density-compact .ga { margin: 10px 0 12px; padding: 8px 0 8px; }
+.cols.density-compact .ga-lead { font-size: 17px; margin: 4px 0 10px; }
+.cols.density-compact .ga-var { padding: 5px 0; }
+.cols.density-compact .rail-scn { padding-top: 8px; }
+.cols.density-compact .rail-scn li { padding: 3px 0; font-size: 12px; }
+.cols.density-compact h2.sec.more { margin-top: 20px; }
+
+/* Apparatus of a detected space-research corpus (NasaApparatus). */
+.nasa-apparatus { margin: 0 0 14px; }
+.nasa-apparatus figcaption { font-family: "Fira Sans", sans-serif; font-size: 13px; line-height: 1.4; margin-top: 6px; }
+.ga-nasa { display: grid; grid-template-columns: minmax(0, 320px) 1fr; gap: 18px; align-items: start; margin: 0 0 18px; }
+.ga-nasa-cov { font-family: "Fira Sans", sans-serif; font-size: 14px; margin: 0; }
+@media (max-width: 700px) { .ga-nasa { grid-template-columns: 1fr; } }

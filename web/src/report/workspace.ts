@@ -5,7 +5,9 @@ import type { Axes, Extra } from "../state";
 import { t } from "../i18n";
 
 /** Browser-local projects. No accounts, no server: everything lives in this browser's storage. */
-export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[] };
+/** A reference to a custom evaluation kept in IndexedDB (see customStore.ts); counts are copied so the list works without it. */
+export type CustomRef = { id: string; title: string; docs: number; variables: number };
+export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[]; custom?: CustomRef };
 export type Project = {
   id: string;
   name: string;
@@ -31,7 +33,14 @@ function cleanExploration(x: unknown): SavedExploration | null {
     scenario: { values: sc.values as Scenario["values"], active: sc.active.filter((a): a is string => typeof a === "string") },
     axes: { x: x.axes.x, y: x.axes.y },
     extras: cleanExtras(x.extras),
+    custom: cleanCustom(x.custom),
   };
+}
+
+function cleanCustom(c: unknown): CustomRef | undefined {
+  if (!isObj(c) || typeof c.id !== "string") return undefined;
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  return { id: c.id, title: typeof c.title === "string" ? c.title : "", docs: n(c.docs), variables: n(c.variables) };
 }
 
 /** Drops anything malformed so corrupt storage never breaks the screen. */
@@ -113,9 +122,9 @@ export function deleteProject(id: string): Result {
   return commit(all().filter((p) => p.id !== id));
 }
 
-export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date, extras: Extra[] = []): Result {
+export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date, extras: Extra[] = [], custom?: CustomRef): Result {
   const t = stamp(now);
-  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes }, extras: extras.map((x) => ({ ...x })) };
+  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes }, extras: extras.map((x) => ({ ...x })), ...(custom ? { custom: { ...custom } } : {}) };
   return update(id, (p) => ({ ...p, explorations: [...p.explorations, e], modifiedAt: t }));
 }
 

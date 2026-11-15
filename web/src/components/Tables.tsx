@@ -317,9 +317,23 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
   onPick: (values: Record<string, number>) => void;
 }) {
   const { pack, lens } = useData();
+  const nums = pack.schema.variables.filter((v): v is NumVariable => v.type === "num");
+
+  if (nums.length < 2 || !grid || !pack.schema.variables.some((v) => v.id === grid.x) || !pack.schema.variables.some((v) => v.id === grid.y)) {
+    return (
+      <figure className="fig wide gap" id="fig-gaps">
+        <figcaption>
+          <b>{t("Figure")} {figure} |</b> {t("Coverage and gaps.")}
+        </figcaption>
+        <div className="fig-fallback-note" style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--ink-2)", background: "var(--bg-subtle, rgba(0,0,0,0.02))", borderRadius: "4px", margin: "1rem 0" }}>
+          <p>{t("At least two numeric variables are required to display coverage and gaps.")}</p>
+        </div>
+      </figure>
+    );
+  }
+
   const vx = varOf(pack, grid.x) as NumVariable;
   const vy = varOf(pack, grid.y) as NumVariable;
-  const nums = pack.schema.variables.filter((v): v is NumVariable => v.type === "num");
   const nx = grid.xEdges.length - 1;
   const ny = grid.yEdges.length - 1;
   const W = 1060;

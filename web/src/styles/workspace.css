@@ -17,6 +17,8 @@
 .ws-list li:first-child { padding-top: 2px; }
 .ws-form { min-height: 0; overflow-y: auto; }
 .ws-upload { margin-top: 32px; }
+.ws-custom { list-style: none; margin: 0 0 10px; padding: 0; }
+.ws-list .ws-custom li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; border-bottom: 0; border-left: 2px solid var(--rule); padding: 4px 0 4px 10px; margin: 4px 0; }
 .ws-main label { display: flex; flex-direction: column; gap: 4px; font-family: var(--sans); font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
 .ws-main input, .ws-main textarea { font-family: var(--sans); font-size: 15px; color: var(--ink); padding: 6px 8px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); }
 .ws-main textarea { resize: vertical; }

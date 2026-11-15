@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Integración frontend T35–T37. Backend del MVP implementado y comprobado en AWS:** 42 rutas JWT, PDF contextual, claims/variantes, intención/lente e inferencia por proyecto. Ventana de integración con worker habilitado. |
 | Último commit verificado | `08be856` + cierre de esta entrega. 172 pruebas API; web 104 pasan/2 omitidas,6 helper Cognito y motor con bundle AWS pasan; build/validate_pack/check_agnostic pasan. Recibos reales:38+57 comprobaciones HTTP. T38 web sigue en `d0308e9`; no se volvió a publicar. |
-| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. |
+| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. Formulario de `nasa2genui` integrado en `frontend` (carga real, 30 archivos): publicar `/propose` y `/design` con `infra/20_api.sh` tras confirmación humana. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -104,6 +104,43 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · rama frontend · merge de nasa2genui (formulario con carga real y detección de variables)
+- Se integra `nasa2genui` (hasta 0f08553) en `frontend`. De `nasa2genui` se toma completo el formulario *New evaluation* de 3 pasos (Documents → Interface design → Variables), con estos cambios:
+  - carga real de CSV/TSV/JSON/PDF, hasta 30 archivos;
+  - extracción de variables con cita;
+  - pack y lente propios del corpus subido;
+  - blueprint de secciones y `/propose`/`/design` en `api/handler.py`.
+- De `frontend` se conservan:
+  - el tour del jurado de 9 paradas (`JudgeTour.tsx`, `tour.css`);
+  - `HabitatPanel` con `data-preset`;
+  - `id="methods"`;
+  - el `hold` de `ProcessingStep`;
+  - el estado del dossier en `Flow`.
+- Combinaciones:
+  - `ProcessingStep` recibe a la vez el borrador (`draft`) y `hold`.
+  - El informe usa el orden de secciones del blueprint, con el pliegue Methods identificado como `#methods`.
+  - `HabitatPanel` solo aparece con el corpus demo; con un corpus propio, `ScenarioPanel` muestra `NasaApparatus` si se detecta temática NASA.
+  - El tour limpia el corpus propio al empezar.
+  - En `handler.py`, `/ask` y `/analysis` usan `schema(active_pack)`.
+  - `.gitignore` y `test_upload_tickets.py` conservan las adiciones de ambas ramas.
+  - En esta bitácora se descartó la copia que traía `nasa2genui` de cuatro entradas de `frontend` (con un marcador `>>>>>>> origin/frontend` ya commiteado).
+- Arreglos tras el merge:
+  - se repuso la traducción `Question` que usa el tour;
+  - `lote.test.ts` y `nasaDetect.test.ts` leían una ruta fija de otra laptop; ahora usan `PROMETEO_LOTE_DIR` y se omiten si no existe. El lote real está en `tools/psi/data/dominio_ebullicion/lote`, fuera de git.
+- Verificado:
+  - tsc;
+  - pruebas web con el lote real: 219 pasan, 3 omitidas;
+  - 185 pruebas API, con boto3 en un venv temporal y `PYTHONUTF8=1`; sin UTF-8, Windows falla por cp1252;
+  - build, con aviso de chunk de 1.28 MB por pdfjs;
+  - `check_agnostic.sh`.
+- Comprobado en Chrome headless a 1366×860, sin errores de consola:
+  - formulario con 3 archivos reales del lote: 17 variables, informe `#report` sin `HabitatPanel`;
+  - demo con 5 presets y los hallazgos 0/268 y 22.2 % BASS-II;
+  - tour completo: 9 paradas, cada una con su elemento resaltado.
+- Ojo:
+  - la detección de variables en PDF produce etiquetas ruidosas (por ejemplo, "that the A power law coefficient of mSDB" con unidad "in"); es calidad de `ingest/pdf.ts`, no del merge;
+  - `infra/20_api.sh` debe volver a ejecutarse para publicar `/propose` y `/design`, y requiere confirmación.
 
 ### 2026-11-15 · rama frontend · recorrido guiado alineado con el pitch (`docs/pitch.pdf`)
 - El tour sigue ahora el guion de 3 min y el recorrido de la §4 del pitch, en 9 paradas:
@@ -241,6 +278,12 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Lectura de contadores SQS también devuelve AccessDenied. Política T34 preparada incluye ahora observación de DLQ y REPORT del log exclusivo del worker; ReceiveMessage solo DLQ para cotejar el doc_id con visibilidad0, sin DeleteMessage/SendMessage. No se aplicó la política desde esta sesión ni se consumieron mensajes. ZIP vigente preparado en /tmp/prometeo-worker-relevo-final.zip.
 - Web T38: los tres JSON demo remotos/locales coincidieron byte a byte antes del intento. deploy_web terminó254 en cloudfront:GetDistribution denegado, antes de build/sync/invalidation; no hubo publicación web ni cambios de datos. Política mínima nueva infra/t38-web-deployer-policy.json y guía docs/PERMISOS_RELEVO_AWS.md; no privilegios administrativos ni borrado.
 - Llamadas Bedrock de esta sesión: dos de regresión pública ask/analysis; sus respuestas no exponen tokens, no se inventa costo exacto. Extracción nueva de lote y pruebas locales: cero llamadas. Conservar tope USD30/revisión de lote>USD5. Queda intervención administrativa concreta y los pendientes de código indicados arriba; ninguna decisión científica se reabre.
+
+### 2026-11-15 · pendiente.md §1–3 (frontend) y §1.1 backend
+- Hecho y verificado con el lote real (`~/Descargas/lote`, 23 archivos → 23 procesados, 135 variables): límite de 30 por lote con aviso de excedentes; progreso por archivo, "Clear all documents", arrastre de carpetas; chips de variables, reordenar secciones (arrastre + botones), botón `/design`; buscador, grupos colapsables y conversión de unidades solo de visualización; detección NASA (`ingest/nasaDetect.ts`) con figura isométrica en panel, resumen gráfico y fold "Experimental apparatus"; guardar/reabrir evaluaciones propias (IndexedDB `prometeo-custom-db`) con historial en Workspace; apéndice de impresión (Tablas A1/A2), BibTeX real desde DOIs, descarga `prometeo.pack.json`; preguntas locales (máx/mín/media/conteo y filtros) con procedencia. Pruebas: 212 web, 162 API, check_agnostic OK, build OK.
+- Backend: `/propose` admite 30 documentos y rechaza 31; reservas de subida aceptan 30 y la 31 da 422. `infra/20_api.sh` ya enruta `/propose` y `/design` (`$default`), con IAM Bedrock, CORS y throttling.
+- Falta: volver a ejecutar `infra/20_api.sh` para publicar el `handler.py` actual y `infra/deploy_web.sh` para la UI (requieren AWS y confirmación); worker SQS sigue bloqueado por T34. Emojis previos en Cover, ScenarioPanel (what-if) y ProcessingStep sin tocar.
+- **Trampas:** con localhost la API responde sin CORS (esperado: solo orígenes CloudFront). El resumen del kicker con 100+ variables ahora se recorta a 3 líneas (texto completo en `title` e impresión).
 
 ### 2026-11-15 · T36 revisión local y acceso a originales
 - CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.

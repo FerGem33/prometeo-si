@@ -43,12 +43,15 @@ export function readUrl(pack: Pack, lens: Lens, search: string): { scenario: Sce
 
 export function writeUrl(lens: Lens, scenario: Scenario, axes: Axes): string {
   const q = new URLSearchParams();
-  for (const id of scenario.active) {
-    const x = scenario.values[id];
-    if (x !== undefined && x !== "") q.set(id, String(x));
+  if (scenario?.active && Array.isArray(scenario.active)) {
+    for (const id of scenario.active) {
+      const x = scenario.values?.[id];
+      if (x !== undefined && x !== "") q.set(id, String(x));
+    }
   }
-  if (axes.x !== lens.default_axes[0]) q.set("x", axes.x);
-  if (axes.y !== lens.default_axes[1]) q.set("y", axes.y);
+  const defaultAxes = lens?.default_axes ?? [];
+  if (axes?.x && axes.x !== defaultAxes[0]) q.set("x", axes.x);
+  if (axes?.y && axes.y !== defaultAxes[1]) q.set("y", axes.y);
   return "?" + q.toString();
 }
 

@@ -8,6 +8,7 @@ import { overallText, levelBasis, whyText } from "../report/text";
 import { doiOf, num, scenarioValueText, studyShort, varOf } from "../report/format";
 import { explainStudy, valueWithUnit } from "../report/ranking";
 import { t, many } from "../i18n";
+import { NasaApparatus, type NasaInfo } from "./NasaApparatus";
 
 const GRADES: Grade[] = ["A", "B", "C", "D"];
 
@@ -33,6 +34,9 @@ const isMissing = (a: AxisScore | undefined) => !a || a.missing || !!a.reason;
 
 /** Closeness 0–100 per variable. A variable the source does not record is a dashed spoke, not a zero. */
 function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; onVertex: (recordId: string) => void }) {
+  if (axes.length < 3) {
+    return <Bars axes={axes} name={name} />;
+  }
   const W = 420;
   const H = 330;
   const cx = W / 2;
@@ -94,6 +98,9 @@ function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; on
 
 /** With fewer than three variables a polygon has no area, so the same numbers are drawn as bars. */
 function Bars({ axes, name }: { axes: Axis[]; name: string | null }) {
+  if (axes.length === 0) {
+    return <p className="hint">{t("No variables available for closeness comparison.")}</p>;
+  }
   return (
     <ul className="ga-bars">
       {axes.map((a) => (
@@ -112,7 +119,7 @@ function Bars({ axes, name }: { axes: Axis[]; name: string | null }) {
   );
 }
 
-export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, overall, comparable }: {
+export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, overall, comparable, nasa }: {
   scenario: Scenario;
   onChange: (s: Scenario) => void;
   ranking: StudyResult[];
@@ -120,6 +127,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
   levels: VariableEvidence[];
   overall: OverallEvidence;
   comparable: number;
+  nasa?: NasaInfo;
 }) {
   const { pack, lens } = useData();
   const openProv = useProv();
@@ -136,7 +144,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
     () =>
       corpusSummary(pack, scenario).map((b) => ({
         id: b.variable,
-        label: varOf(pack, b.variable).label,
+        label: pack.schema.variables.find((v) => v.id === b.variable)?.label ?? b.variable,
         value: scenarioValueText(pack, b.variable, scenario.values[b.variable]),
         best: b.best,
         score: selId ? close[selId]?.[b.variable] : undefined,
@@ -162,6 +170,15 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
         <b>{comparable.toLocaleString("en-US")}</b> {t("of")} {(pack.meta.stats.tests ?? 0).toLocaleString("en-US")} {t("tests are comparable with this scenario. Overall evidence is")} <b>{overallText(overall.level, unit)}</b>.{" "}
         {top ? t("The closest {0} is {1} (grade {2}, d = {3}).", unit, studyShort(pack, top.study), top.grade, top.distance) : t("No {0} has records comparable with it.", unit)}
       </p>
+
+      {nasa && (
+        <div className="ga-nasa">
+          <NasaApparatus {...nasa} compact />
+          <p className="ga-nasa-cov">
+            <b>{t("Empirical coverage.")}</b> {t("{0} comparable tests; overall evidence is {1}.", comparable.toLocaleString("en-US"), overallText(overall.level, unit))}
+          </p>
+        </div>
+      )}
 
       <div className="ga-grid">
         <section className="ga-a" aria-label={t("Scenario against the tested range")}>

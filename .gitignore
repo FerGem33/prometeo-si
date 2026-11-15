@@ -21,3 +21,4 @@ tools/psi/data/
 # Capturas de perfiles del jurado: no se versionan (docs/demo_and_pitch/jurado.md)
 docs/demo_and_pitch/**/*.jpg
 docs/demo_and_pitch/**/*.png
+.playwright-cli/

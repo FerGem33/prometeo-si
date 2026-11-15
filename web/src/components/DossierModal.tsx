@@ -6,7 +6,7 @@ import type { Mapping } from "./ctx";
 import { FINDING_LEVEL, findingText, findingTitle, overallText, whyText } from "../report/text";
 import { matchingHabitatPreset, allHabitatPresets } from "./HabitatFigure";
 import { scenarioValueText, varOf } from "../report/format";
-import { generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
+import { generateBibtex, generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
 import { datasetCsv, datasetExport, variableColumns } from "../report/dataset-export";
 import { t, many } from "../i18n";
 
@@ -172,6 +172,7 @@ export function DossierModal({
   }, [pack, presetObj, scenario]);
 
   const top6 = useMemo(() => ranking.slice(0, 6), [ranking]);
+  const bibtex = useMemo(() => generateBibtex(pack), [pack]);
   const comparable = useMemo(() => pool(pack, scenario), [pack, scenario]);
   const scopedRecords = useMemo(
     () => scopeRecords(pack, scope, comparable, ranking),
@@ -241,8 +242,16 @@ export function DossierModal({
             <button type="button" className="chip" onClick={handleDownloadMarkdown} title={t("Download Markdown Dossier")}>
               {t("Download .md")}
             </button>
-            <button type="button" className="chip" onClick={handleDownloadJson} title={t("Export full JSON evidence pack")}>
-              {t("Export JSON")}
+            <button type="button" className="chip" onClick={handleDownloadJson} title={t("Export the scenario, ranking and findings as JSON")}>
+              {t("Export dossier JSON")}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              onClick={() => downloadFile("prometeo.pack.json", JSON.stringify(pack, null, 2), "application/json;charset=utf-8")}
+              title={t("Download the processed evidence pack: sources, harmonized records and SHA-256 checksums")}
+            >
+              {t("Download pack JSON")}
             </button>
             <button type="button" className="chip" onClick={() => window.print()} title={t("Print or save as official NASA PDF")}>
               {t("Print / PDF")}
@@ -323,6 +332,20 @@ export function DossierModal({
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="dossier-sec">
+          <h3>{t("References (BibTeX)")}</h3>
+          {bibtex ? (
+            <>
+              <pre className="dossier-bib">{bibtex}</pre>
+              <button type="button" className="chip noprint" onClick={() => downloadFile(`prometeo_${pack.meta.id}_${dateTag}.bib`, bibtex, "application/x-bibtex;charset=utf-8")}>
+                {t("Download BibTeX")}
+              </button>
+            </>
+          ) : (
+            <p>{t("No DOI was found in the documents of this corpus, so no BibTeX entry can be written.")}</p>
+          )}
         </section>
 
         <section className="dossier-sec noprint">

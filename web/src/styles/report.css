@@ -209,3 +209,18 @@ footer.end { margin-top: 30px; border-top: 2px solid var(--ink); padding-top: 8p
   .brand img { filter: none; }
   body { background: none; } .page { border: 0; margin: 0; } .figctl { display: none; }
 }
+
+/* Appendix of the uploaded corpus: only in the printed report. */
+.print-block { display: none; }
+@media print {
+  .print-block { display: block; break-before: page; }
+  .corpus-appendix table { width: 100%; margin: 0 0 14px; }
+  .corpus-appendix caption { text-align: left; caption-side: top; padding-bottom: 4px; }
+  .corpus-appendix td.mono { font-size: 9px; word-break: break-all; }
+  details > summary { list-style: none; }
+}
+.dossier-bib { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; line-height: 1.4; max-height: 240px; overflow: auto; white-space: pre-wrap; word-break: break-word; border: 1px solid var(--rule); border-radius: 2px; padding: 8px 10px; margin: 0 0 8px; }
+@media print { .dossier-bib { max-height: none; overflow: visible; } }
+/* Large uploaded corpora can list 100+ variables; keep the kicker to three lines (full text in the title). */
+.kicker .verify { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+@media print { .kicker .verify { display: inline; -webkit-line-clamp: unset; overflow: visible; } }

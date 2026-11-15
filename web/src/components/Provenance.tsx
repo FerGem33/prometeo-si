@@ -23,13 +23,38 @@ export function Provenance({ id, onClose }: { id: string; onClose: () => void })
         </button>
       </header>
       <p className="prov-title">{study.title}</p>
+      {r.quote && (
+        <blockquote
+          className="prov-quote"
+          style={{
+            margin: "8px 0 10px",
+            padding: "8px 12px",
+            borderLeft: "3px solid var(--ink)",
+            background: "var(--bg-subtle, rgba(0, 0, 0, 0.04))",
+            fontStyle: "italic",
+            fontSize: "12px",
+            lineHeight: "1.4",
+          }}
+        >
+          <b>{t("Verbatim excerpt:")}</b> “{r.quote}”
+        </blockquote>
+      )}
       <dl>
         <dt>{t("File")}</dt>
         <dd>{source.name}</dd>
-        <dt>{t("Row")}</dt>
-        <dd>
-          {r.source.row ?? r.source.page} <span className="hint">{t("(header is row 1)")}</span>
-        </dd>
+        {r.confidence === "paper" || r.source.page !== undefined ? (
+          <>
+            <dt>{t("Page")}</dt>
+            <dd>{r.source.page ?? 1}</dd>
+          </>
+        ) : (
+          <>
+            <dt>{t("Row")}</dt>
+            <dd>
+              {r.source.row} <span className="hint">{t("(header is row 1)")}</span>
+            </dd>
+          </>
+        )}
         <dt>{t("Record")}</dt>
         <dd>
           {r.kind === "campaign" ? t("campaign row (summarises several tests as ranges)") : t("individual test")}
