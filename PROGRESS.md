@@ -85,6 +85,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 00:42 CST · regla persistente del modelo aprobado
+- **Decisión del dueño:** Haiku 4.5 es obligatorio para las siguientes tareas. `AGENTS.md` §6 exige conservar el perfil de `infra/config.env` en API, pipeline, extracción y deploy; cualquier migración necesita una nueva instrucción explícita del dueño.
+- **Guía:** `infra/README.md` documenta cómo cargar `MODEL_ID` y usarlo también como `BEDROCK_MODEL_ID` en comandos manuales. Se corrigió su estado de despliegue obsoleto remitiendo a este seguimiento.
+- **Alcance:** documentación y comentarios de configuración; no cambia el valor de `MODEL_ID`, no requiere deploy y mantiene el siguiente paso de T31/T32.
+
 ### 2026-11-15 00:37 CST · decisión del dueño: conservar Haiku 4.5
 - **D6 cerrada:** se conserva `us.anthropic.claude-haiku-4-5-20251001-v1:0`, ya configurado y probado con SDK 2.8.0. Se descarta la migración a Haiku 5.5 y se retira el requisito de solicitar acceso.
 - **T17:** permanece hecha con la evidencia pública registrada en `0813d37` y la revisión posterior; no requiere otro deploy para esta decisión.

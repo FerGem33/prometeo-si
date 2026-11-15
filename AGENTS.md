@@ -69,6 +69,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 - **Vectores de prueba:** `web/src/engine/golden.test.ts` usa datos reales. Si un vector falla, el motor está mal o el pack cambió. Investiga antes de tocar el vector, y si lo cambias, explica por qué en el commit.
 - **Python:** 3.12. En `pipeline/` solo librería estándar. Ejecutar scripts que leen datos con `python3 -I`.
 - **Bedrock:** SDK oficial `anthropic` (`AnthropicBedrock`) y modelo desde `MODEL_ID`. Nunca escribas el ID de modelo en el código. No inventes la API del SDK: consulta su documentación.
+- **Modelo aprobado (D6, 15-nov):** todas las tareas futuras de API, pipeline, extracción y despliegue usarán `us.anthropic.claude-haiku-4-5-20251001-v1:0`, definido en `infra/config.env`. Conservarlo al actualizar SDK, prompts o infraestructura. No migrar a Haiku 5.5 ni a otro modelo sin una nueva instrucción explícita del dueño. La falta de acceso a 5.5 no es un bloqueo del proyecto.
 - **Validación:** toda salida de la IA se valida contra el esquema antes de usarse. El texto del usuario va delimitado como dato.
 - **Tareas pequeñas:** nada de refactors fuera de la tarea en curso.
 

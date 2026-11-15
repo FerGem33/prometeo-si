@@ -4,11 +4,32 @@
 
 Web: https://dursf4nho4zl6.cloudfront.net
 
-El 2026-11-14 se comprobó CloudFront `Deployed` y HTTPS HTTP 200.
-Está publicado el informe de T05–T07. Falta verificar visualmente la página:
-la herramienta de navegador del agente no estuvo disponible. T08 sigue en
-curso hasta completar esa verificación. La API ya está desplegada y Bedrock verificado; la integración UI T11 está
-implementada en el repo, pendiente de deploy final por el dueño.
+La web y la API están publicadas. T08, T11, T15, T16, T17 y T19 constan como
+hechas en `PROGRESS.md`, que conserva la evidencia y el estado vivo del relevo.
+
+## Modelo obligatorio para futuras tareas (D6)
+
+Usar **Claude Haiku 4.5** con el perfil
+`us.anthropic.claude-haiku-4-5-20251001-v1:0`, definido en `infra/config.env`.
+Esta decisión aplica a API, pipeline, extracción, pruebas reales y despliegues.
+Actualizar prompts, SDK o infraestructura no autoriza cambiar el modelo.
+Una migración requiere una nueva instrucción explícita del dueño; no se debe
+solicitar acceso a Haiku 5.5 como requisito para continuar el proyecto.
+
+Desde la raíz del repositorio:
+
+```bash
+export AWS_PROFILE=prometeo
+source infra/config.env
+source infra/outputs.env
+```
+
+Los scripts y la aplicación leen `MODEL_ID`. Si un comando manual usa
+`BEDROCK_MODEL_ID`, asignarlo desde la misma configuración:
+
+```bash
+export BEDROCK_MODEL_ID="$MODEL_ID"
+```
 
 ## Qué se comparte y qué se configura por persona
 
