@@ -50,7 +50,11 @@ Recibo sin tokens en `/tmp/prometeo-t33-ab.json`.
 
 Cuando estén habilitadas y comprobadas las rutas de cargas, el modo
 `node tools/cognito/cli.mjs uploads /ruta/real/original.csv` inicia dos sesiones
-y ejecuta el smoke S3/complete contra un CSV/PDF real. No usarlo como sustituto
+y ejecuta el smoke S3/complete contra un CSV/PDF real. En Windows, desde PowerShell
+(no Git Bash: la entrada oculta de contraseñas necesita una consola real):
+`powershell -ExecutionPolicy Bypass -File tools\cognito\run_uploads_smoke.ps1`.
+Carga las variables públicas de `infra/*.env` y por defecto usa el CSV real de BASS-II
+de la descarga local. No usarlo como sustituto
 del despliegue del worker; estado y permisos en `docs/T33_CARGAS_PREPARACION.md`.
 
 La prueba **crea dos proyectos vacíos** de verificación. Sus IDs quedan en el

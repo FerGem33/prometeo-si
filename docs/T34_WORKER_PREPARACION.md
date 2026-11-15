@@ -58,8 +58,57 @@ Genera dependencias Linux arm64/Python 3.12 y módulos ingest_worker,
 ingest_propose e ingest_core. No incluye corpus, credenciales ni configuración
 de aprobación. No contacta AWS. No reemplaza un ZIP existente.
 
-Falta script idempotente de provisión/despliegue y sus permisos administrativos.
-Antes de crear el consumidor deben comprobarse:
+## Despliegue: `infra/deploy_worker.py` (escrito el 15-nov, sin ejecutar contra AWS)
+
+Por defecto solo prepara: escribe `worker-trust.json`, `worker-policy.json`, `worker-env.json`
+y `worker-mapping.json` para revisión y no hace llamadas AWS. Con `--apply`:
+
+1. Preflight: identidad no root en `352818909129`, visibilidad de cola >= 6x timeout con la DLQ de
+   T31, perfil de inferencia igual al modelo D6. Si algo no coincide, se detiene antes de escribir.
+2. Rol `prometeo-hack-worker-role` (se crea si no existe; si existe con otra confianza, se detiene),
+   `AWSLambdaBasicExecutionRole` y política inline acotada: tabla concreta; `GetObject` en `raw/`;
+   `Get/PutObject` en `text/`; `ListBucket` solo del bucket de corpus; Receive/Delete/GetAttributes/
+   ChangeVisibility de la cola concreta; `InvokeModel` del perfil D6 y sus modelos.
+3. Lambda `prometeo-hack-worker`: Python 3.12 arm64, `ingest_worker.handler`, 120 s, 1024 MB,
+   variables DATA_TABLE/CORPUS_BUCKET/MODEL_ID/UPLOAD_LIMITS_JSON (D3). Si existe con otro rol, se detiene.
+4. Asociación SQS: batch 1, `ReportBatchItemFailures`, concurrencia máxima 2, **creada deshabilitada**.
+   Su UUID se guarda en `outputs.env` (`WORKER_MAPPING_UUID`) y las corridas siguientes la reutilizan.
+   Si existe pero falta el UUID, se detiene en vez de duplicarla.
+5. `--enable` / `--disable` cambian el estado de forma explícita; sin ellas no se toca.
+
+**Por qué `s3:ListBucket`:** sin él, S3 responde 403 (no 404) a un objeto inexistente y
+`read_json` trataría cada caché vacía como error: la primera llamada al modelo de todo documento
+fallaría. Los tests con dobles no lo detectan. ListBucket no se puede acotar por prefijo para esa
+comprobación; queda limitado al bucket de corpus. Requiere visto bueno humano como cualquier permiso nuevo.
+
+Permisos del operador: `infra/t34-deployer-policy.json` (añadir al permission set SSO, como T33).
+`lambda:CreateEventSourceMapping` solo admite `Resource: "*"`; se limita con la condición
+`lambda:FunctionArn` al worker. Conviene validarla con el simulador de políticas IAM antes de usarla.
+
+Guion en la laptop con perfil `prometeo` (Linux/macOS, Python 3.12):
+
+```bash
+export AWS_PROFILE=prometeo && source infra/config.env && source infra/outputs.env
+bash infra/package_worker.sh /tmp/prometeo-worker-$(git rev-parse --short HEAD).zip
+python3.12 -I infra/deploy_worker.py --output-dir /tmp/prometeo-t34-config            # revisar JSON
+python3.12 -I infra/deploy_worker.py --output-dir /tmp/prometeo-t34-config --apply --zip /tmp/prometeo-worker-<sha>.zip
+source infra/outputs.env   # recoge WORKER_MAPPING_UUID antes de la segunda corrida
+python3.12 -I infra/deploy_worker.py --output-dir /tmp/prometeo-t34-config --apply --zip /tmp/prometeo-worker-<sha>.zip   # idempotencia
+# Solo después de revisar rol/variables y aceptar el costo Bedrock de los mensajes ya encolados:
+python3.12 -I infra/deploy_worker.py --output-dir /tmp/prometeo-t34-config --apply --zip /tmp/prometeo-worker-<sha>.zip --enable
+```
+
+**Atención al habilitar:** la cola ya puede tener mensajes de `complete` (por ejemplo del smoke
+de T33). Al habilitar, se procesan de inmediato con llamadas reales a Bedrock.
+
+Pruebas: `api/test_deploy_worker.py` (10, con dobles): dos corridas sin duplicar, asociación
+deshabilitada por defecto, `--enable`/`--disable`, conservación de variables ajenas, reintento solo
+por propagación del rol nuevo, UUID perdido, preflight root/visibilidad y rol/función distintos.
+No son evidencia de AWS real.
+
+## Lo que falta comprobar
+
+Antes de habilitar el consumidor deben comprobarse:
 
 - Lambda worker separada: runtime Python 3.12 arm64, handler
   `ingest_worker.handler`, timeout propuesto 120 s y memoria a medir con PDF real.

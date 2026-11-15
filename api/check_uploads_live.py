@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import tempfile
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import uuid
@@ -16,7 +17,7 @@ import uuid
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
-    parser.add_argument('--output', default='/tmp/prometeo-t33-upload-check.json')
+    parser.add_argument('--output', default=str(Path(tempfile.gettempdir()) / 'prometeo-t33-upload-check.json'))
     args = parser.parse_args()
     path = args.source.resolve()
     if path.suffix.lower() not in ('.csv', '.pdf') or not path.is_file() or not 1 <= path.stat().st_size <= 20000000:

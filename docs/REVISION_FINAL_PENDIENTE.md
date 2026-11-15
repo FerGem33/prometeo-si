@@ -6,7 +6,7 @@ de mensajes de continuidad. D3 sí está aprobada: 20 MB/60 páginas/30 document
 
 | Revisión | Evidencia concreta | Resultado que debe registrar una persona |
 |---|---|---|
-| D7: discrepancias de mapping | `T32_EVALUACION.md` y `agnostic_proof.md` | Decisión por discrepancia, responsable y razón; conservar referencia anterior |
+| D7: discrepancias de mapping | **`D7_DECISIONES.md` (tabla precargada: 18 críticas + 2 reglas de grupo)**; origen en `T32_EVALUACION.md` y `agnostic_proof.md` | Firmar la tabla: aceptar o corregir cada recomendación, con responsable y razón; conservar referencia anterior |
 | Soporte semántico y alcance PDF | Candidatos y rechazos de `T32_EVALUACION.md`; parser nuevo en `T34_WORKER_PREPARACION.md` | Cita respalda valor/unidad/experimentos; texto legible cuando haga falta. No propagar presión a todas las filas sin evidencia |
 | T30: resto del contrato C | `CONTRATOS_FASE2.md` §5 y límites técnicos documentados | Aprobación/corrección explícita de las partes aún no aprobadas |
 | T12/T27, D4 | Ficha ML descriptiva y criterios propuestos | Definir clases destino/umbrales antes de afirmar aptitud ML |
