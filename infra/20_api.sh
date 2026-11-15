@@ -7,6 +7,8 @@ source infra/config.env
 source infra/outputs.env
 : "${MODEL_ID:?Primero verificar MODEL_ID con 00_check.sh}"
 : "${CF_URL:?Primero desplegar T08}"
+# Orígenes extra para pruebas locales (coma). Vacío = solo CF_URL: EXTRA_ORIGINS= bash infra/20_api.sh
+EXTRA_ORIGINS=${EXTRA_ORIGINS-http://localhost:5173,http://127.0.0.1:5173}
 PYTHON=${PYTHON:-api/.venv/bin/python}
 "$PYTHON" -c 'import sys; assert sys.version_info[:2] == (3,12), "Se requiere Python 3.12"'
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
@@ -30,15 +32,15 @@ with ZipFile(root/'lambda.zip','w',ZIP_DEFLATED) as z:
         if p.is_file() and '__pycache__' not in p.parts: z.write(p,p.relative_to(package))
 PY
 aws bedrock get-inference-profile --inference-profile-identifier "$MODEL_ID" > "$TMP/model.json"
-"$PYTHON" -I - "$TMP" "$CF_URL" "$MODEL_ID" <<'PY'
+"$PYTHON" -I - "$TMP" "$CF_URL" "$MODEL_ID" "$EXTRA_ORIGINS" <<'PY'
 import json,sys
 from pathlib import Path
 root=Path(sys.argv[1]); profile=json.loads((root/'model.json').read_text())
 resources=[profile['inferenceProfileArn']]+[m['modelArn'] for m in profile['models']]
 (root/'trust.json').write_text(json.dumps({'Version':'2012-10-17','Statement':[{'Effect':'Allow','Principal':{'Service':'lambda.amazonaws.com'},'Action':'sts:AssumeRole'}]}))
 (root/'policy.json').write_text(json.dumps({'Version':'2012-10-17','Statement':[{'Effect':'Allow','Action':'bedrock:InvokeModel','Resource':resources}]}))
-(root/'env.json').write_text(json.dumps({'Variables':{'MODEL_ID':sys.argv[3],'CF_URL':sys.argv[2]}}))
-(root/'cors.json').write_text(json.dumps({'AllowOrigins':[sys.argv[2]],'AllowMethods':['POST','OPTIONS'],'AllowHeaders':['content-type'],'MaxAge':300}))
+(root/'env.json').write_text(json.dumps({'Variables':{'MODEL_ID':sys.argv[3],'CF_URL':sys.argv[2],'EXTRA_ORIGINS':sys.argv[4]}}))
+(root/'cors.json').write_text(json.dumps({'AllowOrigins':[sys.argv[2]]+[o for o in sys.argv[4].split(',') if o],'AllowMethods':['POST','OPTIONS'],'AllowHeaders':['content-type'],'MaxAge':300}))
 PY
 ROLE_ARN=$(aws iam list-roles --query "Roles[?RoleName=='${ROLE_NAME}'].Arn | [0]" --output text)
 if [[ "$ROLE_ARN" == None ]]; then

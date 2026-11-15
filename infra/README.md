@@ -172,9 +172,9 @@ export VITE_API_URL="$API_URL"
 npm run dev --prefix web
 ```
 
-CORS de producción admite solo CF_URL; desde localhost las llamadas pueden
-ser bloqueadas por el navegador y se verá la plantilla. No ampliar CORS de
-producción para una prueba local. El build final sí usará el origen permitido.
+CORS admite CF_URL y, por defecto, http://localhost:5173 y http://127.0.0.1:5173
+(variable `EXTRA_ORIGINS` de `infra/20_api.sh`, usada por Gateway y por el handler).
+Antes del cierre/entrega, quitar localhost: `EXTRA_ORIGINS= bash infra/20_api.sh`.
 
 Verificación T11 tras el deploy final: usar la sugerencia de 25% O₂, 0.5 atm
 y Nomex; comprobar escenario actualizado, chips editables, frases con fuentes

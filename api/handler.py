@@ -69,9 +69,9 @@ def model_json(system, data):
 
 def reply(status, body, origin):
     headers = {'content-type': 'application/json', 'cache-control': 'no-store', 'vary': 'Origin'}
-    allowed = os.environ.get('CF_URL')
-    if allowed and origin == allowed:
-        headers.update({'access-control-allow-origin': allowed,
+    allowed_origins = [o for o in [os.environ.get('CF_URL')] + os.environ.get('EXTRA_ORIGINS', '').split(',') if o]
+    if origin and origin in allowed_origins:
+        headers.update({'access-control-allow-origin': origin,
                         'access-control-allow-methods': 'POST, OPTIONS',
                         'access-control-allow-headers': 'content-type'})
     return {'statusCode': status, 'headers': headers, 'body': json.dumps(body, allow_nan=False)}
