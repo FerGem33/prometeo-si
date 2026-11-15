@@ -3,7 +3,7 @@ import type { ModuleOf, PaperRelevance } from "../../genui/types";
 import { t } from "../../i18n";
 import { num } from "../../report/format";
 import { ModuleFrame } from "./ModuleFrame";
-import "../styles/genui/papers.css";
+import "../../styles/genui/papers.css";
 
 export interface KeyPapersModuleProps {
   spec: ModuleOf<"key_papers">;
