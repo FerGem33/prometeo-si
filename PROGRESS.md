@@ -100,6 +100,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · rama frontend · recorrido guiado para el jurado rehecho
+- Antes: modal centrado con fondo oscurecido y desenfoque que tapaba la pantalla, texto en EB Garamond de 13 px y datos erróneos (base lunar "24 % O₂ / 0.70 atm", "telemetría en vivo", "zero AI hallucination").
+- Ahora (`components/JudgeTour.tsx`, `styles/tour.css`): panel acoplado abajo, o en columna a la derecha a partir de 1600 px, que reserva su espacio en la página, así que no tapa nada. Cada parada marca con un contorno el elemento del que habla y lo desplaza a la vista. Agenda de 8 paradas (Problema, Caso, Motor, Respuesta, Cobertura, Fuentes, Asistente, Exportación). Se maneja con ← →, PageUp/PageDown (control de presentaciones) y Esc.
+- Contenido: las cifras salen del pack y de la lente (pruebas, investigaciones, tablas, preset por defecto, primera pregunta). Las afirmaciones sobre `/ask` y `/analysis` se comprobaron contra `api/verify.py`. Al iniciar se carga el preset por defecto (base lunar); la parada Fuentes abre un panel de procedencia real.
+- Cambios de soporte: `ProcessingStep` acepta `hold` para quedarse en pantalla durante su parada, y el estado del dossier pasó de `Report` a `Flow` para que el tour pueda abrirlo y cerrarlo.
+- Verificado: tsc, 112 tests web (prueba del tour reescrita, incluye que ningún texto prediga resultados), build y `check_agnostic.sh`. Recorrido completo en Chrome headless a 1877×842, 1366×768 (ES, claro) y 390×844, sin errores de consola.
+- Ojo: a 390 px la portada y el formulario ya desbordaban en horizontal antes de este cambio (enlaces de la cabecera y el stepper); no se tocó. En Git Bash, `npm test` falla al arrancar por la ruta `/d/` frente a `D:\` (dos copias de vitest); desde PowerShell pasa.
+
 ### 2026-11-15 · rama frontend · merge de main (T32–T38 hasta 2745d85)
 - Conflictos resueltos en `PROGRESS.md` (bitácora: se conservan las entradas de ambas ramas) y `DossierModal.tsx` (i18n de `frontend` + exportación de datacard de `main`). Los textos nuevos del datacard van en `t()` con traducción en `i18n/es/flow.ts`.
 - Choque no marcado por git: `main` cambió las columnas del CSV (`<id>_min [unidad]`, `_original_*`, `_source_*`) y el diccionario de datos seguía anunciando `<id>_min`. Ahora ambos usan `variableColumns` de `report/dataset-export.ts`.

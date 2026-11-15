@@ -26,6 +26,7 @@ import { EvidenceCard } from "./components/EvidenceCard";
 import { ReadingGuide } from "./components/ReadingGuide";
 import { ExtraTag } from "./components/ExtraVars";
 import { JudgeTour } from "./components/JudgeTour";
+import { habitatScenario } from "./components/HabitatFigure";
 import "./styles/tour.css";
 import { abstractText, overallText } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
@@ -96,8 +97,13 @@ function Flow({ data }: { data: Data }) {
   const [extras, setExtras] = useState<Extra[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [fileCount, setFileCount] = useState(0);
-  const [dossierTrigger, setDossierTrigger] = useState(false);
+  const [dossierOpen, setDossierOpen] = useState(false);
+  const [hold, setHold] = useState(false);
   const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
+  // The dossier belongs to the report; leaving the report closes it.
+  useEffect(() => {
+    if (stage !== "report") setDossierOpen(false);
+  }, [stage]);
 
   useEffect(() => {
     const onHash = () => {
@@ -163,7 +169,7 @@ function Flow({ data }: { data: Data }) {
       />
     );
   } else if (stage === "processing") {
-    screen = <ProcessingStep fileCount={fileCount} onBack={() => go("scenario")} onComplete={() => go("report")} />;
+    screen = <ProcessingStep fileCount={fileCount} hold={hold} onBack={() => go("scenario")} onComplete={() => go("report")} />;
   } else {
     screen = (
       <Report
@@ -179,8 +185,8 @@ function Flow({ data }: { data: Data }) {
         onHome={() => go("cover")}
         onEdit={() => go("scenario")}
         onWorkspace={() => go("workspace")}
-        initialDossierOpen={dossierTrigger}
-        onDossierConsumed={() => setDossierTrigger(false)}
+        dossierOpen={dossierOpen}
+        onDossier={setDossierOpen}
       />
     );
   }
@@ -189,12 +195,13 @@ function Flow({ data }: { data: Data }) {
     <>
       {screen}
       <JudgeTour
-        currentStage={stage}
-        onNavigate={go}
-        onOpenDossier={() => {
-          setDossierTrigger(true);
-          go("report");
+        onStart={() => {
+          setScenario(habitatScenario(lens, lens.default_preset));
+          setExtras([]);
         }}
+        onNavigate={go}
+        onDossier={setDossierOpen}
+        onHold={setHold}
       />
     </>
   );
@@ -213,8 +220,8 @@ function Report({
   onHome,
   onEdit,
   onWorkspace,
-  initialDossierOpen,
-  onDossierConsumed,
+  dossierOpen,
+  onDossier,
 }: {
   data: Data;
   scenario: Scenario;
@@ -228,21 +235,13 @@ function Report({
   onHome: () => void;
   onEdit: () => void;
   onWorkspace: () => void;
-  initialDossierOpen?: boolean;
-  onDossierConsumed?: () => void;
+  dossierOpen: boolean;
+  onDossier: (open: boolean) => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [dossierOpen, setDossierOpen] = useState(false);
   const openProv = useCallback((id: string) => setProv(id), []);
-
-  useEffect(() => {
-    if (initialDossierOpen) {
-      setDossierOpen(true);
-      onDossierConsumed?.();
-    }
-  }, [initialDossierOpen, onDossierConsumed]);
 
   const r = useMemo(() => {
     const part = partitionOf(pack, scenario);
@@ -304,7 +303,7 @@ function Report({
             <button type="button" className="chip noprint" onClick={onHome}>
               {t("Start")}
             </button>
-            <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
+            <button type="button" className="chip noprint" onClick={() => onDossier(true)}>
               {t("Dossier & export")}
             </button>
             <button type="button" className="chip noprint" onClick={() => window.print()}>
@@ -493,7 +492,7 @@ function Report({
           overall={r.overall}
           ranking={r.ranking}
           findings={r.finds}
-          onClose={() => setDossierOpen(false)}
+          onClose={() => onDossier(false)}
         />
       )}
     </ProvCtx.Provider>

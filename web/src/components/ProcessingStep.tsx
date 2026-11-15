@@ -14,11 +14,14 @@ export const PROCESSING_STEPS = lazy([
 export function ProcessingStep({
   fileCount = 0,
   stepDurationMs = 620,
+  hold = false,
   onBack,
   onComplete,
 }: {
   fileCount?: number;
   stepDurationMs?: number;
+  /** Stay on this screen after the last step instead of opening the report (the guided tour talks over it). */
+  hold?: boolean;
   onBack: () => void;
   onComplete: () => void;
 }) {
@@ -32,13 +35,13 @@ export function ProcessingStep({
       timer = setTimeout(() => {
         setCurrentStep((prev) => prev + 1);
       }, stepDurationMs);
-    } else {
+    } else if (!hold) {
       timer = setTimeout(() => {
         onComplete();
       }, 380);
     }
     return () => clearTimeout(timer);
-  }, [currentStep, stepDurationMs, onComplete]);
+  }, [currentStep, stepDurationMs, onComplete, hold]);
 
   const progressPct = Math.min(100, Math.round((currentStep / PROCESSING_STEPS.length) * 100));
 

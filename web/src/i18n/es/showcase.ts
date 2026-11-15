@@ -181,38 +181,73 @@ export const SHOWCASE: Record<string, string> = {
   "Fast-ingress rapid-traverse architecture with low convective ventilation.": "Arquitectura de acceso y recorrido rápidos, con baja ventilación convectiva.",
 
   // ---- guided tour
-  "Stop 1 of 5 · Vision & Corpus": "Parada 1 de 5 · Visión y corpus",
-  "From 1,889 Scattered Tests to Cited Intelligence": "De 1,889 pruebas dispersas a conocimiento citado",
-  "Prometeo unifies decades of NASA Physical Sciences Informatics (PSI) experiments into an empirical knowledge graph with cryptographic checksums for every source table.":
-    "Prometeo reúne décadas de experimentos de NASA Physical Sciences Informatics (PSI) en un grafo de conocimiento empírico, con sumas de verificación criptográficas para cada tabla de origen.",
-  "Eliminates weeks of manual literature search; establishes verifiable provenance.": "Ahorra semanas de búsqueda bibliográfica manual; establece una procedencia verificable.",
-  "Stop 2 of 5 · Intent & GenUI": "Parada 2 de 5 · Intención e interfaz generada",
-  "Mission Scenario & Habitat Selection": "Escenario de misión y selección de hábitat",
-  "Engineers formulate specific environmental conditions (Lunar Base 24% O₂ / 0.70 atm or ISS 21% O₂ / 1.0 atm). The generative interface dynamically binds variables to live telemetry.":
-    "Los ingenieros formulan condiciones ambientales concretas (base lunar 24% O₂ / 0.70 atm o ISS 21% O₂ / 1.0 atm). La interfaz generada vincula las variables a la telemetría en vivo.",
-  "Instant adaptation to mission requirements without hardcoded interfaces.": "Adaptación inmediata a los requisitos de la misión sin interfaces fijas.",
-  "Stop 3 of 5 · Chamber Telemetry": "Parada 3 de 5 · Telemetría de la cámara",
-  "ISS CIR / BASS Microgravity Telemetry": "Telemetría en microgravedad ISS CIR / BASS",
-  "A 5-stage automated harmonization pipeline normalizes units, computes multidimensional σ-distances, and aligns empirical data to the proposed operating point.":
-    "Un proceso automático de armonización en 5 etapas normaliza unidades, calcula distancias σ multidimensionales y alinea los datos empíricos con el punto de operación propuesto.",
-  "Rigorous physics-based normalization with zero AI hallucination.": "Normalización rigurosa basada en física, sin alucinaciones de IA.",
-  "Stop 4 of 5 · Scientific Verdict": "Parada 4 de 5 · Veredicto científico",
-  "Deterministic Verdict & ML Readiness": "Veredicto determinista y preparación para ML",
-  "Evaluates overall evidence coverage, assigns grades A–D per study, plots the multi-variable condition map, and generates Table 5's ML Training Readiness Card.":
-    "Evalúa la cobertura global de la evidencia, asigna notas A–D por estudio, dibuja el mapa de condiciones multivariable y genera la ficha de preparación para entrenamiento de ML de la Tabla 5.",
-  "Actionable decision-making backed by empirical safety boundaries.": "Decisiones accionables respaldadas por límites empíricos.",
-  "Stop 5 of 5 · Mission Deliverable": "Parada 5 de 5 · Entregable de misión",
-  "1-Click Flight Director Technical Dossier": "Dossier técnico para dirección de vuelo en un clic",
-  "Generates an audit-ready academic report with full DOI citations, downloadable CSV tables, and print-ready PDF layout for mission flight controllers.":
-    "Genera un informe académico listo para auditoría, con citas DOI completas, tablas CSV descargables y un PDF listo para imprimir para los controladores de vuelo.",
-  "Instant transition from interactive exploration to certified mission deliverable.": "Paso inmediato de la exploración interactiva a un entregable de misión.",
-  "Contest judge presentation tour": "Recorrido de presentación para el jurado",
-  "Start 3-Minute Guided Pitch Tour for Hackathon Judges": "Iniciar el recorrido guiado de 3 minutos para el jurado del hackathon",
-  "3-Min Pitch Tour": "Recorrido de 3 min",
-  "· For Judges": "· Para el jurado",
-  "Close presentation tour": "Cerrar el recorrido de presentación",
-  "Key Judge Takeaway:": "Idea clave para el jurado:",
+  Problem: "Problema",
+  Case: "Caso",
+  Engine: "Motor",
+  Answer: "Respuesta",
+  Coverage: "Cobertura",
+  Assistant: "Asistente",
+  Export: "Exportación",
+  "Decades of experiments, scattered across tables": "Décadas de experimentos, dispersos en tablas",
+  "The example corpus holds {0} {1} from {2} {3}, spread over {4} source tables, each with its own columns and units. Checking one new scenario against all of them means reading every paper and converting every value by hand.":
+    "El corpus de ejemplo reúne {0} {1} de {2} {3}, repartidas en {4} tablas de origen, cada una con sus propias columnas y unidades. Contrastar un escenario nuevo con todas ellas obliga a leer cada artículo y a convertir cada valor a mano.",
+  "The corpus behind this demo, counted from the evidence pack.":
+    "El corpus de esta demostración, contado a partir del paquete de evidencia.",
+  "Prometeo turns that scattered record into one comparable, cited corpus.":
+    "Prometeo convierte ese registro disperso en un único corpus comparable y citado.",
+  "State the case in four steps": "Plantear el caso en cuatro pasos",
+  "Documents to compare against, the question in plain words, a starting setting and the variables with their values. The tour has loaded the setting “{0}”: {1}":
+    "Los documentos con los que comparar, la pregunta en palabras sencillas, un entorno de partida y las variables con sus valores. El recorrido ha cargado el entorno “{0}”: {1}",
+  "The four steps of the form.": "Los cuatro pasos del formulario.",
+  "Every condition that enters the comparison is explicit and editable.":
+    "Cada condición que entra en la comparación es explícita y editable.",
+  "A deterministic engine computes the evidence": "Un motor determinista calcula la evidencia",
+  "Values are converted to one canonical unit, tests are split into partitions that are never compared with each other, and each of the {0} {1} receives a distance in standard deviations and a grade from A to D. The same inputs always produce the same report.":
+    "Los valores se convierten a una unidad canónica, las pruebas se separan en particiones que nunca se comparan entre sí y {cada uno|cada una} de {los|las} {0} {1} recibe una distancia en desviaciones estándar y una nota de A a D. Las mismas entradas producen siempre el mismo informe.",
+  "The harmonization steps run by the engine.": "Los pasos de armonización que ejecuta el motor.",
+  "Levels, grades and findings are computed, not generated: they can be audited and reproduced.":
+    "Los niveles, las notas y los hallazgos se calculan, no se generan: se pueden auditar y reproducir.",
+  "What has been studied, condition by condition": "Qué se ha estudiado, condición por condición",
+  "Each condition of the scenario receives one level: Studied, Near, not covered, Not studied or Scarce evidence, always written in words and never shown by color alone. Key findings state the largest gaps, each with its sources.":
+    "Cada condición del escenario recibe un nivel: Estudiado, Cercano, no cubierto, No estudiado o Evidencia escasa, siempre escrito en palabras y nunca indicado solo con color. Los hallazgos clave enuncian los huecos más grandes, cada uno con sus fuentes.",
+  "The evidence card and the key findings.": "La ficha de evidencia y los hallazgos clave.",
+  "Prometeo compares conditions with the record; it does not predict outcomes. A gap is reported as a gap.":
+    "Prometeo compara condiciones con lo registrado; no predice resultados. Un hueco se informa como hueco.",
+  "Where the evidence is, and where nobody has looked": "Dónde está la evidencia y dónde nadie ha mirado",
+  "The graphical abstract places the scenario inside the range in which each variable was tested and shows how close the nearest {0} comes. Tests that do not record a variable are kept apart; they are never given a value.":
+    "El resumen gráfico sitúa el escenario dentro del rango en que se probó cada variable y muestra cuánto se acerca {el|la} {0} más {cercano|cercana}. Las pruebas que no registran una variable se mantienen aparte; nunca se les asigna un valor.",
+  "The graphical abstract: tested range per variable and the scenario value.":
+    "El resumen gráfico: rango probado por variable y valor del escenario.",
+  "Blank regions point to the experiment that would close the gap.": "Las regiones vacías señalan el experimento que cerraría el hueco.",
+  "Every value leads back to its source": "Cada valor lleva a su fuente",
+  "Any underlined value opens its source: the file, the row, the original value and unit, the conversion applied, the DOI and the SHA-256 of the table. The tour has just opened one.":
+    "Cualquier valor subrayado abre su fuente: el archivo, la fila, el valor y la unidad originales, la conversión aplicada, el DOI y el SHA-256 de la tabla. El recorrido acaba de abrir una.",
+  "The source panel of a value in the graphical abstract.": "El panel de fuente de un valor del resumen gráfico.",
+  "Any number in the report can be checked against the original record in one click.":
+    "Cualquier número del informe se puede contrastar con el registro original en un clic.",
+  "Questions in plain language, checked before they are shown": "Preguntas en lenguaje natural, verificadas antes de mostrarse",
+  "A question such as “{0}” is translated into scenario values that are validated before they are applied. The written analysis keeps only sentences that match, word for word, a finding computed by the engine, each with its sources. If the service fails, a template text is shown and labeled as such.":
+    "Una pregunta como “{0}” se traduce en valores del escenario que se validan antes de aplicarse. El análisis redactado conserva solo las frases que coinciden, palabra por palabra, con un hallazgo calculado por el motor, cada una con sus fuentes. Si el servicio falla, se muestra un texto de plantilla marcado como tal.",
+  "The questions and analysis panel.": "El panel de preguntas y análisis.",
+  "The AI helps to ask and to explain; it never sets a level, a grade or a finding.":
+    "La IA ayuda a preguntar y a explicar; nunca fija un nivel, una nota ni un hallazgo.",
+  "A dossier and datasets ready for review": "Un dossier y conjuntos de datos listos para revisión",
+  "The report goes out as PDF or Markdown. The harmonized records go out as CSV with units, DOI and a study group for leakage-free splits, together with a datacard that lists conversions, rejected columns and what was not assessed.":
+    "El informe sale en PDF o Markdown. Los registros armonizados salen en CSV con unidades, DOI y un grupo por estudio para particiones sin fuga de datos, junto con una ficha de datos que enumera conversiones, columnas rechazadas y lo que no se evaluó.",
+  "The dataset export of the dossier.": "La exportación de datos del dossier.",
+  "The same corpus serves a design review and a machine-learning dataset, with its provenance intact.":
+    "El mismo corpus sirve para una revisión de diseño y para un conjunto de datos de aprendizaje automático, con su procedencia intacta.",
+  "Guided tour": "Recorrido guiado",
+  "· for judges": "· para el jurado",
+  "Guided tour of Prometeo": "Recorrido guiado de Prometeo",
+  "Stops of the tour": "Paradas del recorrido",
+  "Close tour": "Cerrar recorrido",
+  "Stop {0} of {1} · {2}": "Parada {0} de {1} · {2}",
+  "Outlined on the page:": "Marcado en la página:",
+  "Not on screen:": "No visible en pantalla:",
+  "Why it matters": "Por qué importa",
   "← Back": "← Atrás",
-  "Finish Tour ✓": "Terminar recorrido ✓",
-  "Next Stop →": "Siguiente parada →",
+  "Next: {0} →": "Siguiente: {0} →",
+  "Finish the tour": "Terminar el recorrido",
+  "Keys: ← → or a presentation clicker; Esc closes.": "Teclas: ← → o un control de presentaciones; Esc cierra.",
 };
