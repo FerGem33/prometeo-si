@@ -4,9 +4,9 @@ import type { Lens, Pack, Scenario } from "./engine";
 import { DataCtx, ProvCtx } from "./components/ctx";
 import type { Data, Mapping } from "./components/ctx";
 import { AssistantPanel } from "./components/AssistantPanel";
-import { HabitatPanel, PresetChips, ScenarioPanel } from "./components/ScenarioPanel";
-import { allHabitatPresets, matchingHabitatPreset } from "./components/HabitatFigure";
-import { SectionNav } from "./components/SectionNav";
+import { HabitatPanel, LevelTag, PresetChips, ScenarioPanel } from "./components/ScenarioPanel";
+import { NextTab, ReportTabs, TabPanel } from "./components/SectionNav";
+import type { ReportTab } from "./components/SectionNav";
 import { VariantsPanel } from "./components/VariantsPanel";
 import { MapFigure } from "./components/MapFigure";
 import { SourcesRanked } from "./components/SourcesRanked";
@@ -242,6 +242,7 @@ function Report({
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<ReportTab>("summary");
   const openProv = useCallback((id: string) => setProv(id), []);
 
   const r = useMemo(() => {
@@ -268,12 +269,16 @@ function Report({
   const graded = r.ranking.filter((x) => x.grade !== "D");
   const best = graded[0];
 
-  const presetLabel = allHabitatPresets(lens).find((p) => p.id === matchingHabitatPreset(lens, scenario))?.label;
   const pick = (v: Record<string, number | string>) =>
     setScenario((s) => ({ ...s, values: { ...s.values, ...v }, active: pack.schema.variables.map((x) => x.id).filter((id) => s.active.includes(id) || id in v) }));
+  const goTab = (next: ReportTab) => {
+    setTab(next);
+    window.scrollTo({ top: 0 });
+  };
   const changeValues = () => {
+    setTab("summary");
     setEditing(true);
-    setTimeout(() => document.getElementById("scenario-controls")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    setTimeout(() => document.getElementById("scenario-controls")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
   const closeMenu = (e: React.MouseEvent<HTMLElement>) => e.currentTarget.closest("details")?.removeAttribute("open");
 
@@ -290,8 +295,23 @@ function Report({
           <Prefs />
         </header>
 
-        {/* The four layers of the report and its actions stay in reach while the page scrolls. */}
-        <SectionNav>
+        <div className="kicker">
+          <span>{lens.kicker ?? t("Scenario assessment")}</span>
+          <span className="verify">{summary}</span>
+        </div>
+        <h1>{lens.title}</h1>
+        <p className="byline">
+          <span>{pack.meta.source_note}</span>
+          <span>{t("every value links to its source row and DOI")}</span>
+        </p>
+        {goal.trim() && (
+          <p className="goalline">
+            <b>{t("Question.")}</b> {goal.trim()}
+          </p>
+        )}
+
+        {/* The three tabs of the report and its actions stay in reach while the page scrolls. */}
+        <ReportTabs tab={tab} onTab={goTab}>
           <SaveExploration packId={pack.meta.id} scenario={scenario} axes={axes} extras={extras} goal={goal} projectId={projectId} summary={summary} />
           <button type="button" className="chip noprint" onClick={() => onDossier(true)}>
             {t("Dossier & export")}
@@ -313,89 +333,51 @@ function Report({
               </button>
             </div>
           </details>
-        </SectionNav>
+        </ReportTabs>
 
-        <div className="cols single">
-          {/* 1 · Answer: the scenario and how much evidence there is for it. */}
-          <section className="sect" id="sec-answer" aria-labelledby="scn-title">
-            <div className="kicker">
-              <span>{lens.kicker ?? t("Scenario assessment")}</span>
-            </div>
-            <div className="scn-headline">
-              <h1 id="scn-title">{summary ? (presetLabel ? `${presetLabel} · ${summary}` : summary) : lens.title}</h1>
-              <button type="button" className="chip noprint" onClick={changeValues}>
-                {t("Change values")}
-              </button>
-            </div>
-            <p className="byline">
-              {summary && <span>{lens.title}</span>}
-              <span>{pack.meta.source_note}</span>
-              <span>{t("every value links to its source row and DOI")}</span>
-            </p>
-            {goal.trim() && (
-              <p className="goalline">
-                <b>{t("Question.")}</b> {goal.trim()}
-              </p>
-            )}
-
+        {/* Main column, with a side rail that stays in view while the page scrolls. The widest tables take the full width. */}
+        <div className={tab === "data" ? "cols single" : "cols"}>
+          {/* Summary: how much evidence there is, what stands out, and why, variable by variable. */}
+          <TabPanel id="summary" tab={tab}>
             <div className="top">
               <EvidenceCard overall={r.overall} ranking={r.ranking} comparable={r.n} />
             </div>
 
-            <Fold title={t("Abstract")} hint={t("the same answer in full sentences, as in the printed report")}>
-              <p className="abstract">{abstractText(pack, lens, scenario, r.overall, r.finds)}</p>
-            </Fold>
-          </section>
-
-          {/* 2 · Why: each variable once, then the ways to change the scenario, then the findings. */}
-          <section className="sect" id="sec-why" aria-labelledby="why-title">
-            <div className="sect-head">
-              <h2 id="why-title">{t("Why: each condition against what was tested")}</h2>
-              <p className="hint noprint">{t("Click a scale to move a value; every figure, table and sentence is recomputed.")}</p>
-            </div>
-            <ScenarioRanges scenario={scenario} onChange={setScenario} levels={r.levels} />
-            {extras.length > 0 && (
-              <ul className="why-extras">
-                {extras.map((e) => (
-                  <li key={e.id}>
-                    <span>
-                      {e.name}{" "}
-                      <b>
-                        {e.value} {e.unit}
-                      </b>
-                    </span>
-                    <ExtraTag />
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="try noprint">
-              <span className="try-lab">{t("Try another scenario:")}</span>
-              <PresetChips scenario={scenario} onChange={setScenario} />
-            </div>
-            <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders and your own variables")}>
-              <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
-            </Fold>
-            <Fold title={t("Save or compare variants of this scenario")} hint={t("kept in this browser only")}>
-              <VariantsPanel scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} />
-            </Fold>
-
             <KeyFindings findings={r.finds} />
-            <Fold title={t("Table 2 · All findings for the scenario")} hint={t("{0} findings with their sources", r.finds.length)}>
-              <FindingsList findings={r.finds} />
-            </Fold>
 
-            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
-          </section>
+            <section className="sect" aria-labelledby="why-title">
+              <div className="sect-head">
+                <h2 id="why-title">{t("Why: each condition against what was tested")}</h2>
+                <p className="hint noprint">{t("Click a scale to move a value; every figure, table and sentence is recomputed.")}</p>
+              </div>
+              <ScenarioRanges scenario={scenario} onChange={setScenario} levels={r.levels} />
+              <div className="try noprint">
+                <span className="try-lab">{t("Try another scenario:")}</span>
+                <PresetChips scenario={scenario} onChange={setScenario} />
+              </div>
+              <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders and your own variables")}>
+                <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
+              </Fold>
+              <Fold title={t("Save or compare variants of this scenario")} hint={t("kept in this browser only")}>
+                <VariantsPanel scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} />
+              </Fold>
+            </section>
 
-          {/* 3 · Explore: the figures. The first is open; the others open in place. */}
-          <section className="sect" id="sec-explore" aria-labelledby="explore-title">
-            <div className="sect-head">
-              <h2 id="explore-title">{t("Explore the evidence")}</h2>
-            </div>
+            <section className="abstract-card" aria-label={t("Abstract")}>
+              <div className="abstract-head">
+                <b className="lbl">{t("Abstract")}</b>
+              </div>
+              <p className="abstract">{abstractText(pack, lens, scenario, r.overall, r.finds)}</p>
+            </section>
 
-            <h2 className="sec">{t("1 · Where the tests sit relative to the scenario")}</h2>
+            <NextTab to="evidence" onTab={goTab}>
+              {t("Next: see where the {0} comparable tests sit relative to the scenario.", r.n.toLocaleString("en-US"))}
+            </NextTab>
+          </TabPanel>
+
+          {/* Evidence: the figures. */}
+          <TabPanel id="evidence" tab={tab}>
+            <h2 className="sec first">{t("1 · Where the tests sit relative to the scenario")}</h2>
             <MapFigure figure={1} scenario={scenario} partition={r.part} axes={axes} onAxes={setAxes} onPick={pick} />
             <Fold title={t("Read the detail")} hint={t("Partitions.")}>
               <div className="row">
@@ -414,7 +396,7 @@ function Report({
             </Fold>
 
             <h2 className="sec">{t("2 · How close each")} {unit} {t("comes, variable by variable")}</h2>
-            <Fold title={t("Figure 2 · Closeness of every {0}, variable by variable", unit)} hint={t("sortable table with the nearest values")}>
+            <Fold open title={t("Figure 2 · Closeness of every {0}, variable by variable", unit)} hint={t("sortable table with the nearest values")}>
               <ClosenessPanels scenario={scenario} ranking={r.ranking} close={r.close} />
               <HeatTable figure={2} results={r.ranking} closeness={r.close} scenario={scenario} />
             </Fold>
@@ -434,7 +416,7 @@ function Report({
             </Fold>
 
             <h2 className="sec">{t("3 · Coverage and gaps")}</h2>
-            <Fold title={t("Figure {0} · Coverage and gaps", 3)} hint={t("comparable tests in each region; select a cell to move the scenario")}>
+            <Fold open title={t("Figure {0} · Coverage and gaps", 3)} hint={t("comparable tests in each region; select a cell to move the scenario")}>
               <GapFigure figure={3} grid={r.grid} scenario={scenario} axes={axes} onAxes={setAxes} onPick={pick} />
             </Fold>
             <Fold title={t("Read the detail")} hint={t("What a gap means.")}>
@@ -457,16 +439,19 @@ function Report({
             <Fold title={t("Proposed scenario")} hint={t("isometric model and comparison against a baseline")}>
               <HabitatPanel scenario={scenario} />
             </Fold>
-          </section>
 
-          {/* 4 · Data, sources and methods: everything needed to check a number. */}
-          <section className="sect" id="sec-sources" aria-labelledby="sources-title">
-            <div className="sect-head">
-              <h2 id="sources-title">{t("Data, sources and methods")}</h2>
-              <p className="hint">{t("every value links to its source row and DOI")}</p>
-            </div>
-            <Fold title={t("Table 1 · Ranking of the {0} {1}", pack.studies.length, many(unit))} hint={t("grade, distance, nearest record, reason and DOI")}>
+            <NextTab to="data" onTab={goTab}>
+              {t("Next: check any number against its table, its source and the method.")}
+            </NextTab>
+          </TabPanel>
+
+          {/* Data and methods: everything needed to check a number. */}
+          <TabPanel id="data" tab={tab}>
+            <Fold open title={t("Table 1 · Ranking of the {0} {1}", pack.studies.length, many(unit))} hint={t("grade, distance, nearest record, reason and DOI")}>
               <RankingTable results={r.ranking} scenario={scenario} />
+            </Fold>
+            <Fold title={t("Table 2 · All findings for the scenario")} hint={t("{0} findings with their sources", r.finds.length)}>
+              <FindingsList findings={r.finds} />
             </Fold>
             <Fold title={t("Sources")} hint={t("Tables 3 and 4 · the {0} source tables and the ranking explained", pack.sources.length)}>
               <SourcesTable n={3} />
@@ -499,7 +484,40 @@ function Report({
             <Fold title={t("References")} hint={t("datasets and their DOIs")}>
               <References />
             </Fold>
-          </section>
+          </TabPanel>
+
+          {/* Side rail: the scenario and its levels, the question box and the analysis. Kept in the page for the tour and the print. */}
+          <aside className="rail" aria-label={t("Scenario summary, questions and analysis")} hidden={tab === "data"}>
+            <section className="rail-scn noprint" aria-label={t("Current scenario")}>
+              <h2>{t("Current scenario")}</h2>
+              <ul>
+                {r.levels.map((lv) => (
+                  <li key={lv.variable}>
+                    <span>
+                      {varOf(pack, lv.variable).label} <b>{scenarioValueText(pack, lv.variable, lv.value)}</b>
+                    </span>
+                    <LevelTag level={lv.level} />
+                  </li>
+                ))}
+                {extras.map((e) => (
+                  <li key={e.id}>
+                    <span>
+                      {e.name}{" "}
+                      <b>
+                        {e.value} {e.unit}
+                      </b>
+                    </span>
+                    <ExtraTag />
+                  </li>
+                ))}
+              </ul>
+              {r.levels.length === 0 && extras.length === 0 && <p className="hint">{t("No variable is part of the scenario.")}</p>}
+              <button type="button" className="chip rail-change" onClick={changeValues}>
+                {t("Change values")}
+              </button>
+            </section>
+            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
+          </aside>
         </div>
 
         <footer className="end">
