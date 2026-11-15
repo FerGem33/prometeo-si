@@ -10,6 +10,7 @@ import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
 import { BASELINE_PROFILES, computeWhatIfDelta } from "../report/whatif";
 import { t } from "../i18n";
+import { NasaApparatus, type NasaInfo } from "./NasaApparatus";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
   const l = LEVELS[level];
@@ -50,6 +51,7 @@ export function ScenarioPanel({
   extras,
   onExtras,
   isCustomCorpus,
+  nasa,
 }: {
   scenario: Scenario;
   onChange: (s: Scenario) => void;
@@ -57,6 +59,7 @@ export function ScenarioPanel({
   extras: Extra[];
   onExtras: (e: Extra[]) => void;
   isCustomCorpus?: boolean;
+  nasa?: NasaInfo;
 }) {
   const { pack, lens } = useData();
   const [selectedBaseline, setSelectedBaseline] = useState<string>("earth_std");
@@ -135,6 +138,12 @@ export function ScenarioPanel({
           </div>
         )}
       </div>
+
+      {isCustomCorpus && nasa && (
+        <div className="scn-design-stage noprint">
+          <NasaApparatus {...nasa} compact />
+        </div>
+      )}
 
       {/* Large Selected-Design Interactive Animation Stage on the Final Report Interface */}
       {!isCustomCorpus && (

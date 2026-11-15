@@ -620,3 +620,19 @@ describe("ScenarioStep 3-step redesign & zero-scenarios check", () => {
     });
   });
 });
+
+describe("moveItem (section reorder)", () => {
+  it("moves an item and ignores out-of-range moves", async () => {
+    const { moveItem } = await import("./ScenarioStep");
+    expect(moveItem(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
+    expect(moveItem(["a", "b", "c"], 2, 1)).toEqual(["a", "c", "b"]);
+    const same = ["a", "b"];
+    expect(moveItem(same, 0, -1)).toBe(same);
+  });
+
+  it("keeps the 30-file limit message and reports overflow", () => {
+    const src = readFileSync(join(__dirname, "ScenarioStep.tsx"), "utf-8");
+    expect(src).toContain("Limit: up to 30 files per batch (max. 20 MB per file, 60 pages per PDF)");
+    expect(src).not.toMatch(/\p{Extended_Pictographic}/u);
+  });
+});

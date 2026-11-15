@@ -1,9 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Scenario } from "../engine";
 import type { Axes, Extra } from "../state";
 import { useData } from "./ctx";
 import { createProject, deleteProject, duplicateProject, formatDate, listProjects, renameProject, saveExploration } from "../report/workspace";
-import type { Project, Result, SavedExploration } from "../report/workspace";
+import type { CustomRef, Project, Result, SavedExploration } from "../report/workspace";
+import { customStore } from "../report/customStore";
+import { newId } from "../report/storage";
+import type { EvaluationDraft } from "./ScenarioStep";
 import { count, t, tx } from "../i18n";
 import { Prefs } from "./Prefs";
 
@@ -11,8 +14,27 @@ const NEW = "__new__";
 const WARN = tx("This browser refused to store the change (private mode, full or blocked storage). It was not saved.");
 
 /** Local projects screen. Everything is stored in this browser only; there are no accounts and no server. */
-export function Workspace({ onBack, onOpen }: { onBack: () => void; onOpen: (p: Project, last: SavedExploration | null) => void }) {
+export function Workspace({ onBack, onOpen, onNewEvaluation }: {
+  onBack: () => void;
+  /** draft is the restored custom evaluation, or null when the exploration uses the reference pack or its data is gone. */
+  onOpen: (p: Project, e: SavedExploration | null, draft: EvaluationDraft | null) => void;
+  onNewEvaluation: () => void;
+}) {
   const { pack } = useData();
+  // Ids of custom evaluations still present in IndexedDB; null while loading.
+  const [stored, setStored] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    let live = true;
+    customStore.list().then((ids) => live && setStored(new Set(ids)), () => live && setStored(new Set()));
+    return () => {
+      live = false;
+    };
+  }, []);
+  const open = async (p: Project, e: SavedExploration | null) => {
+    const saved = e?.custom ? await customStore.get(e.custom.id).catch(() => null) : null;
+    onOpen(p, e, saved?.draft ?? null);
+  };
+  const status = (c: CustomRef) => (stored === null ? t("Checking…") : stored.has(c.id) ? t("Saved") : t("Data missing in this browser; opens against the reference pack"));
   const [projects, setProjects] = useState<Project[]>(() => listProjects());
   const [warn, setWarn] = useState(false);
   const [name, setName] = useState("");
@@ -42,7 +64,7 @@ export function Workspace({ onBack, onOpen }: { onBack: () => void; onOpen: (p: 
         <div className="ws-intro">
           <h1>{t("Your projects")}</h1>
           <p className="ws-note">
-            {t("Projects are saved only in this browser. There are no accounts and no sync: clearing site data, or opening Prometeo on another device, will not bring them back. Each project refers to the example evidence pack (")}{pack.meta.id}).
+            {t("Projects are saved only in this browser. There are no accounts and no sync: clearing site data, or opening Prometeo on another device, will not bring them back. A project refers either to the example evidence pack ({0}) or to a custom evaluation built from your own documents, stored in this browser's IndexedDB.", pack.meta.id)}
           </p>
           {warn && (
             <p className="ws-warn" role="alert">
@@ -67,10 +89,27 @@ export function Workspace({ onBack, onOpen }: { onBack: () => void; onOpen: (p: 
                       </span>
                     </div>
                     <p className="ws-intent">{p.intent || t("No intention written.")}</p>
-                    {p.packId !== pack.meta.id && <p className="ws-warn">{t("This project was made with a different evidence pack (")}{p.packId || t("unknown")}{t("); it will open against")} {pack.meta.id}.</p>}
+                    {p.packId !== pack.meta.id && !p.explorations.some((x) => x.custom) && <p className="ws-warn">{t("This project was made with a different evidence pack (")}{p.packId || t("unknown")}{t("); it will open against")} {pack.meta.id}.</p>}
+                    {p.explorations.some((x) => x.custom) && (
+                      <ul className="ws-custom" aria-label={t("Custom evaluations of {0}", p.name)}>
+                        {p.explorations.filter((x) => x.custom).map((x) => (
+                          <li key={x.id}>
+                            <span>
+                              <b>{x.custom!.title || t("Custom evaluation")}</b>{" "}
+                              <span className="ws-meta">
+                                {formatDate(x.savedAt)} · {count(x.custom!.docs, "document")} · {count(x.custom!.variables, "variable analyzed", "variables analyzed")} · {status(x.custom!)}
+                              </span>
+                            </span>
+                            <button type="button" className="chip" onClick={() => open(p, x)}>
+                              {t("Open evaluation")}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {!e && (
                       <div className="ws-actions">
-                        <button type="button" className="chip accent" onClick={() => onOpen(p, p.explorations[p.explorations.length - 1] ?? null)}>
+                        <button type="button" className="chip accent" onClick={() => open(p, p.explorations[p.explorations.length - 1] ?? null)}>
                           {t("Open")}
                         </button>
                         <button type="button" className="chip" onClick={() => setEdit({ id: p.id, mode: "rename", text: p.name })}>
@@ -157,10 +196,10 @@ export function Workspace({ onBack, onOpen }: { onBack: () => void; onOpen: (p: 
 
             <section className="ws-upload">
               <h2>{t("Your own papers")}</h2>
-              <button type="button" className="ghostbtn" disabled aria-describedby="ws-upload-why">
-                {t("Upload papers")}
+              <button type="button" className="ghostbtn" onClick={onNewEvaluation} aria-describedby="ws-upload-why">
+                {t("New evaluation from your documents")}
               </button>
-              <p id="ws-upload-why">{t("Uploading your own papers needs the server pipeline, which is not built yet.")}</p>
+              <p id="ws-upload-why">{t("Upload up to 30 papers or tables, build the evaluation, then use “Save to workspace” in the report to keep it here.")}</p>
             </section>
           </div>
         </div>
@@ -170,8 +209,10 @@ export function Workspace({ onBack, onOpen }: { onBack: () => void; onOpen: (p: 
 }
 
 /** "Save to workspace" in the report bar: opens a dialog that stores the current scenario and axes in a local project. */
-export function SaveExploration({ packId, scenario, axes, extras, goal, projectId, summary }: {
+export function SaveExploration({ packId, scenario, axes, extras, goal, projectId, summary, customDraft }: {
   packId: string; scenario: Scenario; axes: Axes; extras: Extra[]; goal: string; projectId: string | null; summary: string;
+  /** set when the report shows a custom corpus: the whole evaluation is stored in IndexedDB with the exploration */
+  customDraft?: EvaluationDraft | null;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -190,14 +231,27 @@ export function SaveExploration({ packId, scenario, axes, extras, goal, projectI
     dialog.current?.showModal();
   };
   const close = () => dialog.current?.close();
-  const save = () => {
+  const save = async () => {
+    let custom: CustomRef | undefined;
+    if (customDraft) {
+      custom = {
+        id: newId("eval"),
+        title: customDraft.lens.title,
+        docs: customDraft.docs.filter((d) => d.status === "done").length,
+        variables: customDraft.pack.schema.variables.length,
+      };
+      // The draft carries parsed documents but no raw bytes; those stay in the documents store.
+      const draft: EvaluationDraft = { ...customDraft, scenario, extras };
+      const ok = await customStore.save({ id: custom.id, savedAt: new Date().toISOString(), draft }).then(() => true, () => false);
+      if (!ok) return setFailed(true);
+    }
     let id = target;
     if (target === NEW) {
       const c = createProject(name, goal, packId);
       if (!c.ok || !c.project) return setFailed(true);
       id = c.project.id;
     }
-    const r = saveExploration(id, scenario, axes, undefined, extras);
+    const r = saveExploration(id, scenario, axes, undefined, extras, custom);
     if (!r.ok) return setFailed(true);
     setFailed(false);
     setSaved(r.project?.name ?? "");
@@ -235,6 +289,7 @@ export function SaveExploration({ packId, scenario, axes, extras, goal, projectI
           ) : (
             <>
               <p className="modal-note">{t("The scenario below and the axes of Figure 1 are stored in a project. Projects live in this browser only: no account, no server, no sync.")}</p>
+              {customDraft && <p className="modal-note">{t("This evaluation uses your own documents: its evidence pack, lens and interface design are stored too, so it reopens without uploading the files again.")}</p>}
               <p className="modal-what">{summary || t("No variable is included in the scenario.")}</p>
               <label>
                 {t("Project")}

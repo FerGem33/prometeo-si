@@ -80,5 +80,7 @@ describe("ingest validation and hashing", () => {
     const overResult = mergeUploadedDocs(existingThirty, [extraDoc]);
     expect(overResult.docs).toHaveLength(30);
     expect(overResult.docs.map((d) => d.id)).not.toContain("doc_extra");
+    expect(overResult.overflow).toEqual(["extra.csv"]);
+    expect(result.overflow).toEqual([]);
   });
 });

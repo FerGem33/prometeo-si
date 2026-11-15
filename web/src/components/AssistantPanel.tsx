@@ -5,9 +5,14 @@ import { findingText } from "../report/text";
 import { doiOf, scenarioValueText } from "../report/format";
 import { API_BASE, parseAnalysis, parseAsk, postApi } from "../report/api";
 import type { Analysis, Sentence } from "../report/api";
-import { getLang, t } from "../i18n";
+import { getLang, t, tx } from "../i18n";
 import { originalPack } from "../i18n/localize";
-import { interpretLocalQuestion } from "../ingest/localAsk";
+import { answerLocalQuery, interpretLocalQuestion } from "../ingest/localAsk";
+import type { LocalAnswer } from "../ingest/localAsk";
+import { num } from "../report/format";
+
+// An explicit command changes the scenario; any other question is answered from the records.
+const SET_COMMAND = /\b(set|change|cambia|cambiar|pon|poner|fija|establece)\b/i;
 
 export function AssistantPanel({
   scenario,
@@ -27,6 +32,7 @@ export function AssistantPanel({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ key: string; analysis: Analysis } | null>(null);
+  const [local, setLocal] = useState<LocalAnswer | null>(null);
   const request = useRef<AbortController | null>(null);
   const key = JSON.stringify({ scenario, levels, findings });
   const latestKey = useRef(key);
@@ -56,10 +62,15 @@ export function AssistantPanel({
     const controller = new AbortController();
     request.current = controller;
     const started = latestKey.current;
-    setBusy(true); setMessage("");
+    setBusy(true); setMessage(""); setLocal(null);
 
     if (isCustomCorpus) {
       try {
+        const answer = SET_COMMAND.test(question) ? null : answerLocalQuery(question, pack);
+        if (answer && !("unsupported" in answer)) {
+          setLocal(answer);
+          return;
+        }
         const next = interpretLocalQuestion(question, pack);
         if (started !== latestKey.current) {
           setMessage(t("The scenario changed. Submit the question again to apply it."));
@@ -112,6 +123,7 @@ export function AssistantPanel({
         }}>{v.label}: {scenarioValueText(pack, id, scenario.values[id])} {t("· Edit")}</button>;
       })}</div>
     </div>
+    {local && <LocalAnswerView answer={local} />}
     <h2 className="sec">{t("Analysis")}</h2>
     <p className="tblnote">{analysis.mode === "ai" ? t("AI-assisted selection · verified evidence sentences") : t("Template-based analysis · no live AI text")}{analysis.mode === "ai" && getLang() !== "en" ? ` ${t("The analysis sentences are written in English.")}` : ""}</p>
     {analysis.sentences.length ? <ul>{analysis.sentences.map((s) => <li key={s.finding}>
@@ -123,4 +135,42 @@ export function AssistantPanel({
       })}</span>
     </li>)}</ul> : <p>{t("No sourced analysis is available for these conditions.")}</p>}
   </section>;
+}
+
+
+const OP_TEXT: Record<string, string> = { "<": tx("below"), ">": tx("above"), "<=": tx("at or below"), ">=": tx("at or above"), between: tx("between") };
+const STAT_TEXT: Record<string, string> = { max: tx("Maximum"), min: tx("Minimum"), mean: tx("Mean of the tested midpoints"), count: tx("Records with a value") };
+const SHOWN = 12;
+
+/** A read-only answer computed in the browser from pack.records; every record it used opens its source. */
+function LocalAnswerView({ answer }: { answer: LocalAnswer }) {
+  const { pack } = useData();
+  const v = pack.schema.variables.find((x) => x.id === answer.variable);
+  const label = v?.label ?? answer.variable;
+  const unit = answer.unit ?? "";
+  const study = (id: string) => pack.studies.find((s) => s.id === id)?.short ?? id;
+  let text: string;
+  if (answer.kind === "stat") {
+    text = answer.n === 0
+      ? t("No record gives a value for {0}.", label)
+      : answer.stat === "count"
+        ? t("{0} of {1}: {2}.", t(STAT_TEXT.count), label, answer.value)
+        : t("{0} of {1}: {2} {3}, over {4} records with a value.", t(STAT_TEXT[answer.stat]), label, num(answer.value), unit, answer.n);
+  } else {
+    const bounds = answer.bounds.map((b) => num(b)).join(t(" and "));
+    text = answer.studies.length === 0
+      ? t("No study records {0} {1} {2} {3}.", label, t(OP_TEXT[answer.op]), bounds, unit)
+      : t("{0} studies record {1} {2} {3} {4}: {5}.", answer.studies.length, label, t(OP_TEXT[answer.op]), bounds, unit, answer.studies.map(study).join(", "));
+  }
+  return <div className="local-answer" role="status">
+    <p className="tblnote">{t("Computed locally from the corpus records · not AI")}</p>
+    <p>{text}</p>
+    {answer.records.length > 0 && <p className="analysis-sources">{t("Records:")}{" "}
+      {answer.records.slice(0, SHOWN).map((id) => {
+        const r = pack.records.find((x) => x.id === id);
+        return <Src key={id} id={id}>{r ? `${study(r.study)} · ${r.label}` : id}</Src>;
+      })}
+      {answer.records.length > SHOWN ? ` ${t("and {0} more", answer.records.length - SHOWN)}` : ""}
+    </p>}
+  </div>;
 }

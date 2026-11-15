@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateExecutiveMarkdown, generateDossierJson } from "./dossier";
+import { generateBibtex, generateExecutiveMarkdown, generateDossierJson } from "./dossier";
 import type { Scenario, OverallEvidence, StudyResult, Finding, Pack, Lens } from "../engine";
 
 describe("Dossier Export Utilities", () => {
@@ -78,5 +78,26 @@ describe("Dossier Export Utilities", () => {
     expect(parsed.contract).toBe("test-contract");
     expect(parsed.scenario.values.o2).toBe(24);
     expect(parsed.overall.level).toBe("strong");
+  });
+});
+
+describe("generateBibtex", () => {
+  it("writes one entry per distinct DOI with only the fields present", () => {
+    const pack = {
+      studies: [
+        {
+          id: "S1", short: "BASS-II", title: "BASS {II} & flames",
+          links: [{ kind: "doi", url: "https://doi.org/10.1/abc", label: "10.1/abc" }],
+          publications: [{ title: "Spread of flames", doi: "10.2/xyz", authors: "Gold L., Smith J." }],
+        },
+        { id: "S2", short: "Up", title: "Uploaded paper", links: [], publications: [{ title: "Dup", doi: "10.2/XYZ" }] },
+        { id: "S3", short: "NoDoi", title: "No DOI", links: [], publications: [] },
+      ],
+    } as unknown as Pack;
+    const bib = generateBibtex(pack);
+    expect(bib).toContain("@article{S1_1,\n  title = {Spread of flames},\n  author = {Gold L. and Smith J.},\n  doi = {10.2/xyz},\n  url = {https://doi.org/10.2/xyz}\n}");
+    expect(bib).toContain("@misc{S1,\n  title = {BASS II \\& flames},\n  doi = {10.1/abc}");
+    expect(bib.match(/@/g)).toHaveLength(2); // duplicate DOI (case-insensitive) and the study without DOI add nothing
+    expect(bib).not.toContain("year");
   });
 });

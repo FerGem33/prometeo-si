@@ -9,7 +9,10 @@ import {
 import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
-import { requestRemoteProposals } from "../ingest/remote";
+import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
+import { filesFromDrop } from "../ingest/folderDrop";
+import { compatibleUnits, groupVariables } from "../ingest/variableView";
+import { applyConversion, getConversion } from "../ingest/buildPack";
 import {
   createDocStore,
   detectMediaType,
@@ -17,11 +20,13 @@ import {
   sha256Hex,
   validateFileMeta,
 } from "../ingest/storage";
+import { D3_LIMITS } from "../ingest/types";
 import type {
   CorpusScope,
   DesignPresetFlag,
   DocErrorCode,
   ExtractedVariable,
+  ReportSectionId,
   UiBlueprint,
   UploadedDoc,
   VariableProposalRemote,
@@ -36,6 +41,27 @@ import { useData, type Mapping } from "./ctx";
 import { t } from "../i18n";
 
 export const SCENARIO_STEPS = ["Documents", "Interface design", "Variables"] as const;
+
+const SECTION_LABELS: Record<ReportSectionId, string> = {
+  graphical_abstract: "Graphical abstract",
+  map: "Map of tests (Figure 1)",
+  heat: "Closeness by variable (Figure 2)",
+  gaps: "Coverage and gaps (Figure 3)",
+  graph: "Evidence graph",
+  data_methods: "Data, sources and methods",
+};
+
+const FILE_STAGES = ["Reading", "Hashing", "Parsing"] as const;
+type FileProgress = { name: string; stage: (typeof FILE_STAGES)[number] | "Done" };
+
+/** Moves one item of a list to another index; out-of-range moves return the list unchanged. */
+export function moveItem<T>(list: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
+  const next = [...list];
+  const [x] = next.splice(from, 1);
+  next.splice(to, 0, x);
+  return next;
+}
 
 export interface EvaluationDraft {
   docs: UploadedDoc[];
@@ -116,6 +142,8 @@ export function ScenarioStep({
   const [dragOver, setDragOver] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [duplicateNotices, setDuplicateNotices] = useState<string[]>([]);
+  const [overflowNotices, setOverflowNotices] = useState<string[]>([]);
+  const [progress, setProgress] = useState<FileProgress[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docStore = useMemo(() => createDocStore(), []);
 
@@ -143,6 +171,16 @@ export function ScenarioStep({
   // GenUI design step state
   const [instruction, setInstruction] = useState(() => initialDraft?.instruction ?? goal ?? "");
   const [presetFlags, setPresetFlags] = useState<DesignPresetFlag[]>(() => initialDraft?.presetFlags ?? []);
+  const instructionRef = useRef<HTMLTextAreaElement>(null);
+  // Manual section order from the reorder list; overrides the compiled order when set.
+  const [sectionOverride, setSectionOverride] = useState<ReportSectionId[] | null>(() => initialDraft?.blueprint?.sectionOrder ?? null);
+  const [dragSection, setDragSection] = useState<number | null>(null);
+  const [remoteDesign, setRemoteDesign] = useState<Partial<UiBlueprint> | undefined>(undefined);
+  const [designStatus, setDesignStatus] = useState<"idle" | "busy" | "success" | "error">("idle");
+
+  // Variables step: search and display units (display only; stored values keep the source unit)
+  const [varQuery, setVarQuery] = useState("");
+  const [displayUnits, setDisplayUnits] = useState<Record<string, string>>({});
 
   // Categories helper from reference pack
   const cats = useMemo(() => {
@@ -231,9 +269,15 @@ export function ScenarioStep({
   }, [baseVariables, customVarState]);
 
   // Live compiled UI blueprint
-  const blueprint = useMemo(() => {
-    return compileUiBlueprint(instruction, docs, variables, presetFlags);
-  }, [instruction, docs, variables, presetFlags]);
+  const compiledBlueprint = useMemo(() => {
+    return compileUiBlueprint(instruction, docs, variables, presetFlags, remoteDesign);
+  }, [instruction, docs, variables, presetFlags, remoteDesign]);
+  const blueprint = useMemo<UiBlueprint>(() => {
+    if (!sectionOverride) return compiledBlueprint;
+    const known = new Set(compiledBlueprint.sectionOrder);
+    const kept = sectionOverride.filter((s) => known.has(s));
+    return { ...compiledBlueprint, sectionOrder: [...kept, ...compiledBlueprint.sectionOrder.filter((s) => !kept.includes(s))] };
+  }, [compiledBlueprint, sectionOverride]);
 
   // Suggestion prompts derived from corpus
   const suggestions = useMemo(() => {
@@ -250,13 +294,20 @@ export function ScenarioStep({
   }, [pack, lens, scenario]);
 
   // File ingestion handler
-  const addFiles = async (list: FileList | null) => {
+  const addFiles = async (list: FileList | File[] | null) => {
     if (!list || list.length === 0) return;
     const incomingFiles = Array.from(list);
     setIsParsing(true);
     const newDocs: UploadedDoc[] = [];
+    const rows: FileProgress[] = incomingFiles.map((f) => ({ name: f.name, stage: "Reading" }));
+    setProgress(rows);
+    const mark = (i: number, stage: FileProgress["stage"]) => {
+      rows[i] = { ...rows[i], stage };
+      setProgress([...rows]);
+    };
 
-    for (const file of incomingFiles) {
+    for (const [index, file] of incomingFiles.entries()) {
+      if (index > 0) mark(index - 1, "Done");
       const errorCode = validateFileMeta(file, docs.length + newDocs.length);
       const mediaType = detectMediaType(file.name, file.type);
 
@@ -280,7 +331,9 @@ export function ScenarioStep({
       try {
         const arrayBuffer = await file.arrayBuffer();
         const bytes = new Uint8Array(arrayBuffer);
+        mark(index, "Hashing");
         const sha256 = await sha256Hex(bytes);
+        mark(index, "Parsing");
 
         if (mediaType === "application/pdf") {
           try {
@@ -367,10 +420,14 @@ export function ScenarioStep({
       }
     }
 
-    const { docs: merged, duplicates } = mergeUploadedDocs(docs, newDocs);
+    const { docs: merged, duplicates, overflow } = mergeUploadedDocs(docs, newDocs);
     setDocs(merged);
+    setProgress([]);
     if (duplicates.length > 0) {
       setDuplicateNotices((prev) => [...prev, ...duplicates]);
+    }
+    if (overflow.length > 0) {
+      setOverflowNotices((prev) => [...prev, ...overflow]);
     }
     if (merged.length > 0 && scope === "demo") {
       setScope("uploaded");
@@ -385,6 +442,49 @@ export function ScenarioStep({
     if (remaining.length === 0) {
       setScope("demo");
     }
+  };
+
+  const clearAllDocs = async () => {
+    await docStore.clear().catch(() => {});
+    setDocs([]);
+    setScope("demo");
+    setDuplicateNotices([]);
+    setOverflowNotices([]);
+    setRemoteProposals(undefined);
+    setAiStatus("idle");
+  };
+
+  // Optional remote layout (/design); the response is validated by compileUiBlueprint's allowlists.
+  const handleAiDesign = async () => {
+    if (designStatus === "busy") return;
+    setDesignStatus("busy");
+    const result = await requestRemoteDesign(instruction, docs, variables, new AbortController().signal);
+    if (result) {
+      setRemoteDesign(result);
+      setSectionOverride(null);
+      setDesignStatus("success");
+    } else {
+      setDesignStatus("error");
+    }
+  };
+
+  const insertIntoInstruction = (text: string) => {
+    const el = instructionRef.current;
+    const start = el?.selectionStart ?? instruction.length;
+    const end = el?.selectionEnd ?? instruction.length;
+    const before = instruction.slice(0, start);
+    const pad = before && !/\s$/.test(before) ? " " : "";
+    const next = before + pad + text + instruction.slice(end);
+    handleInstructionChange(next.slice(0, 4000));
+    const caret = before.length + pad.length + text.length;
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(caret, caret);
+    });
+  };
+
+  const moveSection = (from: number, to: number) => {
+    setSectionOverride(moveItem(blueprint.sectionOrder, from, to));
   };
 
   // AI analysis button handler (/propose)
@@ -585,7 +685,7 @@ export function ScenarioStep({
           {lv && <LevelTag level={lv.level} />}
           {citation && (
             <span className="citation-badge" title={citation.quote}>
-              📄 {citation.docName}
+              {citation.docName}
               {citation.page ? ` · ${t("Page {0}", citation.page)}` : citation.row ? ` · ${t("Row {0}", citation.row)}` : ""}
             </span>
           )}
@@ -623,6 +723,27 @@ export function ScenarioStep({
                 onCommit={(n) => setVariableValue(v.id, n)}
               />
               {v.unit && <span className="alt">{v.unit}</span>}
+              {v.unit && compatibleUnits(v.unit).length > 0 && (
+                <span className="unit-view">
+                  <select
+                    aria-label={t("Display unit for {0}", v.label)}
+                    value={displayUnits[v.id] ?? ""}
+                    onChange={(e) => setDisplayUnits((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                  >
+                    <option value="">{t("Show in…")}</option>
+                    {compatibleUnits(v.unit).map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                  </select>
+                  {displayUnits[v.id] && (
+                    <output>
+                      = {Number(applyConversion(numVal, getConversion(v.unit, displayUnits[v.id])).toPrecision(4))} {displayUnits[v.id]}
+                    </output>
+                  )}
+                </span>
+              )}
             </div>
           ) : (
             <div className="cond-ctl">
@@ -751,7 +872,8 @@ export function ScenarioStep({
               onDrop={(e) => {
                 e.preventDefault();
                 setDragOver(false);
-                addFiles(e.dataTransfer.files);
+                // Entries must be taken synchronously inside the drop event; filesFromDrop does so before awaiting.
+                filesFromDrop(e.dataTransfer).then(addFiles, () => addFiles(e.dataTransfer.files));
               }}
               onClick={() => fileInputRef.current?.click()}
               role="button"
@@ -771,8 +893,8 @@ export function ScenarioStep({
                 style={{ display: "none" }}
                 onChange={(e) => addFiles(e.target.files)}
               />
-              <b>{t("Drop PDF, CSV, TSV or JSON files here (or click to browse)")}</b>
-              <span>{t("D3 limits: up to 30 files, 20 MB per file, 60 pages per PDF.")}</span>
+              <b>{t("Drop PDF, CSV, TSV or JSON files or whole folders here (or click to browse)")}</b>
+              <span>{t("Limit: up to 30 files per batch (max. 20 MB per file, 60 pages per PDF)")}</span>
               <em>
                 {isParsing
                   ? t("Processing uploaded files...")
@@ -794,6 +916,25 @@ export function ScenarioStep({
               </div>
             )}
 
+            {/* Per-file progress while a batch is being read */}
+            {isParsing && progress.length > 0 && (
+              <ul className="doc-progress" aria-label={t("Processing uploaded files...")} aria-live="polite">
+                {progress.map((p, i) => (
+                  <li key={`${p.name}-${i}`}>
+                    <span className="doc-name">{p.name}</span>
+                    <progress max={FILE_STAGES.length} value={p.stage === "Done" ? FILE_STAGES.length : FILE_STAGES.indexOf(p.stage)} />
+                    <small>{t(p.stage)}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {overflowNotices.length > 0 && (
+              <div className="doc-notice doc-notice-warning" role="alert">
+                <b>{t("Over the {0}-file limit, not added: {1}", D3_LIMITS.maxDocuments, overflowNotices.join(", "))}</b>
+              </div>
+            )}
+
             {/* Deduplication notices */}
             {duplicateNotices.length > 0 && (
               <div className="doc-notice doc-notice-info">
@@ -802,6 +943,14 @@ export function ScenarioStep({
             )}
 
             {/* Uploaded documents card list */}
+            {docs.length > 0 && (
+              <div className="doc-list-bar">
+                <span>{t("{0} of {1} files", docs.length, D3_LIMITS.maxDocuments)}</span>
+                <button type="button" className="linkbtn" onClick={clearAllDocs} disabled={isParsing}>
+                  {t("Clear all documents")}
+                </button>
+              </div>
+            )}
             {docs.length > 0 && (
               <ul className="doc-list" aria-label={t("Your documents")}>
                 {docs.map((doc) => (
@@ -899,6 +1048,7 @@ export function ScenarioStep({
               {t("Interface instructions")}
             </label>
             <textarea
+              ref={instructionRef}
               id="instruction"
               className="goal"
               rows={4}
@@ -907,6 +1057,18 @@ export function ScenarioStep({
               onChange={(e) => handleInstructionChange(e.target.value)}
               placeholder={t("e.g. Highlight key parameters, compare studies, and prioritize gap analysis")}
             />
+
+            {/* Variables that can be inserted into the instruction */}
+            {variables.length > 0 && (
+              <div className="addvars">
+                <span>{t("Insert a variable")}</span>
+                {variables.filter((v) => v.include).slice(0, 24).map((v) => (
+                  <button key={v.id} type="button" className="chip" onClick={() => insertIntoInstruction(v.label)}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Quick focus presets */}
             <div className="addvars">
@@ -962,6 +1124,15 @@ export function ScenarioStep({
               </div>
             )}
 
+            {/* Optional remote refinement (/design) */}
+            <div className="ai-propose-bar">
+              <button type="button" className="ghostbtn" onClick={handleAiDesign} disabled={designStatus === "busy"}>
+                {designStatus === "busy" ? t("Requesting AI layout...") : t("Refine with AI (/design)")}
+              </button>
+              {designStatus === "success" && <span className="ai-status ai-status-success">{t("AI layout applied (validated against the allowed sections and variables)")}</span>}
+              {designStatus === "error" && <span className="ai-status ai-status-error">{t("AI design unavailable, using the local blueprint")}</span>}
+            </div>
+
             {/* Live UiBlueprint Preview */}
             <div className="genui-preview">
               <div className="genui-preview-head">
@@ -994,6 +1165,38 @@ export function ScenarioStep({
                 </span>
               </div>
 
+              <b className="fieldlbl">{t("Section order (drag, or use the arrows)")}</b>
+              <ol className="section-order">
+                {blueprint.sectionOrder.map((sid, i) => (
+                  <li
+                    key={sid}
+                    draggable
+                    className={dragSection === i ? "dragging" : ""}
+                    onDragStart={() => setDragSection(i)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragSection !== null) moveSection(dragSection, i);
+                      setDragSection(null);
+                    }}
+                    onDragEnd={() => setDragSection(null)}
+                  >
+                    <span>{i + 1}. {t(SECTION_LABELS[sid])}</span>
+                    <button type="button" className="rm" disabled={i === 0} onClick={() => moveSection(i, i - 1)} aria-label={t("Move {0} up", t(SECTION_LABELS[sid]))}>
+                      ↑
+                    </button>
+                    <button type="button" className="rm" disabled={i === blueprint.sectionOrder.length - 1} onClick={() => moveSection(i, i + 1)} aria-label={t("Move {0} down", t(SECTION_LABELS[sid]))}>
+                      ↓
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {sectionOverride && (
+                <button type="button" className="linkbtn" onClick={() => setSectionOverride(null)}>
+                  {t("Reset to compiled order")}
+                </button>
+              )}
+
               {blueprint.rationale && (
                 <p className="blueprint-rationale">
                   {t("Rationale: {0}", blueprint.rationale)}
@@ -1017,35 +1220,31 @@ export function ScenarioStep({
               </p>
             )}
 
-            {blueprint.variablesLayout === "grouped" && blueprint.variableGroups.length > 0 ? (
-              <div className="vlayout-grouped">
-                {blueprint.variableGroups.map((g) => {
-                  const groupVars = variables.filter((v) => g.variables.includes(v.id));
-                  if (groupVars.length === 0) return null;
-                  return (
-                    <div key={g.id} className="vgroup-section">
-                      <h3 className="vgroup-title">{g.label}</h3>
-                      <ul className="vlist">{groupVars.map(renderVarRow)}</ul>
-                    </div>
-                  );
-                })}
-                {(() => {
-                  const groupedIds = new Set(blueprint.variableGroups.flatMap((g) => g.variables));
-                  const ungrouped = variables.filter((v) => !groupedIds.has(v.id));
-                  if (ungrouped.length === 0) return null;
-                  return (
-                    <div className="vgroup-section">
-                      <h3 className="vgroup-title">{t("Other variables")}</h3>
-                      <ul className="vlist">{ungrouped.map(renderVarRow)}</ul>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : blueprint.variablesLayout === "grid" ? (
-              <ul className="vlayout-grid">{variables.map(renderVarRow)}</ul>
-            ) : (
-              <ul className="vlayout-list">{variables.map(renderVarRow)}</ul>
-            )}
+            <input
+              type="search"
+              className="var-search"
+              value={varQuery}
+              onChange={(e) => setVarQuery(e.target.value)}
+              placeholder={t("Filter variables by name or unit")}
+              aria-label={t("Filter variables by name or unit")}
+            />
+            {(() => {
+              const groups = groupVariables(variables, blueprint, varQuery, t("Other variables"));
+              const listClass = blueprint.variablesLayout === "grid" ? "vlayout-grid" : "vlist";
+              if (varQuery.trim() && groups.length === 0) return <p className="empty">{t("No variable matches “{0}”.", varQuery.trim())}</p>;
+              return (
+                <div className="vlayout-grouped">
+                  {groups.map((g) => (
+                    <details key={g.id} className="vgroup-section" open>
+                      <summary className="vgroup-title">
+                        {g.label} <small>({g.variables.length})</small>
+                      </summary>
+                      <ul className={listClass}>{g.variables.map(renderVarRow)}</ul>
+                    </details>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Extras (Manual Variables) */}
             {extras.length > 0 && (

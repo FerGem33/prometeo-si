@@ -336,3 +336,14 @@ def test_expired_worker_lease_can_resume_but_active_cannot(completed_upload):
     assert service.resume('owner', 'prj_test')['reenqueued'] == 0
     item['worker_until'] = 0
     assert service.resume('owner', 'prj_test')['reenqueued'] == 1
+
+
+def test_full_batch_of_30_documents_then_limit():
+    repo, s3 = Repository(), S3()
+    service = UploadTickets(repo, repo, repo, s3, 'bucket-test', Limits(100, 60, 30))
+    for i in range(30):
+        service.reserve('owner', 'prj_test', {**DATA, 'name': f'doc{i}.csv'})
+    assert repo.parent['counts']['documents'] == 30 and len(s3.calls) == 30
+    with pytest.raises(ApiError) as e:
+        service.reserve('owner', 'prj_test', {**DATA, 'name': 'doc30.csv'})
+    assert e.value.status == 422 and e.value.details['limit'] == 30 and repo.parent['counts']['documents'] == 30

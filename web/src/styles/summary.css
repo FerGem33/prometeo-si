@@ -209,3 +209,10 @@ h2.sec.more { margin-top: 40px; border-top: 2px solid var(--ink); }
 .cols.density-compact .rail-scn { padding-top: 8px; }
 .cols.density-compact .rail-scn li { padding: 3px 0; font-size: 12px; }
 .cols.density-compact h2.sec.more { margin-top: 20px; }
+
+/* Apparatus of a detected space-research corpus (NasaApparatus). */
+.nasa-apparatus { margin: 0 0 14px; }
+.nasa-apparatus figcaption { font-family: "Fira Sans", sans-serif; font-size: 13px; line-height: 1.4; margin-top: 6px; }
+.ga-nasa { display: grid; grid-template-columns: minmax(0, 320px) 1fr; gap: 18px; align-items: start; margin: 0 0 18px; }
+.ga-nasa-cov { font-family: "Fira Sans", sans-serif; font-size: 14px; margin: 0; }
+@media (max-width: 700px) { .ga-nasa { grid-template-columns: 1fr; } }

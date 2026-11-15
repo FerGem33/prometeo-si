@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { interpretLocalQuestion } from "./localAsk";
+import { answerLocalQuery, interpretLocalQuestion } from "./localAsk";
 import type { Pack, NumVariable, CatVariable } from "../engine";
 
 function createMockPack(variables: (NumVariable | CatVariable)[] = []): Pack {
@@ -185,5 +185,51 @@ describe("interpretLocalQuestion", () => {
     if (!("unsupported" in res)) {
       expect(res.values.mat).toBe("Carbon Fiber");
     }
+  });
+});
+
+describe("answerLocalQuery", () => {
+  const temp: NumVariable = { id: "temp", label: "Temperature", unit: "K", type: "num", sigma: 5, range: [250, 400] };
+  const grav: NumVariable = { id: "gravity", label: "Gravity", unit: "g", type: "num", sigma: 0.05, range: [0, 1] };
+  const base = createMockPack([temp, grav]);
+  // Shaped like the PSI boiling tables: ranges per test, flight vs ground studies.
+  const pack: Pack = {
+    ...base,
+    records: [
+      { ...base.records[0], id: "r1", study: "npbx", values: { temp: [300, 310], gravity: [0, 0.01] }, source: { id: "s1", row: 2 } },
+      { ...base.records[0], id: "r2", study: "mabe", values: { temp: [350, 362], gravity: [0.01, 0.02] }, source: { id: "s2", row: 5 } },
+      { ...base.records[0], id: "r3", study: "ground", values: { temp: [280, 290], gravity: [1, 1] }, source: { id: "s3", row: 1 } },
+      { ...base.records[0], id: "r4", study: "ground", values: { material: "PMMA" }, source: { id: "s3", row: 2 } },
+    ],
+  };
+
+  it("answers the maximum in English and Spanish with the records that hold it", () => {
+    for (const q of ["What is the maximum temperature recorded in the papers?", "¿Cuál es la temperatura máxima registrada?"]) {
+      expect(answerLocalQuery(q, pack)).toEqual({ kind: "stat", variable: "temp", stat: "max", value: 362, unit: "K", n: 3, records: ["r2"] });
+    }
+  });
+
+  it("answers minimum, mean and count", () => {
+    expect(answerLocalQuery("lowest temperature", pack)).toMatchObject({ stat: "min", value: 280, records: ["r3"] });
+    expect(answerLocalQuery("promedio de temperatura", pack)).toMatchObject({ stat: "mean", value: 315.333333, n: 3 });
+    expect(answerLocalQuery("How many tests record gravity?", pack)).toMatchObject({ stat: "count", value: 3 });
+  });
+
+  it("lists the studies under a numeric condition", () => {
+    expect(answerLocalQuery("Which studies evaluated gravity below 0.1 g?", pack)).toEqual({
+      kind: "filter", variable: "gravity", op: "<", bounds: [0.1], unit: "g", studies: ["npbx", "mabe"], records: ["r1", "r2"],
+    });
+    expect(answerLocalQuery("¿Qué estudios evaluaron gravedad menor a 0,1 g?", { ...pack, schema: { ...pack.schema, variables: [temp, { ...grav, label: "Gravedad" }] } })).toMatchObject({ op: "<", studies: ["npbx", "mabe"] });
+    expect(answerLocalQuery("temperature between 340 and 400 K", pack)).toMatchObject({ op: "between", bounds: [340, 400], studies: ["mabe"] });
+    expect(answerLocalQuery("temperature at least 305 K", pack)).toMatchObject({ op: ">=", records: ["r1", "r2"] });
+  });
+
+  it("converts the unit of the question to the unit of the variable", () => {
+    expect(answerLocalQuery("temperature above 80 °C", pack)).toMatchObject({ op: ">", bounds: [353.15], records: ["r2"] });
+  });
+
+  it("returns unsupported when no variable or operation is understood", () => {
+    expect(answerLocalQuery("Tell me a story", pack)).toHaveProperty("unsupported");
+    expect(answerLocalQuery("temperature", pack)).toHaveProperty("unsupported");
   });
 });

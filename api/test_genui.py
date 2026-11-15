@@ -366,3 +366,10 @@ def test_routes_options_and_methods():
         assert opts['statusCode'] == 204
         get_res = call(route, method='GET')
         assert get_res['statusCode'] == 405
+
+
+def test_propose_accepts_batch_of_30_and_rejects_31():
+    doc = lambda i: {'id': f'd{i}', 'name': f't{i}.csv', 'kind': 'table', 'headers': ['a']}
+    h.validate_propose_request({'documents': [doc(i) for i in range(30)]})
+    with pytest.raises(ValueError):
+        h.validate_propose_request({'documents': [doc(i) for i in range(31)]})

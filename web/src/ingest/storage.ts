@@ -253,12 +253,12 @@ export function createDocStore(dbFactory?: IDBFactory): DocStore {
 
 /**
  * Merges incoming documents with existing documents, deduplicating identical SHA-256 hashes
- * and respecting D3_LIMITS.maxDocuments.
+ * and respecting D3_LIMITS.maxDocuments. Names past the limit are returned in `overflow` (code limit_exceeded).
  */
 export function mergeUploadedDocs(
   existing: UploadedDoc[],
   incoming: UploadedDoc[]
-): { docs: UploadedDoc[]; duplicates: string[] } {
+): { docs: UploadedDoc[]; duplicates: string[]; overflow: string[] } {
   const seenSha256 = new Set<string>();
   const mergedDocs: UploadedDoc[] = [];
 
@@ -272,6 +272,7 @@ export function mergeUploadedDocs(
   }
 
   const duplicates: string[] = [];
+  const overflow: string[] = [];
 
   for (const doc of incoming) {
     if (doc.sha256 && seenSha256.has(doc.sha256)) {
@@ -284,8 +285,10 @@ export function mergeUploadedDocs(
       if (doc.sha256) {
         seenSha256.add(doc.sha256);
       }
+    } else {
+      overflow.push(doc.name);
     }
   }
 
-  return { docs: mergedDocs, duplicates };
+  return { docs: mergedDocs, duplicates, overflow };
 }

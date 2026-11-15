@@ -18,6 +18,8 @@ import { ScenarioStep } from "./components/ScenarioStep";
 import type { EvaluationDraft } from "./components/ScenarioStep";
 import { ProcessingStep } from "./components/ProcessingStep";
 import { ChamberFigure } from "./components/ChamberFigure";
+import { NasaApparatus } from "./components/NasaApparatus";
+import { detectNasaCorpus } from "./ingest/nasaDetect";
 import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
@@ -199,8 +201,11 @@ function Flow({ data }: { data: Data }) {
     screen = (
       <Workspace
         onBack={() => go("cover")}
-        onOpen={(p, e) => {
+        onNewEvaluation={() => go("scenario")}
+        onOpen={(p, e, draft) => {
           setGoal(p.intent);
+          setPendingDraft(null);
+          setActiveCustomDraft(draft?.isCustomCorpus ? draft : null);
           if (e) {
             setScenario(e.scenario);
             setAxes(e.axes);
@@ -280,6 +285,7 @@ function Flow({ data }: { data: Data }) {
           data={reportData}
           blueprint={activeCustomDraft?.blueprint}
           isCustomCorpus={Boolean(activeCustomDraft?.isCustomCorpus)}
+          customDraft={activeCustomDraft?.isCustomCorpus ? activeCustomDraft : null}
           scenario={scenario}
           setScenario={setScenario}
           extras={extras}
@@ -326,6 +332,7 @@ function Report({
   data,
   blueprint,
   isCustomCorpus,
+  customDraft,
   scenario,
   setScenario,
   extras,
@@ -343,6 +350,7 @@ function Report({
   data: Data;
   blueprint?: UiBlueprint;
   isCustomCorpus?: boolean;
+  customDraft?: EvaluationDraft | null;
   scenario: Scenario;
   setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void;
   extras: Extra[];
@@ -370,6 +378,25 @@ function Report({
     }
   }, [initialDossierOpen, onDossierConsumed]);
 
+  // Folds print expanded: open every closed <details> before printing and close them again afterwards.
+  useEffect(() => {
+    let opened: HTMLDetailsElement[] = [];
+    const before = () => {
+      opened = [...document.querySelectorAll<HTMLDetailsElement>(".page details:not([open])")].filter((d) => !d.closest(".noprint"));
+      opened.forEach((d) => (d.open = true));
+    };
+    const after = () => {
+      opened.forEach((d) => (d.open = false));
+      opened = [];
+    };
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
+
   const r = useMemo(() => {
     const part = partitionOf(pack, scenario);
     return {
@@ -383,6 +410,13 @@ function Report({
       grid: gaps(pack, { x: axes.x, y: axes.y, partition: part?.value ?? null, scenario }),
     };
   }, [pack, lens, scenario, axes]);
+
+  // Isometric apparatus only for an uploaded corpus whose documents name NASA / microgravity work.
+  const nasa = useMemo(() => {
+    if (!customDraft) return undefined;
+    const d = detectNasaCorpus(customDraft.docs, customDraft.variables);
+    return d.isNasa && d.apparatus ? { apparatus: d.apparatus, matched: d.matched } : undefined;
+  }, [customDraft]);
 
   const unit = lens.unit_of_study ?? "study";
   const where = partitionPhrase(pack, lens, r.part?.value);
@@ -429,6 +463,7 @@ function Report({
               goal={goal}
               projectId={projectId}
               summary={summary}
+              customDraft={customDraft}
             />
             <button type="button" className="chip noprint" onClick={onEdit}>
               {t("Edit scenario")}
@@ -475,7 +510,7 @@ function Report({
           </div>
 
           <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
-            <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} isCustomCorpus={isCustomCorpus} />
+            <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} isCustomCorpus={isCustomCorpus} nasa={nasa} />
           </Fold>
 
           <aside className="rail" aria-label={t("Scenario summary, questions and analysis")}>
@@ -531,6 +566,7 @@ function Report({
                     levels={r.levels}
                     overall={r.overall}
                     comparable={r.n}
+                    nasa={nasa}
                   />
                 );
               case "map":
@@ -619,16 +655,21 @@ function Report({
                       <SourcesTable n={3} />
                       <SourcesRanked n={4} ranking={r.ranking} closeness={r.close} scenario={scenario} />
                     </Fold>
+                    {nasa && (
+                      <Fold open={isFoldOpen("apparatus", true)} title={t("Experimental apparatus")} hint={t("isometric diagram of the apparatus type named in the uploaded documents")}>
+                        <NasaApparatus apparatus={nasa.apparatus} matched={nasa.matched} />
+                      </Fold>
+                    )}
                     <Fold open={isFoldOpen("methods", false)} title={t("Methods")} hint={t("Table 6 · partitions, distance, grades, levels and unit conversions")}>
                       <div className="row">
                         <div className="body">
                           <Methods tableN={6} />
-                          <details className="noprint">
+                          {!isCustomCorpus && <details className="noprint">
                             <summary>{t("Isometric apparatus diagram · ISS CIR / BASS Microgravity Combustion Chamber")}</summary>
                             <div className="methods-chamber-wrap">
                               <ChamberFigure interactive />
                             </div>
-                          </details>
+                          </details>}
                         </div>
                         <aside className="side">
                           <p>
@@ -650,6 +691,56 @@ function Report({
             }
           })}
         </div>
+
+        {isCustomCorpus && (
+          <section className="print-block corpus-appendix" aria-label={t("Uploaded corpus")}>
+            <h2 className="sec">{t("Appendix · Uploaded corpus")}</h2>
+            <table>
+              <caption>
+                <b>{t("Table A1 |")}</b> {t("Variables of the uploaded corpus, with their unit and recorded range.")}
+              </caption>
+              <thead>
+                <tr>
+                  <th>{t("Variable")}</th>
+                  <th>{t("Unit")}</th>
+                  <th>{t("Recorded range")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pack.schema.variables.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.long ?? v.label}</td>
+                    <td>{v.type === "num" ? v.unit ?? "–" : "–"}</td>
+                    <td>{v.type === "num" ? `${v.range[0]} – ${v.range[1]}` : t("categorical")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <table>
+              <caption>
+                <b>{t("Table A2 |")}</b> {t("The {0} uploaded {1}, with DOI and SHA-256 of each source document.", pack.studies.length, many(unit))}
+              </caption>
+              <thead>
+                <tr>
+                  <th>{t("Study")}</th>
+                  <th>{t("Title")}</th>
+                  <th>DOI</th>
+                  <th>SHA-256</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pack.studies.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.short}</td>
+                    <td>{s.title}</td>
+                    <td>{s.links.find((l) => l.kind === "doi")?.label ?? "–"}</td>
+                    <td className="mono">{pack.sources.filter((x) => x.study === s.id).map((x) => x.sha256?.slice(0, 16)).filter(Boolean).join(" ") || "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         <footer className="end">
           <span>{lens.footer}</span>

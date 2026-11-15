@@ -59,3 +59,35 @@ export function generateDossierJson(
     2,
   );
 }
+
+const bibEscape = (s: string) => s.replace(/[{}]/g, "").replace(/([&%$#_])/g, "\\$1").replace(/\s+/g, " ").trim();
+const bibKey = (s: string) => s.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "") || "ref";
+
+/**
+ * BibTeX for every DOI the pack carries: publications of a study (@article) and the study's own DOI link (@misc).
+ * Only fields present in the pack are written; authors and years are never inferred.
+ */
+export function generateBibtex(pack: Pack): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const add = (type: string, key: string, fields: [string, string | undefined][]) => {
+    const body = fields.filter(([, v]) => v && v.trim()).map(([k, v]) => `  ${k} = {${k === "url" || k === "doi" ? v!.trim() : bibEscape(v!)}}`);
+    out.push(`@${type}{${key},\n${body.join(",\n")}\n}`);
+  };
+  for (const s of pack.studies) {
+    (s.publications ?? []).forEach((p, i) => {
+      const doi = p.doi?.trim();
+      if (!doi || seen.has(doi.toLowerCase())) return;
+      seen.add(doi.toLowerCase());
+      const author = p.authors ? p.authors.split(/\s*,\s*/).filter(Boolean).join(" and ") : undefined;
+      add("article", bibKey(`${s.id}_${i + 1}`), [["title", p.title], ["author", author], ["doi", doi], ["url", `https://doi.org/${doi}`]]);
+    });
+    const link = s.links.find((l) => l.kind === "doi");
+    const doi = link ? (link.label ?? link.url.replace(/^https?:\/\/(dx\.)?doi\.org\//, "")) : "";
+    if (doi && !seen.has(doi.toLowerCase())) {
+      seen.add(doi.toLowerCase());
+      add("misc", bibKey(s.id), [["title", s.title], ["doi", doi], ["url", link!.url]]);
+    }
+  }
+  return out.join("\n\n") + (out.length ? "\n" : "");
+}
