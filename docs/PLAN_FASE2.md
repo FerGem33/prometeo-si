@@ -82,7 +82,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 | D6 | ¿Se migra a Haiku 5.5? | El SDK ya es el actual (2.8.0). Haiku 5.5 da 403 en esta cuenta: hay que pedir acceso al modelo en Bedrock. No urge; Haiku 4.5 cumple todas las comprobaciones. | — |
 | D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | Quien conoce las tablas (autor de `construir_corpus.py`). | T32 (sirve de conjunto de prueba) |
 | D8 | ¿Qué se hace con `nasa2genui`? | Comparar en una sesión y traer a `main` solo piezas concretas (figuras), no la migración a Next.js. | — |
-| D9 | ¿`data/psi` vuelve al repo? | Sí (632 KB, CC0). Comprobado el 15-nov: sus 22 CSV son idénticos byte a byte a la descarga local y el pack que se genera con ellos es idéntico al publicado. No cambia el producto; solo permite regenerar el pack desde un clon limpio. | T18, P14 |
+| D9 | ¿`data/psi` vuelve al repo? | **Decidido (15-nov): no.** Los datos se quedan fuera de git. El pack versionado (`web/public/demo/`) es la fuente para la web y la API; para regenerarlo hace falta una descarga local de PSI (T18). | — |
 | D10 | ¿Segundo dominio para la prueba agnóstica y quién consigue su corpus? | Uno con tablas públicas y pocas variables. | T37 |
 | D11 | ¿En qué rama se trabaja? | **Decidido (14-nov):** motor, API, infra y contratos en `main`; la interfaz en `frontend`, que su equipo fusiona cuando quiera. Reparto en `CONTRATOS_FASE2.md` §1. | — |
 
@@ -104,10 +104,11 @@ Mismas reglas que `docs/PLAN.md` y `AGENTS.md`: cada tarea tiene verificación, 
 - Pendiente menor (P14): unidades que el esquema no declara (mmHg, bar, torr) las convierte el modelo, con redondeo; y una condición que no es variable del corpus puede omitirse sin nota.
 - *Verificación:* las cuatro sugerencias de `lens.questions`, `"30% oxygen, 10.2 psi, PMMA"` y `"…with PMMA at 0.17 g"` devuelven 200 con todas sus variables en la URL pública (comandos en §7).
 
-**T18 — Datos reproducibles** · D9
-- Restaurar `data/psi` desde `ce96ba6` (`git checkout ce96ba6 -- data`) o documentar la fuente en `data/psi/README.md`.
-- `induce_schema.py` y `build_pack.py` leen del mismo sitio; quitar la ruta local `tools/datos_psi`.
-- *Verificación:* en un clon limpio, `python3 -I pipeline/build_pack.py && python3 -I pipeline/validate_pack.py` reproduce el pack byte a byte (`git diff --exit-code web/public/demo`).
+**T18 — Datos reproducibles** · D9 decidida: los datos no van a git
+- El pack versionado sigue siendo la fuente para la web y la API. Regenerarlo exige una descarga local de PSI.
+- Documentar en `pipeline/README.md` cómo obtenerla (`pipeline/legacy/nasa_fuego_todo.py`), cómo filtrarla (`python3 -I pipeline/collect_data.py <carpeta>`) y comprobar que el pack sale idéntico (`git diff --exit-code web/public/demo`).
+- `induce_schema.py` y `build_pack.py` deben leer de la misma carpeta, configurable, sin rutas fijas de una laptop.
+- *Verificación:* en una laptop con la descarga, seguir los pasos y obtener el pack idéntico.
 
 **T19 — Análisis con más contenido (CU-20)** · hecha y desplegada (15-nov)
 - Hecho: oración nueva para `tested_elsewhere`, cotejada contra el pack como las demás; las de `above_tested` y `below_tested` ahora dicen el valor extremo registrado; el prompt pide al menos tres oraciones, con los vacíos primero. Para el preset lunar hay 5 oraciones posibles en lugar de 3.

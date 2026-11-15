@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | Ninguna. Bloque A cerrado salvo T18 (espera D9). D6 (Haiku 5.5) espera acceso al modelo en la cuenta AWS. |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 y D9. |
+| Siguiente paso exacto | Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (operativo con SDK 2.8.0); Haiku 5.5 devolvió 403 en esta cuenta |
@@ -55,7 +55,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T15 | Aceptación y entrega | P0 | hecha | Codex · stringbuilder | `55c18ed`, `07231c3` | Puntos 1–9 aceptados; T16 verificó el deploy desde otro equipo y la reutilización de recursos. |
 | T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | hecha | Codex · laptop actual | `07231c3` | API/web publicados; bucket, distribución, Lambda, rol y API existentes conservaron sus IDs; hash público/local `index-Ben2isQ8.js`. |
 | T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | hecha | Claude · ferlr; Codex · stringbuilder | `3720861`, `0813d37` | Verificación de T17 cumplida en la URL pública con Haiku 4.5 y SDK 2.8.0 (revisión independiente del 15-nov 00:10). La migración a Haiku 5.5 es la decisión D6, aparte: 403 de acceso en esta cuenta. |
-| T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
+| T18 | Datos reproducibles | fase 2 · A | pendiente | | | D9 decidida (15-nov): `data/psi` no vuelve a git. Queda documentar cómo regenerar el pack desde una descarga local |
 | T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
