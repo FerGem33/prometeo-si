@@ -21,7 +21,7 @@ import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
 import type { Stage } from "./state";
-import type { Axes } from "./state";
+import type { Axes, Extra } from "./state";
 
 async function load(): Promise<Data> {
   const get = async (name: string) => {
@@ -55,6 +55,7 @@ function Flow({ data }: { data: Data }) {
   const [scenario, setScenario] = useState<Scenario>(initial.scenario);
   const [axes, setAxes] = useState<Axes>(initial.axes);
   const [goal, setGoal] = useState("");
+  const [extras, setExtras] = useState<Extra[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
 
@@ -75,13 +76,13 @@ function Flow({ data }: { data: Data }) {
     window.location.hash = next === "cover" ? "" : next;
   };
   if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} onWorkspace={() => go("workspace")} />;
-  if (stage === "workspace") return <Workspace onBack={() => go("cover")} onOpen={(p, e) => { setGoal(p.intent); if (e) { setScenario(e.scenario); setAxes(e.axes); } setProjectId(p.id); go("report"); }} />;
-  if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
-  return <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} />;
+  if (stage === "workspace") return <Workspace onBack={() => go("cover")} onOpen={(p, e) => { setGoal(p.intent); if (e) { setScenario(e.scenario); setAxes(e.axes); setExtras(e.extras ?? []); } setProjectId(p.id); go("report"); }} />;
+  if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
+  return <Report data={data} scenario={scenario} setScenario={setScenario} extras={extras} setExtras={setExtras} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} />;
 }
 
-function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace }: {
-  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void;
+function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace }: {
+  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; extras: Extra[]; setExtras: (e: Extra[]) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
@@ -106,6 +107,7 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, o
   const summary = scenario.active
     .filter((id) => scenario.values[id] !== undefined && scenario.values[id] !== "")
     .map((id) => `${varOf(pack, id).label} ${scenarioValueText(pack, id, scenario.values[id])}`)
+    .concat(extras.map((e) => `${e.name} ${e.value} ${e.unit}`.trim()))
     .join(" · ");
   const graded = r.ranking.filter((x) => x.grade !== "D");
   const best = graded[0];
@@ -126,10 +128,10 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, o
           <span>{lens.kicker ?? "Scenario assessment"}</span>
           <span className="verify">{summary}</span>
           <span className="sep" />
+          <SaveExploration packId={pack.meta.id} scenario={scenario} axes={axes} extras={extras} goal={goal} projectId={projectId} summary={summary} />
           <button type="button" className="chip noprint" onClick={onEdit}>
             Edit scenario
           </button>
-          <SaveExploration packId={pack.meta.id} scenario={scenario} axes={axes} goal={goal} projectId={projectId} />
           <button type="button" className="chip noprint" onClick={onWorkspace}>
             Workspace
           </button>
@@ -152,9 +154,9 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, o
           </p>
         )}
 
-        <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
+        <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
 
-        <VariantsPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
+        <VariantsPanel scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} />
 
         <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
 

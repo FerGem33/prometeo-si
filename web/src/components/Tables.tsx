@@ -131,7 +131,7 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
       sort.k === "rank" ? x.i : sort.k === "study" ? studyShort(pack, x.r.study) : sort.k === "grade" ? x.r.grade : sort.k === "distance" ? x.r.distance : x.r.comparable;
     return sortStable(withRank, key, sort.dir);
   }, [results, sort, pack]);
-  const th = (k: SortKey, label: string, cls = "") => <SortTh label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
+  const th = (k: SortKey, label: string, cls = "") => <SortTh key={k} label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
   const actives = scenario.active.map((id) => varOf(pack, id));
   return (
     <table id="tbl-rank">
@@ -215,7 +215,7 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
     return sort.k === "default" ? shown : sortStable(shown, key, sort.dir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, sort, closeness, pack, activeIds.join("|")]);
-  const hth = (k: string, label: React.ReactNode, cls = "") => <SortTh label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
+  const hth = (k: string, label: React.ReactNode, cls = "") => <SortTh key={k} label={label} className={cls} active={sort.k === k} dir={sort.dir} onSort={() => setSort((s) => nextSort(s, k))} />;
   return (
     <figure className="fig wide" id="fig-heat">
       <table className="heat">

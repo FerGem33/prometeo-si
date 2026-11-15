@@ -1,17 +1,16 @@
 import { useMemo, useState } from "react";
-import type { Scenario, VariableEvidence } from "../engine";
+import type { Scenario } from "../engine";
 import { useData } from "./ctx";
-import { PartsPanel } from "./PartsPanel";
 import { LevelWord } from "./ChangeSummary";
 import { FINDING_LEVEL, findingText } from "../report/text";
 import { DIRECTION_ARROW, DIRECTION_WORD } from "../report/diff";
-import { compareVariants, defaultParts, deleteVariant, loadVariants, makeVariant, reconcileParts, saveVariant, type Part, type Variant } from "../report/variants";
+import { compareVariants, defaultParts, deleteVariant, loadVariants, makeVariant, saveVariant, type Variant } from "../report/variants";
+import { cleanExtras } from "../state";
+import type { Extra } from "../state";
 
-export function VariantsPanel({ scenario, onChange, levels }: { scenario: Scenario; onChange: (s: Scenario) => void; levels: VariableEvidence[] }) {
+export function VariantsPanel({ scenario, onChange, extras, onExtras }: { scenario: Scenario; onChange: (s: Scenario) => void; extras: Extra[]; onExtras: (e: Extra[]) => void }) {
   const { pack, lens } = useData();
   const packId = pack.meta.id;
-  const [rawParts, setParts] = useState<Part[]>(() => defaultParts(scenario));
-  const parts = useMemo(() => reconcileParts(rawParts, scenario), [rawParts, scenario]);
   const [variants, setVariants] = useState<Variant[]>(() => loadVariants(packId));
   const [name, setName] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -23,7 +22,7 @@ export function VariantsPanel({ scenario, onChange, levels }: { scenario: Scenar
   };
   const save = () => {
     if (!name.trim()) return setNotice("Give the variant a name before saving.");
-    const r = saveVariant(packId, makeVariant(name, scenario, parts));
+    const r = saveVariant(packId, { ...makeVariant(name, scenario, defaultParts(scenario)), extras: extras.map((e) => ({ ...e })) });
     setVariants(r.list);
     setNotice(r.ok ? `Saved "${name.trim()}" in this browser.` : "This browser refused to store the variant (private mode, blocked or full storage). It was not saved and will be lost on reload.");
     if (r.ok) setName("");
@@ -35,7 +34,7 @@ export function VariantsPanel({ scenario, onChange, levels }: { scenario: Scenar
     setNotice(r.ok ? `Deleted "${v.name}".` : "This browser refused the change; the variant may reappear on reload.");
   };
   const load = (v: Variant) => {
-    setParts(v.parts);
+    onExtras(cleanExtras(v.extras));
     onChange({ ...v.scenario, values: { ...v.scenario.values }, active: [...v.scenario.active] });
     setNotice(`Loaded "${v.name}".`);
   };
@@ -45,13 +44,11 @@ export function VariantsPanel({ scenario, onChange, levels }: { scenario: Scenar
   const cmp = useMemo(() => (a && b ? compareVariants(pack, lens, a, b) : null), [a, b, pack, lens]);
 
   return (
-    <section className="variants" aria-label="Variants and parts">
-      <h2>Variants and parts</h2>
-      <PartsPanel parts={parts} scenario={scenario} levels={levels} onChange={setParts} />
+    <section className="variants" aria-label="Saved variants">
+      <h2>Saved variants</h2>
 
       <div className="varsave">
-        <h3>Variants</h3>
-        <p className="tblnote">Saved in this browser only. Nothing is sent to a server, and variants are not shared between browsers or devices.</p>
+        <p className="tblnote">Keep the scenario above under a name, then load it again or compare two of them. Saved in this browser only. Nothing is sent to a server, and variants are not shared between browsers or devices.</p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -76,7 +73,7 @@ export function VariantsPanel({ scenario, onChange, levels }: { scenario: Scenar
           <ul className="varlist">
             {variants.map((v) => (
               <li key={v.id}>
-                <b>{v.name}</b> <small>({v.scenario.active.length} variables, {v.parts.length} {v.parts.length === 1 ? "part" : "parts"}, saved {v.savedAt.slice(0, 16).replace("T", " ")} UTC)</small>{" "}
+                <b>{v.name}</b> <small>({v.scenario.active.length + (v.extras?.length ?? 0)} variables, saved {v.savedAt.slice(0, 16).replace("T", " ")} UTC)</small>{" "}
                 <button type="button" className="chip" onClick={() => load(v)}>
                   Load
                 </button>{" "}

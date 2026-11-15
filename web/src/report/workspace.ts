@@ -1,9 +1,10 @@
 import type { Scenario } from "../engine";
 import { loadJson, newId, saveJson } from "./storage";
-import type { Axes } from "../state";
+import { cleanExtras } from "../state";
+import type { Axes, Extra } from "../state";
 
 /** Browser-local projects. No accounts, no server: everything lives in this browser's storage. */
-export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes };
+export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[] };
 export type Project = {
   id: string;
   name: string;
@@ -28,6 +29,7 @@ function cleanExploration(x: unknown): SavedExploration | null {
     savedAt: typeof x.savedAt === "string" ? x.savedAt : "",
     scenario: { values: sc.values as Scenario["values"], active: sc.active.filter((a): a is string => typeof a === "string") },
     axes: { x: x.axes.x, y: x.axes.y },
+    extras: cleanExtras(x.extras),
   };
 }
 
@@ -110,9 +112,9 @@ export function deleteProject(id: string): Result {
   return commit(all().filter((p) => p.id !== id));
 }
 
-export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date): Result {
+export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?: Date, extras: Extra[] = []): Result {
   const t = stamp(now);
-  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes } };
+  const e: SavedExploration = { id: newId("exp"), savedAt: t, scenario: { values: { ...scenario.values }, active: [...scenario.active] }, axes: { ...axes }, extras: extras.map((x) => ({ ...x })) };
   return update(id, (p) => ({ ...p, explorations: [...p.explorations, e], modifiedAt: t }));
 }
 

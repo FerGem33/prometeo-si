@@ -5,12 +5,14 @@ import { useData } from "./ctx";
 import { LevelTag } from "./ScenarioPanel";
 import { num, scenarioValueText } from "../report/format";
 import { matchingPreset, presetScenario } from "../state";
+import type { Extra } from "../state";
+import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 
 const STEPS = ["Setting", "Variables", "Question", "Documents"];
 
 /** Four-step form: setting, variables, question, documents. One idea per screen. */
-export function ScenarioStep({ scenario, onChange, goal, onGoal, onBack, onRun }: {
-  scenario: Scenario; onChange: (s: Scenario) => void; goal: string; onGoal: (g: string) => void; onBack: () => void; onRun: () => void;
+export function ScenarioStep({ scenario, onChange, extras, onExtras, goal, onGoal, onBack, onRun }: {
+  scenario: Scenario; onChange: (s: Scenario) => void; extras: Extra[]; onExtras: (e: Extra[]) => void; goal: string; onGoal: (g: string) => void; onBack: () => void; onRun: () => void;
 }) {
   const { pack, lens } = useData();
   const [step, setStep] = useState(0);
@@ -91,8 +93,8 @@ export function ScenarioStep({ scenario, onChange, goal, onGoal, onBack, onRun }
         {step === 1 && (
           <section className="step-panel">
             <h1>Choose your variables</h1>
-            <p className="step-lede">Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all.</p>
-            {included.length === 0 && <p className="empty">No variable is included yet. Add one below.</p>}
+            <p className="step-lede">Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all. You can also add a variable of your own: it stays in your scenario, marked as not in this corpus.</p>
+            {included.length === 0 && extras.length === 0 && <p className="empty">No variable is included yet. Add one below.</p>}
             <ul className="vlist">
               {included.map((v) => {
                 const x = scenario.values[v.id];
@@ -143,6 +145,22 @@ export function ScenarioStep({ scenario, onChange, goal, onGoal, onBack, onRun }
                   </li>
                 );
               })}
+              {extras.map((e) => (
+                <li key={e.id} className="vrow">
+                  <div className="vrow-head">
+                    <b>{e.name}</b>
+                    {e.unit && <small>{e.unit}</small>}
+                    <ExtraTag />
+                    <button type="button" className="rm" onClick={() => onExtras(extras.filter((o) => o.id !== e.id))} aria-label={`Remove ${e.name}`}>
+                      Remove
+                    </button>
+                  </div>
+                  <div className="cond-ctl">
+                    <input type="text" className="xval" aria-label={`${e.name} value`} maxLength={40} value={e.value} onChange={(ev) => onExtras(extras.map((o) => (o.id === e.id ? { ...o, value: ev.target.value } : o)))} />
+                    <span className="alt">{EXTRA_BASIS}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
             {available.length > 0 && (
               <div className="addvars">
@@ -154,6 +172,9 @@ export function ScenarioStep({ scenario, onChange, goal, onGoal, onBack, onRun }
                 ))}
               </div>
             )}
+            <div className="addvars">
+              <AddExtra known={vars.flatMap((v) => [v.label, v.long ?? v.label].map((label) => ({ id: v.id, label })))} onKnown={(id) => { if (!scenario.active.includes(id)) add(id); }} onAdd={(e) => onExtras([...extras, e])} />
+            </div>
           </section>
         )}
 

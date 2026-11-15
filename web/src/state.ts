@@ -58,3 +58,14 @@ export function matchingPreset(lens: Lens, s: Scenario): string {
   }
   return "";
 }
+
+/** A variable the user adds that the corpus schema does not have. It is listed with the scenario and never compared. */
+export type Extra = { id: string; name: string; unit: string; value: string };
+
+/** Keeps only well-formed entries, so stored data from an older or corrupt save cannot break the screen. */
+export function cleanExtras(raw: unknown): Extra[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((e): e is Extra => !!e && typeof e === "object" && typeof (e as Extra).id === "string" && typeof (e as Extra).name === "string")
+    .map((e) => ({ id: e.id, name: e.name, unit: typeof e.unit === "string" ? e.unit : "", value: typeof e.value === "string" ? e.value : "" }));
+}

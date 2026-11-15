@@ -3,9 +3,10 @@ import type { EvidenceLevel, Finding, Lens, Pack, Scenario, VariableEvidence } f
 import { evidenceLevels, findings } from "../engine";
 import { loadJson, newId, saveJson } from "./storage";
 import { diffLevels, type LevelChange } from "./diff";
+import type { Extra } from "../state";
 
 export type Part = { id: string; name: string; variables: string[] };
-export type Variant = { id: string; name: string; scenario: Scenario; parts: Part[]; savedAt: string };
+export type Variant = { id: string; name: string; scenario: Scenario; parts: Part[]; savedAt: string; extras?: Extra[] };
 
 const key = (packId: string) => `variants:${packId}`;
 export const DEFAULT_PART_NAME = "Scenario";

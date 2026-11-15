@@ -5,6 +5,8 @@ import { LEVELS, levelBasis } from "../report/text";
 import { num, scenarioValueText } from "../report/format";
 import { ChangeSummary } from "./ChangeSummary";
 import { matchingPreset, presetScenario } from "../state";
+import type { Extra } from "../state";
+import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
   const l = LEVELS[level];
@@ -19,10 +21,14 @@ export function ScenarioPanel({
   scenario,
   onChange,
   levels,
+  extras,
+  onExtras,
 }: {
   scenario: Scenario;
   onChange: (s: Scenario) => void;
   levels: VariableEvidence[];
+  extras: Extra[];
+  onExtras: (e: Extra[]) => void;
 }) {
   const { pack, lens } = useData();
   const vars = pack.schema.variables.filter((v) => !(v.type === "cat" && v.role === "partition"));
@@ -147,6 +153,40 @@ export function ScenarioPanel({
               </tr>
             );
           })}
+          {extras.map((e) => (
+            <tr key={e.id}>
+              <td className="v x">
+                {e.name}
+                {e.unit && <small> ({e.unit})</small>}
+              </td>
+              <td className="ctl">
+                <input type="text" className="xval" aria-label={`${e.name} value`} maxLength={40} value={e.value} onChange={(ev) => onExtras(extras.map((o) => (o.id === e.id ? { ...o, value: ev.target.value } : o)))} />
+                <span className="print-only">
+                  {e.value} {e.unit}
+                </span>
+              </td>
+              <td>
+                <ExtraTag />
+              </td>
+              <td className="basis">
+                {EXTRA_BASIS}{" "}
+                <button type="button" className="chip noprint" onClick={() => onExtras(extras.filter((o) => o.id !== e.id))} aria-label={`Remove ${e.name}`}>
+                  Remove
+                </button>
+              </td>
+            </tr>
+          ))}
+          <tr className="addrow noprint">
+            <td colSpan={4}>
+              <AddExtra
+                known={vars.flatMap((v) => [v.label, v.long ?? v.label].map((label) => ({ id: v.id, label })))}
+                onKnown={(id) => {
+                  if (!scenario.active.includes(id)) toggle(id);
+                }}
+                onAdd={(e) => onExtras([...extras, e])}
+              />
+            </td>
+          </tr>
         </tbody>
       </table>
       <ChangeSummary levels={levels} />

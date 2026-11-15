@@ -1,12 +1,21 @@
 .bar-links { display: inline-flex; gap: 22px; align-items: center; }
-.ws-main { max-width: 760px; margin: 0 auto; padding: 32px clamp(20px, 5vw, 40px) 72px; }
+
+/* Workspace screen: intro on top, then the saved list (left, scrolls) beside the narrow form (right). */
+.ws-main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px clamp(20px, 4vw, 40px) 28px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ws-main h1 { font-size: 32px; margin: 0 0 8px; }
-.ws-main h2 { font-family: var(--sans-c); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 36px 0 12px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
-.ws-note { color: var(--ink-2); line-height: 1.5; }
-.ws-main label, .ws-save label { display: flex; flex-direction: column; gap: 4px; font-family: var(--sans); font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
-.ws-main input, .ws-main textarea, .ws-save input, .ws-save select { font-family: var(--sans); font-size: 15px; color: var(--ink); padding: 6px 8px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); }
-.ws-list { list-style: none; margin: 0; padding: 0; }
+.ws-main h2 { font-family: var(--sans-c); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+.ws-note { color: var(--ink-2); line-height: 1.5; margin: 0; max-width: 760px; }
+.ws-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 36px; flex: 1; min-height: 0; margin-top: 24px; }
+.ws-side { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--rule); padding-right: 28px; }
+.ws-list { list-style: none; margin: 0; padding: 0 8px 0 0; flex: 1; min-height: 0; overflow-y: auto; }
 .ws-list li { border-bottom: 1px solid var(--rule); padding: 14px 0; }
+.ws-list li:first-child { padding-top: 2px; }
+.ws-form { min-height: 0; overflow-y: auto; }
+.ws-upload { margin-top: 32px; }
+.ws-main label { display: flex; flex-direction: column; gap: 4px; font-family: var(--sans); font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
+.ws-main input, .ws-main textarea { font-family: var(--sans); font-size: 15px; color: var(--ink); padding: 6px 8px; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); }
+.ws-main textarea { resize: vertical; }
+.ws-new .cta { width: 100%; padding: 11px 20px; font-size: 15px; }
 .ws-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
 .ws-meta { font-family: var(--sans-c); font-size: 12px; color: var(--ink-3); }
 .ws-intent { margin: 6px 0 10px; color: var(--ink-2); }
@@ -14,6 +23,56 @@
 .ws-edit label { margin-bottom: 0; }
 .ws-danger { border-color: var(--accent); color: var(--accent); }
 .ws-warn { color: var(--accent); font-family: var(--sans); font-size: 13px; border-left: 3px solid var(--accent); padding-left: 8px; margin: 8px 0; }
-.ws-ok { color: var(--ink-2); font-family: var(--sans); font-size: 12px; text-transform: none; letter-spacing: 0; }
-.ws-empty, .ws-upload p { color: var(--ink-2); font-family: var(--sans); font-size: 14px; }
-.ws-save { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; text-transform: none; letter-spacing: 0; }
+.ws-empty, .ws-upload p { color: var(--ink-2); font-family: var(--sans); font-size: 14px; line-height: 1.45; margin: 10px 0 0; }
+
+/* The whole screen fits the viewport; the list and the form scroll inside their own columns. */
+@media (min-width: 861px) {
+  .screen.workspace { height: 100vh; min-height: 0; }
+}
+@media (max-width: 860px) {
+  .ws-cols { grid-template-columns: 1fr; gap: 28px; }
+  .ws-form { order: -1; overflow: visible; }
+  .ws-side { border-right: 0; padding-right: 0; }
+  .ws-list { max-height: 60vh; }
+}
+
+/* Accented action: the one filled control in a row of outlined chips. */
+.chip.accent { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 600; padding: 4px 12px; white-space: nowrap; }
+.chip.accent:hover { background: var(--ink); border-color: var(--ink); }
+.chip.add { color: var(--accent); border-color: var(--accent); }
+.chip:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Dialog for saving an exploration. */
+.modal { width: min(520px, calc(100vw - 32px)); margin: auto; padding: 0; border: 1px solid var(--ink); border-radius: 3px; background: var(--paper); color: var(--ink); text-transform: none; letter-spacing: 0; font-family: var(--serif); font-size: 16px; line-height: 1.5; }
+.modal::backdrop { background: rgba(29, 28, 26, .5); }
+.modal form { display: flex; flex-direction: column; gap: 14px; padding: 26px 28px 24px; }
+.modal h2 { font-family: var(--serif); font-size: 24px; font-weight: 500; margin: 0; color: var(--ink); }
+.modal p { margin: 0; }
+.modal-note { color: var(--ink-2); }
+.modal-what { font-family: var(--sans); font-size: 13px; color: var(--ink-2); border-left: 3px solid var(--rule); padding-left: 10px; }
+.modal label { display: flex; flex-direction: column; gap: 4px; font-family: var(--sans); font-size: 13px; color: var(--ink-2); }
+.modal input, .modal select { font-family: var(--sans); font-size: 15px; color: var(--ink); padding: 8px 10px; border: 1px solid var(--ink-3); border-radius: 2px; background: var(--paper); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.modal-actions .cta, .modal-actions .ghostbtn { padding: 9px 22px; font-size: 14px; }
+
+/* User-defined variables in the scenario table and the form. */
+.level-extra { border-style: dashed; }
+.addextra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--sans); font-size: 13px; }
+.addextra-lbl { color: var(--ink-3); margin-right: 4px; }
+.addextra input, input.xval { font-family: var(--sans); font-size: 13px; color: var(--ink); border: 1px solid var(--ink-3); border-radius: 2px; padding: 4px 8px; background: transparent; width: 150px; min-width: 0; }
+.addextra .hint { flex-basis: 100%; margin: 0; }
+table.scn td.v.x { padding-left: 24px; }
+table.scn tr.addrow td { padding-top: 10px; }
+.vrow .cond-ctl input.xval { width: 200px; font-size: 15px; padding: 7px 10px; }
+
+/* Report bar on narrow screens: the actions wrap instead of running off the page. */
+@media (max-width: 700px) {
+  .kicker { flex-wrap: wrap; }
+  .kicker .sep { display: none; }
+  .kicker .verify { flex-basis: 100%; }
+}
+
+/* Save-variant row. */
+.varsave form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 6px; }
+.varsave form label { display: inline-flex; align-items: center; gap: 8px; }
+.varsave form input { width: 240px; padding: 4px 8px; }
