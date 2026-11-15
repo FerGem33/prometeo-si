@@ -57,11 +57,14 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
                     and studies[sid]['links'][0]['url'] == 'https://doi.org/'+entry['doi'], 'Ambiguous study metadata')
         else:
             studies[sid] = {'id': sid, 'short': sid, 'title': entry['title'],
-                'summary': entry.get('summary', ''), 'attributes': {}, 'related': [],
-                'links': [{'kind': 'doi', 'label': 'DOI', 'url': 'https://doi.org/'+entry['doi']}], 'counts': {'records': 0}}
+                'summary': {'objective': None, 'subjects': [], 'conditions': None, 'variables': [], 'instruments': None},
+                'attributes': {}, 'related': [],
+                'links': [{'kind': 'doi', 'label': 'DOI', 'url': 'https://doi.org/'+entry['doi']}],
+                'counts': {'records': 0, 'tests': 0, 'publications': 0, 'documents': 0}}
         sources.append({'id': did, 'kind': 'table' if document['kind'] == 'table' else 'paper',
             'name': document['name'], 'study': sid, 'sha256': document['sha256'],
             'license': entry.get('license'), 'used': document['kind'] == 'table'})
+        studies[sid]['counts']['documents'] += 1
     used = set()
     for item in expected['records']:
         entry = entries[item['doc_id']]
@@ -79,6 +82,8 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
             'flags': ['mapping_uncertain'] if item['flags'] else [], 'flag_notes': item['flags']}
         records.append(record)
         studies[entry['study']]['counts']['records'] += 1
+        studies[entry['study']]['counts']['tests'] += int(entry['kind'] == 'test')
+        studies[entry['study']]['summary']['variables'] = sorted(set(studies[entry['study']]['summary']['variables']) | set(item['values']))
     schema_variables = []
     for key in sorted(used):
         v = variables[key]
@@ -111,7 +116,9 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
     pack = {'contract': 'prometeo.pack/1', 'meta': {'id': metadata['id'], 'title': lens['title'],
         'created_at': decision['at'], 'source_note': decision['authority'], 'pack_version': pack_version,
         'schema_sha256': approval['schema_sha256'], 'metadata_sha256': decision['metadata_sha256'],
-        'stats': {'records': len(records), 'studies': len(studies), 'sources': len(sources)}},
+        'stats': {'records': len(records), 'studies': len(studies), 'sources': len(sources),
+            'tests': sum(r['kind'] == 'test' for r in records), 'campaigns': sum(r['kind'] == 'campaign' for r in records),
+            'flagged': sum(bool(r['flags']) for r in records), 'publications': 0, 'documents': len(documents)}},
         'schema': {'variables': schema_variables, 'thresholds': thresholds}, 'sources': sources,
         'studies': list(studies.values()), 'records': records, 'claims': []}
     mapping = {'version': approval['schema']['version'], 'schema_sha256': approval['schema_sha256'],

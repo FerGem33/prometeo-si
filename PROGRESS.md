@@ -66,7 +66,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | pendiente | | | Requiere borrador extraído; conservar original, autor y cita; pendientes APIs y pantalla |
-| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | pendiente | | | Contrato §5.10 aprobado 15-nov: CSV con unidad, DOI, `group_id` por estudio, valor original y `datacard.json`; sin AWS |
+| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | esta entrega | CSV y datacard conectados al modal; demo y bundle T37 pasan con mismo código, D4 determinista y QA Chrome desktop/móvil. Deploy pospuesto; selector/editor de objetivo y criterios sigue en T27. docs/T38_DATASET_EXPORT.md |
 
 ## Aceptación final (T15)
 
@@ -82,23 +82,29 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 ## Revisión final pendiente
 
-- **T32:** revisar las discrepancias listadas en `docs/T32_EVALUACION.md` y los 15 candidatos PDF antes de cualquier aprobación nueva. El 92.1 % es acuerdo de asignación con el mapping vigente, no precisión científica; D7 sigue pendiente. Un PDF requiere texto/OCR revisado. La aprobación local no autentica al operador.
+- **T32:** revisión D7 cerrada por el dueño y PDF por delegación; métrica revisada 148/172 conjunta,86,05%, no precisión científica. Decisión/hashes en docs/T32_PDF_DECISIONES.md. Un PDF conserva exclusión de extracción automática por texto mal codificado; no bloquea ni añade condiciones al pack. Las aprobaciones locales no autentican al operador.
 
 - **T31:** terminada con dos corridas reales e idempotentes usando SSO en la cuenta `352818909129`. `infra/outputs.env` versiona los IDs/ARNs/URLs de tabla, bucket privado, cola/DLQ, user pool y cliente público. No contiene credenciales ni secretos. El rol para T31 no concede permisos de Lambda ni worker; T33/T34 deberán definir y probar permisos separados.
 
-- **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
-- **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
+- **ML (T12/T27/T38):** D4 define los umbrales y el motor los calcula determinísticamente. Falta el selector/editor T27; exportar sin candidato explícito indica not_assessed, no un veredicto inventado. Los resultados originales y frecuencias no son clases científicas validadas.
+- **Mapeo (T14/D7):** el informe histórico conserva el experimento inicial; D7_DECISIONES.md cierra las discrepancias con criterio aprobado y sin alterar la referencia. No extrapolar acuerdo con el mapping a precisión científica.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
 
 - **Revisión humana T12 (ML):** definir clases destino y umbrales de aptitud antes de interpretar frecuencias descriptivas como decisión de selección de modelo. Responsable: equipo/persona dueña del uso ML. Evidencia: criterios aprobados y anotados en `PROGRESS.md`.
 - **Revisión humana T14/T32 (D7):** la persona que conoce las tablas (autor de `construir_corpus.py`) debe resolver las 79 diferencias de `docs/agnostic_proof.md` y revisar la lista de discrepancias en `docs/T32_EVALUACION.md`. Conservar mapping vigente hasta aprobación explícita; el porcentaje no sustituye esta decisión.
 - **Revisión semántica PDF T32:** revisar cada candidato literal y su página/contexto en los cinco PDF enumerados en `docs/T32_EVALUACION.md`, incluyendo alcance experimental; rechazar los que no respalden valor, unidad y población de pruebas. El archivo sin texto requiere fuente legible/OCR revisado.
-- **Aprobación T30 / D3:** aprobar o corregir el contrato §5 y confirmar límites de carga (20 MB, 60 páginas, 30 documentos), tras revisar la medición de costos exigida por el plan. Sin esa decisión no iniciar T33–T36. D1/D2 están decididas; D3 no.
-- **D10/T37:** elegir segundo dominio con tablas públicas y pocas variables y asignar quién consigue su corpus antes de evaluar la prueba agnóstica.
+- **T30/D3:** aprobados; cargas/DELETE verificadas. Medición real del costo/memoria/lote T34 pendiente de permisos y ventana AWS. Tope operativo USD30 y revisión si lote>USD5 se mantienen.
+- **D10/T37:** ebullición decidida y corpus de23 fuentes regenerado. Revisión delegada acotada de2 tablas y bundle local verificados; lote completo/publicación/síntesis aún pendientes.
 
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T38 exportación y criterios D4
+- Implementado CSV con unidades/DOI/group_id, originales/correcciones y resultados fuente separados; datacard con versiones/hashes, conversiones, rechazos, licencias desconocidas explícitas y criterios D4. Registros excluidos/citas PDF no verificadas nunca se exportan.
+- Motor puro assessDataset con límites D4 y entradas/objetivo explícitos. La ficha sin candidato indica not_assessed; no inventa objetivo, versión ni capacidad predictiva. Nuevas lentes T37 incluyen ml_thresholds; editor/selector T27 sigue con interfaz.
+- Modal existente conecta CSV y datacard, con errores visibles y estado de preparación. Pruebas con demo y bundle T37 usan el mismo código. QA Chrome 1280×900/390×844: descargas reales268 registros, hash CSV igual al de ficha,22 fuentes, sin overlay/desborde. Análisis aislado con doble HTTP mode=template; no AWS, después del CORS local esperado de primera corrida. Capturas/scripts solo en /tmp. Aplicadas guías React y frontend-testing-debugging; detalles en docs/T38_DATASET_EXPORT.md.
+- Verificación:106 web pasan con bundle, build pasa (aviso chunk>500kB), check_agnostic pasa; pack público intacto. Se corrigió forma del resumen/contadores del bundle local para coincidir con tipos de Study, sin crear datos científicos; cinco pruebas de publicación pasan. Despliegue sigue pospuesto por el dueño.
 
 ### 2026-11-15 · T37 constructor local y aprobación delegada acotada
 - `publish_bundle.py` exige esquema aprobado y metadatos revisados con hashes; recalcula extracción tabular, exige identidad de estudio/DOI/kind sustentado, sigma positivo y presets citados, bloquea conflictos y genera pack/lens/mapping/recibo en carpeta nueva fuera de demo.

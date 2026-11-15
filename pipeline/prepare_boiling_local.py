@@ -38,7 +38,21 @@ def main():
         publish.require(set(mapping) <= set(doc['headers']), 'Reviewed column disappeared')
         for value in item['variables']:
             v = {k: copy.deepcopy(v) for k, v in value.items() if k != 'column'}
-            v.update(status='approved', records=len(doc['rows']), merged_from=[])
+            candidates = []
+            column_index = doc['headers'].index(value['column'])
+            for row in doc['rows']:
+                text = row['values'][column_index]
+                if not text.strip():
+                    continue
+                if v['type'] == 'num':
+                    try:
+                        review.numeric_cell(text)
+                    except ValueError:
+                        continue
+                candidates.append({'kind': 'table', 'doc_id': did, 'row': row['row'],
+                                   'column': value['column'], 'text': text})
+            publish.require(candidates, 'No explicit numeric/categorical evidence for '+value['id'])
+            v.update(status='approved', records=len(candidates), merged_from=[], evidence=candidates[:1])
             variables.append(v)
         for header in doc['headers']:
             v = mapping.get(header)
@@ -70,6 +84,7 @@ def main():
     metadata = {'id': config['id'], 'review_config_sha256': review.digest(config),
         'parsed_documents_sha256': review.digest(documents), 'documents': entries,
         'thresholds': config['thresholds'], 'lens': {'title': config['title'],
+            'ml_thresholds': json.loads((ROOT/'web/src/contracts/ml-thresholds.json').read_text()),
             'byline': 'NASA PSI · reviewed local subset of two investigations',
             'disclaimer': 'Compares documented conditions; does not predict boiling or establish safety.',
             'default_axes': ['heat_flux', 'subcooling'], 'evidence': {'min_studies': 2},

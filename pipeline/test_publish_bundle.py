@@ -51,6 +51,8 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(pack['records'][0]['orig']['length']['text'], '1')
         self.assertEqual(pack['records'][0]['source'], {'id': self.did, 'row': 2})
         self.assertEqual(pack['studies'][0]['counts']['records'], 2)
+        self.assertEqual(pack['studies'][0]['summary']['subjects'], [])
+        self.assertEqual(pack['studies'][0]['counts']['publications'], 0)
         self.assertIsNone(pack['sources'][0]['license'])
         self.assertNotIn('license', pack['meta'])
         self.assertFalse(bundle['receipt']['published'])
@@ -86,6 +88,23 @@ class PublicationTests(unittest.TestCase):
     def test_conflicts_require_resolution_and_proposal_never_publishes(self):
         self.approval['stage'] = 'awaiting_review'
         with self.assertRaises(ValueError): self.build()
+
+    def test_unresolved_conflicts_block_bundle_generation(self):
+        path = Path(self.tmp.name)/'conflicting.csv'
+        path.write_text('a,b\n1,2\n')
+        doc = m.review.ingest.parse_document(path)
+        docs = {doc['id']: doc}
+        schema = copy.deepcopy(self.schema)
+        schema['columns'] = [{**schema['columns'][0], 'doc_id': doc['id'], 'column': key} for key in ('a', 'b')]
+        approval = m.review.approve(m.review.review_request(schema, docs), schema, docs, 1, 'fixture reviewer')
+        extraction = m.review.extract_tables(approval, docs)
+        meta = copy.deepcopy(self.meta)
+        meta['documents'] = {doc['id']: {**next(iter(meta['documents'].values())), 'sha256': doc['sha256']}}
+        meta['parsed_documents_sha256'] = m.review.digest(docs)
+        meta.pop('approval')
+        meta['approval'] = {**self.meta['approval'], 'sources': m.review.snapshot(docs), 'metadata_sha256': m.review.digest(meta)}
+        with self.assertRaisesRegex(ValueError, 'Resolve conflicts'):
+            m.build(approval, docs, extraction, meta, 1, 1)
 
 
 if __name__ == '__main__':
