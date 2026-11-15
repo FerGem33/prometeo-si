@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Relevo AWS y bloque C · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. API actualizada y originales CSV verificados con dos usuarios. Worker y publicación web bloqueados por IAM; políticas en docs/PERMISOS_RELEVO_AWS.md. |
-| Último commit verificado | API desplegada `2745d85` (12 rutas JWT, original CSV real); T38 local `777fb81`; bundle T37 `8f23050`; T32 delegada `cc61d95`. 148 API/40 pipeline/106 web/6 helper pasan. |
-| Siguiente paso exacto | Aplicar política consolidada infra/prometeo-deployer-policy.json al permission set, conservando otros permisos T31; reprovisionar y validar condición IAM del mapping (docs/PERMISOS_RELEVO_AWS.md). GetRole/CloudFront ya pasan, pero SQS GetQueueAttributes y S3 ListBucket siguen denegados. Después: ZIP vigente, RELEVO §3–4 y web T38. T35 aún sin activar; pendientes de código T37/T36 documentados. |
+| Tarea en curso | **T34 · laptop AWS.** Política consolidada aplicada; lecturas SQS/S3 pasan. T38 publicada y verificada en CloudFront. Worker espera confirmación de la simulación administrativa del mapping exigida por RELEVO §0; paquete/JSON preparados. |
+| Último commit verificado | API desplegada `2745d85` (12 rutas JWT, original CSV real); T38 publicada desde `d0308e9`; bundle T37 `8f23050`; T32 delegada `cc61d95`. 148 API/40 pipeline/106 web/6 helper pasan. |
+| Siguiente paso exacto | Confirmar simulación CreateMappingOnlyForWorker (allowed ARN worker, implicitDeny otro ARN). Perfil operativo no permite SimulateCustomPolicy. Luego aplicar infra/deploy_worker.py dos veces, primero deshabilitado; lote10+corrupto, métricas/DLQ y deshabilitar. T35 aún sin activar; pendientes de código T37/T36 documentados. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy. Dueño autorizó retomar AWS: API/originales desplegados y verificados; worker sigue denegado y deploy web falla en GetDistribution antes de subir archivos. Políticas concretas: docs/PERMISOS_RELEVO_AWS.md.
+- D9: corpus fuera de Git; T18/T31/T32 hechas. Política consolidada aplicada: SQS/S3/CloudFront pasan y T38 publicada. Worker sin crear; pendiente confirmar simulación administrativa exigida por RELEVO §0. T35/T37/T36 conservan sus pendientes de código/verificación, no se declaran hechos por la publicación de T38.
 
 - [15-nov] **No publicar la web todavía.** La interfaz nueva entró a `main` y tiene puntos que chocan con las reglas: la llama crece en "Ignition", hay textos del dominio escritos a mano y el CSS usa gradientes y sombras. Detalle en `docs/PLAN_FASE2.md` §9.2 — equipo de interfaz y una persona que lo apruebe.
 - [15-nov] La interfaz duplica en `web/src/report/` lógica que ya existe en el motor (grafo, diferencias, variantes y espacio de trabajo). Hay que unificarla antes de las pantallas del bloque C (`docs/PLAN_FASE2.md` §9.3) — equipo de interfaz.
@@ -69,7 +69,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso | stringbuilder | `2745d85` + esta entrega | CLI de correcciones/conflictos/claims con 7 pruebas. Originales desplegados: 23 HTTP y cotejo SHA real pasan, con dos usuarios y limpieza. Falta PDF parseado/página real, APIs persistentes, publicación corregida y pantallas; docs/T36_REVISION_LOCAL.md |
-| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | `777fb81` | CSV/datacard y D4 determinista pasan con demo y bundle T37; QA desktop/móvil. Deploy intentado: GetDistribution denegado antes del sync; falta política web. Selector/editor sigue en T27; docs/T38_DATASET_EXPORT.md |
+| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha | stringbuilder | `777fb81` + esta entrega | Publicada en CloudFront tras policy consolidada; invalidación Completed y QA real desktop/móvil. CSV/datacard de 268 registros, SHA coincide, demo intacta y análisis IA200. Selector/editor de objetivo sigue en T27; docs/T38_DATASET_EXPORT.md |
 
 ## Aceptación final (T15)
 
@@ -102,6 +102,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Política aplicada: web publicada y preflight T34
+- git pull --rebase sin cambios de main; solo referencia frontend actualizada, sin merge. STS pasa con perfil/cuenta/rol esperados. GetQueueAttributes ingest pasa: visibilidad de 960 s, redrive de 3 intentos a DLQ y 2 mensajes preexistentes. ListBucket web pasa (consulta maxkeys=0, no implica bucket vacío). DLQ: 0 visibles y 0 no visibles.
+- GetRole worker devuelve NoSuchEntity y GetFunctionConfiguration ResourceNotFound: rol y función aún no existen. Preparados JSON en /tmp/prometeo-t34-live-d0308e9 y ZIP /tmp/prometeo-worker-d0308e9.zip (Linux arm64/Python3.12); no se aplican antes del prerrequisito administrativo.
+- SimulateCustomPolicy todavía devuelve AccessDenied. El relevo exige validación administrativa de CreateMappingOnlyForWorker; se pidió confirmar allowed para ARN exacto e implicitDeny para otro. No se cambió perfil ni se concedió permiso global para eludir ese paso. Trabajos independientes continúan.
+- deploy_web terminó 0; invalidación IAAD71RW5QYWP8IJPPZV0H6U19 Completed. Mismos bucket/CF. Pack/lens/mapping remotos coinciden byte a byte después del sync.
+- Durante el push llegaron 2bc00e8/c4bccf4. Se integran por rebase conservando ambas bitácoras; nueva regla de revisión humana UI y una sola lógica recibida. El deploy se creó a14:50:18UTC, antes del commit del gate a14:52:42UTC. La QA automática no equivale a revisión humana contra §5–§7: queda pendiente §9.2 y no habrá otra publicación web sin esa revisión registrada. Delegaciones T32/esquema ratificadas por dueño; no se reabren.
+- QA real en CloudFront con Chrome a 1280×900/390×844, sin dobles HTTP: descarga CSV de 268 registros y datacard de 22 fuentes, SHA coincide, unidades/outcomes presentes. Sin overlay/errores de consola ni desborde horizontal. Análisis real HTTP 200, mode=ai, tres frases citadas. Es otra solicitud real de análisis; no hay llamadas de lote T34 ni gasto facturado inferido.
+- Verificación posterior: 106 web pasan con bundle externo, 148 API pasan, check_agnostic y diff-check pasan. Build del deploy pasa con aviso de chunk >500kB. Datos publicados/locales sin cambios; fotos/descargas de QA solo en /tmp.
 
 ### 2026-11-15 · Revisión del trabajo restante (Claude · ferlr)
 - Revisado hasta `d0308e9`: 104 pruebas web y 188 de API, pipeline y herramientas en verde; build y check_agnostic OK; sin coautoría. La web publicada sigue en `index-Ben2isQ8.js`.
@@ -153,7 +162,7 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Implementadas GET/PATCH/approve de esquema con versiones inmutables, hash de fuentes/artefacto, control de revisión, edición que revoca aprobación y despacho recuperable a SQS. Extracción tabular determinista con leases, citas por celda, conversiones y rechazos/conflictos conservados; no publica el pack.
 - Configuración optativa `--schema` añade tres rutas JWT y permisos por prefijo; T33 sin el flag conserva 11 rutas. Paquetes API/worker incluyen los validadores estándar de T32. Ver docs/T35_REVISION_API.md y límites allí detallados.
 - Python 3.12: **135 API pasan** (incluye dobles de revisión/extracción/despliegue); **98 web pasan**, validate_pack y check_agnostic pasan, bash-n y diff-check pasan. `web/public/demo` sin cambios. Las pruebas nuevas no prueban AWS real; T35 no se marca hecha.
-- STS volvió a responder con cuenta352818909129 y rol SSO Prometeo-T31 al ejecutarlo fuera del sandbox. Se retoma relevo; no hace falta cambiar perfil ni modelo. `20_api.sh` terminó0 y reutilizó API/Lambda/rol existentes. `deploy_projects.py --uploads` terminó0; regresión y smoke en curso. No hay llamadas nuevas de extracción ni costes de lote todavía.
+- STS volvió a responder con cuenta352818909129 y rol SSO Prometeo-T31 al ejecutarlo fuera del sandbox. Se retoma relevo; no hace falta cambiar perfil ni modelo. `20_api.sh` terminó 0 y reutilizó API/Lambda/rol existentes. `deploy_projects.py --uploads` terminó 0; regresión y smoke en curso. No hay llamadas nuevas de extracción ni costes de lote todavía.
 
 ### 2026-11-15 · T32 revisión delegada y preparación del relevo
 - T32: revisión conservadora de 15 candidatos con originales/páginas; 12 aceptados como contexto (aproximaciones/máximos/figura concreta), tres excluidos (material redundante, supuesto P=1 atm y fase del modelo). Ninguno se propaga a tablas; ocho rechazos iniciales permanecen. Aprobación delegada explícita, no revisión experta; versión/hashes en docs/T32_PDF_DECISIONES.json.

@@ -5,6 +5,12 @@ rol SSO `Prometeo-T31`. Login/STS y despliegue API funcionan. No se necesita
 cambiar modelo, perfil ni usar root. Faltan permisos del operador; no nuevas
 decisiones científicas.
 
+**Estado más reciente:** política consolidada aplicada. STS, SQS y S3 web ya
+pasan. T38 web publicada y verificada; el bloqueo anterior de CloudFront quedó
+resuelto. Worker todavía sin crear: el perfil operativo sigue sin permiso de
+simulación IAM y se pidió confirmar la validación administrativa del mapping
+exigida por RELEVO §0. No se vuelve a pedir los permisos de recursos ya resueltos.
+
 ## Actualización después de añadir permisos de lectura
 
 El dueño añadió lectura del rol worker y acceso CloudFront. Comprobación real
