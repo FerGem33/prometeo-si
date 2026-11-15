@@ -56,9 +56,12 @@ sup.ref a { text-decoration: none; }
 .brand { display: inline-flex; align-items: center; gap: 7px; }
 .brand img { display: block; width: 135px; height: 135px; filter: brightness(1.75) saturate(.85); }
 .page-loading { display: flex; justify-content: center; align-items: center; min-height: 55vh; }
-.kicker { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 8px; font-family: var(--sans-c); font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
+.kicker { display: flex; align-items: center; gap: 10px; margin: 22px 0 8px; font-family: var(--sans-c); font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
 .kicker select { font: inherit; color: var(--ink); text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 13px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 2px 6px; cursor: pointer; }
 .kicker .verify { color: var(--grade-b); text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 12px; }
+/* The report actions share one height: when a label wraps to two lines, its neighbours grow with it. */
+.kicker-actions { display: flex; align-items: stretch; gap: 10px; }
+.kicker-actions .chip { justify-content: center; }
 h1 { font-weight: 500; font-size: 40px; line-height: 1.1; max-width: 960px; }
 .byline { font-style: italic; font-size: 17px; color: var(--ink-2); margin: 10px 0 22px; }
 .byline span + span::before { content: " · "; }

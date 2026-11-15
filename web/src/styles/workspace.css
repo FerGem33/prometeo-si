@@ -70,6 +70,7 @@ table.scn tr.addrow td { padding-top: 10px; }
   .kicker { flex-wrap: wrap; }
   .kicker .sep { display: none; }
   .kicker .verify { flex-basis: 100%; }
+  .kicker-actions { flex-wrap: wrap; }
 }
 
 /* Save-variant row. */

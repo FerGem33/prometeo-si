@@ -38,7 +38,7 @@ import { loadLocale, localizeData } from "./i18n/localize";
 import type { CorpusLocale } from "./i18n/localize";
 import { Prefs } from "./components/Prefs";
 
-const STAGE_HASHES = ["", "#scenario", "#report", "#workspace"];
+const STAGE_HASHES = ["", "#scenario", "#processing", "#report", "#workspace"];
 
 async function load(): Promise<Data> {
   const get = async (name: string) => {
@@ -285,30 +285,32 @@ function Report({
           <span>{lens.kicker ?? t("Scenario assessment")}</span>
           <span className="verify">{summary}</span>
           <span className="sep" />
-          <SaveExploration
-            packId={pack.meta.id}
-            scenario={scenario}
-            axes={axes}
-            extras={extras}
-            goal={goal}
-            projectId={projectId}
-            summary={summary}
-          />
-          <button type="button" className="chip noprint" onClick={onEdit}>
-            {t("Edit scenario")}
-          </button>
-          <button type="button" className="chip noprint" onClick={onWorkspace}>
-            {t("Workspace")}
-          </button>
-          <button type="button" className="chip noprint" onClick={onHome}>
-            {t("Start")}
-          </button>
-          <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
-            {t("Dossier & export")}
-          </button>
-          <button type="button" className="chip noprint" onClick={() => window.print()}>
-            {t("Export PDF")}
-          </button>
+          <div className="kicker-actions noprint">
+            <SaveExploration
+              packId={pack.meta.id}
+              scenario={scenario}
+              axes={axes}
+              extras={extras}
+              goal={goal}
+              projectId={projectId}
+              summary={summary}
+            />
+            <button type="button" className="chip noprint" onClick={onEdit}>
+              {t("Edit scenario")}
+            </button>
+            <button type="button" className="chip noprint" onClick={onWorkspace}>
+              {t("Workspace")}
+            </button>
+            <button type="button" className="chip noprint" onClick={onHome}>
+              {t("Start")}
+            </button>
+            <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
+              {t("Dossier & export")}
+            </button>
+            <button type="button" className="chip noprint" onClick={() => window.print()}>
+              {t("Export PDF")}
+            </button>
+          </div>
         </div>
         <h1>{lens.title}</h1>
         <p className="byline">
