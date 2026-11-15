@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T11 (Codex · stringbuilder); T08 pendiente de revisión visual |
+| Tarea en curso | T12 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
 | Último commit verificado | T10: 2bda497; T11 pruebas locales en este commit |
-| Siguiente paso exacto | Dueño: integrar cambios y ejecutar infra/deploy_web.sh (exporta API_URL al build); verificar T08/T11 en navegador; después T12–T15 según plan |
+| Siguiente paso exacto | T12: ficha descriptiva de outcomes sin combinar columnas heterogéneas; registrar limitación de criterios de idoneidad ML y después seguir T13 según plan |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -48,7 +48,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
-| T12 | Ficha de datos para ML | P2 | pendiente | | | |
+| T12 | Ficha de datos para ML | P2 | en curso | Codex · stringbuilder | este commit | Resúmenes por fuente/columna/kind; no combinar outcomes heterogéneos |
 | T13 | Comparar 2 estudios | P2 | pendiente | | | |
 | T14 | Prueba agnóstica | P3 | pendiente | | | |
 | T15 | Aceptación y entrega | P0 | pendiente | | | |
