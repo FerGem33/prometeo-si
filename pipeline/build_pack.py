@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """build_pack.py - genera el pack de demo (contrato prometeo.pack/1) desde data/psi.
 
-Entrada : data/psi/tables/*.csv, data/psi/meta/*.json, pipeline/lens.json (escrita a mano)
+Entrada : <data-dir>/tables/*.csv, <data-dir>/meta/*.json, pipeline/lens.json (escrita a mano)
           pipeline/legacy/construir_corpus.py  (SPECS = mapeo ya revisado de las tablas)
-Salida  : web/public/demo/pack.json, mapping.json, lens.json
+Salida  : <output-dir>/pack.json, mapping.json, lens.json
 
 Ruta rapida de la guia 10.1: se reutiliza la logica revisada del corpus del companero
 (pruebas_de + SPECS) y solo se cambia la forma de salida. Nada se rellena: lo que la
 tabla no trae no aparece en `values`.
 
-Uso: python3 -I pipeline/build_pack.py        Solo libreria estandar.
+Uso: python3 -I pipeline/build_pack.py --data-dir /tmp/data --output-dir /tmp/demo
+Solo libreria estandar.
 """
-import glob, hashlib, importlib.util, json, os, re
+import argparse, glob, hashlib, importlib.util, json, os, re
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TABLAS = os.path.join(RAIZ, "data/psi/tables")
@@ -127,7 +128,12 @@ def mapeo_de_tabla(sid, cab, spec, es_microg):
     return {"source": sid, "columns": columnas, "constants": constantes, "notes": notas}
 
 
-def main():
+def main(data_dir=None, output_dir=None):
+    global TABLAS, METAS, SALIDA
+    if data_dir:
+        TABLAS, METAS = os.path.join(data_dir, "tables"), os.path.join(data_dir, "meta")
+    if output_dir:
+        SALIDA = output_dir
     metas = {}
     for ruta in glob.glob(os.path.join(METAS, "*.json")):
         m = json.load(open(ruta, encoding="utf-8"))
@@ -266,4 +272,8 @@ for _k, _n in FLAG_NOTES.items():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-dir", default=None, help="carpeta con tables/ y meta/; default: data/psi")
+    parser.add_argument("--output-dir", default=None, help="destino pack.json, mapping.json y lens.json; default: web/public/demo")
+    args = parser.parse_args()
+    main(args.data_dir, args.output_dir)

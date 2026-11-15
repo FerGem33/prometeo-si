@@ -290,3 +290,39 @@ Las constantes locales requieren filas destino, `source_value`, `source_unit`, `
 valor canónico, nota, cita y `semantic_support: "reviewed"`. El revisor documenta el alcance;
 la extracción rechaza valores que no correspondan a la conversión y retiene ambos documentos
 cuando la evidencia proviene de otra fuente.
+
+## T18: regenerar el pack desde una descarga local sin tocar el publicado
+
+La decisión D9 conserva los datos fuente fuera de Git. `collect_data.py` recibe carpetas
+creadas por `pipeline/legacy/nasa_fuego_todo.py` (subcarpetas `psi_json/` y `psi_tablas/`)
+y `--salida` selecciona una raíz con `tables/` y `meta/`. El default histórico continúa siendo
+`data/psi`. `build_pack.py --data-dir` lee esa misma raíz y `--output-dir` escribe
+`pack.json`, `mapping.json` y `lens.json`; si no se pasa, conserva su comportamiento histórico.
+`induce_schema.py --tables-dir <raíz>/tables` acepta esa misma ubicación para su evaluación
+separada con Bedrock.
+
+Ejemplo aislado desde una descarga completa (`DESCARGA` contiene `psi_json` y `psi_tablas`):
+
+```bash
+export DESCARGA=/ruta/datos_fuego
+export DATOS=/tmp/prometeo-regeneracion/data
+export SALIDA=/tmp/prometeo-regeneracion/demo
+python3.12 -I pipeline/collect_data.py --salida "$DATOS" "$DESCARGA"
+python3.12 -I pipeline/build_pack.py --data-dir "$DATOS" --output-dir "$SALIDA"
+python3.12 -I pipeline/validate_pack.py "$SALIDA"
+cmp web/public/demo/pack.json "$SALIDA/pack.json"
+cmp web/public/demo/mapping.json "$SALIDA/mapping.json"
+cmp web/public/demo/lens.json "$SALIDA/lens.json"
+```
+
+Para regenerar la descarga, el script oficial local ya documentado por el proyecto es
+`pipeline/legacy/nasa_fuego_todo.py`; sus instrucciones y argumentos están en su docstring.
+Las carpetas temporales del ejemplo deben ser nuevas o limpiarse manualmente fuera del repo
+antes de repetir, porque el recolector conserva archivos previos que no reemplaza.
+
+Verificación ejecutada en esta laptop (descarga `tools/datos_psi`, enlazada como entrada local):
+24 investigaciones de combustión filtradas, 22 CSV copiados; `build_pack.py` produjo 24
+estudios, 1986 registros, 22 fuentes; `validate_pack.py` pasó y los tres `cmp` devolvieron 0.
+El destino temporal está en `/tmp/prometeo-t18/`; no se añadieron fuentes ni artefactos a Git.
+Esta evidencia verifica igualdad para la descarga disponible y la versión vigente de
+`pipeline/lens.json`/mapping. Cambios posteriores en esos insumos requieren repetir la prueba.

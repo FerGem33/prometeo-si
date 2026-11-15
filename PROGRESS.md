@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · laptop AWS / stringbuilder: flujo reanudable probado, edición/versionado conjunto; D7/PDF pendientes. T18 pendiente de documentación (D9 decidida). |
+| Tarea en curso | T32 en curso · stringbuilder: D7/PDF pendientes. T18 hecha: datos y salida configurables; pack temporal idéntico confirmado. |
 | Último commit verificado | Base `6851fb1`; verificación T32 de esta entrega en `docs/T32_EVALUACION.md`; API/web publicadas sin cambios |
-| Siguiente paso exacto | T32: persona revisa discrepancias D7 y candidatos PDF en `docs/T32_EVALUACION.md`, decide esquema/unidades/alcance y aprueba mediante `pipeline/README.md`; repetir tras decisiones. D3 sigue abierta. T31 no se ejecutó en este relevo; no desplegar por inferencia. Interfaz: T21–T29 con su equipo. |
+| Siguiente paso exacto | T32: persona revisa discrepancias D7 y candidatos PDF en `docs/T32_EVALUACION.md`; D3 sigue abierta. T31 espera ejecución con AWS en su tarea. Interfaz: T21–T29 con su equipo. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -54,7 +54,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T15 | Aceptación y entrega | P0 | hecha | Codex · stringbuilder | `55c18ed`, `07231c3` | Puntos 1–9 aceptados; T16 verificó el deploy desde otro equipo y la reutilización de recursos. |
 | T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | hecha | Codex · laptop actual | `07231c3` | API/web publicados; bucket, distribución, Lambda, rol y API existentes conservaron sus IDs; hash público/local `index-Ben2isQ8.js`. |
 | T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | hecha | Claude · ferlr; Codex · stringbuilder | `3720861`, `0813d37` | Verificación de T17 cumplida en la URL pública con Haiku 4.5 y SDK 2.8.0 (revisión independiente del 15-nov 00:10). D6 cerrada: el dueño conserva Haiku 4.5 y descarta migrar a 5.5. |
-| T18 | Datos reproducibles | fase 2 · A | pendiente | | | D9 decidida (15-nov): `data/psi` no vuelve a git. Queda documentar cómo regenerar el pack desde una descarga local |
+| T18 | Datos reproducibles | fase 2 · A | hecha | stringbuilder | esta entrega | `collect_data.py`/`build_pack.py` rutas configurables; 24 investigaciones, 22 CSV, pack temporal válido e idéntico byte a byte en los tres archivos. Descarga y artefactos siguen fuera de Git. |
 | T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
@@ -86,6 +86,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 02:14 CST · T18 datos reproducibles
+- `collect_data.py --salida` ahora filtra descarga hacia `<raíz>/tables` y `meta`; `build_pack.py --data-dir/--output-dir` permite entrada y salida temporal. `induce_schema.py --tables-dir` ya podía recibir la misma ruta.
+- Verificación sobre descarga local `tools/datos_psi`: 24 investigaciones de combustión, 22 CSV. Pack temporal: 24 estudios, 1986 registros, 22 fuentes; `validate_pack.py` OK. `cmp` confirmó byte idéntico `pack.json`, `mapping.json`, `lens.json` al publicado.
+- No se tocó `web/public/demo` y los datos/artefactos permanecen fuera de Git. T18 queda hecha. Guía en `pipeline/README.md`.
 
 ### 2026-11-15 01:49 CST · T32 CLI conjunta y reanudable
 - **Workflow:** `pipeline/ingest_run.py` conecta parseo/perfiles, propuestas conjuntas, edición versionada, gate de aprobación, extracción y evaluación PDF. IDs de propuestas namespaced por documento; posibles equivalencias se ofrecen para revisión, no fusión automática. Cache content-addressed por hash de fuente/parser/Poppler/modelo/prompt/payload; las respuestas crudas se revalidan y los reintentos necesitan `--retry-failed`.

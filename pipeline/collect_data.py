@@ -3,20 +3,21 @@
 
 Lee una o mas carpetas de descarga (cada una con psi_json/ y psi_tablas/), se queda con las
 investigaciones con researchArea == "Combustion Science" y escribe:
-  data/psi/tables/*.csv   tablas experimentales, sin tocar (byte a byte)
-  data/psi/meta/*.json    metadatos sin los listados de archivos ni los contactos
+  <salida>/tables/*.csv  tablas experimentales, sin tocar (byte a byte)
+  <salida>/meta/*.json   metadatos sin los listados de archivos ni los contactos
 
-Uso:  python3 -I pipeline/collect_data.py ../datos_fuego ../datos_fuego_131_260
+Uso:  python3 -I pipeline/collect_data.py --salida /tmp/data ../datos_fuego
 Solo libreria estandar.
 """
-import glob, json, os, shutil, sys
+import argparse, glob, json, os, shutil, sys
 
 DROP = ("added", "modified", "removed", "contacts", "images")   # listados de archivos y datos personales
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def main(carpetas):
-    tablas, metas = os.path.join(RAIZ, "data/psi/tables"), os.path.join(RAIZ, "data/psi/meta")
+def main(carpetas, salida=None):
+    base = os.path.abspath(salida or os.path.join(RAIZ, "data/psi"))
+    tablas, metas = os.path.join(base, "tables"), os.path.join(base, "meta")
     os.makedirs(tablas, exist_ok=True); os.makedirs(metas, exist_ok=True)
     n_inv = n_csv = 0
     for carpeta in carpetas:
@@ -39,4 +40,8 @@ def main(carpetas):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or [os.path.join(RAIZ, "..", "datos_fuego"), os.path.join(RAIZ, "..", "datos_fuego_131_260")])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--salida", type=os.path.abspath, default=None, help="raíz destino con tables/ y meta/ (default: data/psi)")
+    parser.add_argument("carpetas", nargs="*", help="descargas con psi_json/ y psi_tablas/")
+    args = parser.parse_args()
+    main(args.carpetas or [os.path.join(RAIZ, "..", "datos_fuego"), os.path.join(RAIZ, "..", "datos_fuego_131_260")], args.salida)

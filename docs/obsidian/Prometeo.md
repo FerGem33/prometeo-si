@@ -59,3 +59,11 @@ limitaciones: [T32_EVALUACION.md](../T32_EVALUACION.md). D7 y D3 siguen abiertas
 Pruebas T32 y regresiones: 64 API/pipeline con Python 3.12 (incluyen dobles), 54 web,
 `check_agnostic.sh` y `validate_pack.py` pasan. Las llamadas reales se cuentan por separado
 en el informe; no prueban por sí solas precisión científica ni aprobación humana.
+
+## T18: datos reproducibles
+
+`collect_data.py --salida` y `build_pack.py --data-dir/--output-dir` dejan filtrar una descarga
+local y regenerar los tres artefactos en una carpeta temporal. La verificación actual produjo
+24 estudios, 1986 registros, 22 fuentes; el pack validó e igualó byte por byte los tres archivos
+publicados. D9 mantiene los originales fuera de Git. Instrucciones y límites en
+[pipeline/README.md](../../pipeline/README.md#t18-regenerar-el-pack-desde-una-descarga-local-sin-tocar-el-publicado).
