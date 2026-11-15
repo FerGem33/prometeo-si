@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prometeo · estilo artículo científico</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Fira+Sans:wght@400;500;600&family=Fira+Sans+Condensed:wght@400;500&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E4E2DD; font-family: "EB Garamond", serif; color: #1D1C1A; -webkit-font-smoothing: antialiased; }
+  .hoja { width: 1240px; margin: 28px auto; background: #FDFCF9; border: 1px solid #CFCBC2; padding: 44px 64px 52px; }
+  .revista { display: flex; justify-content: space-between; font-family: "Fira Sans Condensed"; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #6A665E; border-bottom: 2px solid #1D1C1A; padding-bottom: 6px; }
+  .revista b { color: #A3271B; font-weight: 500; }
+  .tipo { font-family: "Fira Sans Condensed"; font-size: 12px; color: #A3271B; text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 8px; }
+  h1 { font-weight: 500; font-size: 40px; line-height: 1.08; max-width: 1000px; }
+  .autor { font-style: italic; font-size: 17px; color: #4A4740; margin: 10px 0 20px; }
+  .resumen { border-top: 1px solid #1D1C1A; border-bottom: 1px solid #1D1C1A; padding: 14px 0; font-size: 18px; line-height: 1.5; columns: 2; column-gap: 40px; }
+  .resumen b { font-family: "Fira Sans"; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+  .cuerpo { display: grid; grid-template-columns: 1fr 330px; gap: 40px; margin-top: 24px; }
+  figure svg { width: 100%; display: block; }
+  figcaption { font-family: "Fira Sans"; font-size: 12.5px; line-height: 1.45; color: #3A3832; margin-top: 8px; }
+  figcaption b { font-weight: 600; }
+  .texto h2 { font-family: "Fira Sans"; font-weight: 600; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 6px; }
+  .texto p { font-size: 17px; line-height: 1.5; margin-bottom: 16px; text-align: justify; hyphens: auto; }
+  .texto sup { font-family: "Fira Sans"; font-size: 10px; color: #A3271B; }
+  .n { font-family: "Fira Sans"; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .roja { color: #A3271B; }
+  table { width: 100%; border-collapse: collapse; font-family: "Fira Sans"; font-size: 12.5px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  caption { text-align: left; font-size: 12.5px; margin-bottom: 4px; color: #3A3832; }
+  thead th { border-top: 1.5px solid #1D1C1A; border-bottom: 1px solid #1D1C1A; font-weight: 500; text-align: left; padding: 4px 6px 4px 0; }
+  tbody td { padding: 3px 6px 3px 0; }
+  tbody tr:last-child td { border-bottom: 1.5px solid #1D1C1A; }
+  td.r, th.r { text-align: right; }
+  .refs { margin-top: 18px; font-size: 13.5px; line-height: 1.45; color: #4A4740; }
+  .refs li { margin-left: 18px; }
+</style>
+</head>
+<body>
+<article class="hoja">
+  <div class="revista"><span><b>Prometeo</b> · Informe de evidencia</span><span>Expediente B-01 · 14 nov 2026</span><span>Generado de 5 tablas experimentales de NASA PSI</span></div>
+  <p class="tipo">Evaluación de escenario</p>
+  <h1>Evidencia experimental sobre combustión aplicable a una base lunar con 30 % de oxígeno y 70.3 kPa</h1>
+  <p class="autor">Compilado automáticamente a partir de FLEX, CFI, BASS-II, SAFFIRE-I y SAFFIRE-II · cada cifra enlaza a su fila de origen</p>
+  <div class="resumen"><b>Resumen.</b> Se revisaron <span class="n" id="a-total"></span> pruebas realizadas en la Estación Espacial Internacional y en Cygnus. Sólo <span class="n" id="a-cerca"></span> se encuentran a menos de 4 puntos de oxígeno y 25 % de presión del escenario, y todas corresponden a gotas de combustible líquido. Ninguna de las <span class="n" id="a-sol"></span> pruebas de materiales sólidos registra la presión ambiente, y ninguna supera <span class="n" id="a-max"></span> % de O₂. No existen pruebas a 0.17 g. <span class="roja">La inflamabilidad de los materiales de un hábitat lunar no está respaldada por estos datos.</span></div>
+
+  <div class="cuerpo">
+    <figure>
+      <svg id="fig" viewBox="0 0 800 440"></svg>
+      <figcaption><b>Figura 1 | Pruebas por presión ambiente y fracción de oxígeno.</b> Círculos: FLEX (gotas de metanol y heptano). Cuadros: CFI (gotas de dodecano). Panel derecho: pruebas de sólidos cuya tabla no registra presión, ordenadas sólo por O₂. El rectángulo sombreado delimita la vecindad del escenario (±4 puntos de O₂, ±25 % de presión). Escala horizontal logarítmica.</figcaption>
+      <table>
+        <caption><b>Tabla 1 |</b> Pruebas más cercanas al escenario.</caption>
+        <thead><tr><th>Investigación</th><th>Prueba</th><th>Combustible</th><th class="r">O₂ (%)</th><th class="r">P (kPa)</th><th>Desenlace</th><th>Fuente</th></tr></thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </figure>
+    <div class="texto">
+      <h2>1 · Cobertura</h2>
+      <p>La evidencia cercana al escenario procede de un solo experimento, FLEX<sup>1</sup>, y describe gotas aisladas, no superficies. En todas ellas la llama terminó por ruptura o extinción de la gota.</p>
+      <h2>2 · Huecos</h2>
+      <p>Los ensayos con sólidos de BASS-II<sup>2</sup> y SAFFIRE<sup>3</sup> se hicieron con aire cercano al de cabina; sus tablas no anotan la presión. <span class="n" id="a-mat"></span> muestras se describen por su forma sin declarar el material.</p>
+      <h2>3 · Implicación</h2>
+      <p>Diseñar materiales para la base requiere ensayos de sólidos a O₂ elevado y presión reducida, una región que <span class="roja">ningún experimento de esta base de datos ha cubierto</span>.</p>
+      <ol class="refs">
+        <li>FLEX, PSI-69, tabla experimental.</li>
+        <li>BASS-II, PSI-25, tabla experimental.</li>
+        <li>SAFFIRE-I y II, PSI-98 y PSI-99.</li>
+      </ol>
+    </div>
+  </div>
+</article>
+<script src="../prototipo/datos.js"></script>
+<script src="comun.js"></script>
+<script>
+  const { P, esc, cerca, conP, sol, solSinP, n, top: cercanas, FIN, maxSol, sinMat, rnd, el, escalas } = D;
+  const $ = (s) => document.getElementById(s);
+  $("a-total").textContent = P.length; $("a-cerca").textContent = n.length; $("a-sol").textContent = sol.length;
+  $("a-max").textContent = maxSol.toFixed(1); $("a-mat").textContent = sinMat;
+  $("tabla").innerHTML = cercanas.map((p) => `<tr><td>${p.inv}</td><td>${p.prueba}</td><td>${p.combustible}</td><td class="r">${p.o2.toFixed(1)}</td><td class="r">${p.p_kpa.toFixed(1)}</td><td>${FIN[p.fin] || "—"}</td><td>${p.psi}, fila ${p.fila}</td></tr>`).join("");
+
+  const svg = $("fig"), F = "Fira Sans";
+  const s = escalas(52, 610, 14, 390), S0 = 650, S1 = 790;
+  const t = (x, y, txt, a = {}) => el(svg, "text", { x, y, "font-family": F, "font-size": 11, fill: "#3A3832", ...a }, txt);
+  el(svg, "rect", { x: s.x(esc.p / 1.25), y: s.y(34), width: s.x(esc.p * 1.25) - s.x(esc.p / 1.25), height: s.y(26) - s.y(34), fill: "#F1D9D3" });
+  el(svg, "rect", { x: S0, y: s.y(34), width: S1 - S0, height: s.y(26) - s.y(34), fill: "#F1D9D3" });
+  [50, 70, 100, 150, 200, 300, 500].forEach((k) => { el(svg, "line", { x1: s.x(k), x2: s.x(k), y1: s.B, y2: s.B + 4, stroke: "#1D1C1A" }); t(s.x(k), s.B + 17, k, { "text-anchor": "middle" }); });
+  [10, 15, 20, 25, 30, 35].forEach((o) => { el(svg, "line", { x1: s.L - 4, x2: s.L, y1: s.y(o), y2: s.y(o), stroke: "#1D1C1A" }); t(s.L - 8, s.y(o) + 4, o, { "text-anchor": "end" }); });
+  el(svg, "path", { d: `M${s.L},${s.T} V${s.B} H${s.R}`, fill: "none", stroke: "#1D1C1A" });
+  el(svg, "path", { d: `M${S0},${s.T} V${s.B} H${S1}`, fill: "none", stroke: "#1D1C1A" });
+  t((s.L + s.R) / 2, s.B + 36, "Presión ambiente (kPa)", { "text-anchor": "middle", "font-size": 12 });
+  t(S0 + (S1 - S0) / 2, s.B + 17, "sin registro", { "text-anchor": "middle", "font-style": "italic" });
+  const ty = t(0, 0, "Fracción de O₂ (%)", { "font-size": 12, "text-anchor": "middle" }); ty.setAttribute("transform", `translate(16 ${(s.T + s.B) / 2}) rotate(-90)`);
+  t(s.L + 6, s.T + 10, "a", { "font-weight": 600, "font-size": 14 }); t(S0 + 6, s.T + 10, "b", { "font-weight": 600, "font-size": 14 });
+  P.forEach((p, i) => {
+    if (p.p_kpa != null) {
+      const cx = s.x(p.p_kpa) + rnd(i, 1) * 6, cy = s.y(p.o2) + rnd(i, 2) * 5;
+      if (p.inv === "CFI") el(svg, "rect", { x: cx - 2.3, y: cy - 2.3, width: 4.6, height: 4.6, fill: "none", stroke: "#1D1C1A", "stroke-width": .9 });
+      else el(svg, "circle", { cx, cy, r: 2.3, fill: cerca(p) ? "#A3271B" : "#1D1C1A", "fill-opacity": cerca(p) ? 1 : .55 });
+    } else el(svg, "circle", { cx: S0 + 10 + (rnd(i, 3) + .5) * (S1 - S0 - 20), cy: s.y(p.o2) + rnd(i, 4) * 5, r: 2.1, fill: "none", stroke: "#1D1C1A", "stroke-width": .8 });
+  });
+  el(svg, "path", { d: `M${s.x(esc.p) - 7},${s.y(esc.o2)} h14 M${s.x(esc.p)},${s.y(esc.o2) - 7} v14`, stroke: "#A3271B", "stroke-width": 1.6 });
+  t(s.x(esc.p) + 46, s.y(esc.o2) - 30, "Base lunar", { fill: "#A3271B", "font-weight": 600 });
+  el(svg, "path", { d: `M${s.x(esc.p) + 44},${s.y(esc.o2) - 27} L${s.x(esc.p) + 9},${s.y(esc.o2) - 4}`, stroke: "#A3271B", fill: "none", "stroke-width": .8 });
+</script>
+</body>
+</html>

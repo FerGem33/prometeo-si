@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prometeo · estilo portada de revista</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400;1,6..96,700&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #2A1A14; -webkit-font-smoothing: antialiased; }
+  .portada { width: 1360px; height: 1000px; margin: 0 auto; background: #E5481F; color: #190E0A; position: relative; overflow: hidden; font-family: "Work Sans", sans-serif; }
+  .cabezal { position: absolute; left: 56px; right: 56px; top: 34px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #190E0A; padding-bottom: 10px; }
+  .cabezal .nombre { font-family: "Bodoni Moda"; font-weight: 900; font-size: 112px; line-height: .8; letter-spacing: -.02em; }
+  .cabezal .num { text-align: right; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; line-height: 1.6; }
+  .titular { position: absolute; left: 56px; top: 200px; width: 600px; }
+  .titular .ant { font-size: 14px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 14px; }
+  .titular h1 { font-family: "Bodoni Moda"; font-weight: 400; font-style: italic; font-size: 68px; line-height: 1; letter-spacing: -.015em; }
+  .titular h1 b { font-style: normal; font-weight: 900; }
+  .titular p { font-size: 19px; line-height: 1.45; margin-top: 22px; max-width: 520px; color: #2C1710; }
+  .lineas { position: absolute; left: 56px; bottom: 50px; width: 560px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 36px; }
+  .lineas div { border-top: 2px solid #190E0A; padding-top: 8px; }
+  .lineas b { font-family: "Bodoni Moda"; font-weight: 900; font-size: 64px; line-height: .9; display: block; }
+  .lineas span { font-size: 14px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .lineas .cero b { color: #FBE9D7; }
+  .cielo { position: absolute; right: 0; top: 150px; width: 720px; height: 850px; }
+  .credito { position: absolute; right: 56px; bottom: 20px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #3A1E14; }
+</style>
+</head>
+<body>
+<div class="portada">
+  <div class="cabezal">
+    <div class="nombre">Prometeo</div>
+    <div class="num">Expediente nº 1 · Base lunar<br>Noviembre 2026 · 501 pruebas de la NASA</div>
+  </div>
+  <div class="titular">
+    <div class="ant">Especial · Fuego fuera de la Tierra</div>
+    <h1>Nadie ha encendido <b>un sólido</b> con 30&nbsp;% de oxígeno a presión lunar</h1>
+    <p>Las paredes, cables y telas de la primera base no tienen respaldo experimental. Esto es lo que sí se ha probado, y lo que falta.</p>
+  </div>
+  <div class="lineas">
+    <div><b id="l1"></b><span>pruebas leídas</span></div>
+    <div><b id="l2"></b><span>cerca de la base, sólo gotas</span></div>
+    <div class="cero"><b>0</b><span>sólidos con presión</span></div>
+    <div class="cero"><b>0</b><span>a gravedad lunar</span></div>
+  </div>
+  <svg class="cielo" id="c" viewBox="0 0 720 850"></svg>
+  <div class="credito">Cada punto es una prueba real · NASA Physical Sciences Informatics · CC0</div>
+</div>
+<script src="../prototipo/datos.js"></script>
+<script src="comun.js"></script>
+<script>
+  const { P, esc, cerca, n, solSinP, maxSol, rnd, el, escalas } = D;
+  document.getElementById("l1").textContent = P.length;
+  document.getElementById("l2").textContent = n.length;
+  const svg = document.getElementById("c");
+  const s = escalas(130, 560, 60, 740);
+  const crema = "#FBE9D7", tinta = "#190E0A";
+  // constelación: pruebas como estrellas sobre el fondo de fuego
+  P.forEach((p, i) => {
+    if (p.p_kpa != null) el(svg, "circle", { cx: s.x(p.p_kpa) + rnd(i, 1) * 10, cy: s.y(p.o2) + rnd(i, 2) * 9, r: cerca(p) ? 3.6 : 2.6, fill: cerca(p) ? tinta : crema, "fill-opacity": cerca(p) ? 1 : .9 });
+    else el(svg, "circle", { cx: 610 + (rnd(i, 3) + .5) * 90, cy: s.y(p.o2) + rnd(i, 4) * 9, r: 2.2, fill: crema, "fill-opacity": .55 });
+  });
+  // la Luna: el escenario
+  const bx = s.x(esc.p), by = s.y(esc.o2);
+  el(svg, "circle", { cx: bx, cy: by, r: 58, fill: "none", stroke: tinta, "stroke-width": 2 });
+  el(svg, "text", { x: bx + 72, y: by - 6, "font-family": "Bodoni Moda", "font-style": "italic", "font-size": 30, fill: tinta }, "la base");
+  el(svg, "text", { x: bx + 72, y: by + 18, "font-family": "Work Sans", "font-weight": 600, "font-size": 12, "letter-spacing": "1.5", fill: tinta }, "30 % O₂ · 70.3 KPA · 0.17 G");
+  // ejes mínimos, como pie de foto
+  const t = (x, y, txt, a = {}) => el(svg, "text", { x, y, "font-family": "Work Sans", "font-size": 11.5, "font-weight": 600, "letter-spacing": "1.2", fill: tinta, ...a }, txt);
+  el(svg, "line", { x1: s.L, x2: s.R, y1: s.B + 20, y2: s.B + 20, stroke: tinta });
+  [50, 100, 200, 500].forEach((k) => t(s.x(k), s.B + 38, k + " KPA", { "text-anchor": "middle" }));
+  el(svg, "line", { x1: s.L - 20, x2: s.L - 20, y1: s.T, y2: s.B, stroke: tinta });
+  [15, 20, 25, 30, 35].forEach((o) => t(s.L - 28, s.y(o) + 4, o + " %", { "text-anchor": "end" }));
+  t(610, s.B + 38, "SÓLIDOS, P = ?");
+  el(svg, "line", { x1: 600, x2: 710, y1: s.y(maxSol) - 8, y2: s.y(maxSol) - 8, stroke: tinta, "stroke-dasharray": "3 3" });
+  t(600, s.y(maxSol) - 16, `TECHO ${maxSol.toFixed(1)} %`);
+</script>
+</body>
+</html>

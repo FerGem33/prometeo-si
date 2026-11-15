@@ -1,0 +1,54 @@
+/* Prometeo · tokens de diseño
+   Única fuente de colores, tipografías, espaciado y tamaños.
+   Regla: ningún valor visual fuera de este archivo. Ver design/REGLAS.md. */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap");
+
+:root {
+  /* Color: papel, tinta y una sola señal */
+  --papel:      #F2EEE5;
+  --papel-2:    #E9E3D6;
+  --tinta:      #1B1A17;
+  --tinta-2:    #4F4B43;
+  --tinta-3:    #8A8478;
+  --linea:      #CEC6B5;
+  --linea-2:    #B5AC98;
+  --senal:      #E4511B;   /* naranja internacional: escenario del usuario, huecos */
+  --senal-tenue: rgba(228, 81, 27, 0.10);
+
+  /* Datos */
+  --dato:       #2E4756;   /* puntos de evidencia */
+  --dato-2:     #7C8F99;
+
+  /* Grado de evidencia (semáforo, apagado a propósito) */
+  --grado-a:    #2F6A4E;   /* dato directo de tabla */
+  --grado-b:    #A87B12;   /* dato aproximado o extraído de texto */
+  --grado-n:    var(--senal); /* sin evidencia */
+
+  /* Tipografía */
+  --f-titulo: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --f-texto:  "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-dato:   "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Escala tipográfica (1.333) */
+  --t-0: 11px;   /* etiquetas en versalitas */
+  --t-1: 13px;   /* notas, ejes */
+  --t-2: 15px;   /* texto */
+  --t-3: 20px;
+  --t-4: 27px;
+  --t-5: 48px;   /* títulos */
+  --t-6: 84px;   /* cifras protagonistas */
+
+  /* Espaciado (base 4) */
+  --e-1: 4px;  --e-2: 8px;  --e-3: 12px; --e-4: 16px;
+  --e-5: 24px; --e-6: 32px; --e-7: 48px; --e-8: 72px; --e-9: 112px;
+
+  /* Trazo y forma */
+  --trazo: 1px;
+  --radio: 2px;      /* máximo permitido: 4px */
+  --ancho-max: 1280px;
+
+  /* Movimiento: solo con propósito */
+  --dur: 240ms;
+  --curva: cubic-bezier(.2, .7, .2, 1);
+}

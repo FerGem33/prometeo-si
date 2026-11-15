@@ -1,0 +1,40 @@
+/* 2 · SUIZO / MANUAL NASA 1975 — blanco, negro, un rojo; grotesca pesada, retícula estricta, cifras enormes */
+body {
+  background: #FFFFFF; color: #0A0A0A;
+  font-family: "Archivo", sans-serif; font-size: 14px;
+  --f-dato: "Archivo", sans-serif; --f-texto: "Archivo", sans-serif;
+  --eje: #0A0A0A; --eje-txt: #0A0A0A; --rejilla: #E6E6E6; --rejilla-trazo: none;
+  --punto: #0A0A0A; --punto-cerca: #E03C31; --punto-2: #9A9A9A;
+  --esc: #E03C31; --anot: #0A0A0A; --franja: #F2F2F2;
+  --zona-tipo: rayado; --zona-fondo: rgba(224,60,49,.06); --zona-linea: rgba(224,60,49,.55);
+}
+.top { padding: 18px 48px; border-bottom: 4px solid #0A0A0A; }
+.brand { font-weight: 900; font-size: 22px; letter-spacing: -.02em; }
+.sub { font-size: 13px; color: #555; }
+.top nav a { font-size: 13px; font-weight: 500; color: #888; } .top nav a.on { color: #0A0A0A; font-weight: 700; }
+
+.frame { grid-template-columns: repeat(12, 1fr); column-gap: 24px; padding: 32px 48px 24px; }
+.intro { grid-column: 1 / 8; }
+.nums { grid-column: 1 / 13; border-top: 4px solid #0A0A0A; margin: 26px 0 26px; }
+.chart { grid-column: 1 / 9; }
+.list { grid-column: 9 / 13; }
+
+.kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #E03C31; margin-bottom: 10px; }
+h1 { font-weight: 800; font-size: 58px; line-height: .95; letter-spacing: -.035em; margin-bottom: 14px; }
+.cond { display: flex; gap: 22px; font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.lead { font-size: 17px; line-height: 1.4; max-width: 38em; color: #333; }
+.lead mark { color: #E03C31; font-weight: 700; }
+
+.num { padding-top: 10px; border-right: 1px solid #0A0A0A; padding-right: 16px; }
+.num + .num { padding-left: 16px; } .num:last-child { border-right: 0; }
+.num b { font-weight: 900; font-size: 92px; line-height: .9; letter-spacing: -.05em; }
+.num.cero b { color: #E03C31; }
+.num span { font-weight: 700; font-size: 14px; margin-top: 6px; }
+.num small { font-size: 12px; color: #666; }
+
+.chart-tit, .list-tit { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .02em; border-top: 1px solid #0A0A0A; padding-top: 8px; margin-bottom: 12px; }
+.list-tit + ol { margin-bottom: 18px; }
+.list li { padding: 7px 0; border-bottom: 1px solid #E6E6E6; grid-template-columns: 1fr auto; font-size: 12.5px; }
+.list .id { font-weight: 700; } .list .g { font-weight: 700; color: #E03C31; } .list .v, .list .src { grid-column: 1 / 3; } .list .src { color: #888; font-size: 11px; }
+#huecos li { grid-template-columns: 44px 1fr; align-items: baseline; }
+#huecos b { font-weight: 900; font-size: 26px; color: #E03C31; }

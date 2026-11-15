@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prometeo · Expediente de evidencia</title>
+  <link rel="stylesheet" href="../design/tokens.css">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="barra">
+    <a class="marca" href="#portada">Prometeo</a>
+    <span class="barra-sub">Expediente de evidencia · combustión en microgravedad</span>
+    <nav class="folios" aria-label="Secciones">
+      <a href="#portada"  data-folio="portada"><b>01</b> Escenario</a>
+      <a href="#resumen"  data-folio="resumen"><b>02</b> Expediente</a>
+      <a href="#mapa"     data-folio="mapa"><b>03</b> Mapa de evidencia</a>
+      <a href="#evidencia" data-folio="evidencia"><b>04</b> Evidencia</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 01 · PORTADA -->
+    <section id="portada" class="pantalla">
+      <div class="portada">
+        <div class="portada-texto">
+          <p class="etiqueta">Pregunta de diseño</p>
+          <h1 class="titulo-mayor">¿Qué sabemos del fuego<br>en el lugar donde<br><em>van a vivir</em>?</h1>
+          <p class="entrada">Prometeo leyó las tablas de experimentos de combustión de la NASA en la Estación Espacial y las ordenó según el hábitat que elijas. Muestra lo que se ha probado, de dónde sale cada dato y qué falta.</p>
+        </div>
+        <figure class="portada-figura" aria-hidden="true">
+          <svg id="mini-mapa" viewBox="0 0 420 300"></svg>
+          <figcaption class="nota"><span id="mini-total"></span> pruebas reales, por oxígeno y presión</figcaption>
+        </figure>
+      </div>
+
+      <div class="indice">
+        <p class="etiqueta">Elige un hábitat</p>
+        <ol id="lista-escenarios" class="escenarios"></ol>
+      </div>
+    </section>
+
+    <!-- 02 · RESUMEN -->
+    <section id="resumen" class="pantalla">
+      <div class="cabecera-exp">
+        <p class="etiqueta" id="r-folio"></p>
+        <h2 class="titulo" id="r-titulo"></h2>
+        <p class="condiciones" id="r-condiciones"></p>
+      </div>
+      <div class="cifras" id="r-cifras"></div>
+      <p class="conclusion" id="r-conclusion"></p>
+      <a class="siguiente" href="#mapa">Ver el mapa de evidencia →</a>
+    </section>
+
+    <!-- 03 · MAPA -->
+    <section id="mapa" class="pantalla">
+      <div class="mapa-cabecera">
+        <div>
+          <p class="etiqueta">Figura 1 · <span id="m-folio"></span></p>
+          <h2 class="titulo">Dónde se ha probado</h2>
+        </div>
+        <div class="filtros" role="group" aria-label="Filtros">
+          <label><input type="checkbox" data-tipo="gota" checked> Gotas de combustible</label>
+          <label><input type="checkbox" data-tipo="solido" checked> Materiales sólidos</label>
+        </div>
+      </div>
+      <div class="mapa-cuerpo">
+        <svg id="figura" viewBox="0 0 980 560" role="img" aria-label="Pruebas por oxígeno y presión"></svg>
+        <aside class="mapa-notas" id="m-notas"></aside>
+      </div>
+      <p class="pie-figura">Eje horizontal en escala logarítmica. Cada marca es una prueba de las tablas experimentales de PSI. La franja derecha agrupa las pruebas cuya tabla no registra la presión. Pasa el cursor sobre una marca para ver su fuente.</p>
+    </section>
+
+    <!-- 04 · EVIDENCIA -->
+    <section id="evidencia" class="pantalla">
+      <div class="cabecera-exp">
+        <p class="etiqueta" id="e-folio"></p>
+        <h2 class="titulo">Lo que se sabe y lo que falta</h2>
+      </div>
+      <div class="evidencia">
+        <div>
+          <h3 class="subtitulo">Pruebas más cercanas al escenario</h3>
+          <table class="tabla" id="e-tabla">
+            <thead><tr>
+              <th>#</th><th>Investigación</th><th>Prueba</th><th>Combustible</th>
+              <th class="num">O₂ %</th><th class="num">kPa</th><th class="num">Dist.</th><th>Final</th><th>Grado</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <p class="nota" id="e-metodo"></p>
+        </div>
+        <div>
+          <h3 class="subtitulo">Huecos detectados</h3>
+          <ul class="huecos" id="e-huecos"></ul>
+          <div class="pendiente">
+            <p class="etiqueta">Pendiente · etapa E2 del motor</p>
+            <p>Aquí aparecerán las relaciones extraídas de los artículos, cada una con su cita textual. El prototipo solo usa tablas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p>Fuente: NASA Physical Sciences Informatics (psi.nasa.gov), tablas experimentales de FLEX (PSI-69), CFI (PSI-39), BASS-II (PSI-25), SAFFIRE-I y II (PSI-98, PSI-99). Licencia CC0.</p>
+    <p>Prototipo de diseño. Las condiciones de los escenarios están marcadas como «por verificar» hasta confirmarlas con las fuentes del reto.</p>
+  </footer>
+
+  <div id="ficha" class="ficha" hidden></div>
+
+  <script src="datos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

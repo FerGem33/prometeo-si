@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prometeo · estilo atlas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Cormorant+SC:wght@500;600;700&family=Alegreya+Sans:wght@400;500&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E9DFC7; color: #3B2F1F; font-family: "Cormorant Garamond", serif; -webkit-font-smoothing: antialiased; }
+  .lamina { width: 1400px; margin: 20px auto; border: 1px solid #6E5A3E; outline: 6px solid #E9DFC7; box-shadow: 0 0 0 7px #6E5A3E; background: #F1E8D3; display: grid; grid-template-columns: 1fr 290px; }
+  .mapa { padding: 18px 10px 14px 18px; border-right: 1px solid #6E5A3E; }
+  .mapa svg { width: 100%; display: block; }
+  .margen { padding: 26px 26px; }
+  .cartela { text-align: center; border: 1px solid #6E5A3E; padding: 16px 12px 14px; margin-bottom: 22px; }
+  .cartela .sc { font-family: "Cormorant SC"; letter-spacing: .14em; font-size: 13px; }
+  .cartela h1 { font-family: "Cormorant SC"; font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: .04em; margin: 6px 0 4px; }
+  .cartela p { font-style: italic; font-size: 16px; }
+  h2 { font-family: "Cormorant SC"; font-weight: 600; font-size: 17px; letter-spacing: .1em; border-bottom: 1px solid #6E5A3E; margin: 18px 0 8px; }
+  .nota { font-size: 16px; line-height: 1.35; margin-bottom: 9px; }
+  .nota b { font-family: "Cormorant SC"; font-size: 20px; color: #8E2B1B; margin-right: 4px; }
+  .ley { font-family: "Alegreya Sans"; font-size: 12.5px; }
+  .ley div { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .sw { width: 26px; height: 14px; border: 1px solid #6E5A3E; display: inline-block; }
+  .lugares { font-family: "Alegreya Sans"; font-size: 12.5px; line-height: 1.5; }
+  .lugares li { list-style: none; display: grid; grid-template-columns: 1fr auto; border-bottom: 1px dotted #A08E6E; padding: 2px 0; }
+</style>
+</head>
+<body>
+<div class="lamina">
+  <div class="mapa"><svg id="m" viewBox="0 0 1080 760"></svg></div>
+  <aside class="margen">
+    <div class="cartela">
+      <div class="sc">Prometeo · Lámina II</div>
+      <h1>Carta de la evidencia</h1>
+      <p>del fuego en microgravedad,<br>levantada de <span id="tot"></span> pruebas<br>con destino a la Base Lunar</p>
+    </div>
+    <h2>Notas del cartógrafo</h2>
+    <p class="nota"><b id="n1"></b> pruebas yacen en las cercanías de la Base, todas de gotas de combustible.</p>
+    <p class="nota"><b>0</b> sólidos tienen su presión asentada en las tablas; viven en la isla del margen.</p>
+    <p class="nota"><b>0</b> expediciones a gravedad lunar.</p>
+    <h2>Signos convencionales</h2>
+    <div class="ley">
+      <div><span class="sw" style="background:#D9CFA4"></span>1–2 pruebas por parcela</div>
+      <div><span class="sw" style="background:#B5AC74"></span>3–9 pruebas</div>
+      <div><span class="sw" style="background:#857D4B"></span>10 o más</div>
+      <div><span class="sw" style="background:repeating-linear-gradient(45deg,#F1E8D3 0 3px,#C9B993 3px 4px)"></span>Sin explorar</div>
+      <div><svg width="26" height="16"><circle cx="13" cy="8" r="6" fill="none" stroke="#8E2B1B" stroke-width="1.6"/><circle cx="13" cy="8" r="1.8" fill="#8E2B1B"/></svg>Asentamiento proyectado</div>
+    </div>
+    <h2>Puestos más cercanos</h2>
+    <ul class="lugares" id="lug"></ul>
+  </aside>
+</div>
+<script src="../prototipo/datos.js"></script>
+<script src="comun.js"></script>
+<script>
+  const { P, esc, n, top: cercanas, solSinP, maxSol, rnd, el, escalas } = D;
+  document.getElementById("tot").textContent = P.length;
+  document.getElementById("n1").textContent = n.length;
+  document.getElementById("lug").innerHTML = cercanas.map((p) => `<li><span>${p.inv} ${p.prueba}, ${p.combustible.toLowerCase()}</span><span>${p.psi}·${p.fila}</span></li>`).join("");
+
+  const svg = document.getElementById("m");
+  const s = escalas(58, 850, 30, 700);
+  const defs = el(svg, "defs");
+  const pat = el(defs, "pattern", { id: "inc", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  el(pat, "rect", { width: 7, height: 7, fill: "#F1E8D3" });
+  el(pat, "line", { x1: 0, y1: 0, x2: 0, y2: 7, stroke: "#C9B993", "stroke-width": 1 });
+  el(svg, "rect", { x: s.L, y: s.T, width: s.R - s.L, height: s.B - s.T, fill: "url(#inc)" });
+
+  // parcelas: rejilla en log(presión) × O2
+  const NX = 30, NY = 26, cw = (s.R - s.L) / NX, ch = (s.B - s.T) / NY;
+  const cuenta = {};
+  P.filter((p) => p.p_kpa != null).forEach((p) => {
+    const i = Math.min(NX - 1, Math.floor((s.x(Math.min(599, p.p_kpa)) - s.L) / cw)), j = Math.min(NY - 1, Math.floor((s.B - s.y(p.o2)) / ch));
+    const k = i + "," + j; cuenta[k] = (cuenta[k] || 0) + 1;
+  });
+  // halo de costa: parcelas vecinas a tierra
+  const costa = {};
+  Object.keys(cuenta).forEach((k) => { const [i, j] = k.split(",").map(Number); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const kk = (i + a) + "," + (j + b); if (!cuenta[kk]) costa[kk] = 1; } });
+  Object.keys(costa).forEach((k) => { const [i, j] = k.split(",").map(Number); if (i < 0 || j < 0 || i >= NX || j >= NY) return; el(svg, "rect", { x: s.L + i * cw, y: s.B - (j + 1) * ch, width: cw, height: ch, fill: "#EDE3C8" }); });
+  Object.entries(cuenta).forEach(([k, c]) => {
+    const [i, j] = k.split(",").map(Number);
+    el(svg, "rect", { x: s.L + i * cw + .5, y: s.B - (j + 1) * ch + .5, width: cw - 1, height: ch - 1, fill: c >= 10 ? "#857D4B" : c >= 3 ? "#B5AC74" : "#D9CFA4", stroke: "#6E5A3E", "stroke-width": .5 });
+  });
+  // marco con graduación de mapa
+  el(svg, "rect", { x: s.L, y: s.T, width: s.R - s.L, height: s.B - s.T, fill: "none", stroke: "#3B2F1F", "stroke-width": 1.2 });
+  el(svg, "rect", { x: s.L - 6, y: s.T - 6, width: s.R - s.L + 12, height: s.B - s.T + 12, fill: "none", stroke: "#3B2F1F", "stroke-width": .6 });
+  const tx = (x, y, t, a = {}) => el(svg, "text", { x, y, "font-family": "Alegreya Sans", "font-size": 12, fill: "#3B2F1F", ...a }, t);
+  [50, 70, 100, 150, 200, 300, 500].forEach((k, q) => { el(svg, "rect", { x: s.x(k) - .5, y: s.B + 1, width: 1, height: 5, fill: "#3B2F1F" }); tx(s.x(k), s.B + 22, k + " kPa", { "text-anchor": "middle" }); });
+  [10, 15, 20, 25, 30, 35].forEach((o) => tx(s.L - 12, s.y(o) + 4, o + "°", { "text-anchor": "end" }));
+  tx(s.L - 12, s.T - 12, "O₂ %", { "text-anchor": "end", "font-style": "italic" });
+
+  // rótulos cartográficos
+  const rot = (x, y, t, size, a = {}) => el(svg, "text", { x, y, "font-family": "Cormorant Garamond", "font-style": "italic", "font-size": size, fill: "#6E5A3E", "letter-spacing": ".18em", ...a }, t);
+  rot(s.x(230), s.y(33.2), "TERRA INCOGNITA", 34, { "text-anchor": "middle" });
+  rot(s.x(230), s.y(32.1), "ningún ensayo en estas latitudes", 17, { "text-anchor": "middle", "letter-spacing": ".04em" });
+  rot(s.x(250), s.y(13), "mar de la baja presión parcial", 16, { "text-anchor": "middle", "letter-spacing": ".08em" });
+  rot(s.x(160), s.y(23.6), "Llanura de cabina", 17, { "text-anchor": "middle", fill: "#3B2F1F", "letter-spacing": ".06em" });
+
+  // asentamiento
+  const bx = s.x(esc.p), by = s.y(esc.o2);
+  el(svg, "circle", { cx: bx, cy: by, r: 11, fill: "none", stroke: "#8E2B1B", "stroke-width": 2 });
+  el(svg, "circle", { cx: bx, cy: by, r: 3, fill: "#8E2B1B" });
+  el(svg, "circle", { cx: bx, cy: by, r: 52, fill: "none", stroke: "#8E2B1B", "stroke-width": .8, "stroke-dasharray": "2 4" });
+  el(svg, "text", { x: bx + 62, y: by + 2, "font-family": "Cormorant SC", "font-weight": 700, "font-size": 24, fill: "#8E2B1B", "letter-spacing": ".08em" }, "Base Lunar");
+  el(svg, "text", { x: bx + 62, y: by + 20, "font-family": "Cormorant Garamond", "font-style": "italic", "font-size": 15, fill: "#8E2B1B" }, "30 % O₂ · 70.3 kPa · 0.17 g");
+
+  // isla de los sólidos (recuadro)
+  const ix = 890, iw = 170;
+  el(svg, "rect", { x: ix, y: s.T, width: iw, height: s.B - s.T, fill: "#EDE3C8", stroke: "#3B2F1F", "stroke-width": 1.2 });
+  el(svg, "text", { x: ix + iw / 2, y: s.T + 26, "text-anchor": "middle", "font-family": "Cormorant SC", "font-weight": 700, "font-size": 15, fill: "#3B2F1F", "letter-spacing": ".04em" }, "Isla de los sólidos");
+  el(svg, "text", { x: ix + iw / 2, y: s.T + 44, "text-anchor": "middle", "font-family": "Cormorant Garamond", "font-style": "italic", "font-size": 14, fill: "#6E5A3E" }, "longitud (presión) desconocida");
+  el(svg, "line", { x1: ix, x2: ix + iw, y1: s.y(esc.o2), y2: s.y(esc.o2), stroke: "#8E2B1B", "stroke-dasharray": "2 4" });
+  el(svg, "text", { x: ix + iw / 2, y: s.y(esc.o2) - 6, "text-anchor": "middle", "font-family": "Cormorant Garamond", "font-style": "italic", "font-size": 14, fill: "#8E2B1B" }, "paralelo de la Base");
+  solSinP.forEach((p, i) => el(svg, "circle", { cx: ix + 16 + (rnd(i, 3) + .5) * (iw - 32), cy: s.y(p.o2) + rnd(i, 4) * 6, r: 2.2, fill: "#6E5A3E" }));
+  el(svg, "text", { x: ix + iw / 2, y: s.y(maxSol) - 12, "text-anchor": "middle", "font-family": "Cormorant Garamond", "font-style": "italic", "font-size": 14, fill: "#3B2F1F" }, `costa norte: ${maxSol.toFixed(1)} %`);
+
+  // rosa de los vientos mínima: más O2 al norte
+  const rx = 800, ry = 90;
+  el(svg, "path", { d: `M${rx},${ry - 30} L${rx + 6},${ry} L${rx},${ry + 30} L${rx - 6},${ry} Z`, fill: "#3B2F1F" });
+  el(svg, "path", { d: `M${rx - 30},${ry} L${rx},${ry - 6} L${rx + 30},${ry} L${rx},${ry + 6} Z`, fill: "none", stroke: "#3B2F1F" });
+  el(svg, "text", { x: rx, y: ry - 36, "text-anchor": "middle", "font-family": "Cormorant SC", "font-size": 13, fill: "#3B2F1F" }, "+ O₂");
+  el(svg, "text", { x: rx + 36, y: ry + 4, "font-family": "Cormorant SC", "font-size": 13, fill: "#3B2F1F" }, "+ kPa");
+</script>
+</body>
+</html>

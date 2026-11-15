@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prometeo · muestra de estilo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500;700&family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+  <link rel="stylesheet" href="base.css">
+  <script>document.write('<link rel="stylesheet" href="e' + (new URLSearchParams(location.search).get("e") || "1") + '.css">');</script>
+</head>
+<body>
+  <header class="top">
+    <span class="brand">Prometeo</span>
+    <span class="sub">Evidencia de combustión para hábitats espaciales</span>
+    <nav><a>01 Escenario</a><a class="on">02 Expediente</a><a>03 Mapa</a><a>04 Evidencia</a></nav>
+  </header>
+  <main class="frame">
+    <section class="intro">
+      <p class="kicker">Expediente B · Base lunar</p>
+      <h1>¿Qué sabemos del fuego en una base lunar?</h1>
+      <p class="cond"><span>30 % O₂</span><span>70.3 kPa</span><span>0.17 g</span></p>
+      <p class="lead">Hay evidencia cerca, pero solo de gotas de combustible líquido. Para los materiales sólidos, <mark>la presión nunca quedó registrada</mark>.</p>
+    </section>
+    <section class="nums" id="nums"></section>
+    <section class="chart">
+      <p class="chart-tit">Pruebas por oxígeno y presión</p>
+      <svg id="fig" viewBox="0 0 760 430"></svg>
+    </section>
+    <section class="list">
+      <p class="list-tit">Más cercanas</p>
+      <ol id="cerca"></ol>
+      <p class="list-tit">Huecos</p>
+      <ul id="huecos"></ul>
+    </section>
+  </main>
+  <script src="../prototipo/datos.js"></script>
+  <script src="muestra.js"></script>
+</body>
+</html>

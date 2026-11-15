@@ -1,0 +1,13 @@
+/* Estructura común; cada eN.css define la identidad */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.top { display: flex; align-items: baseline; gap: 24px; }
+.top nav { margin-left: auto; display: flex; gap: 24px; }
+.frame { display: grid; }
+.intro, .nums, .chart, .list { min-width: 0; }
+.nums { display: grid; grid-template-columns: repeat(4, 1fr); }
+.num b, .num span, .num small { display: block; }
+#fig { width: 100%; height: auto; display: block; overflow: visible; }
+ol, ul { list-style: none; }
+.list li { display: grid; }
+mark { background: none; color: inherit; }
