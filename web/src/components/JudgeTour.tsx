@@ -323,9 +323,6 @@ export function JudgeTour({
       const on = (a: string) => control?.getAttribute(a) === "true";
       if (control && !on("aria-pressed") && !on("aria-expanded")) control.click();
       const el = await waitFor(step.target, 3000, stop);
-      // The report is read in tabs; a stop inside a tab that is not shown opens that tab first.
-      const panel = el?.closest<HTMLElement>("[data-tab]");
-      if (panel?.hidden) document.getElementById(`tab-${panel.dataset.tab}`)?.click();
       if (cancelled || !el) return;
       el.setAttribute(FOCUS, "");
       reveal(el, dock.current);

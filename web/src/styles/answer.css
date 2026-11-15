@@ -2,22 +2,17 @@
    no shadows, radius <= 3px. Every colour is a theme token, so the dark and the light theme both follow. */
 
 @media (min-width: 1181px) {
-  .page.answer-first { width: max(82vw, min(1440px, calc(100vw - 40px))); padding: 28px 56px 56px; }
-  .answer-first .cols > .rail { top: 66px; max-height: calc(100vh - 78px); margin-top: 26px; }
+  .page.answer-first { width: min(1180px, calc(100vw - 40px)); padding: 28px 56px 56px; }
 }
 .cols.single { display: block; }
-.answer-first .brand img { width: 112px; height: 112px; }
-.answer-first .brand { font-size: 14px; gap: 12px; }
+.answer-first .brand img { width: 44px; height: 44px; }
 
 /* ---------- bar that stays in view: sections and actions ---------- */
 .secnav { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 24px; background: var(--paper); border-bottom: 1px solid var(--rule); font-family: var(--sans); }
-.secnav { margin-top: 6px; }
-.tabs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 6px; align-self: flex-end; }
-.tabs button { font: inherit; font-size: 14px; color: var(--ink-2); background: var(--surface-card); border: 1px solid var(--rule); border-bottom: 3px solid transparent; border-radius: 2px 2px 0 0; min-height: 46px; padding: 2px 18px 0; cursor: pointer; }
-.tabs button small { font-size: 12.5px; color: var(--ink-3); }
-.tabs button:hover { color: var(--ink); border-color: var(--ink-3); border-bottom-color: transparent; }
-.tabs button[aria-selected=true] { color: var(--ink); font-weight: 600; background: var(--paper); border-color: var(--ink); border-bottom-color: var(--accent); }
-.tabs button[aria-selected=true] small { font-weight: 400; }
+.secnav nav { display: flex; flex-wrap: wrap; gap: 0 26px; }
+.secnav nav button { font: inherit; font-size: 13.5px; color: var(--ink-3); background: none; border: 0; border-bottom: 3px solid transparent; min-height: 46px; padding: 3px 0 0; cursor: pointer; }
+.secnav nav button:hover { color: var(--ink); }
+.secnav nav button[aria-current] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
 .secnav-n { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 2px; }
 .secnav-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 7px 0; }
 .secnav-actions .chip { font-size: 13px; padding: 6px 12px; justify-content: center; }
@@ -32,24 +27,20 @@
 .more-menu button:hover, .more-menu button:focus-visible { background: var(--accent-wash); }
 
 /* ---------- sections ---------- */
-.tabpanel { padding-top: 26px; }
-.sect { scroll-margin-top: 66px; margin-top: 36px; }
-.answer-first h2.sec.first { margin-top: 0; }
-.tabpanel > .fold:first-child { border-top: 0; }
-.tabpanel .keys { margin: 26px 0 0; }
-.tabpanel .abstract-card { margin: 30px 0 0; }
-.tabpanel .hab-panel { border: 0; margin: 0; padding: 0; }
-.nexttab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 28px; padding: 16px 20px; background: var(--surface-card); border: 1px solid var(--rule-2); border-radius: 2px; font-family: var(--serif); font-size: 19px; line-height: 1.35; color: var(--ink); }
-.nexttab button.link { font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 8px 0; }
-.rail .rail-change { width: 100%; justify-content: center; font-size: 13px; padding: 8px 12px; border-color: var(--ink); color: var(--ink); }
-.answer-first .kicker .verify { font-size: 13px; }
+.sect { scroll-margin-top: 60px; margin-top: 48px; }
+.sect:first-child { margin-top: 0; }
 .sect-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; border-top: 2px solid var(--ink); padding-top: 14px; margin-bottom: 6px; }
 .sect-head h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; line-height: 1.2; }
 .sect-head .hint { font-size: 12.5px; }
 .answer-first h2.sec { margin-top: 30px; }
 .sect .fold .abstract { max-width: 780px; font-size: 17px; }
 
-/* ---------- summary: the answer ---------- */
+/* ---------- 1 · answer ---------- */
+.answer-first .kicker { margin: 24px 0 6px; }
+.scn-headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; }
+.scn-headline h1 { font-size: 34px; line-height: 1.15; }
+.scn-headline .chip { font-size: 13px; padding: 5px 12px; }
+.answer-first .byline { margin: 8px 0 20px; font-size: 16px; }
 .answer-first .top { display: block; margin-bottom: 0; }
 .answer-first .evcard { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px 56px; padding: 26px 0 24px; }
 .answer-first .evcard h2, .evcard-side h3 { font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); margin: 0 0 12px; }
@@ -75,9 +66,26 @@
 .ga-why .ga-track { height: 14px; margin: 8px 0 6px; }
 .ga-why .ga-var-level .level { font-size: 13px; padding: 2px 10px; }
 .ga-why .ga-basis { font-size: 13.5px; margin-top: 8px; }
+.why-extras { list-style: none; font-family: var(--sans); font-size: 13px; color: var(--ink-2); }
+.why-extras li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule-2); }
+.why-extras b { color: var(--ink); font-weight: 600; }
 .try { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 18px 0 16px; font-family: var(--sans); font-size: 13px; color: var(--ink-3); }
 .try .presets { gap: 8px; }
 .try .chip { font-size: 13px; padding: 7px 14px; }
+.sect .keys { margin: 30px 0 0; border-bottom: 0; padding-bottom: 14px; }
+.sect .hab-panel { border: 0; margin: 0; padding: 0; }
+
+.sect .assistant-panel { border-top: 1px solid var(--ink); margin-top: 30px; padding: 16px 0 0; font-family: var(--sans); font-size: 13px; color: var(--ink-2); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 48px; }
+.sect .assistant-panel label, .sect .assistant-panel h2.sec { font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink); margin: 0 0 8px; padding: 0; border: 0; }
+.sect .question-row input { padding: 9px 10px; font-size: 14px; border-color: var(--ink); background: var(--surface-card); }
+.sect .question-row .chip { font-size: 13px; padding: 6px 12px; }
+.sect .assistant-ask .presets .chip { text-align: left; }
+.sect .assistant-ask p[role=status] { margin: 8px 0 0; font-size: 12px; color: var(--ink-3); }
+.sect .assistant-ask p[role=status] + .presets { display: none; }
+.sect .assistant-analysis ul { padding-left: 18px; font-family: var(--serif); font-size: 16px; line-height: 1.4; color: var(--ink); }
+.sect .assistant-analysis li { margin: 8px 0 0; }
+.sect .analysis-sources { font-family: var(--sans); font-size: 12px; }
+
 /* ---------- 3 · explore: closeness panels side by side ---------- */
 .ga-close .ga-c { grid-column: auto; border-top: 0; padding-top: 0; margin-top: 0; }
 .ga-close { margin-bottom: 18px; }
@@ -86,10 +94,11 @@
   .answer-first .evcard { grid-template-columns: 1fr; }
   .answer-first .evcard-level { font-size: 52px; }
   .answer-first .evcard-def { font-size: 20px; }
+  .scn-headline h1 { font-size: 27px; }
   .ga-why .ga-var { grid-template-columns: 1fr; gap: 6px; }
+  .sect .assistant-panel { grid-template-columns: 1fr; }
   .sect-head h2 { font-size: 24px; }
-  .tabs button { padding: 2px 12px 0; }
-  .answer-first .brand img { width: 72px; height: 72px; }
+  .secnav nav { gap: 0 18px; }
 }
 /* On a phone the bar would cover a third of the window, so it scrolls with the page. */
 @media (max-width: 700px) {
@@ -100,6 +109,5 @@
   .sect { margin-top: 22px; }
   .answer-first .evcard { grid-template-columns: 1fr 1fr; }
   .answer-first .evcard-level { font-size: 44px; }
-  .tabpanel[hidden], .rail[hidden] { display: block !important; }
-  .tabpanel { padding-top: 12px; }
+  .sect .assistant-panel { display: block; }
 }
