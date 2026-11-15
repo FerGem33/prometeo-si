@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T32 en curso · stringbuilder: D7/PDF pendientes. T18 hecha: datos y salida configurables; pack temporal idéntico confirmado. |
-| Último commit verificado | Base `6851fb1`; verificación T32 de esta entrega en `docs/T32_EVALUACION.md`; API/web publicadas sin cambios |
-| Siguiente paso exacto | T32: persona revisa discrepancias D7 y candidatos PDF en `docs/T32_EVALUACION.md`; D3 sigue abierta. T31 espera ejecución con AWS en su tarea. Interfaz: T21–T29 con su equipo. |
+| Tarea en curso | T32 en curso · stringbuilder: revisión humana D7/PDF pendiente. T31 preparada, pero ejecución detenida porque el perfil AWS `prometeo` devuelve identidad root. T18 hecha. |
+| Último commit verificado | `97d1613`; T18 reproducible. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
+| Siguiente paso exacto | Configurar un principal AWS IAM de mínimo privilegio para `prometeo` (sin root), verificar `sts get-caller-identity` y ejecutar dos veces `infra/30_data.sh` según §8 de `docs/PLAN_FASE2.md`. En paralelo, una persona revisa D7 y los candidatos PDF de `docs/T32_EVALUACION.md`; el detalle está en “Revisión final pendiente”. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18 pendiente de documentación. T21–T29 corresponden al equipo de interfaz. T32 en curso local; D7 pendiente para evaluar el mapeo. D3 sigue abierta para las subidas.
+- D9 decidida: `data/psi` permanece fuera de git; T18 está hecha. T21–T29 corresponden al equipo de interfaz. T32 sigue en curso por revisión D7/PDF. D3 sigue abierta para las subidas. T31 no se ejecutó porque STS identificó el perfil disponible como root; falta perfil IAM de mínimo privilegio.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -58,8 +58,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
-| T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
-| T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | `infra/30_data.sh` escrito y probado con simulador; falta ejecutarlo con perfil `prometeo` |
+| T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
+| T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Script pasó simulador y `bash -n`; ejecución AWS pendiente: perfil `prometeo` resuelve a root, se requiere principal IAM acotado |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
 | T33–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
@@ -79,13 +79,28 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 - **T32:** revisar las discrepancias listadas en `docs/T32_EVALUACION.md` y los 15 candidatos PDF antes de cualquier aprobación nueva. El 92.1 % es acuerdo de asignación con el mapping vigente, no precisión científica; D7 sigue pendiente. Un PDF requiere texto/OCR revisado. La aprobación local no autentica al operador.
 
+- **T31 / acceso AWS:** el 2026-11-15 el perfil `prometeo` autenticó como `arn:aws:iam::352818909129:root`. No se ejecutó `infra/30_data.sh`. Antes de crear/configurar recursos, sustituir el perfil por una identidad IAM de mínimo privilegio y volver a verificar la cuenta; no usar root para el flujo de trabajo. `bash -n infra/30_data.sh` sí pasó. Después se requieren las dos corridas idempotentes y la inspección de `infra/outputs.env` sin secretos.
+
 - **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
 - **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
 
+- **Revisión humana T12 (ML):** definir clases destino y umbrales de aptitud antes de interpretar frecuencias descriptivas como decisión de selección de modelo. Responsable: equipo/persona dueña del uso ML. Evidencia: criterios aprobados y anotados en `PROGRESS.md`.
+- **Revisión humana T14/T32 (D7):** la persona que conoce las tablas (autor de `construir_corpus.py`) debe resolver las 79 diferencias de `docs/agnostic_proof.md` y revisar la lista de discrepancias en `docs/T32_EVALUACION.md`. Conservar mapping vigente hasta aprobación explícita; el porcentaje no sustituye esta decisión.
+- **Revisión semántica PDF T32:** revisar cada candidato literal y su página/contexto en los cinco PDF enumerados en `docs/T32_EVALUACION.md`, incluyendo alcance experimental; rechazar los que no respalden valor, unidad y población de pruebas. El archivo sin texto requiere fuente legible/OCR revisado.
+- **Aprobación T30 / D3:** aprobar o corregir el contrato §5 y confirmar límites de carga (20 MB, 60 páginas, 30 documentos), tras revisar la medición de costos exigida por el plan. Sin esa decisión no iniciar T33–T36. D1/D2 están decididas; D3 no.
+- **D10/T37:** elegir segundo dominio con tablas públicas y pocas variables y asignar quién consigue su corpus antes de evaluar la prueba agnóstica.
+
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T31 preflight y revisiones pendientes
+- `git pull --rebase`: `main` ya sincronizada con `origin/main` en `97d1613`. El único elemento sin seguimiento es `tools/datos_psi/`; no se añadió a Git.
+- Revisión estática de `infra/30_data.sh`: configura DynamoDB, bucket S3 privado, SQS/DLQ y Cognito; `bash -n infra/30_data.sh` pasó. El guion de T31 requiere dos ejecuciones reales y revisar outputs.
+- AWS STS para `AWS_PROFILE=prometeo` devolvió cuenta `352818909129` y ARN `arn:aws:iam::352818909129:root`. No se ejecutó el guion ni se crearon o modificaron recursos. Se detuvo la operación para no usar identidad root, conforme al principio de permisos acotados de `AGENTS.md` §8.
+- Se detallaron en “Revisión final pendiente” los responsables/evidencias esperadas para T12, D7/T14/T32, soporte semántico PDF, T30/D3 y D10/T37. Ninguna aprobación humana fue inferida.
+- **Siguiente paso:** cambiar el perfil `prometeo` a una identidad IAM de mínimo privilegio, comprobar cuenta con STS y completar la verificación de dos corridas de T31. En paralelo, solicitar la revisión humana D7/PDF y la aprobación de D3.
 
 ### 2026-11-15 02:14 CST · T18 datos reproducibles
 - `collect_data.py --salida` ahora filtra descarga hacia `<raíz>/tables` y `meta`; `build_pack.py --data-dir/--output-dir` permite entrada y salida temporal. `induce_schema.py --tables-dir` ya podía recibir la misma ruta.
