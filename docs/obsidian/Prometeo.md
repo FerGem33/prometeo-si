@@ -30,7 +30,7 @@ Informe interactivo que compara un escenario propuesto con registros de experime
 ## Especificación técnica
 
 - En pantallas de 600 px o menos, los controles pasan de una tabla de cuatro columnas a filas apiladas; los encabezados siguen disponibles para tecnologías de asistencia.
-- Las solicitudes de escenario se validan contra el esquema. Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción o propagación reciben una respuesta fija de alcance no admitido.
+- Las solicitudes de escenario se validan contra el esquema. Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción, propagación o búsqueda de condiciones experimentales cercanas reciben una respuesta fija de alcance no admitido. Las sugerencias de `/ask` deben solicitar cambios de escenario, no consultas de ranking o recuperación de estudios.
 - Cada oración del análisis debe referir un hallazgo y sus fuentes aprobadas; ante un error de API se conserva la plantilla determinista.
 - El informe no requiere cuenta ni guarda escenarios en el servidor.
 

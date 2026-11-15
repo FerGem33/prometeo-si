@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
-| Último commit verificado | `55c18ed` (arreglos de aceptación y guardia de `/ask`); web y API publicados |
+| Último commit verificado | `55c18ed` (base de aceptación); fix posterior de sugerencia ya publicado, pendiente de commit |
 | Siguiente paso exacto | En otra laptop, con su perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh`; comprobar que reutiliza los recursos y marcar el punto 9 para cerrar T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -17,7 +17,7 @@
 
 ## Bloqueos
 
-- [21:24] Falta ejecutar el deploy desde otra laptop para completar el punto 9 de T15; esta sesión desplegó dos veces sobre los recursos existentes y verificó que la infraestructura no se duplicó.
+- [21:24] Falta ejecutar el deploy desde otra laptop para completar el punto 9 de T15; los despliegues de esta sesión reutilizaron los recursos existentes.
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
 - [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
@@ -61,9 +61,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 - [x] 3. Actualización en vivo de escenario, niveles y análisis confirmada al aplicar preset y pregunta; T06 había medido ~42 ms por actualización del motor.
 - [x] 4. Valor de procedencia abierto: archivo `PSI-25_Experimental table_BASS-II.csv`, fila 2 y DOI `10.60555/4qc4-de67`.
 - [x] 5. Chrome Print Preview de la URL pública muestra 16 páginas con escenario, hallazgos, Methods y References.
-- [x] 6. `/ask` aplicó O₂ 25 %, presión 0.5 atm y Nomex. `Which material will ignite first?` devuelve `Only scenario changes are supported.` sin invocar el modelo.
+- [x] 6. `/ask` aplicó O₂ 25 %, presión 0.5 atm y Nomex. La sugerencia de traje actualiza a O₂ 100 %, 0.293 atm y Nomex; la pregunta de comparación original devuelve `Only scenario changes are supported.` sin invocar el modelo. Preguntas de ignición reciben el mismo límite.
 - [x] 7. `/analysis` mostró frases de hallazgo con fuentes verificadas. `pytest api/` valida que errores de API dejan plantilla (modo `template`); no se forzó caída en el sitio público.
-- [x] 8. `npm test --prefix web` (35), `api/.venv/bin/python -m pytest api/` (27), build Vite/TypeScript y `scripts/check_agnostic.sh` en verde.
+- [x] 8. `npm test --prefix web` (35), `api/.venv/bin/python -m pytest api/` (28), build Vite/TypeScript y `scripts/check_agnostic.sh` en verde.
 - [ ] 9. Deploy desde otra laptop sin duplicar recursos
 
 ## Revisión final pendiente
@@ -84,6 +84,13 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **Verificación:** `npm test --prefix web` 35/35; `npm run build --prefix web` OK; `api/.venv/bin/python -m pytest api/` 27/27; `scripts/check_agnostic.sh` OK; `git diff --check` OK. GET/HEAD CloudFront y HEAD del favicon: 200.
 - **Pendiente real:** punto 9 de T15, ejecutar el script desde una segunda laptop con su perfil `prometeo`. T08 y T11 quedan hechas; T15 sigue en curso hasta registrar esa comprobación. No se generó evidencia directa de fallo de `/analysis` en navegador; su fallback cuenta con prueba automatizada.
 - **Siguiente paso exacto:** en otro equipo, configurar el perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh` y anotar si reutiliza bucket/distribución; si pasa, marcar punto 9 y T15 hechas. Mantener pendiente la revisión humana de resultados T12 y discrepancias T14.
+
+### 2026-11-14 · Codex · corrección de la sugerencia de traje
+- **Hallazgo:** la sugerencia “Which conditions are closest…” pedía recuperar/rankear estudios, pero `/ask` solo traduce cambios de escenario. El fallo del modelo se presentaba como HTTP 502.
+- **Cambio:** la sugerencia ahora pide aplicar O₂ 100 %, 0.293 atm y Nomex. La pregunta de comparación se reconoce como contenido no soportado y recibe el límite fijo sin invocar Bedrock; se añadió prueba de regresión y se actualizó la documentación del producto.
+- **Verificación:** `npm test --prefix web` (35/35), `api/.venv/bin/python -m pytest api/` (28/28), build Vite/TypeScript, `scripts/check_agnostic.sh` y `git diff --check` OK. En CloudFront, la sugerencia aplicada mostró O₂ 100, presión 0.293 atm y Nomex, con “Scenario updated”.
+- **Publicación:** web con invalidación `I5QRYPFRMSA2JOODN9490YBX46`; Lambda existente actualizada mediante `infra/20_api.sh` en `https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com`. No se crearon recursos AWS.
+- **Siguiente paso exacto:** commit y push de este arreglo y su bitácora; para cerrar T15 aún se requiere que otra laptop con perfil `prometeo` ejecute `bash infra/deploy_web.sh`.
 
 ### 2026-11-14 20:41 CST · Codex · publicación web y revisión de entrega
 - Preflight: `npm test --prefix web` (35/35), `npm run build --prefix web`, `scripts/check_agnostic.sh` y `python3.12 -I pipeline/validate_pack.py` OK (24 estudios, 1,986 registros, 22 fuentes). AWS STS con perfil `prometeo` confirmó la cuenta configurada; no se crearon recursos nuevos.

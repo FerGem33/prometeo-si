@@ -52,6 +52,14 @@ def test_ask_rejects_outcome_question_without_model(monkeypatch):
     assert json.loads(response['body']) == {'unsupported': 'Only scenario changes are supported.'}
 
 
+def test_ask_rejects_closest_conditions_query_without_model(monkeypatch):
+    data = case('ask'); data['question'] = 'Which conditions are closest to a spacesuit at 100% O₂ and 4.3 psi?'
+    monkeypatch.setattr(h, 'model_json', lambda *args: pytest.fail('Should not call model'))
+    response = call('/ask', data)
+    assert response['statusCode'] == 200
+    assert json.loads(response['body']) == {'unsupported': 'Only scenario changes are supported.'}
+
+
 @pytest.mark.parametrize('values,active', [({'o2': 999}, ['o2']), ({'material':'Cotton'},['material']),
     ({'o2':True},['o2']), ({'unknown':1},['unknown']), ({'p':.5},['o2']), ({'p':.5},['p','p'])])
 def test_invalid_model_scenario(monkeypatch, values, active):

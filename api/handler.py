@@ -68,10 +68,15 @@ def model_json(system, data):
     return json.loads(text)
 
 
-def asks_for_outcome(question):
-    """Keep outcome and safety questions outside the scenario interpreter."""
-    return re.search(r'\b(?:ignite|ignition|burn(?:s|ed|ing)?|combust(?:ion|ible)?|flammab\w*|fire|flame\w*|safe(?:ty)?|risk|predict\w*|spread)\b',
-                     question, re.IGNORECASE) is not None
+def asks_for_unsupported_content(question):
+    """Keep evidence and outcome questions outside the scenario interpreter."""
+    asks_about_outcomes = re.search(
+        r'\b(?:ignite|ignition|burn(?:s|ed|ing)?|combust(?:ion|ible)?|flammab\w*|fire|flame\w*|safe(?:ty)?|risk|predict\w*|spread)\b',
+        question, re.IGNORECASE)
+    asks_for_comparisons = re.search(
+        r'\b(?:which|what)\s+conditions\b.{0,80}\b(?:closest|nearest|most similar)\b',
+        question, re.IGNORECASE)
+    return asks_about_outcomes is not None or asks_for_comparisons is not None
 
 
 def reply(status, body, origin):
@@ -129,7 +134,7 @@ def handler(event, context=None):
         return reply(400, {'error': 'Invalid request'}, origin)
     try:
         if path == '/ask':
-            if asks_for_outcome(data['question']):
+            if asks_for_unsupported_content(data['question']):
                 return reply(200, {'unsupported': 'Only scenario changes are supported.'}, origin)
             output = model_json('Translate scenario requests into JSON only: {"values":{},"active":[],"filters":{}}. '
                 'Use canonical units and known categories from schema. Include only requested variables. '
