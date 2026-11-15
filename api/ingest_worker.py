@@ -1,4 +1,4 @@
-"""T34 ingestion through proposed schema only. Never approves/extracts/publishes.
+"""T34 proposals and T35 explicitly approved extraction. Never grants approval or publishes.
 
 Source bytes are read only by this worker. The API records expected_sha256;
 verified sha256 is written here after comparison. SQS retries use checkpoints.

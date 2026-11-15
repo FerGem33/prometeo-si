@@ -1,6 +1,6 @@
 """T33 local project routes. Trust only a configured API Gateway JWT authorizer.
 
-Not activated by infra/20_api.sh yet. Never decode a caller-supplied JWT here.
+Routes are configured separately by deploy_projects.py. Never decode a caller-supplied JWT here.
 """
 import base64
 import hashlib

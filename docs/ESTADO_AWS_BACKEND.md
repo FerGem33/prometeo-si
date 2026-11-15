@@ -5,6 +5,9 @@ T33 cargas/DELETE verificadas con19checks reales. T35 tiene API de revisión loc
 T37 constructor y subset de ebullición verificados, T38 exportación local terminada,
 T36 revisión CLI y originales preparados. T34 espera política de operador y
 simulador IAM; el dueño volvió a autorizar retomar AWS tras las pruebas locales.
+Retoma comprobó:12 rutas JWT y descarga real del original,23 HTTP+SHA pasan.
+Worker sigue denegado; web también requiere GetDistribution antes de publicar.
+Políticas y pasos en PERMISOS_RELEVO_AWS.md.
 Estado vigente y pendientes exactos: PROGRESS.md. La tabla siguiente conserva
 la foto previa al relevo, no evidencia del estado actual.
 

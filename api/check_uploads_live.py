@@ -1,6 +1,6 @@
 """Live T33 file checks. Uses real local source and two sessions from environment.
 
-Creates a project and an original file; does not delete either. No signed URLs,
+Creates a project and an original file; --cleanup removes both. No signed URLs,
 credentials, or source bytes in the receipt. Worker verification is separate.
 """
 import argparse
@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import uuid
 
@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--output', default=str(Path(tempfile.gettempdir()) / 'prometeo-t33-upload-check.json'))
     parser.add_argument('--cleanup', action='store_true', help='Also verify DELETE (document, project) and isolation')
+    parser.add_argument('--originals', action='store_true', help='Also verify original URL ownership and real download integrity')
     args = parser.parse_args()
     path = args.source.resolve()
     if path.suffix.lower() not in ('.csv', '.pdf') or not path.is_file() or not 1 <= path.stat().st_size <= 20000000:
@@ -73,6 +74,23 @@ def main():
         assert ticket['doc_id'] in [d['id'] for d in listing['items']]
         send('foreign_list_rejected', 'GET', endpoint, 404, token=b)
         send('jobs', 'GET', base+'/projects/'+pid+'/jobs', 200, token=a)
+        if args.originals:
+            original = endpoint+'/'+ticket['doc_id']+'/url'
+            send('foreign_original_rejected', 'POST', original, 404, {}, b)
+            signed = send('original_url', 'POST', original, 200, {}, a)
+            assert 0 < signed['expires_in'] <= 300, 'Original TTL exceeds contract'
+            assert signed['url'].startswith('https://prometeo-hack-corpus-352818909129.s3.'), 'Unexpected original destination'
+            try:
+                with urlopen(Request(signed['url'], method='GET'), timeout=30) as response:
+                    downloaded = response.read()
+                    receipt.append({'check': 'original_download', 'http': response.code, 'expected': 200})
+                    assert response.code == 200, 'Original download failed'
+            except (HTTPError, URLError):
+                raise RuntimeError('Original download failed; signed URL withheld') from None
+            assert hashlib.sha256(downloaded).hexdigest() == digest['sha256'], 'Original content hash mismatch'
+            receipt.append({'check': 'original_download_hash', 'match': True})
+            if media == 'text/csv':
+                send('csv_page_rejected', 'POST', original, 400, {'page': 1}, a)
         if args.cleanup:  # Requires the deployed T33 DELETE routes.
             document = endpoint+'/'+ticket['doc_id']
             send('foreign_delete_document_rejected', 'DELETE', document, 404, token=b)

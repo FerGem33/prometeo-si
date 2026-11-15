@@ -26,12 +26,14 @@ async function prompt(label, secret = false) {
 
 async function main() {
   const mode = process.argv[2];
-  const cleanup = mode === 'uploads' && process.argv.length === 5 && process.argv[4] === '--cleanup';
+  const uploadOptions = mode === 'uploads' ? process.argv.slice(4) : [];
+  const validUploads = mode === 'uploads' && process.argv.length >= 4 &&
+    uploadOptions.every(option => ['--cleanup', '--originals'].includes(option)) && new Set(uploadOptions).size === uploadOptions.length;
   // batch <folder> [check_batch_live.py options]: one session (user A) uploads a whole folder (T34/T37).
   const batch = mode === 'batch' && process.argv.length >= 4;
   if (!['register', 'confirm', 'login', 'ab', 'uploads', 'batch'].includes(mode)
-      || (process.argv.length !== (mode === 'uploads' ? 4 : 3) && !cleanup && !batch)) {
-    throw new Error('Usage: node tools/cognito/cli.mjs register|confirm|login|ab|uploads <source> [--cleanup]|batch <folder> [--corrupt] [--limit N]');
+      || (mode === 'uploads' ? !validUploads : process.argv.length !== 3 && !batch)) {
+    throw new Error('Usage: node tools/cognito/cli.mjs register|confirm|login|ab|uploads <source> [--cleanup] [--originals]|batch <folder> [--corrupt] [--limit N]');
   }
   const config = {poolId: process.env.USER_POOL_ID, clientId: process.env.USER_POOL_CLIENT_ID};
   if (config.poolId !== 'us-east-1_JP5FcOZMA' || config.clientId !== 'n509p2ooh8opklaphskhs68sc') {
@@ -68,7 +70,7 @@ async function main() {
       }
       const script = fileURLToPath(new URL({uploads: '../../api/check_uploads_live.py', batch: '../../api/check_batch_live.py'}[mode]
         ?? '../../api/check_projects_live.py', import.meta.url));
-      const checks = mode === 'uploads' ? ['--source', process.argv[3], ...(cleanup ? ['--cleanup'] : [])]
+      const checks = mode === 'uploads' ? ['--source', process.argv[3], ...uploadOptions]
         : batch ? ['--dir', process.argv[3], ...process.argv.slice(4)]
         : ['--output', '/tmp/prometeo-t33-ab.json'];
       const status = await new Promise((resolve, reject) => {

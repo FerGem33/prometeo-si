@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Cierre local T36 y retoma AWS · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. Dueño autoriza volver a AWS después de pruebas; comprobar de nuevo permisos T34 antes de crear/habilitar worker. |
-| Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Retomar AWS: comprobar permisos T34, validar condición IAM y seguir RELEVO §3–4 (worker deshabilitado, lote10+corrupto/DLQ y medición). T35/originales suman15rutas JWT al aplicarse, luego prueba de aprobación/extracción. Pendientes locales: publicación autenticada T37 y persistencia de revisión T36; no se marcan completas por tener CLI. |
+| Tarea en curso | **Relevo AWS y bloque C · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. API actualizada y originales CSV verificados con dos usuarios. Worker y publicación web bloqueados por IAM; políticas en docs/PERMISOS_RELEVO_AWS.md. |
+| Último commit verificado | API desplegada `2745d85` (12 rutas JWT, original CSV real); T38 local `777fb81`; bundle T37 `8f23050`; T32 delegada `cc61d95`. 148 API/40 pipeline/106 web/6 helper pasan. |
+| Siguiente paso exacto | Administrador aplica políticas T34 y T38 web al permission set, reprovisiona y valida condición IAM del mapping (docs/PERMISOS_RELEVO_AWS.md). Después: ZIP del commit vigente, RELEVO §3–4 y deploy web T38. T35 aún sin activar; schema+originals generan 15 rutas JWT. Pendientes de código: publicación autenticada/síntesis T37 y persistencia/API/pantallas T36. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -19,7 +19,7 @@
 
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
-- D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy; no se intentó crear recursos. Dueño pidió continuar localmente y AWS después.
+- D9 decidida: `data/psi` permanece fuera de git; T18/T31/T32 hechas. T21–T29 corresponden al equipo de interfaz. D3 aprobada y cargas/DELETE verificadas. T34: AccessDenied en iam:GetRole del worker e iam:SimulateCustomPolicy. Dueño autorizó retomar AWS: API/originales desplegados y verificados; worker sigue denegado y deploy web falla en GetDistribution antes de subir archivos. Políticas concretas: docs/PERMISOS_RELEVO_AWS.md.
 
 (Formato: `- [hora] descripción — quién puede resolverlo`.)
 
@@ -65,8 +65,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
 | T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
-| T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (local) | stringbuilder | esta entrega | CLI versionada de correcciones/conflictos/claims, 7 pruebas; originales GET firmados300s con ownership/páginas, 10 pruebas. Borrador real51registros preparado sin corregir datos. Faltan APIs persistentes, publicación corregida y pantalla; docs/T36_REVISION_LOCAL.md |
-| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | esta entrega | CSV y datacard conectados al modal; demo y bundle T37 pasan con mismo código, D4 determinista y QA Chrome desktop/móvil. Deploy pospuesto; selector/editor de objetivo y criterios sigue en T27. docs/T38_DATASET_EXPORT.md |
+| T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso | stringbuilder | `2745d85` + esta entrega | CLI de correcciones/conflictos/claims con 7 pruebas. Originales desplegados: 23 HTTP y cotejo SHA real pasan, con dos usuarios y limpieza. Falta PDF parseado/página real, APIs persistentes, publicación corregida y pantallas; docs/T36_REVISION_LOCAL.md |
+| T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha (local) | stringbuilder | `777fb81` | CSV/datacard y D4 determinista pasan con demo y bundle T37; QA desktop/móvil. Deploy intentado: GetDistribution denegado antes del sync; falta política web. Selector/editor sigue en T27; docs/T38_DATASET_EXPORT.md |
 
 ## Aceptación final (T15)
 
@@ -99,6 +99,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Retoma AWS: originales comprobados, permisos worker/web pendientes
+- API empaquetada y actualizada (20_api exit0); deploy_projects --uploads --originals exit0. Gateway confirma **12 rutas JWT**. Lambda Active/Successful conserva nombre/rol y Haiku4.5 de D6. T35 no se activó sin consumidor.
+- Smoke real ampliado: **23 HTTP y un cotejo SHA pasan**. URL original propia200, ajena404, GET S3 firmado200 y bytes idénticos al CSV PSI-87 local; página CSV400. Subida/reintentos/hash/DELETE/aislamiento siguen pasando; proyecto temporal limpiado. Recibo saneado docs/t36-original-smoke-2026-11-15.json; sin URLs firmadas/tokens. sha256_observed continúa null porque el worker no corrió.
+- T34: nueva consulta GetRole del worker devuelve AccessDenied; no se crean rol/Lambda/mapping ni llamadas de lote. Simulación IAM sigue requiriendo administrador.
+- Lectura de contadores SQS también devuelve AccessDenied. Política T34 preparada incluye ahora observación de DLQ y REPORT del log exclusivo del worker; ReceiveMessage solo DLQ para cotejar el doc_id con visibilidad0, sin DeleteMessage/SendMessage. No se aplicó la política desde esta sesión ni se consumieron mensajes. ZIP vigente preparado en /tmp/prometeo-worker-relevo-final.zip.
+- Web T38: los tres JSON demo remotos/locales coincidieron byte a byte antes del intento. deploy_web terminó254 en cloudfront:GetDistribution denegado, antes de build/sync/invalidation; no hubo publicación web ni cambios de datos. Política mínima nueva infra/t38-web-deployer-policy.json y guía docs/PERMISOS_RELEVO_AWS.md; no privilegios administrativos ni borrado.
+- Llamadas Bedrock de esta sesión: dos de regresión pública ask/analysis; sus respuestas no exponen tokens, no se inventa costo exacto. Extracción nueva de lote y pruebas locales: cero llamadas. Conservar tope USD30/revisión de lote>USD5. Queda intervención administrativa concreta y los pendientes de código indicados arriba; ninguna decisión científica se reabre.
 
 ### 2026-11-15 · T36 revisión local y acceso a originales
 - CLI review_records: correct/exclude/resolve/claim con versión, hashes de esquema/fuentes/parseado, autor/fecha/razón, primer valor y cita originales e historial íntegro. No se confunde corrección humana con dato de la cita. Fila totalmente conflictiva no se pierde; alternativas conservadas son marcadas, no ensayos independientes.

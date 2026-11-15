@@ -1,6 +1,8 @@
 # T38 — Dataset export y ficha reproducible
 
-Implementado localmente; despliegue pospuesto por el dueño junto con AWS.
+Implementado localmente; despliegue intentado al retomar AWS y bloqueado por
+`cloudfront:GetDistribution` antes de subir archivos. Política y pasos en
+`PERMISOS_RELEVO_AWS.md`; no se presenta como publicado.
 En el informe: **Dossier & export → Scope → Download records CSV** y
 **Download datacard JSON**. Ambos usan el mismo alcance. Son descargas separadas
 para evitar que el navegador bloquee descargas múltiples automáticas.
@@ -73,10 +75,10 @@ bash scripts/check_agnostic.sh
 ```
 
 QA de interfaz: `http://127.0.0.1:5174/#report`, Chrome headless/Playwright,
-1280×900 y390×844. Browser plugin no disponible; Playwright instalado solo en
+1280×900 y 390×844. Browser plugin no disponible; Playwright instalado solo en
 `/tmp/prometeo-t38-qa`, sin dependencias nuevas del proyecto. Descargas reales:
 268 registros comparables en CSV y datacard, hash CSV coincidente, 22 fuentes.
-Página correcta, contenido visible, sin overlay ni desborde horizontal a390px.
+Página correcta, contenido visible, sin overlay ni desborde horizontal a390 px.
 Capturas locales: `/tmp/prometeo-t38-desktop.png` y `/tmp/prometeo-t38-mobile.png`.
 
 La primera prueba observó el rechazo CORS esperado de `/analysis` desde
