@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | Ninguna. Bloque A cerrado salvo T18 (espera D9). D6 (Haiku 5.5) espera acceso al modelo en la cuenta AWS. |
+| Tarea en curso | T32 en curso · Codex / ferlr: lectura local CSV/PDF y verificación de citas. T18 pendiente de documentación (D9 decidida). |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
 | Siguiente paso exacto | Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 (límites del corpus). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
