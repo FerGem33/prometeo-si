@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **Cierre local T36 y retoma AWS · stringbuilder.** T32/T33 verificadas; T38 local terminada; T35/T37/T36 con código y pruebas locales. Dueño autoriza volver a AWS después de pruebas; comprobar de nuevo permisos T34 antes de crear/habilitar worker. |
+| Tarea en curso | **Paper inteligente guiado por propósito · stringbuilder, rama nasa2genui.** Implementación de docs/SPEC_PAPER_INTELIGENTE_POR_PROPOSITO.md en checkout aislado; sin mezclar cambios locales de main. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Publicar pendiente.md §1–3: `infra/20_api.sh` (handler con /propose y /design para 30 docs) y `infra/deploy_web.sh`, con confirmación humana. Luego retomar AWS: permisos T34 para el worker SQS (pendiente.md §4.2) y RELEVO §3–4. |
+| Siguiente paso exacto | Extender contratos/puntuación/selección y renderizador de módulos según la spec. Confirmación solicitada al dueño para escala A–D, alcance del chat, variables manuales y persistencia; avanzar trabajo independiente mientras responde. No desplegar web sin revisión humana. El estado AWS de esta rama es histórico: no ejecutarlo como si reemplazara main. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -99,6 +99,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Inicio de paper guiado por propósito
+- Dueño solicita implementar la especificación recibida, documentar, commit y push con su identidad Git. Copia de referencia en docs/SPEC_PAPER_INTELIGENTE_POR_PROPOSITO.md. Base expresa: nasa2genui, commit 0f08553; worktree aislado para conservar main y sus cambios locales.
+- La rama sí contiene ingesta local CSV/PDF, compilador UiBlueprint, /design y /propose. Se reutilizan esas piezas y el motor. No hay autorización para publicar la web ni crear infraestructura nueva; el modelo D6 se conserva.
+- Decisiones §7 solicitadas al dueño antes de implementar comportamientos dependientes. Contratos de módulos, puntuación determinista con procedencia y separación de selección/valores pueden avanzar independientemente.
 
 ### 2026-11-15 · pendiente.md §1–3 (frontend) y §1.1 backend
 - Hecho y verificado con el lote real (`~/Descargas/lote`, 23 archivos → 23 procesados, 135 variables): límite de 30 por lote con aviso de excedentes; progreso por archivo, "Clear all documents", arrastre de carpetas; chips de variables, reordenar secciones (arrastre + botones), botón `/design`; buscador, grupos colapsables y conversión de unidades solo de visualización; detección NASA (`ingest/nasaDetect.ts`) con figura isométrica en panel, resumen gráfico y fold "Experimental apparatus"; guardar/reabrir evaluaciones propias (IndexedDB `prometeo-custom-db`) con historial en Workspace; apéndice de impresión (Tablas A1/A2), BibTeX real desde DOIs, descarga `prometeo.pack.json`; preguntas locales (máx/mín/media/conteo y filtros) con procedencia. Pruebas: 212 web, 162 API, check_agnostic OK, build OK.
