@@ -85,6 +85,24 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
     };
   }, [pack, slot]);
 
+  // Close the detail card by clicking anywhere outside it (except nodes, the table form and the source panel) or with Escape.
+  useEffect(() => {
+    if (!sel) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Element)) return;
+      if (!e.target.closest(".kg-card, .gnode, .prov, .kg-alt")) setSel(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSel(null);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [sel]);
+
   const node = g.nodes.find((n) => n.id === sel) ?? null;
   const byId = new Map(g.nodes.map((n) => [n.id, n]));
   const edgesOf = (id: string) => g.edges.filter((e) => e.a === id || e.b === id);

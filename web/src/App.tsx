@@ -273,7 +273,7 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
               </p>
             </aside>
           </div>
-          <GapFigure figure={3} grid={r.grid} scenario={scenario} />
+          <GapFigure figure={3} grid={r.grid} scenario={scenario} axes={axes} onAxes={setAxes} onPick={(v) => setScenario((s) => ({ ...s, values: { ...s.values, ...v }, active: pack.schema.variables.map((x) => x.id).filter((id) => s.active.includes(id) || id in v) }))} />
           <Fold title="Table 2 · All findings for the scenario" hint={`${r.finds.length} findings with their sources`}>
             <FindingsList findings={r.finds} />
           </Fold>

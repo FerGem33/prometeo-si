@@ -296,10 +296,29 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
   );
 }
 
-export function GapFigure({ grid, scenario, figure }: { grid: GapGrid; scenario: Scenario; figure: number }) {
+type CellKey = { x: string; y: string; xi: number; yi: number };
+
+/** Middle of the cell on each axis, kept inside the range the variable allows and rounded to its step. */
+function cellCentre(v: NumVariable, lo: number, hi: number): number {
+  const mid = (lo + hi) / 2;
+  const clamped = Math.min(v.range[1], Math.max(v.range[0], mid));
+  const step = v.step ?? 0;
+  const snapped = step > 0 ? Math.round(clamped / step) * step : clamped;
+  return Number(Math.min(v.range[1], Math.max(v.range[0], snapped)).toFixed(4));
+}
+
+export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
+  grid: GapGrid;
+  scenario: Scenario;
+  figure: number;
+  axes: { x: string; y: string };
+  onAxes: (a: { x: string; y: string }) => void;
+  onPick: (values: Record<string, number>) => void;
+}) {
   const { pack, lens } = useData();
   const vx = varOf(pack, grid.x) as NumVariable;
   const vy = varOf(pack, grid.y) as NumVariable;
+  const nums = pack.schema.variables.filter((v): v is NumVariable => v.type === "num");
   const nx = grid.xEdges.length - 1;
   const ny = grid.yEdges.length - 1;
   const W = 1060;
@@ -310,9 +329,68 @@ export function GapFigure({ grid, scenario, figure }: { grid: GapGrid; scenario:
   const max = Math.max(1, ...grid.cells.flat().map((c) => c.n));
   const name = grid.partition ? partitionName(lens, grid.partition) : "all tests";
   const otherTotal = grid.cells.flat().reduce((a, c) => a + c.other, 0);
+
+  const [pinned, setPinned] = useState<CellKey | null>(null);
+  const [hover, setHover] = useState<{ xi: number; yi: number } | null>(null);
+  const [showOther, setShowOther] = useState(true);
+  // A selection belongs to one pair of axes; changing the axes drops it.
+  const pin = pinned && pinned.x === grid.x && pinned.y === grid.y && grid.cells[pinned.yi]?.[pinned.xi] ? pinned : null;
+  const shown = hover ?? pin;
+
+  const range = (xi: number, yi: number) => ({
+    x: `${num(grid.xEdges[xi])}–${num(grid.xEdges[xi + 1])} ${vx.unit}`,
+    y: `${num(grid.yEdges[yi])}–${num(grid.yEdges[yi + 1])} ${vy.unit}`,
+  });
+  const moveHere = (xi: number, yi: number) =>
+    onPick({
+      [vx.id]: cellCentre(vx, grid.xEdges[xi], grid.xEdges[xi + 1]),
+      [vy.id]: cellCentre(vy, grid.yEdges[yi], grid.yEdges[yi + 1]),
+    });
+  const describe = (xi: number, yi: number) => {
+    const c = grid.cells[yi][xi];
+    const r = range(xi, yi);
+    return `${vx.label} ${r.x}, ${vy.label} ${r.y}: ${c.n} comparable ${c.n === 1 ? "test" : "tests"}${c.studies.length ? ` from ${c.studies.map((s) => studyShort(pack, s)).join(", ")}` : ""}; ${c.other} in other partitions`;
+  };
+  const near = grid.nearestCell;
+  const scn = grid.scenarioCell;
+  const scnEmpty = scn ? grid.cells[scn.yi][scn.xi].n === 0 : false;
+  const both = scenario.active.includes(grid.x) && scenario.active.includes(grid.y);
+  const select = (xi: number, yi: number) => setPinned(pin && pin.xi === xi && pin.yi === yi ? null : { x: grid.x, y: grid.y, xi, yi });
+
   return (
-    <figure className="fig wide" id="fig-gaps">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Coverage of ${vx.label} by ${vy.label}`}>
+    <figure className="fig wide gap" id="fig-gaps">
+      <div className="figctl noprint">
+        <label>
+          Horizontal
+          <select value={axes.x} onChange={(e) => onAxes({ ...axes, x: e.target.value })}>
+            {nums.filter((v) => v.id !== axes.y).map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label} ({v.unit})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Vertical
+          <select value={axes.y} onChange={(e) => onAxes({ ...axes, y: e.target.value })}>
+            {nums.filter((v) => v.id !== axes.x).map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label} ({v.unit})
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="sep" />
+        <button type="button" className="chip" aria-pressed={showOther} onClick={() => setShowOther(!showOther)}>
+          Other partitions
+        </button>
+        {near && scnEmpty && both && (
+          <button type="button" className="chip accent" onClick={() => moveHere(near.xi, near.yi)}>
+            Move the scenario to the nearest covered cell
+          </button>
+        )}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Coverage of ${vx.label} by ${vy.label}. Each cell can be selected.`}>
         <defs>
           <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="8" stroke="var(--rule)" strokeWidth="1.5" />
@@ -323,28 +401,53 @@ export function GapFigure({ grid, scenario, figure }: { grid: GapGrid; scenario:
             const x = L + xi * cw;
             const y = (ny - 1 - yi) * ch + 8;
             const dark = c.n / max > 0.55;
-            const isScn = grid.scenarioCell?.xi === xi && grid.scenarioCell?.yi === yi;
+            const isScn = scn?.xi === xi && scn?.yi === yi;
+            const isNear = near && scnEmpty && near.xi === xi && near.yi === yi;
+            const isPin = pin?.xi === xi && pin?.yi === yi;
+            const isHot = hover?.xi === xi && hover?.yi === yi;
             return (
-              <g key={`${xi}-${yi}`}>
-                <rect x={x} y={y} width={cw} height={ch} fill={c.n ? "var(--ink)" : "url(#hatch)"} fillOpacity={c.n ? 0.1 + 0.75 * (c.n / max) : 1} stroke="var(--paper)" strokeWidth="2">
-                  <title>
-                    {`${vx.label} ${num(grid.xEdges[xi])}–${num(grid.xEdges[xi + 1])} ${vx.unit}, ${vy.label} ${num(grid.yEdges[yi])}–${num(grid.yEdges[yi + 1])} ${vy.unit}\n${c.n} comparable tests (${name})${c.studies.length ? ": " + c.studies.map((s) => studyShort(pack, s)).join(", ") : ""}\n${c.other} tests in other partitions`}
-                  </title>
-                </rect>
+              <g
+                key={`${xi}-${yi}`}
+                className={`gcell${isPin ? " pin" : ""}${isHot ? " hot" : ""}`}
+                tabIndex={0}
+                role="button"
+                aria-pressed={isPin}
+                aria-label={describe(xi, yi)}
+                onClick={() => select(xi, yi)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    select(xi, yi);
+                  }
+                }}
+                onMouseEnter={() => setHover({ xi, yi })}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover({ xi, yi })}
+                onBlur={() => setHover(null)}
+              >
+                <rect x={x} y={y} width={cw} height={ch} fill={c.n ? "var(--ink)" : "url(#hatch)"} fillOpacity={c.n ? 0.1 + 0.75 * (c.n / max) : 1} stroke="var(--paper)" strokeWidth="2" />
                 <text x={x + cw / 2} y={y + ch / 2 + 1} textAnchor="middle" className="lab" style={{ fontSize: 13, fontWeight: 600, fill: dark ? "var(--paper)" : "var(--ink)" }}>
                   {c.n}
                 </text>
-                {c.other > 0 && (
+                {showOther && c.other > 0 && (
                   <text x={x + cw / 2} y={y + ch - 5} textAnchor="middle" className="lab" style={{ fontSize: 10, fill: dark ? "var(--paper)" : "var(--ink-3)" }}>
                     other partitions: {c.other}
                   </text>
                 )}
+                {isNear && <rect x={x + 2} y={y + 2} width={cw - 4} height={ch - 4} fill="none" stroke="var(--paper)" strokeWidth="4" />}
+                {isNear && <rect x={x + 2} y={y + 2} width={cw - 4} height={ch - 4} fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeDasharray="5 3" />}
                 {isScn && <rect x={x + 1.5} y={y + 1.5} width={cw - 3} height={ch - 3} fill="none" stroke="var(--accent)" strokeWidth="2.5" />}
                 {isScn && (
-                  <text x={x + 6} y={y + 12} className="scn-txt" style={{ fontSize: 10 }}>
+                  <text x={x + 6} y={y + 10} className="scn-txt" style={{ fontSize: 10, paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3, strokeLinejoin: "round" }}>
                     scenario
                   </text>
                 )}
+                {isNear && (
+                  <text x={x + 6} y={y + 10} className="scn-txt" style={{ fontSize: 10, paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3, strokeLinejoin: "round" }}>
+                    nearest covered
+                  </text>
+                )}
+                <rect className="gsel" x={x + 1} y={y + 1} width={cw - 2} height={ch - 2} fill="none" />
               </g>
             );
           }),
@@ -368,6 +471,50 @@ export function GapFigure({ grid, scenario, figure }: { grid: GapGrid; scenario:
           </text>
         </g>
       </svg>
+
+      <div className="gap-detail" aria-live="polite">
+        {!shown ? (
+          <p className="hint">Hover a cell to read it, select one to pin it and to move the scenario there.{near && scnEmpty && both ? " The dashed outline marks the covered cell nearest to the scenario." : ""}</p>
+        ) : (
+          (() => {
+            const c = grid.cells[shown.yi][shown.xi];
+            const r = range(shown.xi, shown.yi);
+            const pinnedNow = pin && pin.xi === shown.xi && pin.yi === shown.yi;
+            return (
+              <>
+                <p>
+                  <b>
+                    {vx.label} {r.x} · {vy.label} {r.y}
+                  </b>
+                  {pinnedNow ? "" : " (hover)"}
+                </p>
+                <p>
+                  {c.n === 0 ? (
+                    <>No comparable test was recorded in this cell. An empty cell states that nothing was recorded there; it does not state what would happen.</>
+                  ) : (
+                    <>
+                      {c.n} comparable {c.n === 1 ? "test" : "tests"} from {c.studies.length} {c.studies.length === 1 ? (lens.unit_of_study ?? "study") : (lens.unit_of_study ?? "study") + "s"}:{" "}
+                      {c.studies.map((s) => studyShort(pack, s)).join(", ")}.
+                    </>
+                  )}{" "}
+                  {c.other > 0 ? `${c.other} tests of other partitions fall here, as context.` : ""}
+                </p>
+                {pinnedNow && (
+                  <p className="gap-actions noprint">
+                    <button type="button" className="chip accent" onClick={() => moveHere(shown.xi, shown.yi)}>
+                      Move the scenario to this cell
+                    </button>
+                    <button type="button" className="chip" onClick={() => setPinned(null)}>
+                      Unpin
+                    </button>
+                  </p>
+                )}
+              </>
+            );
+          })()
+        )}
+      </div>
+
       <figcaption>
         <b>
           Figure {figure} | Coverage and gaps: {(vx.long ?? vx.label).toLowerCase()} × {(vy.long ?? vy.label).toLowerCase()}, {name}.
@@ -380,11 +527,11 @@ export function GapFigure({ grid, scenario, figure }: { grid: GapGrid; scenario:
         ) : (
           <>
             {grid.both} of {grid.total} comparable tests record both variables ({grid.no_x} lack {vx.label}, {grid.no_y} lack {vy.label}).
-            {grid.scenarioCell && grid.cells[grid.scenarioCell.yi][grid.scenarioCell.xi].n === 0 && " The scenario cell is empty."}
+            {scn && scnEmpty && " The scenario cell is empty."}
           </>
         )}{" "}
         {otherTotal > 0 && `${otherTotal.toLocaleString("en-US")} tests of other partitions record both.`}
-        {scenario.active.includes(grid.x) && scenario.active.includes(grid.y) ? " The red outline is the scenario cell." : ""}
+        {both ? " The red outline is the scenario cell." : ""}
       </figcaption>
     </figure>
   );
