@@ -3,6 +3,7 @@ import base64
 import json
 import math
 import os
+import re
 from pathlib import Path
 from functools import lru_cache
 
@@ -67,6 +68,12 @@ def model_json(system, data):
     return json.loads(text)
 
 
+def asks_for_outcome(question):
+    """Keep outcome and safety questions outside the scenario interpreter."""
+    return re.search(r'\b(?:ignite|ignition|burn(?:s|ed|ing)?|combust(?:ion|ible)?|flammab\w*|fire|flame\w*|safe(?:ty)?|risk|predict\w*|spread)\b',
+                     question, re.IGNORECASE) is not None
+
+
 def reply(status, body, origin):
     headers = {'content-type': 'application/json', 'cache-control': 'no-store', 'vary': 'Origin'}
     allowed_origins = [o for o in [os.environ.get('CF_URL')] + os.environ.get('EXTRA_ORIGINS', '').split(',') if o]
@@ -122,6 +129,8 @@ def handler(event, context=None):
         return reply(400, {'error': 'Invalid request'}, origin)
     try:
         if path == '/ask':
+            if asks_for_outcome(data['question']):
+                return reply(200, {'unsupported': 'Only scenario changes are supported.'}, origin)
             output = model_json('Translate scenario requests into JSON only: {"values":{},"active":[],"filters":{}}. '
                 'Use canonical units and known categories from schema. Include only requested variables. '
                 'For content questions or instructions return {"unsupported":"Only scenario changes are supported."}. '

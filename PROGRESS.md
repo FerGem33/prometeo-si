@@ -8,16 +8,17 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T15 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
-| Último commit verificado | `eef732d` antes del deploy; build actual publicado y validación local en verde; aceptación visual pendiente |
-| Siguiente paso exacto | Revisar URL en ventana privada y móvil; completar los puntos 1–7 y 9 de aceptación con evidencia antes de cerrar T08/T11/T15. |
-| URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (build actual publicado; GET/HEAD HTTP 200; revisión visual en navegador pendiente) |
+| Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
+| Último commit verificado | `55c18ed` (arreglos de aceptación y guardia de `/ask`); web y API publicados |
+| Siguiente paso exacto | En otra laptop, con su perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh`; comprobar que reutiliza los recursos y marcar el punto 9 para cerrar T15. |
+| URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
 
 ## Bloqueos
 
-- Sesión actual: perfil `prometeo` operativo (STS), identidad root; T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Operaciones de despliegue S3/CloudFront verificadas; no se desplegó la UI final. El bloqueo de ferlr siguiente es histórico y no aplica a esta laptop.
+- [21:24] Falta ejecutar el deploy desde otra laptop para completar el punto 9 de T15; esta sesión desplegó dos veces sobre los recursos existentes y verificó que la infraestructura no se duplicó.
+- T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
 - [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
 
@@ -44,38 +45,45 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T05 | Esqueleto del informe | P0 | hecha | Claude · ferlr | (este commit) | Informe React llenado desde pack/lens/mapping: Key findings, abstract por plantilla, Tables 1–4, Methods, References. Captura docs/screens/t05_report.png |
 | T06 | Escenario y figuras | P0 | hecha | Claude · ferlr | (este commit) | Panel de escenario (sliders, selector, presets), Fig. 1 mapa, Fig. 2 cercanía, Fig. 3 huecos, niveles con icono+texto. Preset lunar: O₂ Near/not covered, presión Not studied, PMMA Studied. ~42 ms por paso de slider |
 | T07 | Procedencia, PDF y URL | P0 | hecha | Claude · ferlr | (este commit) | Panel de procedencia (archivo, fila, valor original, conversión, DOI, SHA-256), Export PDF (9 páginas A4, docs/screens/t07_export.pdf), escenario en la URL. Sin desbordes a 400 px |
-| T08 | Infra web (CloudFront) | P0 | en curso | Codex · stringbuilder | este commit | Infra idempotente; build actual publicado el 2026-11-14 e invalidación `I8Q4TEXP1D0GNL00604TJLUCQO` completada; GET/HEAD 200 y bundle actual identificado. Falta revisión visual privada/móvil. |
+| T08 | Infra web (CloudFront) | P0 | hecha | Codex · stringbuilder | `55c18ed` | UI publicada con `infra/deploy_web.sh`; invalidación `I3LO3F80GPJHTV36YDX9FD4MAG`; CloudFront y `/favicon.svg` HTTP 200; revisión pública privada y móvil completada. |
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
-| T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada y publicada con el build actual; 35 tests web y build OK. Falta verificación visual/interactiva pública en privado/móvil |
+| T11 | UI de preguntas y análisis | P1 | hecha | Codex · stringbuilder | `55c18ed` | En incógnito: `/ask` aplica 25 % O₂, 0.5 atm y Nomex; preguntas de ignición reciben el límite fijo. `/analysis` devolvió selección con fuentes; 35 pruebas web y 27 API pasan. |
 | T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | `b4f8ced` | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
 | T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e`, `2e40fb6` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Se corrigió el anidamiento HTML inválido en enlaces expandibles y se regeneró `docs/screens/t13_study_compare.png`. |
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
-| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | (este commit) | README para jueces; build publicado y verificado por HTTP/bundle. Aceptación visual e interactiva en ventana privada/móvil continúa pendiente. |
+| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | `55c18ed` | Puntos 1–8 aceptados y documentados abajo. Falta comprobar `infra/deploy_web.sh` desde otra laptop con perfil AWS configurado (punto 9). |
 
 ## Aceptación final (T15)
 
-- [ ] 1. URL abre sin cuenta ni escrituras al servidor
-- [ ] 2. Preset lunar base: O₂ near/not studied (BASS-II), presión not studied, PMMA studied
-- [ ] 3. Sliders recalculan sin retraso visible
-- [ ] 4. Clic en valor → archivo, fila y DOI
-- [ ] 5. Export PDF completo
-- [ ] 6. `/ask` cambia escenario; pregunta de contenido → mensaje de límite
-- [ ] 7. `/analysis` solo con fuentes; plantilla si la API cae
-- [x] 8. `npm test` (35), `pytest api/` (26 en `api/.venv`, Python 3.12.13), `check_agnostic.sh` en verde
+- [x] 1. URL abre en incógnito sin cuenta. La app no guarda el escenario en el servidor; API sin almacenamiento persistente.
+- [x] 2. Preset lunar base: O₂ 30 % = *Near, not covered* (máximo sólido BASS-II 22.2 %); presión 0.694 atm = 10.2 psi = *Not studied*; PMMA = *Studied*.
+- [x] 3. Actualización en vivo de escenario, niveles y análisis confirmada al aplicar preset y pregunta; T06 había medido ~42 ms por actualización del motor.
+- [x] 4. Valor de procedencia abierto: archivo `PSI-25_Experimental table_BASS-II.csv`, fila 2 y DOI `10.60555/4qc4-de67`.
+- [x] 5. Chrome Print Preview de la URL pública muestra 16 páginas con escenario, hallazgos, Methods y References.
+- [x] 6. `/ask` aplicó O₂ 25 %, presión 0.5 atm y Nomex. `Which material will ignite first?` devuelve `Only scenario changes are supported.` sin invocar el modelo.
+- [x] 7. `/analysis` mostró frases de hallazgo con fuentes verificadas. `pytest api/` valida que errores de API dejan plantilla (modo `template`); no se forzó caída en el sitio público.
+- [x] 8. `npm test --prefix web` (35), `api/.venv/bin/python -m pytest api/` (27), build Vite/TypeScript y `scripts/check_agnostic.sh` en verde.
 - [ ] 9. Deploy desde otra laptop sin duplicar recursos
 
 ## Revisión final pendiente
 
-- **Deploy del dueño:** la UI de T11 y la comparación/ficha nuevas no se han publicado. HTTP 200 del CloudFront confirma respuesta del servidor, no versión ni render final. Revisar los ítems 1–7 y 9 de aceptación después del deploy final en navegador privado y móvil.
+- **Aceptación operativa pendiente:** el punto 9 requiere que una segunda laptop con perfil AWS `prometeo` ejecute `bash infra/deploy_web.sh`. En esta sesión se ejecutó dos veces desde el mismo equipo sobre el mismo bucket y distribución, sin crear recursos duplicados.
 - **Revisión humana de ML (T12):** la ficha conserva resultados originales y reporta frecuencias descriptivas. El equipo no ha definido clases destino ni umbrales; no debe usarse como veredicto de aptitud ni como selección de modelo.
 - **Revisión humana del mapeo (T14):** la propuesta de Bedrock coincide con el mapping en 65.2% de asignaciones y 47.1% de asignación + unidad en muestras pequeñas. Revisar diferencias en `docs/agnostic_proof.md`; el mapping humano continúa siendo la referencia aprobada.
 - **Reproducibilidad de T14:** el checkout no tiene `data/psi/tables`; se ejecutó desde `tools/datos_psi/tablas`, que permanece fuera de Git. Un clon limpio debe recibir esos CSV para repetir la corrida.
-- **No desplegado:** se respetó la instrucción del dueño de reservar el deploy web final. No se modificaron recursos AWS en T12–T15.
 
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 21:24 CST · Codex · aceptación web/API y correcciones finales
+- **Cambios:** CSS móvil apila las filas de escenario, conserva controles numéricos y niveles visibles y añade etiquetas; `web/index.html` enlaza el favicon SVG, evitando la petición 403 a `/favicon.ico`. `/ask` devuelve el límite de contenido de forma determinista para preguntas explícitas de ignición, combustión, inflamabilidad, fuego/llamas, seguridad, riesgo, predicción o propagación. Prueba de regresión añadida.
+- **Commits y publicación:** `55c18ed` (`T15: close acceptance findings and publish fixes`), subido a `origin/main`. `infra/deploy_web.sh` publicó la web; invalidación `I3LO3F80GPJHTV36YDX9FD4MAG`, root y `/favicon.svg` respondieron HTTP 200. `infra/20_api.sh` actualizó la Lambda existente; API `https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com`. No se crearon recursos nuevos.
+- **Revisión del sitio:** Chrome incógnito, URL pública, viewport responsive 400 × 899. Se ven sliders, campos numéricos, nivel y base sin recorte. El preset lunar produjo 30 % O₂ / 0.694 atm / PMMA con niveles *Near, not covered* / *Not studied* / *Studied*. `/ask` aplicó 25 % / 0.5 atm / Nomex; pregunta de ignición devolvió el mensaje de límite. `/analysis` mostró frases con DOI/fuentes. Print Preview presentó 16 páginas. El favicon ya se carga como `favicon.svg`; sin error 403. Una llamada `/ask` anterior a actualizar la Lambda devolvió 502; al repetirla tras el deploy se obtuvo el mensaje fijo esperado.
+- **Verificación:** `npm test --prefix web` 35/35; `npm run build --prefix web` OK; `api/.venv/bin/python -m pytest api/` 27/27; `scripts/check_agnostic.sh` OK; `git diff --check` OK. GET/HEAD CloudFront y HEAD del favicon: 200.
+- **Pendiente real:** punto 9 de T15, ejecutar el script desde una segunda laptop con su perfil `prometeo`. T08 y T11 quedan hechas; T15 sigue en curso hasta registrar esa comprobación. No se generó evidencia directa de fallo de `/analysis` en navegador; su fallback cuenta con prueba automatizada.
+- **Siguiente paso exacto:** en otro equipo, configurar el perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh` y anotar si reutiliza bucket/distribución; si pasa, marcar punto 9 y T15 hechas. Mantener pendiente la revisión humana de resultados T12 y discrepancias T14.
 
 ### 2026-11-14 20:41 CST · Codex · publicación web y revisión de entrega
 - Preflight: `npm test --prefix web` (35/35), `npm run build --prefix web`, `scripts/check_agnostic.sh` y `python3.12 -I pipeline/validate_pack.py` OK (24 estudios, 1,986 registros, 22 fuentes). AWS STS con perfil `prometeo` confirmó la cuenta configurada; no se crearon recursos nuevos.

@@ -75,13 +75,13 @@ export function ScenarioPanel({
           ))}
         </div>
       </div>
-      <table className="scn">
+      <table className="scn" aria-label="Proposed scenario values and evidence">
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Proposed value</th>
-            <th>Evidence level</th>
-            <th>Basis (comparable tests)</th>
+            <th scope="col">Variable</th>
+            <th scope="col">Proposed value</th>
+            <th scope="col">Evidence level</th>
+            <th scope="col">Basis (comparable tests)</th>
           </tr>
         </thead>
         <tbody>
