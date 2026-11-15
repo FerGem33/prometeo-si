@@ -19,26 +19,26 @@ related:
 
 # Prometeo
 
-## Purpose
+## Propósito
 
-Interactive research report that compares a user-proposed scenario with NASA PSI combustion experiment records. The deterministic engine calculates evidence levels and findings; the optional `/ask` endpoint translates scenario changes, and `/analysis` may select only verified, sourced statements.
+Informe interactivo que compara un escenario propuesto con registros de experimentos de combustión de NASA PSI. El motor determinista calcula niveles de evidencia y hallazgos; `/ask` interpreta cambios de escenario y `/analysis` puede seleccionar afirmaciones verificadas con fuentes.
 
-## Relationships & Flow
+## Relaciones y flujo
 
-`[[web/src/components/ScenarioPanel.tsx]]` edits values and displays levels. `[[web/src/components/AssistantPanel.tsx]]` submits scenario questions and presents cited analysis. `[[api/handler.py]]` validates API input and rejects explicit outcome or safety questions before invoking the model. The app is deployed through `infra/deploy_web.sh`; the API is deployed through `infra/20_api.sh`.
+`[[web/src/components/ScenarioPanel.tsx]]` edita valores y muestra los niveles. `[[web/src/components/AssistantPanel.tsx]]` envía preguntas de escenario y presenta análisis con citas. `[[api/handler.py]]` valida la entrada y rechaza preguntas explícitas sobre resultados o seguridad antes de invocar el modelo. La aplicación se publica con `infra/deploy_web.sh`; la API, con `infra/20_api.sh`.
 
-## Technical Specification
+## Especificación técnica
 
-- Mobile scenario controls switch from a four-column table to stacked rows at 600 px and below; headers remain available to assistive technology.
-- Scenario requests are schema-validated. Outcome questions mentioning ignition, burning, combustion, flammability, fire, flames, safety, risk, prediction, or spread return a fixed unsupported response.
-- Analysis sentences must reference a finding and its approved sources; API errors leave the deterministic template visible.
-- No account or server-side scenario storage is used by the report.
+- En pantallas de 600 px o menos, los controles pasan de una tabla de cuatro columnas a filas apiladas; los encabezados siguen disponibles para tecnologías de asistencia.
+- Las solicitudes de escenario se validan contra el esquema. Las preguntas sobre ignición, combustión, inflamabilidad, fuego, llamas, seguridad, riesgo, predicción o propagación reciben una respuesta fija de alcance no admitido.
+- Cada oración del análisis debe referir un hallazgo y sus fuentes aprobadas; ante un error de API se conserva la plantilla determinista.
+- El informe no requiere cuenta ni guarda escenarios en el servidor.
 
-## Validation & Testing
+## Validación y pruebas
 
-- `npm test --prefix web`: 35 tests passed.
-- `npm run build --prefix web`: TypeScript and Vite build passed.
-- `api/.venv/bin/python -m pytest api/`: 27 tests passed.
-- `scripts/check_agnostic.sh`: passed.
-- Public review: CloudFront in Chrome Incognito, responsive viewport 400 × 899, scenario and content question paths, favicon HTTP 200, and 16-page print preview.
-- Cross-laptop deployment remains an external acceptance check.
+- `npm test --prefix web`: 35 pruebas aprobadas.
+- `npm run build --prefix web`: compilación TypeScript y Vite aprobada.
+- `api/.venv/bin/python -m pytest api/`: 27 pruebas aprobadas.
+- `scripts/check_agnostic.sh`: aprobado.
+- Revisión pública: CloudFront en Chrome incógnito, viewport responsive 400 × 899, preguntas de escenario y de contenido, favicon HTTP 200 y vista de impresión de 16 páginas.
+- El despliegue desde otra laptop sigue pendiente como verificación externa de aceptación.
