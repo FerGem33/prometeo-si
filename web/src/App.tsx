@@ -256,7 +256,7 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, o
         <div className="row">
           <div className="body">
             <h2 className="sec">7 · Methods</h2>
-            <Methods tableN={4} />
+            <Methods tableN={6} />
           </div>
           <aside className="side">
             <p>

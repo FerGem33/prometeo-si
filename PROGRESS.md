@@ -77,6 +77,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-14 · rama frontend · fases 1-3 del MVP local
+- Hecho (rama `frontend`, no en `main`): grafo de evidencia (Fig. 4, aristas calculadas por el motor, no extraídas de los textos), tabla "Sources ranked" con valores reales y orden por columna, resumen de cambios de nivel, variantes guardables y comparables, partes con nombre, y Workspace local (proyectos en `localStorage`, solo este navegador, sin cuentas; la subida de papers aparece deshabilitada).
+- Verificado: tsc, 60 tests web, build Vite y `check_agnostic.sh`. NO se probó en navegador: diseño, foco de teclado y vista de impresión sin revisar.
+- Ojo: la Tabla 4 colisionaba entre "Sources ranked" y Methods; Methods pasó a la Tabla 6. La numeración global de tablas no sigue el orden de aparición en la página.
+- Brechas que siguen requiriendo backend: ver `docs/Prometeo — Brechas del frontend y contratos del backend.md`.
+
 ### 2026-11-14 21:24 CST · Codex · aceptación web/API y correcciones finales
 - **Cambios:** CSS móvil apila las filas de escenario, conserva controles numéricos y niveles visibles y añade etiquetas; `web/index.html` enlaza el favicon SVG, evitando la petición 403 a `/favicon.ico`. `/ask` devuelve el límite de contenido de forma determinista para preguntas explícitas de ignición, combustión, inflamabilidad, fuego/llamas, seguridad, riesgo, predicción o propagación. Prueba de regresión añadida.
 - **Commits y publicación:** `55c18ed` (`T15: close acceptance findings and publish fixes`), subido a `origin/main`. `infra/deploy_web.sh` publicó la web; invalidación `I3LO3F80GPJHTV36YDX9FD4MAG`, root y `/favicon.svg` respondieron HTTP 200. `infra/20_api.sh` actualizó la Lambda existente; API `https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com`. No se crearon recursos nuevos.
