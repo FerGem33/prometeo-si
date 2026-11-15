@@ -8,16 +8,16 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
-| Último commit verificado | `3720861` en `main` (fase 2, sin desplegar); lo publicado sigue siendo `67a81e1` |
-| Siguiente paso exacto | Con perfil `prometeo`: guion de `docs/PLAN_FASE2.md` §7 (deploy de API y web, comprobación de `/ask` y `/analysis`). Interfaz: `docs/CONTRATOS_FASE2.md` §6. |
+| Tarea en curso | T16 (Codex · laptop actual); T17 y T19 listas para validación real |
+| Último commit verificado | `3720861` en `main` (fase 2, aún sin desplegar desde este equipo); lo publicado sigue siendo `67a81e1` |
+| Siguiente paso exacto | Ejecutar el guion de `docs/PLAN_FASE2.md` §7 con perfil `prometeo`; confirmar reutilización de recursos, respuestas `/ask` y `/analysis`, y hash de bundle público. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
 
 ## Bloqueos
 
-- [21:24] Falta ejecutar el deploy desde otra laptop para completar el punto 9 de T15; los despliegues de esta sesión reutilizaron los recursos existentes.
+- [23:33] T16 requiere perfil AWS `prometeo` en esta laptop y comprobación de que ambos scripts reutilizan la infraestructura existente.
 - T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Esta sesión actualizó la Lambda existente y publicó la UI; no creó recursos AWS.
 
 - [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
@@ -53,7 +53,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e`, `2e40fb6` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Se corrigió el anidamiento HTML inválido en enlaces expandibles y se regeneró `docs/screens/t13_study_compare.png`. |
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
 | T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | `55c18ed` | Puntos 1–8 aceptados y documentados abajo. Falta comprobar `infra/deploy_web.sh` desde otra laptop con perfil AWS configurado (punto 9). |
-| T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | pendiente | requiere perfil `prometeo` | | `docs/PLAN_FASE2.md` §7 |
+| T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | en curso | Codex · laptop actual | `3720861` | Verificar AWS, reutilización de bucket/distribución/Lambda/API y hash del bundle; seguir §7. |
 | T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | en curso | Claude · ferlr | este commit | Código y 10 pruebas hechos; falta desplegar y probar con Bedrock |
 | T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
 | T19 | Análisis con más contenido | fase 2 · A | en curso | Claude · ferlr | este commit | `tested_elsewhere` y valor extremo; falta desplegar |
@@ -84,6 +84,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 23:33 CST · Codex · recuperación del relevo Fase 2
+- **Inicio:** `git fetch` y `git pull --rebase` confirmaron que `main` coincide con `origin/main` en `3720861`; no había cambios versionados locales. Se conserva `tools/datos_psi/` fuera de Git según D9.
+- **Tarea en curso:** T16. T17 y T19 tienen código y pruebas locales, pero esperan despliegue y validación con Bedrock real.
+- **Siguiente paso exacto:** cargar `AWS_PROFILE=prometeo`, `infra/config.env` y `infra/outputs.env`; correr primero las pruebas de §7 y después `infra/20_api.sh` y `infra/deploy_web.sh`. Confirmar que no se crean recursos y ejecutar los cuatro casos `/ask` más `/analysis`.
 
 ### 2026-11-14 23:20 CST · Claude · ferlr · fase 2 sin AWS: motor, API en código y contratos
 - **Decisión del dueño:** la fusión de `frontend` la hace su equipo; no está en este plan. Motor, API, infra y contratos siguen en `main`.
