@@ -52,6 +52,8 @@ Unas 420 palabras: el máximo para 3 min a ritmo tranquilo. Las acotaciones entr
 >
 > La ciencia avanza. [versión nueva] Cuando entra un artículo nuevo, Prometeo publica una versión nueva del conocimiento y marca qué cambió.
 >
+> [Opcional, si sobra tiempo] Y si alguien quiere entrenar un modelo predictivo, exporta un dataset con procedencia, unidades y una ficha que dice si los datos alcanzan para ello.
+>
 > **[2:15]** Y lo más importante: nada de esto está escrito para la combustión. [cambiar de dominio] Este es el mismo sistema con datos de ebullición. El investigador sube sus tablas y artículos, revisa las variables que el sistema propone y obtiene su propio paper vivo, sea de materiales, de biotecnología o de lo que investigue.
 >
 > **[2:45]** Leer decenas de artículos para encontrar un hueco toma semanas. Con Prometeo, el investigador empieza por el hueco. Gracias.
@@ -76,35 +78,80 @@ Para la demo:
 
 ## 5. Diapositivas de fondo
 
-Cada una tiene un número grande y una línea de contexto. Pasan solas o las avanza una segunda persona, siguiendo el orden del guion.
+Están en el deck **"Prometeo — diapositivas de fondo del pitch"**: https://claude.ai/artifact/6F4s1nsQ3ssXR7dcCa57Pm (privado hasta que se comparta; se descarga en PowerPoint o PDF).
+Cada una tiene un número grande o una frase y una línea de contexto. Las notas del orador dicen en qué momento del guion va cada una. Pasan solas o las avanza una segunda persona.
 
-1. **24 investigaciones · 22 tablas · 1,986 registros**: lo que Prometeo sintetiza hoy.
-2. **0 de 268**: pruebas con sólidos que registran presión.
-3. **22.2 %**: el O₂ máximo probado en sólidos. La base lunar usa 30 %.
-4. **1 clic**: de cualquier número a su fuente (archivo, fila, DOI).
-5. **La IA no calcula**: traduce y redacta; el motor calcula y un verificador revisa.
-6. **Cualquier área**: combustión → ebullición, con el mismo sistema.
-7. **Versiones**: el conocimiento cambia con cada artículo nuevo, y queda registrado qué cambió.
-8. Nombre del equipo, URL y QR.
+| # | Diapositiva | Momento del guion |
+|---|---|---|
+| 1 | Portada: **Prometeo**, para investigadores | Mientras el equipo se prepara |
+| 2 | **24 investigaciones · 22 tablas · 1,986 registros** | 0:00 |
+| 3 | **0 de 268** pruebas con sólidos registran la presión (la diapositiva de acento) | 0:15 |
+| 4 | **22.2 %**: el O₂ máximo probado; la base lunar usa 30 %, con una figura del rango | 0:50 |
+| 5 | **1 clic** de cualquier número a su fuente | 1:05 |
+| 6 | **La IA no calcula**: traduce, calcula el motor, revisa un verificador | 1:20 |
+| 7 | **Versiones**: el conocimiento cambia con cada artículo | 1:50 |
+| 8 | **Cualquier área**: combustión → ebullición → tu área | 2:15 |
+| 9 | **Datos para modelos predictivos**: CSV y ficha de datos | 2:35, o en preguntas |
+| 10 | Cierre con la frase final, la URL y el QR | 2:45 y durante las preguntas |
 
-Diseño: el estilo del informe (papel `#FDFCF9`, tinta `#1D1C1A` y un solo acento `#A3271B`). Sin fondos espaciales: la identidad es la de un paper.
+Diseño: el estilo del informe (papel `#FDFCF9`, tinta `#1D1C1A`, un solo acento `#A3271B`, EB Garamond y Fira Sans). Sin fondos espaciales: la identidad es la de un paper.
 
 ## 6. Preguntas probables (2 min)
 
-Respuestas de 20 segundos o menos. Primero la respuesta directa y después un dato.
+Respuestas de 20 segundos o menos: primero la respuesta directa y después un dato.
+Asignen quién responde cada bloque, para no pisarse. Si no saben algo, lo dicen: este jurado premia más la honestidad que una respuesta inventada.
+
+### 6.1 Valor y diferenciación
 
 | Pregunta | Quién la haría | Respuesta corta |
 |---|---|---|
 | ¿Por qué no usar ChatGPT? | Negocio, IA | Un chatbot siempre contesta, aunque no haya evidencia. Prometeo calcula de forma determinista, cita fila y DOI, y dice "no estudiado" cuando no hay datos. |
-| ¿Cómo evitan alucinaciones? | Ramírez, Flores, Jonam | La IA no produce números. Su salida se valida contra un esquema, y cada frase del análisis pasa un verificador que la compara con los datos. Si falla, se muestra un texto por plantilla, marcado como tal. |
-| ¿Funcionaría con mis datos de [plantas / materiales / sensores]? | Rivas, Parga, Reyes, Jonam | Sí, si son datos experimentales en tablas o artículos. El motor no tiene vocabulario de ningún dominio: subes documentos, revisas las variables propuestas y publicas. Lo probamos con un segundo dominio. |
-| Es mucho texto | Cualquiera | Sustituye decenas de artículos. Se lee en capas: tres hallazgos clave arriba, y el detalle solo si se necesita. Es un punto de partida para investigar, no un resumen para leer de pasada. |
-| ¿Cómo validan que la extracción es correcta? | Flores, Eréndira | Ninguna variable se publica sin aprobación. Al comparar el mapeo automático con el revisado coincide en 86 %, y el 14 % restante es justo lo que revisa una persona. |
-| ¿Quién lo usaría / qué sigue? | Negocio | Grupos de investigación, laboratorios y estudiantes de posgrado al empezar una tesis o una propuesta. El siguiente paso es un piloto con un grupo de investigación local. |
+| Ya existen Elicit, Consensus o Semantic Scholar | Ramírez, académicos | Esos resumen el texto de los artículos. Prometeo trabaja con los **datos experimentales** de las tablas: calcula qué condiciones están cubiertas, cuáles no y con qué fuentes, fila por fila. |
+| ¿Esto sustituye leer los artículos? | Eréndira, Rivas | No. Es el punto de partida: dice qué leer primero y dónde está el hueco. Cada valor lleva a su artículo para profundizar. |
+| Es mucho texto | Cualquiera | Sustituye decenas de artículos. Se lee en capas: tres hallazgos clave arriba y el detalle solo si se necesita. Es un punto de partida para investigar, no un resumen para leer de pasada. |
 | ¿Por qué el formato de paper? | César Ramírez, Eréndira | Es el formato que el investigador ya domina: no tiene que aprender una interfaz nueva. Se exporta a PDF para citarlo o compartirlo. |
-| ¿Y el impacto social? | Vanessa Fernández | Abre datos públicos de NASA a quien no tiene semanas para revisarlos, como estudiantes o grupos pequeños. Además, mostrar lo que no se ha estudiado orienta la investigación hacia los huecos. |
+| ¿Qué significa "cerca, pero no cubierto"? | Académicos | Que hay pruebas en condiciones parecidas, pero no en las del escenario. En la base lunar: se probó hasta 22.2 % de oxígeno y la base usa 30 %. El sistema no extrapola: lo marca. |
 
-Asignen quién responde cada tipo de pregunta, para no pisarse.
+### 6.2 IA y confianza
+
+| Pregunta | Quién la haría | Respuesta corta |
+|---|---|---|
+| ¿Cómo evitan alucinaciones? | Ramírez, Flores, Jonam | La IA no produce números. Su salida se valida contra un esquema, y cada frase del análisis pasa un verificador que la compara con los datos. Si falla, se muestra un texto por plantilla, marcado como tal. |
+| ¿Qué modelo usan? | IA | Claude Haiku 4.5 en Amazon Bedrock. Un modelo pequeño basta porque solo traduce y redacta; el cálculo es del motor. |
+| ¿Qué pasa si la IA se cae? | Flores, Mona | El informe sigue funcionando: el motor no depende de la IA. El análisis pasa a texto por plantilla, marcado como tal. |
+| ¿Cómo validan que la extracción es correcta? | Flores, Eréndira | Ninguna variable se publica sin aprobación. El mapeo automático coincide en 86 % con el revisado, y el resto es justo lo que revisa una persona. Además, 147 registros llevan bandera de calidad y se ven como tales. |
+| ¿Qué pasa si dos artículos se contradicen? | Académicos | No se promedian ni se elige uno en silencio. El conflicto se muestra con las dos fuentes, y una corrección conserva la cita original. |
+| ¿Y las unidades? | Reyes, Parga | Todo se convierte a una unidad canónica, pero el valor original se conserva y se muestra en la procedencia. Por ejemplo, 10.2 psi = 0.694 atm. |
+
+### 6.3 Cualquier área y datos para modelos
+
+| Pregunta | Quién la haría | Respuesta corta |
+|---|---|---|
+| ¿Funcionaría con mis datos de [plantas / materiales / sensores]? | Rivas, Parga, Reyes, Jonam | Sí, si son datos experimentales en tablas o artículos. El motor no tiene vocabulario de ningún dominio: subes documentos, revisas las variables propuestas y publicas. Lo probamos con un segundo dominio, ebullición. |
+| ¿Cómo prueban que de verdad es agnóstico? | Ramírez, Flores | Una prueba automática revisa que el motor no contenga términos del dominio, y el mismo motor sin cambios corre con datos de ebullición. |
+| ¿Sirve para entrenar modelos predictivos? | Ramírez, Flores, Jonam | Sí: exporta un CSV con unidades y DOI en cada fila y un grupo por estudio, para separar entrenamiento y prueba sin fuga de datos. La ficha de datos dice si alcanzan para entrenar y por qué. |
+| ¿Y si no alcanzan los datos para un modelo? | IA | La ficha lo dice con el criterio que no se cumple, por ejemplo, pocos estudios o unidades sin convertir. Eso también es un hallazgo: dice qué experimentos faltan. |
+| ¿Qué pasa con PDF escaneados? | Flores, Mona | Hoy se necesita que el PDF tenga texto; los escaneados requieren OCR, que es un paso siguiente. Las tablas en CSV o Excel funcionan directo. |
+
+### 6.4 Técnica y escala
+
+| Pregunta | Quién la haría | Respuesta corta |
+|---|---|---|
+| ¿Cómo está construido? | Mona, Jonam | Web estática en CloudFront; el motor corre en el navegador. En AWS hay Lambda, API Gateway, DynamoDB, S3, SQS y Cognito. Toda la infraestructura se crea con scripts reproducibles. |
+| ¿Escala? | Flores, negocio | El informe corre en el navegador del usuario, así que no carga al servidor. La ingesta de documentos va por una cola que procesa por lotes y aparta los documentos que fallan sin detener el resto. |
+| ¿Qué tan rápido responde? | César Ramírez | Mover un parámetro actualiza todo el informe en decenas de milisegundos. Solo la pregunta en lenguaje natural tarda unos segundos, por la IA. |
+| ¿Y la privacidad de mis datos sin publicar? | Académicos, Vanessa | Cada investigador tiene su cuenta, y sus proyectos son privados hasta que los publica. Lo probamos con dos usuarios: uno no puede ver los proyectos del otro. |
+
+### 6.5 Negocio e impacto
+
+| Pregunta | Quién la haría | Respuesta corta |
+|---|---|---|
+| ¿Quién lo usaría? | Negocio | Grupos de investigación, laboratorios y estudiantes de posgrado al empezar una tesis o una propuesta de proyecto. |
+| ¿Modelo de negocio? | Jorge González, Roberto Cárdenas | **[Decidir como equipo.]** Propuesta: abierto para la academia, e instancias institucionales para laboratorios o agencias que necesitan trabajar con datos privados. |
+| ¿Qué sigue? | Negocio | Un piloto con un grupo de investigación local, OCR para PDF escaneados y más dominios de NASA PSI. |
+| ¿Qué tanto hicieron en el hackathon? | Cualquiera | **[Confirmar como equipo.]** Todo: datos, motor, informe, IA e infraestructura. |
+| ¿Y el impacto social? | Vanessa Fernández | Abre datos públicos de NASA a quien no tiene semanas para revisarlos, como estudiantes o grupos pequeños. Además, mostrar lo que no se ha estudiado orienta la investigación hacia los huecos. |
+| ¿Por qué un investigador de Saltillo usaría esto? | Jueces locales | Porque el problema es igual en cualquier universidad: revisar la literatura antes de una tesis o un proyecto. Con la carga de documentos sirve también para sus propios datos. |
 
 ## 7. Riesgos y reglas para el día
 
