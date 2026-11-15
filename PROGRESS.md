@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T00 (Claude · laptop ferlr) |
-| Último commit verificado | — |
-| Siguiente paso exacto | Empezar T00 (ver `docs/PLAN.md` §4). |
+| Tarea en curso | T02 (Claude · laptop ferlr) |
+| Último commit verificado | T01 |
+| Siguiente paso exacto | T02: scaffold de web/ (Vite+React+TS+Vitest), api/, infra/, scripts/check_agnostic.sh |
 | URL pública (CloudFront) | _sin desplegar_ |
 | API (`API_URL`) | _sin desplegar_ |
 | `MODEL_ID` confirmado | _pendiente (infra/00_check.sh)_ |
@@ -24,7 +24,7 @@ _Ninguno._ (Formato: `- [hora] descripción — quién puede resolverlo`.)
 - [ ] Acceso AWS por persona y perfil `prometeo` en cada laptop
 - [ ] Invocación real de Claude en Bedrock (`us-east-1`)
 - [ ] Acceso de push al repo para todo el equipo
-- [ ] `construir_corpus.py` / `corpus.json` del compañero en `pipeline/legacy/` (opcional)
+- [x] `construir_corpus.py` del compañero en `pipeline/legacy/` (junto con `nasa_fuego_todo.py`, el descargador)
 
 ## Tareas
 
@@ -32,9 +32,9 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 | ID | Tarea | Prioridad | Estado | Agente / persona | Commit | Nota |
 |---|---|---|---|---|---|---|
-| T00 | Repo y docs | P0 | en curso | Claude · ferlr | | |
-| T01 | Datos en el repo | P0 | pendiente | | | |
-| T02 | Scaffold + `00_check.sh` | P0 | pendiente | | | |
+| T00 | Repo y docs | P0 | hecha | Claude · ferlr | (este commit) | Duplicado borrado, prototipos a archive/, decisiones y escenario real escritos |
+| T01 | Datos en el repo | P0 | hecha | Claude · ferlr | (este commit) | 24 investigaciones de combustión, 22 CSV; data/ = 632 KB (meta sin listados de archivos ni contactos) |
+| T02 | Scaffold + `00_check.sh` | P0 | en curso | Claude · ferlr |  |  |
 | T03 | Pack de demo | P0 | pendiente | | | |
 | T04 | Motor + vectores | P0 | pendiente | | | |
 | T05 | Esqueleto del informe | P0 | pendiente | | | |
