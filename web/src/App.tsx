@@ -12,6 +12,7 @@ import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesT
 import { Methods, References } from "./components/Methods";
 import { Provenance } from "./components/Provenance";
 import { Cover } from "./components/Cover";
+import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
@@ -54,6 +55,7 @@ function Flow({ data }: { data: Data }) {
   const [scenario, setScenario] = useState<Scenario>(initial.scenario);
   const [axes, setAxes] = useState<Axes>(initial.axes);
   const [goal, setGoal] = useState("");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>(() => stageFromUrl(window.location.hash, window.location.search));
 
   useEffect(() => {
@@ -72,13 +74,14 @@ function Flow({ data }: { data: Data }) {
   const go = (next: Stage) => {
     window.location.hash = next === "cover" ? "" : next;
   };
-  if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} />;
+  if (stage === "cover") return <Cover onStart={() => go("scenario")} onDemo={() => go("report")} onWorkspace={() => go("workspace")} />;
+  if (stage === "workspace") return <Workspace onBack={() => go("cover")} onOpen={(p, e) => { setGoal(p.intent); if (e) { setScenario(e.scenario); setAxes(e.axes); } setProjectId(p.id); go("report"); }} />;
   if (stage === "scenario") return <ScenarioStep scenario={scenario} onChange={setScenario} goal={goal} onGoal={setGoal} onBack={() => go("cover")} onRun={() => go("report")} />;
-  return <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} onHome={() => go("cover")} onEdit={() => go("scenario")} />;
+  return <Report data={data} scenario={scenario} setScenario={setScenario} axes={axes} setAxes={setAxes} goal={goal} projectId={projectId} onHome={() => go("cover")} onEdit={() => go("scenario")} onWorkspace={() => go("workspace")} />;
 }
 
-function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEdit }: {
-  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; onHome: () => void; onEdit: () => void;
+function Report({ data, scenario, setScenario, axes, setAxes, goal, projectId, onHome, onEdit, onWorkspace }: {
+  data: Data; scenario: Scenario; setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void; axes: Axes; setAxes: (a: Axes) => void; goal: string; projectId: string | null; onHome: () => void; onEdit: () => void; onWorkspace: () => void;
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
@@ -125,6 +128,10 @@ function Report({ data, scenario, setScenario, axes, setAxes, goal, onHome, onEd
           <span className="sep" />
           <button type="button" className="chip noprint" onClick={onEdit}>
             Edit scenario
+          </button>
+          <SaveExploration packId={pack.meta.id} scenario={scenario} axes={axes} goal={goal} projectId={projectId} />
+          <button type="button" className="chip noprint" onClick={onWorkspace}>
+            Workspace
           </button>
           <button type="button" className="chip noprint" onClick={onHome}>
             Start

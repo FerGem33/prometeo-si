@@ -5,6 +5,7 @@ import "./styles/app.css";
 import "./styles/flow.css";
 import "./styles/graph.css";
 import "./styles/variants.css";
+import "./styles/workspace.css";
 import { App } from "./App";
 
 createRoot(document.getElementById("root")!).render(
