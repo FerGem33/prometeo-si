@@ -96,6 +96,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · T33 registro real de dos cuentas de prueba
+- El dueño proporcionó dos correos bajo su control y autorizó su registro. Tras corregir una contraseña rechazada por Cognito, ambas llamadas reales SignUp terminaron correctamente mediante la CLI SRP; Cognito indicó envío de confirmación y cuentas aún no confirmadas.
+- Siguiente paso: recibir los códigos de correo, ejecutar confirmación de ambas cuentas y luego login/A/B real. No se declara aislamiento verificado todavía. Contraseñas, códigos y tokens no se guardan en Git ni en el recibo de prueba.
+
 ### 2026-11-15 · T33 herramienta de registro/login y estado AWS/backend
 - `tools/cognito/` añade SDK Cognito 6.3.22 fijado, wrapper en memoria, CLI de registro/confirmación/login SRP y ejecución A/B con dos sesiones en entorno del proceso hijo. Entradas de contraseña/código ocultas, tokens fuera de argumentos/logs/archivos. No modifica componentes ni dependencias web ni flujos del pool.
 - Registro envía correo solo cuando el dueño ejecuta el comando con su dirección; no se registraron cuentas ni se hicieron llamadas Cognito en esta entrega. La herramienta detecta desafíos MFA/contraseña temporal y detiene la operación; no implementa su interacción. Limpiar memoria local no revoca tokens globalmente.
