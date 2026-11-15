@@ -1,0 +1,196 @@
+{
+ "items": [
+  {
+   "id": "PSI-25/s7/r2",
+   "study": "PSI-25",
+   "label": "B1",
+   "kind": "test",
+   "values": {
+    "o2": [
+     22.2,
+     22.2
+    ],
+    "g": [
+     0,
+     0
+    ],
+    "material": "PMMA",
+    "phase": "solid"
+   },
+   "citations": {
+    "o2": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 2,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    },
+    "material": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 2,
+     "column": "Fuel Sample Material",
+     "text": "100 micron PMMA film   2 cm wide"
+    }
+   },
+   "confidence": "table",
+   "flags": [
+    "unit_unconverted"
+   ]
+  },
+  {
+   "id": "PSI-25/s7/r3",
+   "study": "PSI-25",
+   "label": "B2",
+   "kind": "test",
+   "values": {
+    "o2": [
+     22.2,
+     22.2
+    ],
+    "g": [
+     0,
+     0
+    ],
+    "material": "PMMA",
+    "phase": "solid"
+   },
+   "citations": {
+    "o2": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 3,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    },
+    "material": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 3,
+     "column": "Fuel Sample Material",
+     "text": "200 micron PMMA film   2 cm wide"
+    }
+   },
+   "confidence": "table",
+   "flags": [
+    "unit_unconverted",
+    "suspect_value"
+   ]
+  },
+  {
+   "id": "PSI-25/s7/r4",
+   "study": "PSI-25",
+   "label": "B3",
+   "kind": "test",
+   "values": {
+    "o2": [
+     22.2,
+     22.2
+    ],
+    "g": [
+     0,
+     0
+    ],
+    "material": "100 micron film   2 cm wide",
+    "phase": "solid"
+   },
+   "citations": {
+    "o2": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 4,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    },
+    "material": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 4,
+     "column": "Fuel Sample Material",
+     "text": "100 micron film   2 cm wide"
+    }
+   },
+   "confidence": "table",
+   "flags": [
+    "unit_unconverted"
+   ]
+  },
+  {
+   "id": "PSI-25/s7/r5",
+   "study": "PSI-25",
+   "label": "B4",
+   "kind": "test",
+   "values": {
+    "o2": [
+     22.2,
+     22.2
+    ],
+    "g": [
+     0,
+     0
+    ],
+    "material": "PMMA",
+    "phase": "solid"
+   },
+   "citations": {
+    "o2": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 5,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    },
+    "material": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 5,
+     "column": "Fuel Sample Material",
+     "text": "300 micron PMMA film   2 cm wide"
+    }
+   },
+   "confidence": "table",
+   "flags": [
+    "unit_unconverted"
+   ]
+  },
+  {
+   "id": "PSI-25/s7/r6",
+   "study": "PSI-25",
+   "label": "B5",
+   "kind": "test",
+   "values": {
+    "o2": [
+     22.2,
+     22.2
+    ],
+    "g": [
+     0,
+     0
+    ],
+    "material": "200 micron  2 cm wide",
+    "phase": "solid"
+   },
+   "citations": {
+    "o2": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 6,
+     "column": "Calibrated  initial O2 % by vol",
+     "text": "22.2"
+    },
+    "material": {
+     "kind": "table",
+     "doc_id": "doc_bass2_table",
+     "row": 6,
+     "column": "Fuel Sample Material",
+     "text": "200 micron  2 cm wide"
+    }
+   },
+   "confidence": "table",
+   "flags": [
+    "unit_unconverted"
+   ]
+  }
+ ],
+ "next_cursor": "row:7"
+}

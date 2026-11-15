@@ -56,5 +56,12 @@
     { "id": "droplets", "label": "Droplet combustion and extinction", "studies": ["PSI-69", "PSI-68", "PSI-39"] }
   ],
   "partition_labels": { "solid": "solid fuels", "liquid": "liquid droplets", "gas": "gaseous fuels", "aerosol": "smoke and aerosols" },
-  "outcome_columns_note": "Outcome columns are kept verbatim; their formats differ between investigations."
+  "outcome_columns_note": "Outcome columns are kept verbatim; their formats differ between investigations.",
+  "parts": [
+    {"id": "atmosphere", "label": "Atmosphere", "variables": ["o2", "p"]},
+    {"id": "ventilation", "label": "Ventilation", "variables": ["flow"]},
+    {"id": "gravity", "label": "Gravity", "variables": ["g"]},
+    {"id": "material", "label": "Material", "variables": ["material"]}
+  ],
+  "graph": {"attributes": ["hardware"]}
 }

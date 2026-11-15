@@ -1,0 +1,195 @@
+{
+ "scenario": {
+  "values": {
+   "o2": 30,
+   "p": 0.694,
+   "material": "PMMA"
+  },
+  "active": [
+   "o2",
+   "p",
+   "material"
+  ]
+ },
+ "levels": [
+  {
+   "variable": "o2",
+   "value": 30,
+   "recorded": 140,
+   "pool": 268,
+   "level": "near",
+   "reason": "outside_near",
+   "tested": [
+    13.6,
+    22.2
+   ],
+   "gap": 7.8,
+   "covering": 0,
+   "studies": [
+    "PSI-25"
+   ],
+   "source": "PSI-25/s7/r2"
+  },
+  {
+   "variable": "p",
+   "value": 0.694,
+   "recorded": 0,
+   "pool": 268,
+   "level": "not_studied",
+   "reason": "never_recorded",
+   "covering": 0,
+   "studies": []
+  },
+  {
+   "variable": "material",
+   "value": "PMMA",
+   "level": "studied",
+   "reason": "covered",
+   "recorded": 262,
+   "covering": 91,
+   "studies": [
+    "PSI-25",
+    "PSI-26",
+    "PSI-99"
+   ],
+   "source": "PSI-25/s7/r2",
+   "pool": 268
+  }
+ ],
+ "findings": [
+  {
+   "level": "attention",
+   "code": "never_measured",
+   "variable": "p",
+   "params": {
+    "value": 0.694,
+    "unit": "atm",
+    "n": 268,
+    "partition": "solid"
+   },
+   "sources": [
+    "PSI-25",
+    "PSI-26",
+    "PSI-98",
+    "PSI-99",
+    "PSI-100"
+   ],
+   "metric": {
+    "value": "0 / 268"
+   },
+   "id": "never_measured:p"
+  },
+  {
+   "level": "attention",
+   "code": "above_tested",
+   "variable": "o2",
+   "params": {
+    "value": 30,
+    "unit": "%",
+    "delta_unit": "percentage points",
+    "delta": 7.8,
+    "edge": 22.2,
+    "min": 13.6,
+    "max": 22.2,
+    "n": 140,
+    "partition": "solid",
+    "study": "BASS-II",
+    "record": "B1",
+    "row": 2
+   },
+   "sources": [
+    "PSI-25/s7/r2"
+   ],
+   "metric": {
+    "value": "+7.8",
+    "unit": "percentage points"
+   },
+   "note": {
+    "text": "Higher oxygen concentration makes materials much more flammable.",
+    "source": "NASA Space Apps 2026, Flame in Freefall challenge statement"
+   },
+   "id": "above_tested:o2"
+  },
+  {
+   "level": "context",
+   "code": "tested_elsewhere",
+   "variable": "o2",
+   "params": {
+    "value": 30,
+    "unit": "%",
+    "n": 36,
+    "partitions": "gas, liquid",
+    "partition": "solid"
+   },
+   "sources": [
+    "PSI-10",
+    "PSI-69",
+    "PSI-159"
+   ],
+   "metric": {
+    "value": "36",
+    "unit": "tests"
+   },
+   "id": "tested_elsewhere:o2"
+  },
+  {
+   "level": "context",
+   "code": "tested_elsewhere",
+   "variable": "p",
+   "params": {
+    "value": 0.694,
+    "unit": "atm",
+    "n": 107,
+    "partitions": "liquid",
+    "partition": "solid"
+   },
+   "sources": [
+    "PSI-39",
+    "PSI-69"
+   ],
+   "metric": {
+    "value": "107",
+    "unit": "tests"
+   },
+   "id": "tested_elsewhere:p"
+  },
+  {
+   "level": "context",
+   "code": "quality_flags",
+   "params": {
+    "study": "BASS-II",
+    "n": 129,
+    "of": 129,
+    "flags": "unit_unconverted, suspect_value"
+   },
+   "sources": [
+    "PSI-25"
+   ],
+   "metric": {
+    "value": "129 / 129"
+   },
+   "id": "quality_flags"
+  },
+  {
+   "level": "support",
+   "code": "category_tested",
+   "variable": "material",
+   "params": {
+    "value": "PMMA",
+    "n": 91,
+    "studies": 3,
+    "names": "BASS-II, BASS, SAFFIRE-II"
+   },
+   "sources": [
+    "PSI-25",
+    "PSI-26",
+    "PSI-99"
+   ],
+   "metric": {
+    "value": "91",
+    "unit": "tests"
+   },
+   "id": "category_tested:material"
+  }
+ ]
+}

@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
 | Último commit verificado | `67a81e1` (corrección de sugerencia y prueba); web y Lambda publicados |
-| Siguiente paso exacto | Ver `docs/PLAN_FASE2.md`: T16 (fusionar `frontend` y desplegar desde otra laptop; cierra el punto 9 y T15) y T17 (`/ask` con psi y gravedad). |
+| Siguiente paso exacto | Con perfil `prometeo`: guion de `docs/PLAN_FASE2.md` §7 (deploy de API y web, comprobación de `/ask` y `/analysis`). Interfaz: `docs/CONTRATOS_FASE2.md` §6. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -53,6 +53,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e`, `2e40fb6` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Se corrigió el anidamiento HTML inválido en enlaces expandibles y se regeneró `docs/screens/t13_study_compare.png`. |
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
 | T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | `55c18ed` | Puntos 1–8 aceptados y documentados abajo. Falta comprobar `infra/deploy_web.sh` desde otra laptop con perfil AWS configurado (punto 9). |
+| T16 | Publicar `main` desde otra laptop (cierra punto 9) | fase 2 · A | pendiente | requiere perfil `prometeo` | | `docs/PLAN_FASE2.md` §7 |
+| T17 | Corregir `/ask` (psi, gravedad, sin 502) | fase 2 · A | en curso | Claude · ferlr | este commit | Código y 10 pruebas hechos; falta desplegar y probar con Bedrock |
+| T18 | Datos reproducibles (`data/psi`) | fase 2 · A | bloqueada | | | Espera la decisión D9 |
+| T19 | Análisis con más contenido | fase 2 · A | en curso | Claude · ferlr | este commit | `tested_elsewhere` y valor extremo; falta desplegar |
+| T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
+| T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
+| T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
+| T31–T37 | Backend y pantallas del bloque C | fase 2 · C | bloqueada | | | Esperan D1–D3 |
 
 ## Aceptación final (T15)
 
@@ -76,6 +84,17 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 23:20 CST · Claude · ferlr · fase 2 sin AWS: motor, API en código y contratos
+- **Decisión del dueño:** la fusión de `frontend` la hace su equipo; no está en este plan. Motor, API, infra y contratos siguen en `main`.
+- **Motor (hecho):** `web/src/engine/extend.ts` con `assess`, `partLevels`, `explainRank`, `diffAssessment`, `graph` y `emphasis`; 15 vectores sobre el pack real. `lens.parts` y `lens.graph` en `pipeline/lens.json` y en el lens publicado.
+- **Estado local (hecho, sin pantallas):** `web/src/contracts/workspace.ts` (proyectos y variantes en `localStorage`), 3 pruebas.
+- **API (código hecho, SIN desplegar ni probar con Bedrock):** `/ask` convierte psi y kPa en código, descarta lo inválido sin 502 y, con `version: 2`, devuelve `notes`; `/analysis` suma `tested_elsewhere` y el valor extremo. Sin `version`, las respuestas son compatibles con la interfaz publicada.
+- **Contratos:** `docs/CONTRATOS_FASE2.md` (motor, estado local, API vigente y propuesta del backend del bloque C), tipos en `web/src/contracts/backend.ts`, ejemplos reales en `docs/fixtures/fase2/`.
+- **Corrección a la entrada anterior:** `/analysis` no devuelve "una sola oración para el preset lunar"; esa prueba usó `api/events/analysis.json`, que solo trae un hallazgo.
+- **Verificado:** web 54/54, API 38/38 (`.venv` local con Python 3.14, no el 3.12 del proyecto), build, `check_agnostic.sh`, `validate_pack.py`.
+- **Siguiente paso exacto:** en la laptop con perfil `prometeo`, seguir `docs/PLAN_FASE2.md` §7: `infra/20_api.sh`, `infra/deploy_web.sh` y los `curl` de comprobación. Si `/ask` devuelve `unsupported` donde debería haber condiciones, ajustar `ASK_SYSTEM`.
+- **Ojo con:** `pipeline/tools/` y `tools/` son copias locales de la descarga de PSI, sin versionar; `data/psi` sigue fuera de git (decisión D9 abierta).
 
 ### 2026-11-14 22:50 CST · Claude · ferlr · revisión del MVP y plan de fase 2
 - **Verificado (solo lectura pública, sin perfil AWS):** web 35/35, API 28/28, build, `check_agnostic.sh` y `validate_pack.py` OK. CloudFront 200 y sirve el build de `main` (`index-Ben2isQ8.js`). `/ask` y `/analysis` públicos responden 200 con los eventos de `api/events/`.
