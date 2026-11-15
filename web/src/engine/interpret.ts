@@ -181,6 +181,7 @@ export function findings(pack: Pack, lens: Lens, scenario: Scenario): Finding[] 
         params: {
           value: t,
           unit: v.unit,
+          delta_unit: v.delta_unit ?? v.unit,
           delta,
           edge: edgeValue,
           min: env[0],
@@ -192,7 +193,7 @@ export function findings(pack: Pack, lens: Lens, scenario: Scenario): Finding[] 
           row: edge.source.row ?? edge.source.page ?? 0,
         },
         sources: [edge.id],
-        metric: { value: `${above ? "+" : "−"}${fmt(delta)}`, unit: v.unit },
+        metric: { value: `${above ? "+" : "−"}${fmt(delta)}`, unit: v.delta_unit ?? v.unit },
         note: risky && v.risk ? { text: v.risk.note, source: v.risk.source } : undefined,
       });
     } else {

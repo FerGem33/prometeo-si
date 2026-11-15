@@ -10,6 +10,8 @@ export type NumVariable = {
   label: string;
   long?: string;
   unit: string;
+  /** unit used when stating a difference, if it differs from `unit` */
+  delta_unit?: string;
   type: "num";
   sigma: number;
   range: Range;
