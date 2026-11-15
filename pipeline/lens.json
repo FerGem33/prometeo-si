@@ -38,8 +38,8 @@
   "questions": [
     "What if the base used 25% O₂ at 0.5 atm with Nomex?",
     "Compare a station cabin at 21% O₂ and 1 atm with a 20 cm/s flow over PMMA",
-    "Which conditions are closest to a spacesuit at 100% O₂ and 4.3 psi?",
-    "Lunar gravity, 30% oxygen, 10.2 psi, cotton fabric"
+    "What if the scenario used 100% O₂ at 0.293 atm with Nomex?",
+    "What if the base used 30% O₂ at 0.694 atm with a 5 cm/s flow over PMMA?"
   ],
   "evidence": { "min_studies": 2 },
   "finding_priority": ["never_measured", "above_tested", "below_tested", "category_untested", "known_gap", "tested_elsewhere", "quality_flags", "within_tested", "category_tested", "full_coverage"],

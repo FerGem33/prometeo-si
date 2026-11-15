@@ -132,6 +132,9 @@ def main():
     for ruta in glob.glob(os.path.join(METAS, "*.json")):
         m = json.load(open(ruta, encoding="utf-8"))
         metas[m["accession"]] = m
+    if not metas or not glob.glob(os.path.join(TABLAS, "*.csv")):
+        raise SystemExit("build_pack: no hay datos en data/psi (meta/*.json y tables/*.csv). No se toca el pack publicado. "
+                         "Genera data/psi con: python3 -I pipeline/collect_data.py <carpeta_descarga>...")
     orden = sorted(metas, key=lambda s: int(s.split("-")[1]))
 
     sources, records, tablas_map, por_estudio, sin_spec = [], [], [], {}, []

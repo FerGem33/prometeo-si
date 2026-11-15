@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
 | Último commit verificado | `67a81e1` (corrección de sugerencia y prueba); web y Lambda publicados |
-| Siguiente paso exacto | En otra laptop, con su perfil AWS `prometeo`, ejecutar `bash infra/deploy_web.sh`; comprobar que reutiliza los recursos y marcar el punto 9 para cerrar T15. |
+| Siguiente paso exacto | Ver `docs/PLAN_FASE2.md`: T16 (fusionar `frontend` y desplegar desde otra laptop; cierra el punto 9 y T15) y T17 (`/ask` con psi y gravedad). |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
@@ -76,6 +76,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 22:50 CST · Claude · ferlr · revisión del MVP y plan de fase 2
+- **Verificado (solo lectura pública, sin perfil AWS):** web 35/35, API 28/28, build, `check_agnostic.sh` y `validate_pack.py` OK. CloudFront 200 y sirve el build de `main` (`index-Ben2isQ8.js`). `/ask` y `/analysis` públicos responden 200 con los eventos de `api/events/`.
+- **Fallos encontrados en la URL pública:** `/ask` devuelve 502 cuando la presión viene en psi (`"30% oxygen, 10.2 psi, PMMA"`); descarta la gravedad sin avisar (`"…at 0.17 g"`); la sugerencia "Lunar gravity, 30% oxygen, 10.2 psi, cotton fabric" daba 502. `/analysis` devuelve una sola oración para el preset lunar.
+- **Corregido en este commit:** esa sugerencia (por una verificada contra la API) en `pipeline/lens.json` y `web/public/demo/lens.json`, que además se habían separado; `build_pack.py` ya no sobrescribe el pack con uno vacío cuando falta `data/psi` (borrado de git en `df713ec`); README sin la nota de deploy pendiente. **Falta `infra/deploy_web.sh` para publicar la sugerencia corregida.**
+- **Plan:** `docs/PLAN_FASE2.md` con los pendientes del MVP (P1–P13), 11 decisiones para personas (D1–D11) y las tareas T16–T37 (cierre del MVP, visión sin backend, construcción de la base con corpus propio).
+- **Siguiente paso exacto:** con perfil `prometeo`, T16 (fusionar `frontend` conservando de `main` `api/handler.py`, su prueba y `lens.json`; desplegar desde otra laptop cierra el punto 9) y T17 (psi y gravedad en `/ask`). Sin AWS se puede empezar T18, T19 (código y pruebas) y T20.
+- **Ojo con:** `frontend` va 2 commits detrás de `main`; fusionarla sin cuidado reintroduce el fallo de la sugerencia del traje.
 
 ### 2026-11-14 21:24 CST · Codex · aceptación web/API y correcciones finales
 - **Cambios:** CSS móvil apila las filas de escenario, conserva controles numéricos y niveles visibles y añade etiquetas; `web/index.html` enlaza el favicon SVG, evitando la petición 403 a `/favicon.ico`. `/ask` devuelve el límite de contenido de forma determinista para preguntas explícitas de ignición, combustión, inflamabilidad, fuego/llamas, seguridad, riesgo, predicción o propagación. Prueba de regresión añadida.

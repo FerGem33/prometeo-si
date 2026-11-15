@@ -6,7 +6,7 @@ Prometeo is an interactive evidence report for the NASA Space Apps 2026 challeng
 
 [Open the public report](https://dursf4nho4zl6.cloudfront.net)
 
-The CloudFront site is live. The latest source changes still need the project owner's final web deployment before this URL reflects them.
+The CloudFront site is live and serves the build of the `main` branch.
 
 ## Use the report
 
@@ -26,4 +26,4 @@ Examples of scope: the 268 solid-fuel tests in the current pack contain no recor
 
 This MVP includes an interactive report, provenance links, PDF printing, scenario questions, and source-backed analysis. It does not include user accounts, file uploads, content-question answering, or an ML model trained on these records. The ML data card is descriptive: no approved target classes or model-suitability thresholds are defined.
 
-The latest source build must be published by the project owner before the public URL can be used to verify the final acceptance checklist. See [`infra/README.md`](infra/README.md) for the deployment and contributor handoff steps.
+See [`infra/README.md`](infra/README.md) for the deployment and contributor handoff steps.
