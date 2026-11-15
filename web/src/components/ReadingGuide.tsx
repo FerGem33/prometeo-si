@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useData } from "./ctx";
+import { t } from "../i18n";
 
 /** A quiet link that opens the reading notes in a dialog. The notes are still printed with the report. */
 export function ReadingGuide() {
@@ -8,7 +9,7 @@ export function ReadingGuide() {
   return (
     <>
       <button type="button" className="guide-link noprint" onClick={() => dialog.current?.showModal()}>
-        How to read this summary
+        {t("How to read this summary")}
       </button>
       <dialog
         ref={dialog}
@@ -19,29 +20,29 @@ export function ReadingGuide() {
         }}
       >
         <div className="guide">
-          <h2 id="guide-title">How to read this report</h2>
+          <h2 id="guide-title">{t("How to read this report")}</h2>
           <p>
-            Every recorded test is placed in the space of experimental conditions and compared with the scenario. Change a value and every figure, table and sentence is recomputed in the browser. Underlined values open their source: file, row, original text, conversion and dataset DOI. Sections marked with + open the full tables.
+            {t("Every recorded test is placed in the space of experimental conditions and compared with the scenario. Change a value and every figure, table and sentence is recomputed in the browser. Underlined values open their source: file, row, original text, conversion and dataset DOI. Sections marked with + open the full tables.")}
           </p>
-          <h3>Grades</h3>
+          <h3>{t("Grades")}</h3>
           <ul>
             <li>
-              <b>A</b> · a comparable record lies within one σ-distance and nothing is missing.
+              <b>A</b> {t("· a comparable record lies within one σ-distance and nothing is missing.")}
             </li>
             <li>
-              <b>B</b> · inside the tested range, with missing variables or a larger distance.
+              <b>B</b> {t("· inside the tested range, with missing variables or a larger distance.")}
             </li>
             <li>
-              <b>C</b> · outside the tested range.
+              <b>C</b> {t("· outside the tested range.")}
             </li>
             <li>
-              <b>D</b> · no comparable record.
+              <b>D</b> {t("· no comparable record.")}
             </li>
           </ul>
           <p className="guide-note">{lens.disclaimer}</p>
           <div className="modal-actions">
             <button type="button" className="cta" onClick={() => dialog.current?.close()}>
-              Close
+              {t("Close")}
             </button>
           </div>
         </div>

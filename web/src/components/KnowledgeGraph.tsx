@@ -4,6 +4,7 @@ import { useData, useProv } from "./ctx";
 import { buildEdges, buildGraph, createSim, edgeText, matchingVariables, simLinks, tick } from "../report/graph";
 import type { GraphNode, Sim } from "../report/graph";
 import { doiOf, num, varOf } from "../report/format";
+import { t, many } from "../i18n";
 
 const W = 920;
 const H = 560;
@@ -111,7 +112,7 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
   const counts: Record<Grade, number> = { A: 0, B: 0, C: 0, D: 0 };
   for (const n of g.nodes) counts[n.result.grade]++;
   const nameOf = (id: string) => byId.get(id)?.study.short ?? id;
-  const distText = (n: GraphNode) => (n.result.distance === null ? "no comparable record" : `d = ${num(n.result.distance)}`);
+  const distText = (n: GraphNode) => (n.result.distance === null ? t("no comparable record") : `d = ${num(n.result.distance)}`);
   const edgeHit = hoverEdge ? g.edges.find((e) => `${e.a}|${e.b}` === hoverEdge) : null;
 
   const point = (e: React.PointerEvent): [number, number] => {
@@ -168,21 +169,21 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
         <header>
           <span className={`kg-badge g${n.result.grade}`}>{n.result.grade}</span>
           <h4>{n.study.short}</h4>
-          <button type="button" className="kg-close" aria-label="Close" onClick={() => setSel(null)}>
+          <button type="button" className="kg-close" aria-label={t("Close")} onClick={() => setSel(null)}>
             ×
           </button>
         </header>
         <p className="kg-sub">{n.study.title}</p>
         <dl>
-          <dt>Grade and distance</dt>
+          <dt>{t("Grade and distance")}</dt>
           <dd>
             {n.result.grade}
-            {n.result.grade === "D" ? " · no comparable record" : ""}
+            {n.result.grade === "D" ? t(" · no comparable record") : ""}
             {n.result.distance !== null && (
               <>
                 {" · "}
                 {n.result.nearest ? (
-                  <button type="button" className="src" title="Show source: file, row and DOI" onClick={() => open(n.result.nearest!)}>
+                  <button type="button" className="src" title={t("Show source: file, row and DOI")} onClick={() => open(n.result.nearest!)}>
                     d = {num(n.result.distance)}
                   </button>
                 ) : (
@@ -191,25 +192,25 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
               </>
             )}
           </dd>
-          <dt>Variables matching the scenario</dt>
+          <dt>{t("Variables matching the scenario")}</dt>
           <dd>
             {matches.length === 0
-              ? "None: no record holds a scenario value."
+              ? t("None: no record holds a scenario value.")
               : matches.map((m, i) => (
                   <span key={m.variable}>
                     {i > 0 && ", "}
-                    <button type="button" className="src" title="Show source: file, row and DOI" onClick={() => open(m.record)}>
+                    <button type="button" className="src" title={t("Show source: file, row and DOI")} onClick={() => open(m.record)}>
                       {varOf(pack, m.variable).label}
                     </button>
                   </span>
                 ))}
           </dd>
-          <dt>Objective</dt>
-          <dd>{obj ? (obj.length > 300 ? obj.slice(0, 300).trimEnd() + "…" : obj) : "Not stated in the pack."}</dd>
-          <dt>Links ({edges.length})</dt>
+          <dt>{t("Objective")}</dt>
+          <dd>{obj ? (obj.length > 300 ? obj.slice(0, 300).trimEnd() + "…" : obj) : t("Not stated in the pack.")}</dd>
+          <dt>{t("Links (")}{edges.length})</dt>
           <dd>
             {edges.length === 0 ? (
-              "None computed."
+              t("None computed.")
             ) : (
               <ul>
                 {edges.map((e) => {
@@ -228,7 +229,7 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
           </dd>
           {doi && (
             <>
-              <dt>Dataset DOI</dt>
+              <dt>{t("Dataset DOI")}</dt>
               <dd>
                 <a href={doi.url} target="_blank" rel="noreferrer">
                   {doi.label}
@@ -248,7 +249,7 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
           ref={svg}
           viewBox={`0 0 ${W} ${H}`}
           role="group"
-          aria-label={`Evidence network of ${g.nodes.length} ${unit}s. Linked ${unit}s are drawn close together.`}
+          aria-label={t("Evidence network of {0} {1}. Linked {2} are drawn close together.", g.nodes.length, many(unit), many(unit))}
           onPointerMove={move}
           onPointerUp={up}
           onPointerCancel={up}
@@ -299,7 +300,7 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
                   tabIndex={0}
                   role="button"
                   aria-pressed={on}
-                  aria-label={`${n.study.short}, grade ${n.result.grade}, ${distText(n)}, ${edgesOf(n.id).length} links`}
+                  aria-label={t("{0}, grade {1}, {2}, {3} links", n.study.short, n.result.grade, distText(n), edgesOf(n.id).length)}
                   onPointerDown={(e) => down(e, n.id)}
                   onPointerEnter={() => !drag.current && setHover(n.id)}
                   onPointerLeave={() => setHover(null)}
@@ -326,11 +327,11 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
 
         <div className="kg-tools noprint">
           <button type="button" className="kg-float-btn" onClick={reset}>
-            Reset layout
+            {t("Reset layout")}
           </button>
         </div>
 
-        <div className="kg-legend" aria-label="Legend">
+        <div className="kg-legend" aria-label={t("Legend")}>
           {GRADES.map((k) => (
             <span key={k}>
               <i className={`kg-badge g${k}`}>{k}</i>
@@ -338,19 +339,19 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
             </span>
           ))}
           <span>
-            <i className="kg-line rel" /> related
+            <i className="kg-line rel" /> {t("related")}
           </span>
           <span>
-            <i className="kg-line" /> shared variables
+            <i className="kg-line" /> {t("shared variables")}
           </span>
         </div>
 
         <p className="kg-status" aria-live="polite">
-          {edgeHit ? `${nameOf(edgeHit.a)} – ${nameOf(edgeHit.b)}: ${edgeText(pack, edgeHit)}` : focus ? `${nameOf(focus)}: ${edgesOf(focus).length} computed links` : "Drag a node to rearrange the network · select one to open it"}
+          {edgeHit ? `${nameOf(edgeHit.a)} – ${nameOf(edgeHit.b)}: ${edgeText(pack, edgeHit)}` : focus ? t("{0}: {1} computed links", nameOf(focus), edgesOf(focus).length) : t("Drag a node to rearrange the network · select one to open it")}
         </p>
 
         {node && (
-          <aside className="kg-card" aria-label={`Selected ${unit}`}>
+          <aside className="kg-card" aria-label={t("Selected {0}", unit)}>
             {detail(node)}
           </aside>
         )}
@@ -358,23 +359,23 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
 
       <figcaption>
         <b>
-          Figure {figure} | Evidence network of the {g.nodes.length} {unit}s.
+          {t("Figure")} {figure} {t("| Evidence network of the")} {g.nodes.length} {many(unit)}.
         </b>{" "}
-        Size, letter and outline give the grade against the active scenario; {unit}s without a comparable record (grade D) stay visible, small and dashed. Links are <b>computed by the engine from the pack</b>, not statements extracted from the authors&apos; texts: a thick line joins {unit}s listed as related in the pack or sharing a publication DOI; a thin line joins {unit}s that both record at least two variables that not every {unit} records. Linked {unit}s are pulled together by a force layout that always starts from the same positions; beyond that, position carries no meaning, and nodes can be dragged freely.
+        {t("Size, letter and outline give the grade against the active scenario;")} {many(unit)} {t("without a comparable record (grade D) stay visible, small and dashed. Links are")} <b>{t("computed by the engine from the pack")}</b>{t(", not statements extracted from the authors' texts: a thick line joins")} {many(unit)} {t("listed as related in the pack or sharing a publication DOI; a thin line joins")} {many(unit)} {t("that both record at least two variables that not every")} {unit} {t("records. Linked")} {many(unit)} {t("are pulled together by a force layout that always starts from the same positions; beyond that, position carries no meaning, and nodes can be dragged freely.")}
       </figcaption>
 
       <details className="kg-alt">
         <summary>
-          Table form of the network ({g.nodes.length} {unit}s, by rank)
+          {t("Table form of the network (")}{g.nodes.length} {many(unit)}{t(", by rank)")}
         </summary>
         <table>
           <thead>
             <tr>
-              <th>Rank</th>
+              <th>{t("Rank")}</th>
               <th>{unit.charAt(0).toUpperCase() + unit.slice(1)}</th>
-              <th>Grade</th>
-              <th>Distance</th>
-              <th>Linked to</th>
+              <th>{t("Grade")}</th>
+              <th>{t("Distance")}</th>
+              <th>{t("Linked to")}</th>
             </tr>
           </thead>
           <tbody>
@@ -387,11 +388,11 @@ export function KnowledgeGraph({ scenario, figure }: { scenario: Scenario; figur
                   </button>
                 </td>
                 <td>{n.result.grade}</td>
-                <td>{n.result.distance === null ? "none" : num(n.result.distance)}</td>
+                <td>{n.result.distance === null ? t("none") : num(n.result.distance)}</td>
                 <td>
                   {edgesOf(n.id)
                     .map((e) => nameOf(e.a === n.id ? e.b : e.a))
-                    .join(", ") || "none"}
+                    .join(", ") || t("none")}
                 </td>
               </tr>
             ))}

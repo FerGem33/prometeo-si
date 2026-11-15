@@ -1,4 +1,5 @@
 import type { Scenario } from "../engine";
+import { t, tx, lazy } from "../i18n";
 
 export interface BaselineProfile {
   id: string;
@@ -7,11 +8,11 @@ export interface BaselineProfile {
   scenario: Scenario;
 }
 
-export const BASELINE_PROFILES: BaselineProfile[] = [
+export const BASELINE_PROFILES: BaselineProfile[] = lazy([
   {
     id: "earth_std",
-    name: "Earth Sea-Level (Baseline)",
-    description: "21% O₂ · 1.00 atm · 0.20 m/s flow",
+    name: tx("Earth Sea-Level (Baseline)"),
+    description: tx("21% O₂ · 1.00 atm · 0.20 m/s flow"),
     scenario: {
       values: { o2: 21, p: 1.0, flow: 0.20, material: "PMMA" },
       active: ["o2", "p", "flow", "material"],
@@ -19,8 +20,8 @@ export const BASELINE_PROFILES: BaselineProfile[] = [
   },
   {
     id: "iss_std",
-    name: "ISS Orbital Module",
-    description: "21% O₂ · 1.00 atm · 0.05 m/s forced ventilation",
+    name: tx("ISS Orbital Module"),
+    description: tx("21% O₂ · 1.00 atm · 0.05 m/s forced ventilation"),
     scenario: {
       values: { o2: 21, p: 1.0, flow: 0.05, material: "PMMA" },
       active: ["o2", "p", "flow", "material"],
@@ -28,14 +29,14 @@ export const BASELINE_PROFILES: BaselineProfile[] = [
   },
   {
     id: "lunar_std",
-    name: "Artemis Exploration Std",
-    description: "24% O₂ · 0.70 atm · 0.05 m/s low flow",
+    name: tx("Artemis Exploration Std"),
+    description: tx("24% O₂ · 0.70 atm · 0.05 m/s low flow"),
     scenario: {
       values: { o2: 24, p: 0.70, flow: 0.05, material: "PMMA" },
       active: ["o2", "p", "flow", "material"],
     },
   },
-];
+]);
 
 export interface WhatIfDelta {
   o2Delta: number;
@@ -64,14 +65,14 @@ export function computeWhatIfDelta(proposed: Scenario, baseline: Scenario): What
   const flammabilityIndexChangePct = Math.round(((propIndex - baseIndex) / baseIndex) * 100);
 
   let riskTendency: "elevated" | "reduced" | "equivalent" = "equivalent";
-  let riskSummary = "Equivalent flammability profile to baseline";
+  let riskSummary = t("Equivalent flammability profile to baseline");
 
   if (flammabilityIndexChangePct >= 8 || o2Delta >= 2.0) {
     riskTendency = "elevated";
-    riskSummary = `Elevated flammability risk (+${flammabilityIndexChangePct}% index relative to ${baseO2}% O₂ / ${baseP} atm)`;
+    riskSummary = t("Elevated flammability risk (+{0}% index relative to {1}% O₂ / {2} atm)", flammabilityIndexChangePct, baseO2, baseP);
   } else if (flammabilityIndexChangePct <= -8 || o2Delta <= -2.0) {
     riskTendency = "reduced";
-    riskSummary = `Reduced combustion susceptibility (${flammabilityIndexChangePct}% index relative to baseline)`;
+    riskSummary = t("Reduced combustion susceptibility ({0}% index relative to baseline)", flammabilityIndexChangePct);
   }
 
   return {

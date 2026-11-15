@@ -4,9 +4,10 @@ import type { AxisScore, Grade, NumVariable, OverallEvidence, Scenario, StudyRes
 import { Src, useData, useProv } from "./ctx";
 import { LevelTag } from "./ScenarioPanel";
 import { REASON } from "./Tables";
-import { OVERALL, levelBasis, whyText } from "../report/text";
+import { overallText, levelBasis, whyText } from "../report/text";
 import { doiOf, num, scenarioValueText, studyShort, varOf } from "../report/format";
 import { explainStudy, valueWithUnit } from "../report/ranking";
+import { t, many } from "../i18n";
 
 const GRADES: Grade[] = ["A", "B", "C", "D"];
 
@@ -27,7 +28,7 @@ export function GradeGlyph({ grade, size = 20 }: { grade: Grade; size?: number }
 
 type Axis = { id: string; label: string; value: string; best: number; score: AxisScore | undefined };
 
-const missingText = (a: AxisScore | undefined) => (a?.reason ? REASON[a.reason] : "not recorded");
+const missingText = (a: AxisScore | undefined) => (a?.reason ? REASON[a.reason] : t("not recorded"));
 const isMissing = (a: AxisScore | undefined) => !a || a.missing || !!a.reason;
 
 /** Closeness 0–100 per variable. A variable the source does not record is a dashed spoke, not a zero. */
@@ -42,8 +43,8 @@ function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; on
   const pt = (i: number, f: number): [number, number] => [cx + R * f * Math.sin(ang(i)), cy - R * f * Math.cos(ang(i))];
   const poly = (fs: number[]) => fs.map((f, i) => pt(i, f).map((x) => x.toFixed(1)).join(",")).join(" ");
   const label = name
-    ? `Closeness of ${name} to the scenario: ${axes.map((a) => `${a.label} ${isMissing(a.score) ? missingText(a.score) : `${Math.round(a.score!.score)} of 100`}`).join("; ")}.`
-    : `Best closeness reached by any source: ${axes.map((a) => `${a.label} ${Math.round(a.best)} of 100`).join("; ")}.`;
+    ? t("Closeness of {0} to the scenario: {1}.", name, axes.map((a) => `${a.label} ${isMissing(a.score) ? missingText(a.score) : t("{0} of 100", Math.round(a.score!.score))}`).join("; "))
+    : t("Best closeness reached by any source: {0}.", axes.map((a) => t("{0} {1} of 100", a.label, Math.round(a.best))).join("; "));
   return (
     <svg className="radar" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
       {[0.25, 0.5, 0.75, 1].map((f) => (
@@ -67,7 +68,7 @@ function Radar({ axes, name, onVertex }: { axes: Axis[]; name: string | null; on
           const rec = a.score!.nearest;
           return (
             <circle key={a.id} className={rec ? "radar-dot link" : "radar-dot"} cx={x} cy={y} r={4.5} onClick={rec ? () => onVertex(rec) : undefined}>
-              <title>{`${name} · ${a.label}: closeness ${Math.round(a.score!.score)} of 100 against ${a.value}${rec ? ". Click for the source row." : ""}`}</title>
+              <title>{t("{0} · {1}: closeness {2} of 100 against {3}{4}", name, a.label, Math.round(a.score!.score), a.value, rec ? t(". Click for the source row.") : "")}</title>
             </circle>
           );
         })}
@@ -156,18 +157,18 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
 
   return (
     <figure className="ga" id="summary">
-      <h2>Graphical abstract</h2>
+      <h2>{t("Graphical abstract")}</h2>
       <p className="ga-lead">
-        <b>{comparable.toLocaleString("en-US")}</b> of {(pack.meta.stats.tests ?? 0).toLocaleString("en-US")} tests are comparable with this scenario. Overall evidence is <b>{OVERALL[overall.level].replace(/study/g, unit)}</b>.{" "}
-        {top ? `The closest ${unit} is ${studyShort(pack, top.study)} (grade ${top.grade}, d = ${top.distance}).` : `No ${unit} has records comparable with it.`}
+        <b>{comparable.toLocaleString("en-US")}</b> {t("of")} {(pack.meta.stats.tests ?? 0).toLocaleString("en-US")} {t("tests are comparable with this scenario. Overall evidence is")} <b>{overallText(overall.level, unit)}</b>.{" "}
+        {top ? t("The closest {0} is {1} (grade {2}, d = {3}).", unit, studyShort(pack, top.study), top.grade, top.distance) : t("No {0} has records comparable with it.", unit)}
       </p>
 
       <div className="ga-grid">
-        <section className="ga-a" aria-label="Scenario against the tested range">
+        <section className="ga-a" aria-label={t("Scenario against the tested range")}>
           <h3>
-            <i>a</i> Scenario against the tested range
+            <i>a</i> {t("Scenario against the tested range")}
           </h3>
-          {levels.length === 0 && <p className="hint">No variable is part of the scenario.</p>}
+          {levels.length === 0 && <p className="hint">{t("No variable is part of the scenario.")}</p>}
           {levels.map((lv) => {
             const v = varOf(pack, lv.variable);
             const numeric = v.type === "num" && typeof lv.value === "number";
@@ -181,7 +182,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
                 </div>
                 {numeric && (
                   <>
-                    <div className={lv.tested ? "ga-track" : "ga-track none"} title="Click to move the scenario value here" onClick={(e) => moveTo(v as NumVariable, e)}>
+                    <div className={lv.tested ? "ga-track" : "ga-track none"} title={t("Click to move the scenario value here")} onClick={(e) => moveTo(v as NumVariable, e)}>
                       {lv.tested && <span className="ga-band" style={{ left: `${pos(lv.tested[0])}%`, width: `${Math.max(0.8, pos(lv.tested[1]) - pos(lv.tested[0]))}%` }} />}
                       <span className="ga-mark" style={{ left: `${pos(lv.value as number)}%` }} />
                     </div>
@@ -200,13 +201,13 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
             );
           })}
           <p className="ga-key">
-            <span className="k-band" /> range covered by comparable tests <span className="k-mark" /> scenario value
+            <span className="k-band" /> {t("range covered by comparable tests")} <span className="k-mark" /> {t("scenario value")}
           </p>
         </section>
 
-        <section className="ga-b" aria-label="Closeness by variable">
+        <section className="ga-b" aria-label={t("Closeness by variable")}>
           <h3>
-            <i>b</i> Closeness by variable{selName ? ` · ${selName}` : ""}
+            <i>b</i> {t("Closeness by variable")}{selName ? ` · ${selName}` : ""}
           </h3>
           {axes.length >= 3 ? <Radar axes={axes} name={selName} onVertex={openProv} /> : <Bars axes={axes} name={selName} />}
           <p className="ga-key">
@@ -215,22 +216,22 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
                 <span className="k-sel" /> {selName}{" "}
               </>
             )}
-            <span className="k-best" /> best reached by any {unit}
+            <span className="k-best" /> {t("best reached by any")} {unit}
           </p>
         </section>
 
-        <section className="ga-c" aria-label={`The ${unit}s by grade`}>
+        <section className="ga-c" aria-label={t("The {0} by grade", many(unit))}>
           <h3>
-            <i>c</i> The {ranking.length} {unit}s by grade
+            <i>c</i> {t("The")} {ranking.length} {many(unit)} {t("by grade")}
           </h3>
           {GRADES.map((g) => {
             const members = ranking.filter((r) => r.grade === g);
             return (
               <div className="ga-group" key={g}>
                 <span className="ga-group-lab">
-                  <GradeGlyph grade={g} size={18} /> Grade {g} · {members.length}
+                  <GradeGlyph grade={g} size={18} /> {t("Grade")} {g} · {members.length}
                 </span>
-                {members.length === 0 && <span className="hint">none</span>}
+                {members.length === 0 && <span className="hint">{t("none")}</span>}
                 {members.map((r) => (
                   <button key={r.study} type="button" className={`ga-st g${g}`} aria-pressed={r.study === selId} onClick={() => setPicked(r.study)}>
                     {studyShort(pack, r.study)}
@@ -246,15 +247,15 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
                 {study && <small>{study.title}</small>}
               </h4>
               <p>
-                Rank {selIndex + 1} of {ranking.length}
+                {t("Rank")} {selIndex + 1} {t("of")} {ranking.length}
                 {sel.distance !== null && (
                   <>
                     {" · "}
-                    <Src id={sel.nearest}>distance d = {sel.distance} at its nearest record</Src>
+                    <Src id={sel.nearest}>{t("distance d =")} {sel.distance} {t("at its nearest record")}</Src>
                   </>
                 )}
                 {" · "}
-                {sel.comparable.toLocaleString("en-US")} comparable records · {sel.why.map((w) => whyText(pack, lens, w)).join("; ")}.
+                {sel.comparable.toLocaleString("en-US")} {t("comparable records ·")} {sel.why.map((w) => whyText(pack, lens, w)).join("; ")}.
               </p>
               {explain.vars.length > 0 && (
                 <ul>
@@ -265,12 +266,12 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
                       <li key={x.variable}>
                         <b>{v.label}</b>{" "}
                         {x.status === "missing" ? (
-                          <span className="hint">{x.reason ? REASON[x.reason] : "not recorded"}</span>
+                          <span className="hint">{x.reason ? REASON[x.reason] : t("not recorded")}</span>
                         ) : x.status === "not_tested" ? (
-                          <span>{scenarioValueText(pack, x.variable, x.scenarioValue as number | string)} is not among the values it tested · closeness 0 of 100</span>
+                          <span>{scenarioValueText(pack, x.variable, x.scenarioValue as number | string)} {t("is not among the values it tested · closeness 0 of 100")}</span>
                         ) : (
                           <>
-                            <Src id={x.nearestRecord}>{valueWithUnit(x.nearestValue, u)}</Src> against {scenarioValueText(pack, x.variable, x.scenarioValue as number | string)} · closeness {Math.round(x.score ?? 0)} of 100
+                            <Src id={x.nearestRecord}>{valueWithUnit(x.nearestValue, u)}</Src> {t("against")} {scenarioValueText(pack, x.variable, x.scenarioValue as number | string)} {t("· closeness")} {Math.round(x.score ?? 0)} {t("of 100")}
                           </>
                         )}
                       </li>
@@ -281,7 +282,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
               {doi && (
                 <p>
                   <a href={doi.url} target="_blank" rel="noreferrer">
-                    Dataset DOI: {doi.label}
+                    {t("Dataset DOI:")} {doi.label}
                   </a>
                 </p>
               )}
@@ -291,7 +292,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
       </div>
 
       <figcaption>
-        <b>Graphical abstract |</b> <b>a</b>, each active variable on its full scale: the dark band is the range covered by comparable tests and the red mark is the scenario value; click a scale to move the value. <b>b</b>, closeness (0–100) of the selected {unit} to the scenario on each variable, with the best value reached by any {unit} as a dashed outline. A dashed spoke means the {unit} does not record that variable: it is absent, not zero. The order of the axes changes the shape of the polygon, so read each axis on its own. <b>c</b>, every {unit} by grade; select one to see its values and sources. All values are computed by rule from the evidence pack; nothing here predicts an outcome.
+        <b>{t("Graphical abstract |")}</b> <b>a</b>{t(", each active variable on its full scale: the dark band is the range covered by comparable tests and the red mark is the scenario value; click a scale to move the value.")} <b>b</b>{t(", closeness (0–100) of the selected")} {unit} {t("to the scenario on each variable, with the best value reached by any")} {unit} {t("as a dashed outline. A dashed spoke means the")} {unit} {t("does not record that variable: it is absent, not zero. The order of the axes changes the shape of the polygon, so read each axis on its own.")} <b>c</b>{t(", every")} {unit} {t("by grade; select one to see its values and sources. All values are computed by rule from the evidence pack; nothing here predicts an outcome.")}
       </figcaption>
     </figure>
   );

@@ -4,6 +4,7 @@ import "../iso/theme-prometeo.css";
 import { chamberSvg, CHAMBER_VECTORS } from "../iso/chamber/build";
 import { useInView, useLoop, spring, type Spring } from "../iso/react/live";
 import { playChamberStageChirp, playTelemetryClick } from "../report/sound";
+import { t, tx, lazy } from "../i18n";
 
 export interface ChamberFigureProps {
   /** Current processing step (0..4). */
@@ -14,15 +15,15 @@ export interface ChamberFigureProps {
   interactive?: boolean;
 }
 
-export const STEP_TELEMETRY_EN = [
-  "STAGE 01 · PMMA SAMPLE LOAD · DOCUMENT INGESTION",
-  "STAGE 02 · OPTICAL LASER SCAN · VARIABLES O₂ / P / V",
-  "STAGE 03 · MICROGRAVITY IGNITION · PSI HARMONIZATION",
-  "STAGE 04 · TELEMETRY & GRADING · SIMILARITY A–D",
-  "READY · 1,889 NASA PSI RECORDS SYNCHRONIZED",
-];
+export const STEP_TELEMETRY_EN = lazy([
+  tx("STAGE 01 · PMMA SAMPLE LOAD · DOCUMENT INGESTION"),
+  tx("STAGE 02 · OPTICAL LASER SCAN · VARIABLES O₂ / P / V"),
+  tx("STAGE 03 · MICROGRAVITY IGNITION · PSI HARMONIZATION"),
+  tx("STAGE 04 · TELEMETRY & GRADING · SIMILARITY A–D"),
+  tx("READY · 1,889 NASA PSI RECORDS SYNCHRONIZED"),
+]);
 
-const STAGE_SHORT = ["1 · Load", "2 · Laser scan", "3 · Ignition", "4 · Telemetry", "Ready"];
+const STAGE_SHORT = lazy([tx("1 · Load"), tx("2 · Laser scan"), tx("3 · Ignition"), tx("4 · Telemetry"), tx("Ready")]);
 
 interface StagePlusSpec {
   code: string;
@@ -33,173 +34,173 @@ interface StagePlusSpec {
   modes: { id: string; label: string; detail: string; flameBoost?: number; scanBoost?: number; needleOffset?: number }[];
 }
 
-const STAGE_PLUS_SPECS: StagePlusSpec[] = [
+const STAGE_PLUS_SPECS: StagePlusSpec[] = lazy([
   {
-    code: "STAGE 01 · CAROUSEL & MANIFOLD",
-    subsystem: "Motorized Specimen Pedestal + O₂/N₂ Gas Manifold",
-    title: "Specimen Insertion & PSI Source Table Ingestion",
+    code: tx("STAGE 01 · CAROUSEL & MANIFOLD"),
+    subsystem: tx("Motorized Specimen Pedestal + O₂/N₂ Gas Manifold"),
+    title: tx("Specimen Insertion & PSI Source Table Ingestion"),
     summary:
-      "Positions the fuel sample on the vertical actuator while indexing 22 SHA-256 verified NASA PSI experiment tables across all four combustion partitions.",
+      tx("Positions the fuel sample on the vertical actuator while indexing 22 SHA-256 verified NASA PSI experiment tables across all four combustion partitions."),
     metrics: [
-      { label: "Corpus Investigations", value: "24 studies", sub: "22 source tables · 352 DOIs" },
-      { label: "Individual Tests", value: "1,889 rows", sub: "+ 97 campaign range rows" },
-      { label: "Manifold Purge", value: "O₂ / N₂", sub: "13.6–100 % O₂ envelope" },
+      { label: tx("Corpus Investigations"), value: tx("24 studies"), sub: tx("22 source tables · 352 DOIs") },
+      { label: tx("Individual Tests"), value: tx("1,889 rows"), sub: tx("+ 97 campaign range rows") },
+      { label: tx("Manifold Purge"), value: "O₂ / N₂", sub: tx("13.6–100 % O₂ envelope") },
     ],
     modes: [
       {
         id: "solid",
-        label: "Solid fuels (268)",
-        detail: "PMMA, Nomex, SIBAL, Cotton/fiberglass & Thin cellulose sheets across BASS, BASS-II & SAFFIRE.",
+        label: tx("Solid fuels (268)"),
+        detail: tx("PMMA, Nomex, SIBAL, Cotton/fiberglass & Thin cellulose sheets across BASS, BASS-II & SAFFIRE."),
       },
       {
         id: "gaseous",
-        label: "Gaseous (1,141)",
-        detail: "Methane, Ethane, Ethylene, Propane & Hydrogen coflow/spherical flames across ACME & s-Flame.",
+        label: tx("Gaseous (1,141)"),
+        detail: tx("Methane, Ethane, Ethylene, Propane & Hydrogen coflow/spherical flames across ACME & s-Flame."),
       },
       {
         id: "droplets",
-        label: "Droplets (361)",
-        detail: "Heptane, Methanol, Ethanol & Decane isolated droplet combustion across FLEX & FLEX-2.",
+        label: tx("Droplets (361)"),
+        detail: tx("Heptane, Methanol, Ethanol & Decane isolated droplet combustion across FLEX & FLEX-2."),
       },
       {
         id: "soot",
-        label: "Smoke & aerosols (119)",
-        detail: "Particulate diagnostics and smoke point characterization in microgravity.",
+        label: tx("Smoke & aerosols (119)"),
+        detail: tx("Particulate diagnostics and smoke point characterization in microgravity."),
       },
     ],
   },
   {
-    code: "STAGE 02 · OPTICAL INTERFEROMETRY",
-    subsystem: "Twin-Column Laser Sheet & Radiometer Ring",
-    title: "Canonical Variable Mapping & Envelope Audit",
+    code: tx("STAGE 02 · OPTICAL INTERFEROMETRY"),
+    subsystem: tx("Twin-Column Laser Sheet & Radiometer Ring"),
+    title: tx("Canonical Variable Mapping & Envelope Audit"),
     summary:
-      "Sweeps the dual-column optical ring along the specimen axis to map raw experiment columns to canonical units without imputing missing values.",
+      tx("Sweeps the dual-column optical ring along the specimen axis to map raw experiment columns to canonical units without imputing missing values."),
     metrics: [
-      { label: "Mapped Variables", value: "5 canonical", sub: "O₂ · Pressure · Flow · Gravity · Fuel" },
-      { label: "Solid O₂ Ceiling", value: "22.2 % max", sub: "BASS-II (140 of 268 solid tests)" },
-      { label: "Solid P Coverage", value: "0 / 268 tests", sub: "Critical gap detected in solid pool" },
+      { label: tx("Mapped Variables"), value: tx("5 canonical"), sub: tx("O₂ · Pressure · Flow · Gravity · Fuel") },
+      { label: tx("Solid O₂ Ceiling"), value: tx("22.2 % max"), sub: tx("BASS-II (140 of 268 solid tests)") },
+      { label: tx("Solid P Coverage"), value: tx("0 / 268 tests"), sub: tx("Critical gap detected in solid pool") },
     ],
     modes: [
       {
         id: "o2_scan",
-        label: "O₂ Envelope (σ = 5 %)",
-        detail: "Tested across 13.6–22.2 % O₂ in solid fuels and up to 100 % O₂ in gaseous/droplet partitions.",
+        label: tx("O₂ Envelope (σ = 5 %)"),
+        detail: tx("Tested across 13.6–22.2 % O₂ in solid fuels and up to 100 % O₂ in gaseous/droplet partitions."),
         scanBoost: 1.35,
       },
       {
         id: "p_scan",
-        label: "Pressure Audit (σ = 0.25 atm)",
-        detail: "0 of 268 solid-fuel tests record ambient pressure; gaseous/droplet tests span 0.3–9.87 atm.",
+        label: tx("Pressure Audit (σ = 0.25 atm)"),
+        detail: tx("0 of 268 solid-fuel tests record ambient pressure; gaseous/droplet tests span 0.3–9.87 atm."),
         scanBoost: 1.6,
       },
       {
         id: "flow_scan",
-        label: "Forced Flow (σ = 8 cm/s)",
-        detail: "Concurrent and opposed oxidizer flow velocities mapped from 0 to 55 cm/s in solid tests.",
+        label: tx("Forced Flow (σ = 8 cm/s)"),
+        detail: tx("Concurrent and opposed oxidizer flow velocities mapped from 0 to 55 cm/s in solid tests."),
         scanBoost: 1.15,
       },
     ],
   },
   {
-    code: "STAGE 03 · HOT-WIRE IGNITION",
-    subsystem: "Sapphire Observation Dome & Spherical 0g Kernel",
-    title: "Microgravity Ignition & Diffusion Plume Harmonization",
+    code: tx("STAGE 03 · HOT-WIRE IGNITION"),
+    subsystem: tx("Sapphire Observation Dome & Spherical 0g Kernel"),
+    title: tx("Microgravity Ignition & Diffusion Plume Harmonization"),
     summary:
-      "Energizes the hot-wire igniter to establish a buoyancy-free spherical flame kernel, aligning test conditions with outcome columns across investigations.",
+      tx("Energizes the hot-wire igniter to establish a buoyancy-free spherical flame kernel, aligning test conditions with outcome columns across investigations."),
     metrics: [
-      { label: "Ignition Regime", value: "0g Spherical", sub: "Diffusion & concurrent-flow wake" },
-      { label: "Outcome Columns", value: "73 approved", sub: "Spread rate · extinction · radiant loss" },
-      { label: "Tolerance Window", value: "±1.25 % O₂", sub: "±0.08 atm P · ±2.0 cm/s Flow" },
+      { label: tx("Ignition Regime"), value: tx("0g Spherical"), sub: tx("Diffusion & concurrent-flow wake") },
+      { label: tx("Outcome Columns"), value: tx("73 approved"), sub: tx("Spread rate · extinction · radiant loss") },
+      { label: tx("Tolerance Window"), value: "±1.25 % O₂", sub: tx("±0.08 atm P · ±2.0 cm/s Flow") },
     ],
     modes: [
       {
         id: "iss_nom",
-        label: "ISS Cabin (21 % O₂ · 1 atm)",
-        detail: "Baseline space-station atmosphere: covered by BASS and BASS-II PMMA/SIBAL microgravity tests.",
+        label: tx("ISS Cabin (21 % O₂ · 1 atm)"),
+        detail: tx("Baseline space-station atmosphere: covered by BASS and BASS-II PMMA/SIBAL microgravity tests."),
         flameBoost: 1.0,
       },
       {
         id: "lunar_30",
-        label: "Lunar Base (30 % O₂ · 0.69 atm)",
-        detail: "Exploration atmosphere: 7.8 percentage points above the 22.2 % O₂ solid-fuel tested ceiling.",
+        label: tx("Lunar Base (30 % O₂ · 0.69 atm)"),
+        detail: tx("Exploration atmosphere: 7.8 percentage points above the 22.2 % O₂ solid-fuel tested ceiling."),
         flameBoost: 1.24,
       },
       {
         id: "eva_suit",
-        label: "Spacesuit (100 % O₂ · 0.29 atm)",
-        detail: "Pure-oxygen low-pressure EVA regime: high thermal diffusivity and unstudied solid-fuel gap.",
+        label: tx("Spacesuit (100 % O₂ · 0.29 atm)"),
+        detail: tx("Pure-oxygen low-pressure EVA regime: high thermal diffusivity and unstudied solid-fuel gap."),
         flameBoost: 1.42,
       },
     ],
   },
   {
-    code: "STAGE 04 · TELEMETRY & GRADING",
-    subsystem: "Range-Normalized Mahalanobis Distance Computer",
-    title: "Deterministic σ-Distance Ranking & Study Grades (A–D)",
+    code: tx("STAGE 04 · TELEMETRY & GRADING"),
+    subsystem: tx("Range-Normalized Mahalanobis Distance Computer"),
+    title: tx("Deterministic σ-Distance Ranking & Study Grades (A–D)"),
     summary:
-      "Computes normalized distance d(s, r) from the active scenario to every test record and assigns study grades A through D without predictive extrapolation.",
+      tx("Computes normalized distance d(s, r) from the active scenario to every test record and assigns study grades A through D without predictive extrapolation."),
     metrics: [
-      { label: "Distance Metric", value: "σ-Euclidean", sub: "Weighted by variable scale σ" },
-      { label: "Evidence Levels", value: "4 deterministic", sub: "Studied · Scarce · Near · Not studied" },
-      { label: "Study Grading", value: "Grades A–D", sub: "Shape + letter + colour encoded" },
+      { label: tx("Distance Metric"), value: tx("σ-Euclidean"), sub: tx("Weighted by variable scale σ") },
+      { label: tx("Evidence Levels"), value: tx("4 deterministic"), sub: tx("Studied · Scarce · Near · Not studied") },
+      { label: tx("Study Grading"), value: tx("Grades A–D"), sub: tx("Shape + letter + colour encoded") },
     ],
     modes: [
       {
         id: "grade_a",
-        label: "● Grade A · Direct",
-        detail: "Comparable partition with all active variables inside tolerance (d ≤ 0.5 σ).",
+        label: tx("● Grade A · Direct"),
+        detail: tx("Comparable partition with all active variables inside tolerance (d ≤ 0.5 σ)."),
         needleOffset: 24,
       },
       {
         id: "grade_b",
-        label: "■ Grade B · Near",
-        detail: "Comparable partition within near threshold (d ≤ 1.5 σ) or partial variable coverage.",
+        label: tx("■ Grade B · Near"),
+        detail: tx("Comparable partition within near threshold (d ≤ 1.5 σ) or partial variable coverage."),
         needleOffset: 8,
       },
       {
         id: "grade_c",
-        label: "◆ Grade C · Context",
-        detail: "Same fuel partition (e.g., BASS-II, SAFFIRE-I/II) but outside the near-condition envelope.",
+        label: tx("◆ Grade C · Context"),
+        detail: tx("Same fuel partition (e.g., BASS-II, SAFFIRE-I/II) but outside the near-condition envelope."),
         needleOffset: -8,
       },
       {
         id: "grade_d",
-        label: "○ Grade D · Other pool",
-        detail: "Different fuel partition (e.g., gaseous or droplet studies when evaluating solid fuels).",
+        label: tx("○ Grade D · Other pool"),
+        detail: tx("Different fuel partition (e.g., gaseous or droplet studies when evaluating solid fuels)."),
         needleOffset: -24,
       },
     ],
   },
   {
-    code: "READY · PORTAL SYNCHRONIZED",
-    subsystem: "Deterministic Evidence Engine (prometeo.pack.v1)",
-    title: "Full Provenance Lock & Interactive Report Ready",
+    code: tx("READY · PORTAL SYNCHRONIZED"),
+    subsystem: tx("Deterministic Evidence Engine (prometeo.pack.v1)"),
+    title: tx("Full Provenance Lock & Interactive Report Ready"),
     summary:
-      "All 1,889 test records, 24 investigations, and 22 SHA-256 source tables are locked and ready for interactive scenario comparison and academic dossier export.",
+      tx("All 1,889 test records, 24 investigations, and 22 SHA-256 source tables are locked and ready for interactive scenario comparison and academic dossier export."),
     metrics: [
-      { label: "Provenance Lock", value: "100 % Cited", sub: "Every value links to source + row + DOI" },
-      { label: "Engine Status", value: "Deterministic", sub: "Zero domain assumptions or predictions" },
-      { label: "Export Formats", value: "Dossier / CSV", sub: "JSON · BibTeX · Print-ready PDF" },
+      { label: tx("Provenance Lock"), value: tx("100 % Cited"), sub: tx("Every value links to source + row + DOI") },
+      { label: tx("Engine Status"), value: tx("Deterministic"), sub: tx("Zero domain assumptions or predictions") },
+      { label: tx("Export Formats"), value: tx("Dossier / CSV"), sub: tx("JSON · BibTeX · Print-ready PDF") },
     ],
     modes: [
       {
         id: "ready_map",
-        label: "Figure 1 · Condition Map",
-        detail: "1,010 dual-variable tests + 140 O₂-only strip tests plotted against scenario tolerance.",
+        label: tx("Figure 1 · Condition Map"),
+        detail: tx("1,010 dual-variable tests + 140 O₂-only strip tests plotted against scenario tolerance."),
       },
       {
         id: "ready_graph",
-        label: "Figure 4 · Evidence Network",
-        detail: "24-study force-directed & ranked-circle graph connected by shared variables and DOIs.",
+        label: tx("Figure 4 · Evidence Network"),
+        detail: tx("24-study force-directed & ranked-circle graph connected by shared variables and DOIs."),
       },
       {
         id: "ready_ml",
-        label: "Table 5 · ML Readiness Card",
-        detail: "73 approved outcome columns audited for completeness and experimental flags.",
+        label: tx("Table 5 · ML Readiness Card"),
+        detail: tx("73 approved outcome columns audited for completeness and experimental flags."),
       },
     ],
   },
-];
+]);
 
 export function ChamberFigure({ step = 2, progressPct = 75, interactive = false }: ChamberFigureProps) {
   const [localStep, setLocalStep] = useState(step);
@@ -311,9 +312,9 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
   return (
     <div ref={hostRef} className="proc-chamber iso iso-prometeo" data-active-stage={activeStep}>
       <div className="proc-chamber-header">
-        <span className="proc-chamber-tag">ISS CIR / BASS · NASA PSI</span>
+        <span className="proc-chamber-tag">{t("ISS CIR / BASS · NASA PSI")}</span>
         {interactive ? (
-          <div className="proc-chamber-tabs" role="group" aria-label="Chamber stage">
+          <div className="proc-chamber-tabs" role="group" aria-label={t("Chamber stage")}>
             {STAGE_SHORT.map((lbl, idx) => (
               <button
                 key={lbl}
@@ -330,14 +331,14 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
             ))}
           </div>
         ) : (
-          <span className="proc-chamber-metrics">O₂ 21–30% · P 0.5–1.0 atm · 0g</span>
+          <span className="proc-chamber-metrics">{t("O₂ 21–30% · P 0.5–1.0 atm · 0g")}</span>
         )}
       </div>
 
       <div className="proc-chamber-stage" dangerouslySetInnerHTML={{ __html: svg }} />
 
       {/* Stage-Specific Interactive Diagnostic & Telemetry Inspector ("Plus" per selected stage) */}
-      <div className="proc-chamber-plus" role="region" aria-label={`Stage ${activeStep + 1} diagnostic telemetry`}>
+      <div className="proc-chamber-plus" role="region" aria-label={t("Stage {0} diagnostic telemetry", activeStep + 1)}>
         <div className="proc-plus-top">
           <div className="proc-plus-heading">
             <span className="proc-plus-kicker">{activeSpec.code} · {activeSpec.subsystem}</span>
@@ -358,7 +359,7 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
         </div>
 
         <div className="proc-plus-modes">
-          <div className="proc-plus-mode-chips" role="group" aria-label="Stage sub-mode inspector">
+          <div className="proc-plus-mode-chips" role="group" aria-label={t("Stage sub-mode inspector")}>
             {activeSpec.modes.map((m, i) => (
               <button
                 key={m.id}
@@ -375,7 +376,7 @@ export function ChamberFigure({ step = 2, progressPct = 75, interactive = false 
             ))}
           </div>
           <p className="proc-plus-mode-detail">
-            <b>Active readout:</b> {activeMode.detail}
+            <b>{t("Active readout:")}</b> {activeMode.detail}
           </p>
         </div>
       </div>

@@ -98,6 +98,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · rama frontend · tema claro/oscuro e idioma inglés/español
+- Hecho: selector de idioma (EN/ES) y tema (Claro/Oscuro) en todas las cabeceras (`components/Prefs.tsx`); la elección queda en este navegador. El oscuro sigue por defecto; el claro usa la paleta del artículo.
+- Bug corregido: en oscuro el abstract no se leía porque `--wash` estaba fijo a un color claro en `summary.css`. Ahora `--wash`, `--muted` y `--rule-light` derivan del tema en `report.css`.
+- i18n (`web/src/i18n/`): la frase en inglés es la clave; `t()` traduce, `tx()` + `lazy()` para tablas fuera de componentes, `count()`/`many()` para plurales. Diccionario en `i18n/es/` (report, flow, showcase). `{masculino|femenino}` sigue el género de la unidad de estudio.
+- Textos del corpus (título, variables, presets, notas) en `web/public/demo/locale.es.json`, no en el código; `i18n/localize.ts` los aplica sin tocar ids, valores ni registros, así que el motor da los mismos resultados. A `/ask` se envía siempre el esquema original en inglés. Las frases de IA de `/analysis` llegan en inglés y se avisa.
+- Verificado: tsc, 100 tests web (nuevo `i18n/coverage.test.ts`: toda frase tiene traducción y conserva sus `{n}`), build, `check_agnostic.sh`; capturas en Chrome headless de informe, portada y formulario en ambos temas e idiomas, sin errores de consola.
+- Ojo: un texto nuevo de la interfaz debe ir dentro de `t()` y tener entrada en `i18n/es/`, o el test de cobertura falla. Si `build_pack.py` regenera `web/public/demo/`, `locale.es.json` debe conservarse.
+
 ### 2026-11-15 · rama frontend · merge de main (contratos del backend + isométricos)
 - Hecho: `origin/main` (hasta 17392f5) integrado en `frontend`. El trabajo de frontend de main (isométricos, presets de misión, What-If, tour, dossier) partía de `826b23b`, así que los conflictos se resolvieron con esa base.
 - Se conserva de `frontend`: informe por capas (`Fold`, graphical abstract, tarjeta de evidencia, panel lateral), red de evidencia viva (`KnowledgeGraph` + `graph.ts`), `NumField` y el orden del formulario Documents, Question, Setting, Variables.

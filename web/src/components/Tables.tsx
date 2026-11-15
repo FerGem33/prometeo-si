@@ -5,6 +5,7 @@ import { ariaSort, nextSort, overallCloseness, sortStable } from "../report/rank
 import type { Dir, SortValue } from "../report/ranking";
 import { doiOf, num, partitionName, rangeText, studyShort, valueText, varOf } from "../report/format";
 import { FINDING_LEVEL, findingText, findingTitle, whyText } from "../report/text";
+import { t, tx, many, lazy, count } from "../i18n";
 
 export function Grade({ g }: { g: string }) {
   return <span className={`grade g${g}`}>{g}</span>;
@@ -14,8 +15,8 @@ export function KeyFindings({ findings }: { findings: Finding[] }) {
   const { pack, lens } = useData();
   const top = findings.slice(0, 4);
   return (
-    <section className="keys" aria-label="Key findings">
-      <h2>Key findings</h2>
+    <section className="keys" aria-label={t("Key findings")}>
+      <h2>{t("Key findings")}</h2>
       <ol>
         {top.map((f) => (
           <li key={f.id}>
@@ -48,7 +49,7 @@ function FindingSources({ f, lead = true }: { f: Finding; lead?: boolean }) {
             {i > 0 && ", "}
             {rec ? (
               <Src id={rec.id}>
-                {studyShort(pack, rec.study)} {rec.label}, row {rec.source.row}
+                {studyShort(pack, rec.study)} {rec.label}{t(", row")} {rec.source.row}
               </Src>
             ) : (
               <a href={`#ref-${s}`}>{studyShort(pack, s)}</a>
@@ -65,15 +66,15 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
   return (
     <table className="findings">
       <caption>
-        <b>Table 2 |</b> All findings for the scenario, computed by rule (Methods). Levels: attention, caution, context, support.
+        <b>{t("Table 2 |")}</b> {t("All findings for the scenario, computed by rule (Methods). Levels: attention, caution, context, support.")}
       </caption>
       <thead>
         <tr>
-          <th>Level</th>
-          <th>Finding</th>
-          <th className="r">Metric</th>
-          <th>Statement</th>
-          <th>Sources</th>
+          <th>{t("Level")}</th>
+          <th>{t("Finding")}</th>
+          <th className="r">{t("Metric")}</th>
+          <th>{t("Statement")}</th>
+          <th>{t("Sources")}</th>
         </tr>
       </thead>
       <tbody>
@@ -100,7 +101,7 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
             </td>
             <td className="srcs">
               <FindingSources lead={false} f={{ ...f, sources: f.sources.slice(0, 6) }} />
-              {f.sources.length > 6 && ` and ${f.sources.length - 6} more`}
+              {f.sources.length > 6 && t(" and {0} more", f.sources.length - 6)}
             </td>
           </tr>
         ))}
@@ -136,7 +137,7 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
   return (
     <table id="tbl-rank">
       <caption>
-        <b>Table 1 |</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : "Study"} ranking for the scenario: grade A–D, then number of missing variables, then normalised distance <i>d</i> of the nearest comparable record. <span className="hint">Use the column buttons to sort (stable; ties keep the default order); click a test for its source row.</span>
+        <b>{t("Table 1 |")}</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : t("Study")} {t("ranking for the scenario: grade A–D, then number of missing variables, then normalised distance")} <i>d</i> {t("of the nearest comparable record.")} <span className="hint">{t("Use the column buttons to sort (stable; ties keep the default order); click a test for its source row.")}</span>
       </caption>
       <thead>
         <tr>
@@ -144,16 +145,16 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
           {th("study", lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : "Study")}
           {th("grade", "Grade")}
           {th("distance", "d", "r")}
-          <th>Nearest record</th>
+          <th>{t("Nearest record")}</th>
           {actives.map((v) => (
             <th key={v.id} className="r">
               {v.label}
               {v.type === "num" ? ` (${v.unit})` : ""}
             </th>
           ))}
-          <th>Why</th>
-          {th("tests", "Comparable records", "r")}
-          <th>Dataset DOI</th>
+          <th>{t("Why")}</th>
+          {th("tests", t("Comparable records"), "r")}
+          <th>{t("Dataset DOI")}</th>
         </tr>
       </thead>
       <tbody>
@@ -171,7 +172,7 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
                 <Grade g={r.grade} />
               </td>
               <td className="r">{r.distance === null ? "—" : num(r.distance)}</td>
-              <td>{rec ? <Src id={rec.id}>{rec.label}, row {rec.source.row}</Src> : "—"}</td>
+              <td>{rec ? <Src id={rec.id}>{rec.label}{t(", row")} {rec.source.row}</Src> : "—"}</td>
               {actives.map((v) => (
                 <td key={v.id} className="r">
                   {rec ? valueText(rec, v) : "—"}
@@ -188,12 +189,12 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
   );
 }
 
-export const REASON: Record<string, string> = {
-  not_recorded: "not recorded",
-  not_comparable: "not comparable",
-  no_records: "no table",
-  no_evidence: "no data",
-};
+export const REASON: Record<string, string> = lazy({
+  not_recorded: tx("not recorded"),
+  not_comparable: tx("not comparable"),
+  no_records: tx("no table"),
+  no_evidence: tx("no data"),
+});
 
 export function HeatTable({ results, closeness, scenario, figure }: { results: StudyResult[]; closeness: Record<string, Record<string, AxisScore>>; scenario: Scenario; figure: number }) {
   const { pack, lens } = useData();
@@ -223,7 +224,7 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
           <tr>
             {hth("study", (lens.unit_of_study ?? "study").replace(/^./, (c) => c.toUpperCase()))}
             {hth("grade", "Grade")}
-            {hth("overall", "Overall closeness", "c")}
+            {hth("overall", t("Overall closeness"), "c")}
             {actives.map((v) =>
               hth(
                 `var:${v.id}`,
@@ -258,16 +259,16 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
                   const rec = a.nearest ? pack.records.find((x) => x.id === a.nearest) : null;
                   const tip =
                     v.type === "num"
-                      ? `Tested range in this source: ${a.tested ? rangeText(a.tested, v) : "—"}. Nearest record: ${rec ? `${rec.label} (${valueText(rec, v)}), row ${rec.source.row}` : "—"}. Gap to scenario: ${num(a.gap ?? 0)} ${v.unit}.`
+                      ? t("Tested range in this source: {0}. Nearest record: {1}. Gap to scenario: {2} {3}.", a.tested ? rangeText(a.tested, v) : "—", rec ? t("{0} ({1}), row {2}", rec.label, valueText(rec, v), rec.source.row) : "—", num(a.gap ?? 0), v.unit)
                       : a.score === 100
-                        ? `${scenario.values[v.id]} appears in this source${rec ? ` (first: ${rec.label}, row ${rec.source.row})` : ""}.`
-                        : `${scenario.values[v.id]} does not appear in the comparable records of this source.`;
+                        ? t("{0} appears in this source{1}.", scenario.values[v.id], rec ? t(" (first: {0}, row {1})", rec.label, rec.source.row) : "")
+                        : t("{0} does not appear in the comparable records of this source.", scenario.values[v.id]);
                   return (
                     <td key={v.id} className="c cell" title={tip}>
                       <span className="bar" style={{ width: `${a.score}%` }} />
                       <Src id={rec?.id} title={tip}>
                         <b>{a.score}</b>
-                        <small> {rec && v.type === "num" ? valueText(rec, v) : v.type === "cat" ? (a.score === 100 ? "tested" : "not tested") : ""}</small>
+                        <small> {rec && v.type === "num" ? valueText(rec, v) : v.type === "cat" ? (a.score === 100 ? t("tested") : t("not tested")) : ""}</small>
                       </Src>
                     </td>
                   );
@@ -279,18 +280,18 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
       </table>
       <figcaption>
         <b>
-          Figure {figure} | Closeness of each {lens.unit_of_study ?? "study"} to the scenario, by variable.
+          {t("Figure")} {figure} {t("| Closeness of each")} {lens.unit_of_study ?? t("study")} {t("to the scenario, by variable.")}
         </b>{" "}
-        Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table 1. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least {pack.schema.thresholds.closeness_reach}σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.{" "}
+        {t("Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table 1. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least")} {pack.schema.thresholds.closeness_reach}{t("σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.")}{" "}
         {rest.length > 0 && (
           <>
-            {all ? "All sources are shown. " : `${rest.length} ${lens.unit_of_study ?? "study"}s without comparable records are not shown (${rest.map((r) => studyShort(pack, r.study)).join(", ")}). `}
+            {all ? t("All sources are shown. ") : t("{0} {1} without comparable records are not shown ({2}). ", rest.length, many(lens.unit_of_study ?? "study"), rest.map((r) => studyShort(pack, r.study)).join(", "))}
             <button type="button" className="link noprint" onClick={() => setAll((x) => !x)}>
-              {all ? "show comparable only" : "show all"}
+              {all ? t("show comparable only") : t("show all")}
             </button>
           </>
         )}{" "}
-        <span className="hint">Hover a cell for the tested range; click it for the source row.</span>
+        <span className="hint">{t("Hover a cell for the tested range; click it for the source row.")}</span>
       </figcaption>
     </figure>
   );
@@ -327,7 +328,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
   const ch = 40;
   const H = ny * ch + 58;
   const max = Math.max(1, ...grid.cells.flat().map((c) => c.n));
-  const name = grid.partition ? partitionName(lens, grid.partition) : "all tests";
+  const name = grid.partition ? partitionName(lens, grid.partition) : t("all tests");
   const otherTotal = grid.cells.flat().reduce((a, c) => a + c.other, 0);
 
   const [pinned, setPinned] = useState<CellKey | null>(null);
@@ -349,7 +350,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
   const describe = (xi: number, yi: number) => {
     const c = grid.cells[yi][xi];
     const r = range(xi, yi);
-    return `${vx.label} ${r.x}, ${vy.label} ${r.y}: ${c.n} comparable ${c.n === 1 ? "test" : "tests"}${c.studies.length ? ` from ${c.studies.map((s) => studyShort(pack, s)).join(", ")}` : ""}; ${c.other} in other partitions`;
+    return t("{0} {1}, {2} {3}: {4}{5}; {6} in other partitions", vx.label, r.x, vy.label, r.y, count(c.n, "comparable test"), c.studies.length ? t(" from {0}", c.studies.map((s) => studyShort(pack, s)).join(", ")) : "", c.other);
   };
   const near = grid.nearestCell;
   const scn = grid.scenarioCell;
@@ -361,7 +362,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
     <figure className="fig wide gap" id="fig-gaps">
       <div className="figctl noprint">
         <label>
-          Horizontal
+          {t("Horizontal")}
           <select value={axes.x} onChange={(e) => onAxes({ ...axes, x: e.target.value })}>
             {nums.filter((v) => v.id !== axes.y).map((v) => (
               <option key={v.id} value={v.id}>
@@ -371,7 +372,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
           </select>
         </label>
         <label>
-          Vertical
+          {t("Vertical")}
           <select value={axes.y} onChange={(e) => onAxes({ ...axes, y: e.target.value })}>
             {nums.filter((v) => v.id !== axes.x).map((v) => (
               <option key={v.id} value={v.id}>
@@ -382,15 +383,15 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
         </label>
         <span className="sep" />
         <button type="button" className="chip" aria-pressed={showOther} onClick={() => setShowOther(!showOther)}>
-          Other partitions
+          {t("Other partitions")}
         </button>
         {near && scnEmpty && both && (
           <button type="button" className="chip accent" onClick={() => moveHere(near.xi, near.yi)}>
-            Move the scenario to the nearest covered cell
+            {t("Move the scenario to the nearest covered cell")}
           </button>
         )}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Coverage of ${vx.label} by ${vy.label}. Each cell can be selected.`}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={t("Coverage of {0} by {1}. Each cell can be selected.", vx.label, vy.label)}>
         <defs>
           <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="8" stroke="var(--rule)" strokeWidth="1.5" />
@@ -431,7 +432,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
                 </text>
                 {showOther && c.other > 0 && (
                   <text x={x + cw / 2} y={y + ch - 5} textAnchor="middle" className="lab" style={{ fontSize: 10, fill: dark ? "var(--paper)" : "var(--ink-3)" }}>
-                    other partitions: {c.other}
+                    {t("other partitions:")} {c.other}
                   </text>
                 )}
                 {isNear && <rect x={x + 2} y={y + 2} width={cw - 4} height={ch - 4} fill="none" stroke="var(--paper)" strokeWidth="4" />}
@@ -439,12 +440,12 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
                 {isScn && <rect x={x + 1.5} y={y + 1.5} width={cw - 3} height={ch - 3} fill="none" stroke="var(--accent)" strokeWidth="2.5" />}
                 {isScn && (
                   <text x={x + 6} y={y + 10} className="scn-txt" style={{ fontSize: 10, paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3, strokeLinejoin: "round" }}>
-                    scenario
+                    {t("scenario")}
                   </text>
                 )}
                 {isNear && (
                   <text x={x + 6} y={y + 10} className="scn-txt" style={{ fontSize: 10, paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3, strokeLinejoin: "round" }}>
-                    nearest covered
+                    {t("nearest covered")}
                   </text>
                 )}
                 <rect className="gsel" x={x + 1} y={y + 1} width={cw - 2} height={ch - 2} fill="none" />
@@ -474,7 +475,7 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
 
       <div className="gap-detail" aria-live="polite">
         {!shown ? (
-          <p className="hint">Hover a cell to read it, select one to pin it and to move the scenario there.{near && scnEmpty && both ? " The dashed outline marks the covered cell nearest to the scenario." : ""}</p>
+          <p className="hint">{t("Hover a cell to read it, select one to pin it and to move the scenario there.")}{near && scnEmpty && both ? t(" The dashed outline marks the covered cell nearest to the scenario.") : ""}</p>
         ) : (
           (() => {
             const c = grid.cells[shown.yi][shown.xi];
@@ -486,26 +487,26 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
                   <b>
                     {vx.label} {r.x} · {vy.label} {r.y}
                   </b>
-                  {pinnedNow ? "" : " (hover)"}
+                  {pinnedNow ? "" : t(" (hover)")}
                 </p>
                 <p>
                   {c.n === 0 ? (
-                    <>No comparable test was recorded in this cell. An empty cell states that nothing was recorded there; it does not state what would happen.</>
+                    <>{t("No comparable test was recorded in this cell. An empty cell states that nothing was recorded there; it does not state what would happen.")}</>
                   ) : (
                     <>
-                      {c.n} comparable {c.n === 1 ? "test" : "tests"} from {c.studies.length} {c.studies.length === 1 ? (lens.unit_of_study ?? "study") : (lens.unit_of_study ?? "study") + "s"}:{" "}
+                      {count(c.n, "comparable test")} {t("from")} {count(c.studies.length, lens.unit_of_study ?? "study")}:{" "}
                       {c.studies.map((s) => studyShort(pack, s)).join(", ")}.
                     </>
                   )}{" "}
-                  {c.other > 0 ? `${c.other} tests of other partitions fall here, as context.` : ""}
+                  {c.other > 0 ? t("{0} tests of other partitions fall here, as context.", c.other) : ""}
                 </p>
                 {pinnedNow && (
                   <p className="gap-actions noprint">
                     <button type="button" className="chip accent" onClick={() => moveHere(shown.xi, shown.yi)}>
-                      Move the scenario to this cell
+                      {t("Move the scenario to this cell")}
                     </button>
                     <button type="button" className="chip" onClick={() => setPinned(null)}>
-                      Unpin
+                      {t("Unpin")}
                     </button>
                   </p>
                 )}
@@ -517,21 +518,21 @@ export function GapFigure({ grid, scenario, figure, axes, onAxes, onPick }: {
 
       <figcaption>
         <b>
-          Figure {figure} | Coverage and gaps: {(vx.long ?? vx.label).toLowerCase()} × {(vy.long ?? vy.label).toLowerCase()}, {name}.
+          {t("Figure")} {figure} {t("| Coverage and gaps:")} {(vx.long ?? vx.label).toLowerCase()} × {(vy.long ?? vy.label).toLowerCase()}, {name}.
         </b>{" "}
-        Large number: comparable tests in the cell ({name}). Small number: tests of other partitions in the same cell, shown as context. Hatched cells have no comparable test. Cell edges are quantiles of the values observed in the whole corpus, so cells are not equally wide.{" "}
+        {t("Large number: comparable tests in the cell (")}{name}{t("). Small number: tests of other partitions in the same cell, shown as context. Hatched cells have no comparable test. Cell edges are quantiles of the values observed in the whole corpus, so cells are not equally wide.")}{" "}
         {grid.both === 0 ? (
           <b>
-            None of the {grid.total} comparable tests records both variables: {grid.no_x} lack {vx.label} and {grid.no_y} lack {vy.label}, so the map has no comparable coverage at all.
+            {t("None of the")} {grid.total} {t("comparable tests records both variables:")} {grid.no_x} {t("lack")} {vx.label} {t("and")} {grid.no_y} {t("lack")} {vy.label}{t(", so the map has no comparable coverage at all.")}
           </b>
         ) : (
           <>
-            {grid.both} of {grid.total} comparable tests record both variables ({grid.no_x} lack {vx.label}, {grid.no_y} lack {vy.label}).
-            {scn && scnEmpty && " The scenario cell is empty."}
+            {grid.both} {t("of")} {grid.total} {t("comparable tests record both variables (")}{grid.no_x} {t("lack")} {vx.label}, {grid.no_y} {t("lack")} {vy.label}).
+            {scn && scnEmpty && t(" The scenario cell is empty.")}
           </>
         )}{" "}
-        {otherTotal > 0 && `${otherTotal.toLocaleString("en-US")} tests of other partitions record both.`}
-        {both ? " The red outline is the scenario cell." : ""}
+        {otherTotal > 0 && t("{0} tests of other partitions record both.", otherTotal.toLocaleString("en-US"))}
+        {both ? t(" The red outline is the scenario cell.") : ""}
       </figcaption>
     </figure>
   );
@@ -542,19 +543,19 @@ export function SourcesTable({ n }: { n: number }) {
   return (
     <table id="tbl-sources">
       <caption>
-        <b>Table {n} |</b> {pack.studies.length} {lens.unit_of_study ?? "study"}s synthesised in this report (metadata from the repository records).
+        <b>{t("Table")} {n} |</b> {pack.studies.length} {many(lens.unit_of_study ?? "study")} {t("synthesised in this report (metadata from the repository records).")}
       </caption>
       <thead>
         <tr>
-          <th>Id</th>
-          <th>Acronym</th>
-          <th>Title</th>
-          <th>Platform · hardware</th>
-          <th>Period</th>
-          <th className="r">Tests</th>
-          <th className="r">Campaign rows</th>
-          <th className="r">Publications</th>
-          <th>Dataset DOI</th>
+          <th>{t("Id")}</th>
+          <th>{t("Acronym")}</th>
+          <th>{t("Title")}</th>
+          <th>{t("Platform · hardware")}</th>
+          <th>{t("Period")}</th>
+          <th className="r">{t("Tests")}</th>
+          <th className="r">{t("Campaign rows")}</th>
+          <th className="r">{t("Publications")}</th>
+          <th>{t("Dataset DOI")}</th>
         </tr>
       </thead>
       <tbody>

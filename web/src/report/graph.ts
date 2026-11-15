@@ -1,5 +1,6 @@
 import { rank } from "../engine";
 import type { DataRecord, Grade, Pack, Range, Scenario, Study, StudyResult } from "../engine";
+import { t, count } from "../i18n";
 
 /**
  * Evidence network: relations computed from data already in the pack. These are NOT claims
@@ -249,8 +250,8 @@ export function matchingVariables(pack: Pack, scenario: Scenario, studyId: strin
 export function edgeText(pack: Pack, e: GraphEdge): string {
   const label = (id: string) => pack.schema.variables.find((v) => v.id === id)?.label ?? id;
   const parts: string[] = [];
-  if (e.kinds.includes("variables")) parts.push(`shares variables ${e.variables.map(label).join(", ")}`);
-  if (e.kinds.includes("publication")) parts.push(`shares ${e.dois.length} publication${e.dois.length === 1 ? "" : "s"} (same DOI)`);
-  if (e.kinds.includes("related")) parts.push("linked: related study");
+  if (e.kinds.includes("variables")) parts.push(t("shares variables {0}", e.variables.map(label).join(", ")));
+  if (e.kinds.includes("publication")) parts.push(t("shares {0} (same DOI)", count(e.dois.length, "publication")));
+  if (e.kinds.includes("related")) parts.push(t("linked: related study"));
   return parts.join("; ");
 }

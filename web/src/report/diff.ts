@@ -1,5 +1,6 @@
 // Pure comparison of two evidence-level lists computed by the engine. No level is derived here.
 import type { EvidenceLevel, VariableEvidence } from "../engine";
+import { tx, lazy } from "../i18n";
 
 /** Order of the four engine levels, from best covered to least covered. Used only to tell up from down. */
 export const LEVEL_RANK: Record<EvidenceLevel, number> = { studied: 3, scarce: 2, near: 1, not_studied: 0 };
@@ -27,4 +28,4 @@ export function diffLevels(before: VariableEvidence[], after: VariableEvidence[]
 }
 
 export const DIRECTION_ARROW: Record<LevelChange["direction"], string> = { up: "▲", down: "▼", added: "+", removed: "−" };
-export const DIRECTION_WORD: Record<LevelChange["direction"], string> = { up: "moved up", down: "moved down", added: "added", removed: "removed" };
+export const DIRECTION_WORD: Record<LevelChange["direction"], string> = lazy({ up: tx("moved up"), down: tx("moved down"), added: tx("added"), removed: tx("removed") });

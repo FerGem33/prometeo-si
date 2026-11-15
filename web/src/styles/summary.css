@@ -165,7 +165,6 @@ h2.sec.more { margin-top: 40px; border-top: 2px solid var(--ink); }
 }
 
 /* ---------- abstract as a quote at the top, reading notes in a dialog ---------- */
-:root { --wash: #F6F3EC; }
 .abstract-card { background: var(--wash); border-left: 3px solid var(--accent); padding: 14px 22px 8px; margin: 4px 0 22px; }
 .abstract-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .abstract-head .lbl { font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); }

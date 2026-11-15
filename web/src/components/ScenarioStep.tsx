@@ -9,6 +9,8 @@ import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
 import { NASA_MISSION_PRESETS } from "./presets";
+import { Prefs } from "./Prefs";
+import { t, many } from "../i18n";
 
 const STEPS = ["Documents", "Question", "Setting", "Variables"];
 
@@ -98,15 +100,18 @@ export function ScenarioStep({
     <div className="screen step">
       <header className="screen-bar">
         <span>
-          <b>Prometeo</b> · New evaluation
+          <b>{t("Prometeo")}</b> {t("· New evaluation")}
         </span>
-        <button type="button" className="linkbtn" onClick={onBack}>
-          Cancel
+        <span className="bar-links">
+          <Prefs />
+          <button type="button" className="linkbtn" onClick={onBack}>
+          {t("Cancel")}
         </button>
+        </span>
       </header>
 
       <main className="step-main">
-        <ol className="stepper" aria-label="Progress">
+        <ol className="stepper" aria-label={t("Progress")}>
           {STEPS.map((label, i) => (
             <li
               key={label}
@@ -115,14 +120,14 @@ export function ScenarioStep({
             >
               <button type="button" onClick={() => setStep(i)}>
                 <i>{i + 1}</i>
-                {label}
+                {t(label)}
               </button>
             </li>
           ))}
         </ol>
 
         <div className="quick-mission-bar noprint">
-          <span className="quick-mission-title">🚀 1-Click NASA Missions:</span>
+          <span className="quick-mission-title">{t("🚀 1-Click NASA Missions:")}</span>
           {NASA_MISSION_PRESETS.map((m) => (
             <button
               key={m.id}
@@ -143,9 +148,9 @@ export function ScenarioStep({
 
         {STEPS[step] === "Setting" && (
           <section className="step-panel">
-            <h1>Where is this scenario set?</h1>
+            <h1>{t("Where is this scenario set?")}</h1>
             <p className="step-lede">
-              Pick a starting point. Each setting loads its own conditions, and you can change every one of them in the next step.
+              {t("Pick a starting point. Each setting loads its own conditions, and you can change every one of them in the next step.")}
             </p>
 
             <div className="choices choices-iso">
@@ -181,9 +186,9 @@ export function ScenarioStep({
                 <div className="choice-fig-wrap">
                   <HabitatFigure name="custom" size="md" />
                 </div>
-                <b>Custom</b>
-                <span>Start with an open control bench and add the variables you need.</span>
-                <small>Manual variable selection · Full corpus comparison</small>
+                <b>{t("Custom")}</b>
+                <span>{t("Start with an open control bench and add the variables you need.")}</span>
+                <small>{t("Manual variable selection · Full corpus comparison")}</small>
               </button>
             </div>
           </section>
@@ -193,18 +198,18 @@ export function ScenarioStep({
           <section className="step-panel">
             <div className="step-head-with-iso">
               <div>
-                <h1>Choose your variables</h1>
+                <h1>{t("Choose your variables")}</h1>
                 <p className="step-lede">
-                  Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all. These are the variables the corpus of step 1 records. You can also add one of your own: no document of this corpus records it, so it stays in your scenario marked as not in this corpus.
+                  {t("Remove the ones that do not apply, change their values, or add another. A variable left out is not compared at all. These are the variables the corpus of step 1 records. You can also add one of your own: no document of this corpus records it, so it stays in your scenario marked as not in this corpus.")}
                 </p>
               </div>
               <div className="step-mini-iso" aria-hidden="true">
                 <HabitatFigure name={preset || "custom"} size="lg" />
-                <span>{presets.find((p) => p.id === preset)?.label ?? "Custom bench"}</span>
+                <span>{presets.find((p) => p.id === preset)?.label ?? t("Custom bench")}</span>
               </div>
             </div>
             {included.length === 0 && extras.length === 0 && (
-              <p className="empty">No variable is included yet. Add one below.</p>
+              <p className="empty">{t("No variable is included yet. Add one below.")}</p>
             )}
             <ul className="vlist">
               {included.map((v) => {
@@ -220,9 +225,9 @@ export function ScenarioStep({
                         type="button"
                         className="rm"
                         onClick={() => remove(v.id)}
-                        aria-label={`Remove ${v.long ?? v.label}`}
+                        aria-label={t("Remove {0}", v.long ?? v.label)}
                       >
-                        Remove
+                        {t("Remove")}
                       </button>
                     </div>
                     {v.type === "num" ? (
@@ -236,7 +241,7 @@ export function ScenarioStep({
                           value={typeof x === "number" ? x : v.range[0]}
                           onChange={(e) => set(v.id, Number(e.target.value))}
                         />
-                        <NumField label={`${v.label} value`} min={v.range[0]} max={v.range[1]} step={v.step} value={typeof x === "number" ? x : undefined} onCommit={(n) => set(v.id, n)} />
+                        <NumField label={t("{0} value", v.label)} min={v.range[0]} max={v.range[1]} step={v.step} value={typeof x === "number" ? x : undefined} onCommit={(n) => set(v.id, n)} />
                         {typeof x === "number" && v.display_units?.[0] && (
                           <span className="alt">
                             = {num(x * v.display_units[0].factor, 1)} {v.display_units[0].unit}
@@ -251,11 +256,11 @@ export function ScenarioStep({
                           onChange={(e) => set(v.id, e.target.value)}
                         >
                           {typeof x === "string" && x !== "" && !cats[v.id].some((o) => o.value === x) && (
-                            <option value={x}>{x} · 0 tests</option>
+                            <option value={x}>{x} {t("· 0 tests")}</option>
                           )}
                           {cats[v.id].map((o) => (
                             <option key={o.value} value={o.value}>
-                              {o.value} · {o.n} tests
+                              {o.value} · {o.n} {t("tests")}
                             </option>
                           ))}
                         </select>
@@ -274,30 +279,30 @@ export function ScenarioStep({
                       type="button"
                       className="rm"
                       onClick={() => onExtras(extras.filter((o) => o.id !== e.id))}
-                      aria-label={`Remove ${e.name}`}
+                      aria-label={t("Remove {0}", e.name)}
                     >
-                      Remove
+                      {t("Remove")}
                     </button>
                   </div>
                   <div className="cond-ctl">
                     <input
                       type="text"
                       className="xval"
-                      aria-label={`${e.name} value`}
+                      aria-label={t("{0} value", e.name)}
                       maxLength={40}
                       value={e.value}
                       onChange={(ev) =>
                         onExtras(extras.map((o) => (o.id === e.id ? { ...o, value: ev.target.value } : o)))
                       }
                     />
-                    <span className="alt">{EXTRA_BASIS}</span>
+                    <span className="alt">{t(EXTRA_BASIS)}</span>
                   </div>
                 </li>
               ))}
             </ul>
             {available.length > 0 && (
               <div className="addvars">
-                <span>Add a variable</span>
+                <span>{t("Add a variable")}</span>
                 {available.map((v) => (
                   <button key={v.id} type="button" className="chip add" onClick={() => add(v.id)}>
                     + {v.long ?? v.label}
@@ -319,12 +324,12 @@ export function ScenarioStep({
 
         {STEPS[step] === "Question" && (
           <section className="step-panel">
-            <h1>What do you want to know?</h1>
+            <h1>{t("What do you want to know?")}</h1>
             <p className="step-lede">
-              Write your question or goal in your own words. It is optional; it appears at the top of the report. The levels and the ranking depend only on the conditions you set, never on this text.
+              {t("Write your question or goal in your own words. It is optional; it appears at the top of the report. The levels and the ranking depend only on the conditions you set, never on this text.")}
             </p>
             <label htmlFor="goal" className="fieldlbl">
-              Your question or goal
+              {t("Your question or goal")}
             </label>
             <textarea
               id="goal"
@@ -333,11 +338,11 @@ export function ScenarioStep({
               maxLength={400}
               value={goal}
               onChange={(e) => onGoal(e.target.value)}
-              placeholder="Example: is there enough evidence to choose this material for the setting above?"
+              placeholder={t("Example: is there enough evidence to choose this material for the setting above?")}
             />
             {(lens.questions?.length ?? 0) > 0 && (
               <div className="addvars">
-                <span>Examples</span>
+                <span>{t("Examples")}</span>
                 {lens.questions!.slice(0, 3).map((q) => (
                   <button key={q} type="button" className="chip" onClick={() => onGoal(q)}>
                     {q}
@@ -350,20 +355,20 @@ export function ScenarioStep({
 
         {STEPS[step] === "Documents" && (
           <section className="step-panel">
-            <h1>Your documents</h1>
+            <h1>{t("Your documents")}</h1>
             <p className="step-lede">
-              Everything starts from a corpus of papers and tables: the variables you can compare are the ones those documents record. This demo ships with one corpus, already processed and reviewed, and you can stage local files to inspect how document ingestion accompanies the harmonization step.
+              {t("Everything starts from a corpus of papers and tables: the variables you can compare are the ones those documents record. This demo ships with one corpus, already processed and reviewed, and you can stage local files to inspect how document ingestion accompanies the harmonization step.")}
             </p>
             <div className="corpus">
               <div>
-                <b>Example corpus</b>
+                <b>{t("Example corpus")}</b>
                 <span>
-                  {lens.byline}: {pack.studies.length} {lens.unit_of_study ?? "study"}s,{" "}
-                  {(s.tests ?? 0).toLocaleString("en-US")} individual {lens.subject ?? "tests"},{" "}
-                  {s.publications ?? 0} linked publications.
+                  {lens.byline}: {pack.studies.length} {many(lens.unit_of_study ?? "study")},{" "}
+                  {(s.tests ?? 0).toLocaleString("en-US")} {t("individual {0}", lens.subject ?? t("tests"))},{" "}
+                  {s.publications ?? 0} {t("linked publications.")}
                 </span>
               </div>
-              <em>Included</em>
+              <em>{t("Included")}</em>
             </div>
             <div
               className={`drop drop-interactive ${dragOver ? "dragover" : ""}`}
@@ -395,14 +400,14 @@ export function ScenarioStep({
                 style={{ display: "none" }}
                 onChange={(e) => addFiles(e.target.files)}
               />
-              <b>Stage your own papers and tables</b>
+              <b>{t("Stage your own papers and tables")}</b>
               <span>
-                Drop PDF, CSV, Excel or JSON tables here (or click to browse). Prometeo stages them alongside the {pack.studies.length}-study NASA PSI reference pack.
+                {t("Drop PDF, CSV, Excel or JSON tables here (or click to browse). Prometeo stages them alongside the")} {pack.studies.length}{t("-study NASA PSI reference pack.")}
               </span>
-              <em>{stagedFiles.length > 0 ? `${stagedFiles.length} file(s) staged` : "Browse or drop files"}</em>
+              <em>{stagedFiles.length > 0 ? t("{0} file(s) staged", stagedFiles.length) : t("Browse or drop files")}</em>
             </div>
             {stagedFiles.length > 0 && (
-              <ul className="staged-files" aria-label="Staged files">
+              <ul className="staged-files" aria-label={t("Staged files")}>
                 {stagedFiles.map((f) => (
                   <li key={f.name}>
                     <span>
@@ -413,7 +418,7 @@ export function ScenarioStep({
                       className="linkbtn"
                       onClick={() => setStagedFiles((prev) => prev.filter((x) => x.name !== f.name))}
                     >
-                      Remove
+                      {t("Remove")}
                     </button>
                   </li>
                 ))}
@@ -428,11 +433,11 @@ export function ScenarioStep({
             className="ghostbtn"
             onClick={() => (step === 0 ? onBack() : setStep(step - 1))}
           >
-            {step === 0 ? "Back to start" : "Back"}
+            {step === 0 ? t("Back to start") : t("Back")}
           </button>
           {!last ? (
             <button type="button" className="cta" onClick={() => setStep(step + 1)}>
-              Continue
+              {t("Continue")}
             </button>
           ) : (
             <button
@@ -441,7 +446,7 @@ export function ScenarioStep({
               disabled={included.length === 0}
               onClick={() => onRun(stagedFiles.length)}
             >
-              Compare against the evidence
+              {t("Compare against the evidence")}
             </button>
           )}
         </div>

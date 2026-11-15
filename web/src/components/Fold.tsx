@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { t } from "../i18n";
 
 /** A section that opens on demand. The content stays in the page so that printing always includes it.
  *  Pass `open` and `onOpenChange` to control it from outside; otherwise it keeps its own state. */
@@ -19,7 +20,7 @@ export function Fold({ title, hint, children, open: initial = false, controlled,
         </span>
         <span className="fold-title">{title}</span>
         {hint && <span className="fold-hint">{hint}</span>}
-        <span className="fold-act">{open ? "Hide" : "Show"}</span>
+        <span className="fold-act">{open ? t("Hide") : t("Show")}</span>
       </button>
       <div className="fold-body" hidden={!open}>
         {children}
