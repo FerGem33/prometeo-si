@@ -128,6 +128,7 @@ td.src { color: var(--ink-3); font-size: 11.5px; }
 .study-compare-col h3 { font-family: var(--serif); font-size: 24px; font-weight: 500; border-top: 1px solid var(--ink); padding-top: 8px; }
 .study-compare-col .study-title { font-size: 14px; margin: 4px 0 8px; }
 .study-compare-col p { margin: 6px 0; }
+.study-record-links { display: flex; align-items: baseline; gap: 4px; margin: 6px 0; }
 .study-description { margin: 6px 0; }
 .study-description summary { cursor: pointer; }
 .study-description p { margin: 4px 0 4px 12px; }
