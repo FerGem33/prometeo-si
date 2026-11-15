@@ -19,6 +19,7 @@ import { StudyCompare } from "./components/StudyCompare";
 import { KnowledgeGraph } from "./components/KnowledgeGraph";
 import { GraphicalAbstract } from "./components/GraphicalAbstract";
 import { Fold } from "./components/Fold";
+import { EvidenceCard } from "./components/EvidenceCard";
 import { ExtraTag } from "./components/ExtraVars";
 import { abstractText, OVERALL } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
@@ -93,6 +94,7 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const openProv = useCallback((id: string) => setProv(id), []);
 
   const r = useMemo(() => {
@@ -163,9 +165,14 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
 
         {/* Main column, with a side rail that stays in view while the page scrolls. */}
         <div className="cols">
-          <div id="scenario-controls">
-            <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
+          <div className="top">
+            <EvidenceCard overall={r.overall} ranking={r.ranking} levels={r.levels} comparable={r.n} />
+            <KeyFindings findings={r.finds} />
           </div>
+
+          <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title="Scenario values" hint="sliders, presets and your own variables">
+            <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
+          </Fold>
 
           <aside className="rail" aria-label="Scenario summary, questions and analysis">
             <section className="rail-scn noprint" aria-label="Current scenario">
@@ -192,7 +199,10 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
                 ))}
               </ul>
               {r.levels.length === 0 && extras.length === 0 && <p className="hint">No variable is part of the scenario.</p>}
-              <button type="button" className="chip" onClick={() => document.getElementById("scenario-controls")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+              <button type="button" className="chip" onClick={() => {
+                  setEditing(true);
+                  setTimeout(() => document.getElementById("scenario-controls")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }}>
                 Change values
               </button>
             </section>
@@ -204,8 +214,6 @@ function Report({ data, scenario, setScenario, extras, setExtras, axes, setAxes,
           </Fold>
 
           <GraphicalAbstract scenario={scenario} onChange={setScenario} ranking={r.ranking} close={r.close} levels={r.levels} overall={r.overall} comparable={r.n} />
-
-          <KeyFindings findings={r.finds} />
 
           <div className="row">
             <p className="abstract">
