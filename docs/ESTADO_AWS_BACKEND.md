@@ -11,7 +11,7 @@ no equivale al recorrido completo operativo.
 | T33 cuentas/proyectos | Registro/confirmación/login SRP y 14 checks A/B reales pasan. API drafts y cuatro rutas JWT desplegadas; MVP operativo | Cargas D3 y gestión completa de proyectos (DELETE/lente); conexión de pantallas por interfaz. Evidencia `T33_PRUEBA_USUARIOS.md` |
 | T30/D3 | Contrato y límites propuestos; permiso acotado para desplegar drafts | Aprobar resto del contrato y límites/costo del corpus. 20 MB/60 páginas/30 documentos no están aprobados por inferencia |
 | T32 extracción | CLI local y evaluación real documentadas | Revisión humana D7, citas PDF y alcance; fuente/OCR legible del PDF pendiente |
-| T33 cargas | Bucket privado creado; contrato de tickets y finalización | Backend de tickets/cargas/comprobación hash/límites, permisos S3 y pruebas reales; no habilitar sin D3 |
+| T33 cargas | Bucket privado y reserva de tickets local con cupo transaccional; deshabilitada | D3, complete/hash real, listado/limpieza, integridad/encolado y pruebas S3 reales. Ver `T33_CARGAS_PREPARACION.md` |
 | T34 worker | Cola/DLQ creadas; pipeline local disponible | Lambda empaquetada con parser PDF, permisos, asociación SQS, progreso/reanudación, lote real y corrupto aislado |
 | T35 revisión | Revisión/aprobación local versionada disponible | API persistente/autenticada y arranque de extracción tras aprobación; pantallas con equipo de interfaz |
 | T36 correcciones y originales | Contratos preparados | API de correcciones/conflictos/claims, auditoría y URLs PDF por propietario; pruebas y pantallas |

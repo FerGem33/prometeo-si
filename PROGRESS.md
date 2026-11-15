@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33: registro, confirmación, login SRP y prueba A/B real de proyectos vacíos comprobados. Siguen pendientes cargas D3 y gestión completa de proyectos. T32 D7/PDF pendiente; T31 hecha. |
+| Tarea en curso | T33: usuarios/drafts A/B reales comprobados; reserva de cargas implementada y probada localmente, deshabilitada por D3. Faltan complete/hash, listado, limpieza/encolado/worker. T32 D7/PDF pendiente; T31 hecha. |
 | Último commit verificado | T33 despliegue `4268b90` (JWT/HTTP y regresión MVP); T31 `56e42d5`. Verificación nueva local de cliente Cognito en esta entrega; no se presume A/B real. |
-| Siguiente paso exacto | Cerrar T30/D3 con límites/costo revisados antes de habilitar cargas; después implementar tickets/finalización y worker T34, y verificar lote real/corrupto. Registro/login y aislamiento de drafts ya pasaron; evidencia en `docs/T33_PRUEBA_USUARIOS.md`. DELETE y edición de intención de proyectos procesados siguen pendientes. D7/PDF requiere revisor. |
+| Siguiente paso exacto | Dueño revisa D3 en `docs/T33_CARGAS_PREPARACION.md` (20 MB/60 páginas/30 documentos, costo orientativo y controles pendientes). Continuar complete con hash real/integridad, listado, encolado durable y worker antes de activar rutas/cargas. Aprobar límites no cierra esas verificaciones. D7/PDF requiere revisor. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -95,6 +95,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 reservas de carga locales y propuesta D3
+- `api/upload_tickets.py` prepara reservas de documentos y URLs PUT de 5 min con tamaño/tipo firmados, clave S3 generada en servidor y propiedad comprobada. Transacción DynamoDB une reserva y contador con condición de revisión/estado/cupo; reintentos con clave no duplican cupos. Se amplió error details para comunicar límites.
+- Gate cerrado por defecto: requiere UPLOADS_ENABLED y UPLOAD_LIMITS_JSON explícitos tras D3; no se configuraron esas variables ni rutas JWT/permisos de documentos en AWS. No se desplegó este avance. `20_api.sh` incluye el módulo para próximos despliegues, sin habilitarlo por sí mismo.
+- `docs/T33_CARGAS_PREPARACION.md` documenta alcance, limitaciones (hash, páginas, reemplazos, cancelación y encolado pendientes) y escenario de costo. Uso T32 observado 288423/47227 tokens, estimación de modelo USD 0,5768 con tarifas de referencia de ejemplo AWS 1,10/5,50 por millón; no factura ni tarifa efectiva comprobada. Escenario hipotético 30 PDF/60 páginas/2000 tokens/página/2 etapas/6000 salida por etapa: USD 9,90 por pasada más otros servicios/reintentos; no es tope.
+- API 85 pruebas Python 3.12, web 98, bash-n y diff-check pasan. Firma con SDK S3 real sin red y dobles de transacción no prueban enforcement S3/DynamoDB remoto. No se invocó Bedrock ni se subieron documentos.
+- D3 sigue pendiente; pregunta concreta de aprobación presentada al dueño. T33 sigue en curso. Siguiente: complete/hash/integridad, listado, encolado/worker y verificación real antes de habilitar cargas.
 
 ### 2026-11-15 · T33 confirmación y aislamiento A/B reales
 - Ambos códigos de correo fueron aceptados por Cognito. Dos inicios de sesión SRP reales terminaron correctamente, con almacenamiento local solo en memoria.

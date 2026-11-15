@@ -7,6 +7,9 @@ T30 completo/D3 siguen pendientes; no habilitar cargas. Pack sin cambios.
 
 ## Rutas implementadas
 
+Avance de documentos local y deshabilitado: `T33_CARGAS_PREPARACION.md`.
+No forma parte de las rutas JWT desplegadas ni de la verificación A/B de drafts.
+
 `api/handler.py` deriva `/projects` a `api/projects.py`. Se implementaron:
 
 | Método/ruta | Resultado |

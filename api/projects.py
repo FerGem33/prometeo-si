@@ -15,12 +15,13 @@ from functools import lru_cache
 
 
 class ApiError(Exception):
-    def __init__(self, status, code, message):
+    def __init__(self, status, code, message, details=None):
         self.status, self.code, self.message = status, code, message
+        self.details = details
 
 
-def fail(status, code, message):
-    raise ApiError(status, code, message)
+def fail(status, code, message, details=None):
+    raise ApiError(status, code, message, details)
 
 
 def identity(event):
@@ -188,6 +189,17 @@ def handle(event):
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
+            documents = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents', path)
+            if documents and method == 'POST':
+                # Authenticate/authorize before gate/configuration or signing.
+                repository = store()
+                repository.get(uid, documents[1])
+                try:
+                    from .upload_tickets import service
+                except ImportError:
+                    from upload_tickets import service
+                headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+                return 201, service(repository).reserve(uid, documents[1], body(event), headers.get('idempotency-key'))
             match = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})', path)
             if not match:
                 fail(404, 'not_found', 'Project route not found')
@@ -197,6 +209,7 @@ def handle(event):
                 return 200, store().patch(uid, match[1], body(event))
         fail(405, 'method_not_allowed', 'Method not available in this release')
     except ApiError as exc:
-        return exc.status, {'error': {'code': exc.code, 'message': exc.message}}
+        return exc.status, {'error': {'code': exc.code, 'message': exc.message,
+                                   **({'details': exc.details} if exc.details is not None else {})}}
     except Exception:
         return 500, {'error': {'code': 'internal', 'message': 'Project service unavailable'}}
