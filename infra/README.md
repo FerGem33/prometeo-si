@@ -1,5 +1,10 @@
 # Despliegue y relevo de Prometeo
 
+Para implementar el backend/worker del bloque C, integrar las pantallas y
+preparar el despliegue final de la arquitectura, seguir la
+[guía de integración y entrega](../docs/GUIA_INTEGRACION_DEPLOY_FINAL.md).
+T31 ya creó los recursos base; el despliegue completo requiere terminar T33–T37.
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net

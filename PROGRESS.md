@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T32 en curso · stringbuilder: revisión humana D7/PDF pendiente. T31 hecha con rol SSO; recursos e IDs documentados en `infra/outputs.env`. T18 hecha. |
-| Último commit verificado | Próximo commit T31; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
+| Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
 | Siguiente paso exacto | Una persona revisa D7 y los candidatos PDF de `docs/T32_EVALUACION.md`; aprobar/corregir contrato T30 y límites D3 antes de iniciar T33. T21–T29 siguen a cargo del equipo de interfaz. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -94,6 +94,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Guía para integración y despliegue final
+- `docs/GUIA_INTEGRACION_DEPLOY_FINAL.md` entrega inventario T31, responsabilidades de interfaz/backend/revisor/dueño, requisitos T30/D3 y D7, configuración pública/privada y guion de aceptación y despliegue final. Enlazada desde `infra/README.md`.
+- T31 termina los recursos base; aún faltan backend C, worker, permisos de ejecución, rutas protegidas y pantallas. La guía exige entregar el script de despliegue C/worker y su recuperación; no presenta los scripts MVP como despliegue completo.
+- Sin cambios de código ni llamadas AWS. Verificación documental: referencias de archivos/comandos y `git diff --check`; no se repitieron pruebas funcionales al no cambiar implementación. El dueño hará el despliegue final cuando el equipo entregue estas piezas y sus verificaciones reales.
 
 ### 2026-11-15 · T31 preflight y revisiones pendientes
 - `git pull --rebase`: `main` ya sincronizada con `origin/main` en `97d1613`. El único elemento sin seguimiento es `tools/datos_psi/`; no se añadió a Git.
