@@ -278,7 +278,7 @@ Base: `VITE_API_URL`. Sin autenticación; CORS solo para el origen del sitio. L�
 
 ## 5. Backend del bloque C (aprobado por el dueño el 15-nov)
 
-Objetivo: que una persona suba su corpus y obtenga un pack `prometeo.pack/1` propio que entra a la misma interfaz y al mismo motor. Tipos completos en `web/src/contracts/backend.ts`; respuestas de ejemplo en `docs/fixtures/fase2/`. Aprobado: drafts y D3 primero, el resto el 15-nov junto con §5.10 (`docs/DECISIONES_CIERRE.md` §1). Desplegado hasta hoy: §5.3 sin DELETE y §5.4 sin DELETE ni `url`; el resto está pendiente (ver `PROGRESS.md`).
+Objetivo: que una persona suba su corpus y obtenga un pack `prometeo.pack/1` propio que entra a la misma interfaz y al mismo motor. Tipos completos en `web/src/contracts/backend.ts`; respuestas de ejemplo en `docs/fixtures/fase2/`. Aprobado: drafts y D3 primero, el resto el 15-nov junto con §5.10 (`docs/DECISIONES_CIERRE.md` §1). Backend del MVP desplegado: 42 rutas JWT, incluidas DELETE, originales, revisión/PDF contextual, registros/conflictos/claims, propuestas, intención/lente e inferencia por proyecto. Evidencia y límites: [integración final](BACKEND_INTEGRACION_FINAL.md). La integración visual sigue pendiente; añadir documentos a una base ya publicada (CU-09) sigue como alcance posterior.
 
 ### 5.1 Reglas comunes
 
@@ -361,6 +361,14 @@ Etapas por documento (`stage`): `upload → parse → profile → propose → ex
 
 Operaciones del revisor (`SchemaEdit`): `set_status`, `rename`, `merge` (fusionar variables), `set_unit`, `set_convert` (solo conversiones lineales `factor` y `offset`), `map_column`, `set_role` (marcar la partición), `set_sigma`.
 
+Extensiones desplegadas el 15-nov: `add_variable` recibe una variable revisada con
+citas verificadas y la inicia como `proposed`; approve acepta opcionalmente
+`review_authority` y `metadata` (`id,documents,lens,thresholds`). La aprobación
+de metadatos se liga en servidor a actor/fecha/hashes; se exige para publicar.
+`GET /projects/{id}/diagnostics` expone al propietario motivos/uso sin texto
+crudo. Resume admite `doc_ids` para reintento selectivo, sin replay de DLQ.
+Detalle y ejemplos vigentes: [integración final](BACKEND_INTEGRACION_FINAL.md).
+
 Reglas:
 - Aprobar exige que ninguna variable ni columna quede en `proposed`, y que a lo sumo una variable tenga `role: "partition"`.
 - Cada variable propuesta trae `evidence`: las citas que justifican su existencia. La pantalla las muestra.
@@ -393,10 +401,36 @@ Reglas:
 | `POST /projects/{id}/analysis` | igual que §4.2 | igual que §4.2 |
 | `POST /projects/{id}/synthesis` | `{"study_ids": [...], "focus"?}` | `{"mode", "sentences": [{"text", "citations": Citation[]}], "dropped"}` |
 
+Cierre desplegado el 15-nov: publicación privada inmutable con URLs de 300 s y
+repetición idempotente. Propuestas guardan `pack_version`/`lens_version`, con
+propiedad/revisión comprobada en transacción. Cambiar intención regenera la
+lente sin reextraer. PUT `/projects/{id}/lens` admite revisión explícita de
+presentación/presets con versión y motivo. Esto no agrega historial de resultados
+de evaluación ni comparación automática entre versiones de la base.
+
+La síntesis reúne hasta 40 extractos originales, alternando estudios; la IA
+selecciona hasta 5 IDs validados. El servidor copia sus textos/citas; una selección
+inválida activa `template` y `fallback_reason`. Responde además `method`, `note`,
+`represented_studies` y `omitted_studies`. `dropped` se conserva por compatibilidad;
+no mide calidad semántica ni cobertura. El cierre real obtuvo `ai` con cinco
+extractos y ambos estudios representados. Guía: [integración final](BACKEND_INTEGRACION_FINAL.md).
+
 - La interfaz carga el pack publicado con las tres URLs y usa el motor igual que con la demo. **El motor no sabe si el pack es la demo o un proyecto.**
-- La síntesis solo publica oraciones cuyos números y citas estén en los registros de los estudios elegidos; el resto se descarta y se cuenta en `dropped`.
+- La síntesis publica únicamente extractos originales de registros, contexto PDF revisado y claims de los estudios elegidos; no afirma que las citas originales respalden un valor corregido por la persona.
 
 ### 5.8 Relaciones y huecos afirmados por autores (CU-18)
+
+APIs desplegadas: GET/POST `/projects/{id}/claims` y DELETE
+`/projects/{id}/claims/{cid}`. Guardar exige `{claim,reason}`; retirar exige
+`{reason}`. Cita literal, identidad de estudio y variables aprobadas se validan
+antes de guardar; actor/motivo quedan en historial. Una declaración de los autores
+no se convierte en conclusión causal del motor.
+
+PDF cuantitativo revisado se conserva por separado en `contextual_evidence`,
+con `use_in_records:false` y `propagate_to_tables:false`; `paper_extractions`
+registra páginas/selecciones y hashes. La localización literal no equivale a
+aprobación semántica; el alcance revisado es explícito. Rutas y cuerpos de revisión,
+reanudación y recuperación manual: [integración final](BACKEND_INTEGRACION_FINAL.md).
 
 `pack.claims` (hoy vacío) recibe elementos `Claim`:
 

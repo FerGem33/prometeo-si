@@ -1,0 +1,876 @@
+{
+  "kind": "real_aws_backend_completion",
+  "date": "2026-11-15",
+  "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "sdk": "anthropic 2.8.0",
+  "python": "3.12",
+  "authenticated_routes": 42,
+  "extension_smoke": {
+    "project_id": "prj_caf172e0a0ba42939157ee2eb06020a4",
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/claims",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/lens",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/paper-candidates",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/pack",
+        "http": 404
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 404
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/claims",
+        "http": 404
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/ask",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/analysis",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/analysis",
+        "http": 400
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/synthesis",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/synthesis",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/pack",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/lens",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/lens",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "DELETE",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 204
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/proposals/backend-smoke",
+        "http": 404
+      }
+    ],
+    "pack_version": 3,
+    "records": 51,
+    "studies": 2,
+    "contextual_candidates": 0,
+    "claims": 0,
+    "ask": {
+      "variable": "human_heat_flux",
+      "matches_source_value": true
+    },
+    "analysis": {
+      "mode": "ai",
+      "sentences": 4
+    },
+    "synthesis": {
+      "mode": "ai",
+      "sentences": 5,
+      "represented_studies": [
+        "PSI-46",
+        "PSI-87"
+      ],
+      "omitted_studies": []
+    },
+    "intent_change": {
+      "pack_unchanged": true,
+      "lens_version": 4,
+      "proposal_version_preserved": true
+    },
+    "final_versions": {
+      "pack_version": 4,
+      "lens_version": 5
+    },
+    "result": "passed"
+  },
+  "pdf_smoke": {
+    "project_id": "prj_c6888f85103d49a692cfae4119434ce0",
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_8d9c055c3a52f267df58cb7fa4017c3d/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_8441b54d539cabbd2c3b93cd904dea2f/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_5c6e3e87d7bebb4d220964f6341a8543/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_681370d607af74f1bb2a1c689375bef4/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_2f886c93acc8fc5de686bf24604a9aa5/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_7b3266df739813569a68cf13aa181398/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_5c39ca72caa3085d53138dcebbb19bdf/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates/pc_89cbf617c31e3408e8af4228bdd8a50a/review",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/claims",
+        "http": 201
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/claims",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/lens",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/paper-candidates",
+        "http": 404
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/pack",
+        "http": 404
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 404
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/claims",
+        "http": 404
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/ask",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/analysis",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/analysis",
+        "http": 400
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/synthesis",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/synthesis",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/pack",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/lens",
+        "http": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/lens",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/documents/doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1/url",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/documents/doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1/text?page=11",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/pack",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/documents/doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1/url",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "private signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/documents/doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1/text?page=11",
+        "http": 200
+      },
+      {
+        "method": "DELETE",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 204
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_c6888f85103d49a692cfae4119434ce0/proposals/backend-smoke",
+        "http": 404
+      }
+    ],
+    "pack_version": 1,
+    "records": 51,
+    "studies": 2,
+    "contextual_candidates": 2,
+    "claims": 1,
+    "ask": {
+      "variable": "human_heat_flux",
+      "matches_source_value": true
+    },
+    "analysis": {
+      "mode": "ai",
+      "sentences": 4
+    },
+    "synthesis": {
+      "mode": "ai",
+      "sentences": 5,
+      "represented_studies": [
+        "PSI-46",
+        "PSI-87"
+      ],
+      "omitted_studies": []
+    },
+    "intent_change": {
+      "pack_unchanged": true,
+      "lens_version": 2,
+      "proposal_version_preserved": true
+    },
+    "final_versions": {
+      "pack_version": 2,
+      "lens_version": 3
+    },
+    "original_pdf": {
+      "sha256_match": true,
+      "page": 11,
+      "literal_quote_found": true,
+      "normalization": "shared NFC/whitespace verifier; punctuation and numbers retained"
+    },
+    "result": "passed",
+    "resumed_partial_smoke": true
+  },
+  "sources": [
+    {
+      "doc_id": "doc_b55a785c99dc71070544bcabf3344678bf2ead012733a39f799691e0d5f5bfe6",
+      "name": "PSI-46__PSI-46_Experimental table_CVB.csv",
+      "sha256": "9ff059b65bfd56bcbb7deed869fc282de2cc4d021cb364a32f46cf77b774cc88",
+      "study": "PSI-46",
+      "kind": "table"
+    },
+    {
+      "doc_id": "doc_cb8e4880dd916d23ff19f2d6bf8e705411bcd2397f8559c62d83da7c92da3582",
+      "name": "PSI-87__PSI-87_Experimental table_Experimental Table - PBE.csv",
+      "sha256": "40e88bbe8d63371dc57eeee095017f53e4b93307256a1e18f36d78dfef208e2f",
+      "study": "PSI-87",
+      "kind": "table"
+    },
+    {
+      "doc_id": "doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1",
+      "name": "PSI-46__PSI-46_Reports_2013 - FinalReport_CVB.pdf",
+      "sha256": "1121028740540a6b615bec770b15bedee36f6aed6b4fb325467008946b613375",
+      "study": "PSI-46",
+      "kind": "paper"
+    }
+  ],
+  "approval": {
+    "version": 3,
+    "authority": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+  },
+  "schema_additions_sha256": "c029c4bbcbbc711ddab0acda5202646231217b0e74a56c3dc8660ea23366733c",
+  "pdf_batches": [
+    {
+      "doc_id": "doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1",
+      "pages": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "selection": [],
+      "status": "done",
+      "artifact_sha256": "fbe7e9cd6117fd920f820cf566ae2e7236e6f0e288a8273b47ca5051a0d3a8ac",
+      "input_tokens": 5009,
+      "output_tokens": 226
+    },
+    {
+      "doc_id": "doc_0e67b14ed9b832c715a30bb8e705c96a49f7bf8bbf65d6e8fe391fea55403af1",
+      "pages": [
+        11,
+        14,
+        17,
+        26
+      ],
+      "selection": [
+        11,
+        14,
+        17,
+        26
+      ],
+      "status": "done",
+      "artifact_sha256": "74d2f8400c0f1a08e53e294dd152db3afb3fc2f2fc9183dcf8097cff927ddb97",
+      "input_tokens": 3825,
+      "output_tokens": 1221
+    }
+  ],
+  "semantic_review": {
+    "authority": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea",
+    "contextual": 2,
+    "rejected": 6,
+    "decisions": [
+      {
+        "id": "pc_8d9c055c3a52f267df58cb7fa4017c3d",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. The authors report a hypothesis and need for further evaluation; this is not a validated categorical measurement. Retained separately as an author-stated gap."
+        }
+      },
+      {
+        "id": "pc_8441b54d539cabbd2c3b93cd904dea2f",
+        "decision": {
+          "status": "contextual",
+          "supports_value": true,
+          "scope": "Reported heater input for the CVB dry/wet runs of 30 mm and 40 mm modules in microgravity discussed on physical page 11. No attribution to any CSV row.",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Visual and literal page review supports 2 W in this stated context only."
+        }
+      },
+      {
+        "id": "pc_5c6e3e87d7bebb4d220964f6341a8543",
+        "decision": {
+          "status": "contextual",
+          "supports_value": true,
+          "scope": "Pentane identified for wet runs only of the CVB 30 mm and 40 mm modules discussed on physical page 11. No attribution to dry runs or CSV records.",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Visual and literal review of the named wet-run working fluid."
+        }
+      },
+      {
+        "id": "pc_681370d607af74f1bb2a1c689375bef4",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. 40 mm is the hardware/module length, not the measured bubble length. The literal citation does not support this variable."
+        }
+      },
+      {
+        "id": "pc_2f886c93acc8fc5de686bf24604a9aa5",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Not selected for this scoped publication: redundant later descriptions retained for future explicit review."
+        }
+      },
+      {
+        "id": "pc_7b3266df739813569a68cf13aa181398",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Not selected for this scoped publication: redundant later descriptions retained for future explicit review."
+        }
+      },
+      {
+        "id": "pc_5c39ca72caa3085d53138dcebbb19bdf",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Not selected for this scoped publication: redundant later descriptions retained for future explicit review."
+        }
+      },
+      {
+        "id": "pc_89cbf617c31e3408e8af4228bdd8a50a",
+        "decision": {
+          "status": "rejected",
+          "reason": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea. Not selected for this scoped publication: redundant later descriptions retained for future explicit review."
+        }
+      }
+    ],
+    "decision_file_sha256": "0d2d967f7deab6b2328e8c90b52f917031577ae57e8fada6a5b48834fb5c998e",
+    "claim_file_sha256": "a41782315ebf57123f792fffce7bb1f4d0838860a89a05e8642612d774583fcd"
+  },
+  "worker_report_sample": {
+    "reports": 19,
+    "pagination_followed": 1,
+    "has_more_pages": true,
+    "metrics": [
+      {
+        "duration_ms": 5233.61,
+        "billed_ms": 5315,
+        "memory_mb": 1024,
+        "max_memory_mb": 168
+      },
+      {
+        "duration_ms": 6598.26,
+        "billed_ms": 6599,
+        "memory_mb": 1024,
+        "max_memory_mb": 222
+      },
+      {
+        "duration_ms": 15848.11,
+        "billed_ms": 15977,
+        "memory_mb": 1024,
+        "max_memory_mb": 228
+      },
+      {
+        "duration_ms": 3333.03,
+        "billed_ms": 3334,
+        "memory_mb": 1024,
+        "max_memory_mb": 228
+      },
+      {
+        "duration_ms": 4735.82,
+        "billed_ms": 4736,
+        "memory_mb": 1024,
+        "max_memory_mb": 222
+      },
+      {
+        "duration_ms": 3933.89,
+        "billed_ms": 3934,
+        "memory_mb": 1024,
+        "max_memory_mb": 222
+      },
+      {
+        "duration_ms": 503.62,
+        "billed_ms": 504,
+        "memory_mb": 1024,
+        "max_memory_mb": 222
+      },
+      {
+        "duration_ms": 4303.44,
+        "billed_ms": 4304,
+        "memory_mb": 1024,
+        "max_memory_mb": 228
+      },
+      {
+        "duration_ms": 4820.09,
+        "billed_ms": 4893,
+        "memory_mb": 1024,
+        "max_memory_mb": 168
+      },
+      {
+        "duration_ms": 9388.38,
+        "billed_ms": 9469,
+        "memory_mb": 1024,
+        "max_memory_mb": 171
+      },
+      {
+        "duration_ms": 10845.59,
+        "billed_ms": 10975,
+        "memory_mb": 1024,
+        "max_memory_mb": 171
+      },
+      {
+        "duration_ms": 12749.06,
+        "billed_ms": 12854,
+        "memory_mb": 1024,
+        "max_memory_mb": 221
+      },
+      {
+        "duration_ms": 554.71,
+        "billed_ms": 555,
+        "memory_mb": 1024,
+        "max_memory_mb": 221
+      },
+      {
+        "duration_ms": 2909.48,
+        "billed_ms": 2910,
+        "memory_mb": 1024,
+        "max_memory_mb": 175
+      },
+      {
+        "duration_ms": 592.91,
+        "billed_ms": 593,
+        "memory_mb": 1024,
+        "max_memory_mb": 178
+      },
+      {
+        "duration_ms": 5106.56,
+        "billed_ms": 5107,
+        "memory_mb": 1024,
+        "max_memory_mb": 180
+      },
+      {
+        "duration_ms": 7688.5,
+        "billed_ms": 7831,
+        "memory_mb": 1024,
+        "max_memory_mb": 168
+      },
+      {
+        "duration_ms": 7571.38,
+        "billed_ms": 7705,
+        "memory_mb": 1024,
+        "max_memory_mb": 168
+      },
+      {
+        "duration_ms": 7620.72,
+        "billed_ms": 7748,
+        "memory_mb": 1024,
+        "max_memory_mb": 168
+      }
+    ],
+    "maximum_observed_memory_mb": 228,
+    "maximum_observed_duration_ms": 15848.11,
+    "scope": "sample of recent invocations, not a whole-account cost report"
+  },
+  "tests": {
+    "api_passed": 172,
+    "web_passed": 104,
+    "web_skipped": 2,
+    "cognito_helper_passed": 6,
+    "private_bundle_engine_passed": 1,
+    "pipeline_publication_passed": 5,
+    "pipeline_record_review_passed": 7,
+    "pipeline_review_extract_passed": 10,
+    "validate_private_pack": "OK 2 studies / 51 records / 3 sources",
+    "check_agnostic": "OK",
+    "build": "passed, existing 629 kB chunk warning"
+  },
+  "limits": [
+    "No web deployment or demo changes.",
+    "No propagation of PDF measurements to table records.",
+    "No scientific acceptance of the full 23-source corpus.",
+    "IAM simulation omitted by the owner earlier; not recorded as passed.",
+    "Billed AWS cost not asserted from token counts or sampled Lambda reports."
+  ],
+  "final_runtime_state": {
+    "api": {
+      "Name": "prometeo-hack-api",
+      "State": "Active",
+      "Update": "Successful",
+      "Runtime": "python3.12",
+      "Model": "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    },
+    "worker_mapping": {
+      "UUID": "01099ec2-85e7-4271-9a74-9ac80f6289fe",
+      "State": "Enabled",
+      "FunctionArn": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-worker"
+    },
+    "routes": {
+      "jwt": 42,
+      "public_routes": [
+        "$default"
+      ]
+    }
+  },
+  "source_sha256": {
+    "api/projects.py": "3e1b1d27dabd48c439f8d50bed5762b0d97885b1928d61c421a65548831f8c92",
+    "api/handler.py": "2ecbbdd028aa4cc7a955ee0b8d542e820805ef9e3c326eb2e5c94647255b6916",
+    "api/evidence.py": "7651f9c1e7c9a272e6c441b8aa41ec11f5ba699f9e6a56ea220d6edf193e50a2",
+    "api/workspace.py": "37a3fcee67ab96a437ab982499c5f0f7193e3af88e5d27d1195b55b819286972",
+    "api/schema_review.py": "c4f4ddcffcc6adba9df61438918115cdd94ff4eb284cb014ec322d660000a8ed",
+    "api/paper_review.py": "5891679ff7ed3f40706fe5848fbbd40d622c33194a266740522b77ccc2f9ba0c",
+    "api/paper_worker.py": "4e72c38b69762653cce8f58fd1d1e963b37106c3f4e7e8b6c26af2527b784801",
+    "api/ingest_worker.py": "183182f0136ec78f1cbef757ff410c647f4f4fc571c892a50364e8996b8e34fa",
+    "api/ingest_propose.py": "0b0f54481df355b6c5a5142563324b71a382b10fe8029ec6cb60fd37568b6463",
+    "api/extract_worker.py": "a84d8e8d4844a475a97f7803f01d1b8f1458ee6f6e7086fa9f2226bba8a33126",
+    "pipeline/publish_bundle.py": "128bc645e7cf5747dc806d42bda312bf3cc054d08d992ae0fcc60b15934f9c37",
+    "pipeline/review_records.py": "9593f70861256c87931a162ad903325c68c5b41d0f0a62744a7ea2bbb2877ff0",
+    "pipeline/review_extract.py": "297fa9043a2000e4c4e63f3b8a22e2f6cc947635324b2f224ed001c70f1de91d",
+    "infra/deploy_projects.py": "7bd84d74bfc7f4258a998c449e145a280439487b4a77e724681385a21fdd6aba"
+  }
+}

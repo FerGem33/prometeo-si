@@ -1,0 +1,282 @@
+{
+  "checked_at": "2026-11-15T19:24:53.670660+00:00",
+  "scope": "AWS configuration readback, real HTTP preflights and anonymous GET rejection; no browser upload, login or inference performed.",
+  "api_id": "ve5oqmsyie",
+  "function": "prometeo-hack-api",
+  "corpus_bucket": "prometeo-hack-corpus-352818909129",
+  "origins": [
+    "https://dursf4nho4zl6.cloudfront.net",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+  ],
+  "api_cors": {
+    "AllowHeaders": [
+      "content-type",
+      "authorization",
+      "idempotency-key"
+    ],
+    "AllowMethods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS"
+    ],
+    "AllowOrigins": [
+      "https://dursf4nho4zl6.cloudfront.net",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173"
+    ],
+    "MaxAge": 300
+  },
+  "lambda_configuration": {
+    "extra_origins": "http://localhost:5173,http://127.0.0.1:5173",
+    "cf_url": "https://dursf4nho4zl6.cloudfront.net",
+    "model_id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "state": "Active",
+    "last_update_status": "Successful"
+  },
+  "bucket_cors": {
+    "CORSRules": [
+      {
+        "AllowedHeaders": [
+          "content-type",
+          "if-none-match",
+          "x-amz-checksum-sha256",
+          "x-amz-server-side-encryption"
+        ],
+        "AllowedMethods": [
+          "PUT"
+        ],
+        "AllowedOrigins": [
+          "https://dursf4nho4zl6.cloudfront.net",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173"
+        ],
+        "MaxAgeSeconds": 300
+      },
+      {
+        "AllowedMethods": [
+          "GET"
+        ],
+        "AllowedOrigins": [
+          "https://dursf4nho4zl6.cloudfront.net",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173"
+        ],
+        "MaxAgeSeconds": 300
+      }
+    ]
+  },
+  "configuration_checks": {
+    "api_exact_origins": true,
+    "lambda_local_origins": true,
+    "lambda_cloudfront_preserved": true,
+    "approved_model_preserved": true,
+    "lambda_update_successful": true,
+    "bucket_put_get_exact_origins": true,
+    "project_routes_42_all_jwt": true
+  },
+  "preflights": [
+    {
+      "check": "api_projects",
+      "origin": "https://dursf4nho4zl6.cloudfront.net",
+      "requested_method": "GET",
+      "http_status": 204,
+      "allow_origin": "https://dursf4nho4zl6.cloudfront.net",
+      "allow_methods": [
+        "DELETE",
+        "GET",
+        "OPTIONS",
+        "PATCH",
+        "POST",
+        "PUT"
+      ],
+      "allow_headers": [
+        "authorization",
+        "content-type",
+        "idempotency-key"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_upload",
+      "origin": "https://dursf4nho4zl6.cloudfront.net",
+      "requested_method": "PUT",
+      "http_status": 200,
+      "allow_origin": "https://dursf4nho4zl6.cloudfront.net",
+      "allow_methods": [
+        "PUT"
+      ],
+      "allow_headers": [
+        "content-type",
+        "if-none-match"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_download",
+      "origin": "https://dursf4nho4zl6.cloudfront.net",
+      "requested_method": "GET",
+      "http_status": 200,
+      "allow_origin": "https://dursf4nho4zl6.cloudfront.net",
+      "allow_methods": [
+        "GET"
+      ],
+      "allow_headers": [
+        ""
+      ],
+      "passed": true
+    },
+    {
+      "check": "api_projects",
+      "origin": "http://localhost:5173",
+      "requested_method": "GET",
+      "http_status": 204,
+      "allow_origin": "http://localhost:5173",
+      "allow_methods": [
+        "DELETE",
+        "GET",
+        "OPTIONS",
+        "PATCH",
+        "POST",
+        "PUT"
+      ],
+      "allow_headers": [
+        "authorization",
+        "content-type",
+        "idempotency-key"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_upload",
+      "origin": "http://localhost:5173",
+      "requested_method": "PUT",
+      "http_status": 200,
+      "allow_origin": "http://localhost:5173",
+      "allow_methods": [
+        "PUT"
+      ],
+      "allow_headers": [
+        "content-type",
+        "if-none-match"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_download",
+      "origin": "http://localhost:5173",
+      "requested_method": "GET",
+      "http_status": 200,
+      "allow_origin": "http://localhost:5173",
+      "allow_methods": [
+        "GET"
+      ],
+      "allow_headers": [
+        ""
+      ],
+      "passed": true
+    },
+    {
+      "check": "api_projects",
+      "origin": "http://127.0.0.1:5173",
+      "requested_method": "GET",
+      "http_status": 204,
+      "allow_origin": "http://127.0.0.1:5173",
+      "allow_methods": [
+        "DELETE",
+        "GET",
+        "OPTIONS",
+        "PATCH",
+        "POST",
+        "PUT"
+      ],
+      "allow_headers": [
+        "authorization",
+        "content-type",
+        "idempotency-key"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_upload",
+      "origin": "http://127.0.0.1:5173",
+      "requested_method": "PUT",
+      "http_status": 200,
+      "allow_origin": "http://127.0.0.1:5173",
+      "allow_methods": [
+        "PUT"
+      ],
+      "allow_headers": [
+        "content-type",
+        "if-none-match"
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_download",
+      "origin": "http://127.0.0.1:5173",
+      "requested_method": "GET",
+      "http_status": 200,
+      "allow_origin": "http://127.0.0.1:5173",
+      "allow_methods": [
+        "GET"
+      ],
+      "allow_headers": [
+        ""
+      ],
+      "passed": true
+    },
+    {
+      "check": "api_unapproved_origin",
+      "origin": "https://unapproved.invalid",
+      "requested_method": "GET",
+      "http_status": 204,
+      "allow_origin": null,
+      "allow_methods": [
+        ""
+      ],
+      "allow_headers": [
+        ""
+      ],
+      "passed": true
+    },
+    {
+      "check": "s3_unapproved_origin",
+      "origin": "https://unapproved.invalid",
+      "requested_method": "PUT",
+      "http_status": 403,
+      "allow_origin": null,
+      "allow_methods": [
+        ""
+      ],
+      "allow_headers": [
+        ""
+      ],
+      "passed": true
+    }
+  ],
+  "unauthenticated_requests": [
+    {
+      "origin": "https://dursf4nho4zl6.cloudfront.net",
+      "http_status": 401,
+      "allow_origin": "https://dursf4nho4zl6.cloudfront.net",
+      "passed": true
+    },
+    {
+      "origin": "http://localhost:5173",
+      "http_status": 401,
+      "allow_origin": "http://localhost:5173",
+      "passed": true
+    },
+    {
+      "origin": "http://127.0.0.1:5173",
+      "http_status": 401,
+      "allow_origin": "http://127.0.0.1:5173",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

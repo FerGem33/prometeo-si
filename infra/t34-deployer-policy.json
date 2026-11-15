@@ -5,7 +5,22 @@
       "Sid": "CheckIngestQueueBeforeMapping",
       "Effect": "Allow",
       "Action": "sqs:GetQueueAttributes",
-      "Resource": "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest"
+      "Resource": [
+        "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest",
+        "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest-dlq"
+      ]
+    },
+    {
+      "Sid": "ReadOnlyWorkerReportsForVerification",
+      "Effect": "Allow",
+      "Action": "logs:FilterLogEvents",
+      "Resource": "arn:aws:logs:us-east-1:352818909129:log-group:/aws/lambda/prometeo-hack-worker:*"
+    },
+    {
+      "Sid": "InspectOnlyWorkerDlqWithoutDeletion",
+      "Effect": "Allow",
+      "Action": "sqs:ReceiveMessage",
+      "Resource": "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest-dlq"
     },
     {
       "Sid": "ReadApprovedModelProfile",

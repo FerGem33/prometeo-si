@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InspectExistingWebDistribution",
+      "Effect": "Allow",
+      "Action": ["cloudfront:GetDistribution", "cloudfront:GetInvalidation", "cloudfront:CreateInvalidation"],
+      "Resource": "arn:aws:cloudfront::352818909129:distribution/E2SO4K789H7YOQ"
+    },
+    {
+      "Sid": "ListExistingWebBucketForSync",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::prometeo-hack-web-352818909129"
+    },
+    {
+      "Sid": "UploadExistingWebAssetsWithoutDeletion",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::prometeo-hack-web-352818909129/*"
+    }
+  ]
+}

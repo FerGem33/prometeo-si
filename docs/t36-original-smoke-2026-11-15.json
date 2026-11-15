@@ -1,0 +1,128 @@
+[
+  {
+    "check": "create_project",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "foreign_ticket_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "reserve",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "reserve_repeat",
+    "http": 201,
+    "expected": 201
+  },
+  {
+    "check": "s3_put",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "s3_overwrite_rejected",
+    "http": 412,
+    "expected": 412
+  },
+  {
+    "check": "foreign_complete_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "complete",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "complete_repeat",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "complete_hash_conflict",
+    "http": 409,
+    "expected": 409
+  },
+  {
+    "check": "list",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "foreign_list_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "jobs",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "foreign_original_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "original_url",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "original_download",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "original_download_hash",
+    "match": true
+  },
+  {
+    "check": "csv_page_rejected",
+    "http": 400,
+    "expected": 400
+  },
+  {
+    "check": "foreign_delete_document_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "foreign_delete_project_rejected",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "check": "delete_document",
+    "http": 204,
+    "expected": 204
+  },
+  {
+    "check": "list_after_delete",
+    "http": 200,
+    "expected": 200
+  },
+  {
+    "check": "delete_project",
+    "http": 204,
+    "expected": 204
+  },
+  {
+    "check": "project_gone",
+    "http": 404,
+    "expected": 404
+  },
+  {
+    "project_id": "prj_00e4e1cce59a4499b340c406aef0e714",
+    "doc_id": "doc_d4866bef5f970b8309e6f32a014e22f745f192e54b167c3ef358eafc5e89d95f",
+    "sha256_expected": "40e88bbe8d63371dc57eeee095017f53e4b93307256a1e18f36d78dfef208e2f",
+    "sha256_observed": null,
+    "cleanup": "Deleted through API"
+  }
+]

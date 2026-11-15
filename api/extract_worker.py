@@ -40,6 +40,7 @@ def process(message, lease, schemas):
     claimed = []
     try:
         for did in documents:
+            if documents[did]['kind'] != 'table': continue
             doc_key = {'PK': 'P#'+pid, 'SK': 'D#'+did}
             table.update_item(Key=doc_key,
                 UpdateExpression='SET worker_lease = :lease, worker_until = :until, #stage = :extract, #status = :running',
@@ -54,6 +55,7 @@ def process(message, lease, schemas):
         schemas.s3.put_object(Bucket=schemas.bucket, Key=artifact_key, Body=json.dumps(result, ensure_ascii=False).encode(),
                               ContentType='application/json')
         for did in documents:
+            if documents[did]['kind'] != 'table': continue
             table.update_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+did},
                 UpdateExpression='SET #stage = :verify, #status = :done, updated_at = :now, worker_until = :zero',
                 ConditionExpression='attribute_exists(PK) AND #status <> :deleting AND worker_lease = :lease',

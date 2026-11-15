@@ -98,6 +98,16 @@ def message(did=DID):
     return {'version': 1, 'uid': 'owner', 'project_id': PID, 'doc_id': did}
 
 
+def test_old_proposal_message_acknowledges_only_source_bound_manual_recovery(worker):
+    item = worker.table.items['P#'+PID, 'D#'+DID]
+    item.update(status='done', proposal_origin='manual', sha256=item['expected_sha256'],
+                proposal_key=f'u/owner/p/{PID}/text/{DID}/manual-'+('c'*64)+'.json')
+    worker.process(message(), 'old-rejected-proposal')
+    assert worker.client.calls == 0
+    item['proposal_key'] = 'u/another-owner/manual.json'
+    with pytest.raises(DocumentFailure): worker.process(message(), 'tampered')
+
+
 def test_success_reaches_review_never_approval_and_retry_reuses(worker):
     worker.process(message(), 'lease1')
     item = worker.table.items['P#'+PID, 'D#'+DID]
@@ -116,6 +126,13 @@ def test_hash_mismatch_fails_before_model(worker):
         worker.process(message(), 'lease')
     assert worker.client.calls == 0
     assert worker.table.items['P#'+PID, 'D#'+DID]['sha256'] is None
+
+
+def test_deleted_project_message_is_acknowledged_without_model_or_dlq_retry(worker):
+    worker.table.items.pop(('U#owner', 'P#'+PID))
+    worker.table.items.pop(('P#'+PID, 'D#'+DID))
+    worker.process(message(), 'retired-project')
+    assert worker.client.calls == 0
 
 
 def test_resume_successful_model_after_checkpoint_failure(worker, monkeypatch):
