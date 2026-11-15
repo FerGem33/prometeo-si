@@ -5,6 +5,12 @@ preparar el despliegue final de la arquitectura, seguir la
 [guía de integración y entrega](../docs/GUIA_INTEGRACION_DEPLOY_FINAL.md).
 T31 ya creó los recursos base; el despliegue completo requiere terminar T33–T37.
 
+T33 dispone de un [avance de despliegue de proyectos](../docs/T33_API_PROYECTOS.md):
+`python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy`
+prepara configuración sin llamadas AWS. La aplicación es explícita, requiere
+aprobación T30 registrada y todavía necesita verificarse en AWS con dos usuarios.
+No implementa cargas ni despliega worker.
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net

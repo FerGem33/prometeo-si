@@ -66,8 +66,9 @@ MODEL_ID/CF_URL y otras variables existentes, no reemplazar el entorno completo.
 
 Antes de despliegue, el implementador de infra debe:
 
-1. Incluir `api/projects.py` en el paquete Lambda (el script MVP actual copia
-   solo handler y verify). Se añadió dependencia explícita boto3 1.44.3.
+1. Publicar primero el paquete de `infra/20_api.sh`, que ahora incluye
+   `api/projects.py` y conserva las variables existentes. Se añadió dependencia
+   explícita boto3 1.44.3.
 2. Configurar permisos DynamoDB GetItem/PutItem/Query solo para la tabla.
 3. Crear/reutilizar authorizer y proteger cada ruta; configurar integración y
    permisos de invocación acotados. No exponer una ruta alternativa sin auth.
@@ -77,8 +78,55 @@ Antes de despliegue, el implementador de infra debe:
 5. Integrar estas configuraciones en un script idempotente sin perder las
    rutas/variables del MVP, y probar dos usuarios reales antes de publicar UI.
 
-`infra/20_api.sh` todavía no activa proyectos: no ejecutarlo suponiendo que
-esta funcionalidad quedará disponible. El despliegue final lo hará el dueño.
+`infra/20_api.sh` por sí solo no activa proyectos. `infra/deploy_projects.py`
+configura los puntos 2–4 sobre API, integración, rol y Lambda existentes.
+El despliegue final lo hará el dueño, tras registrar aprobación T30.
+
+### Preparación y aplicación del despliegue de proyectos
+
+```bash
+source infra/config.env
+source infra/outputs.env
+# Seguro para preparar: no contacta AWS.
+python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy
+```
+
+Revisar los cuatro JSON. Cuando el dueño haya aprobado T30, registrado la
+decisión y revisado permisos SSO para IAM/Lambda/API Gateway:
+
+```bash
+export AWS_PROFILE=prometeo
+aws sso login --profile prometeo
+# Publica código; conserva variables previas de Lambda.
+bash infra/20_api.sh
+# Ejecutar solo después de registrar aprobación real, no para eludirla.
+python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy \
+  --apply --contract-approved
+```
+
+No se ejecutaron estos comandos de aplicación en esta entrega. El flag no
+autentica al aprobador: exige una decisión humana ya documentada. El script
+verifica cuenta/rol no root, Lambda/rol exactos, API, stage `$default` auto-deploy
+y una integración v2 existente. Reutiliza authorizer si coincide; detiene
+configuraciones distintas sin reemplazarlas. Crea/actualiza únicamente las
+cuatro rutas protegidas de proyectos. Conserva la ruta pública `$default` del
+MVP, combina variables y aplica CORS del origen web.
+
+Los permisos de invocación Lambda se acotan al API, stage, método y prefijo
+projects; el comodín final `projects/*` corresponde a IDs de proyectos, no a
+otros servicios o APIs. DynamoDB se acota al ARN exacto de la tabla. No se
+concede acceso al bucket/colas ni se implementa el worker en este script.
+
+Si falla un paso, conservar salida y reejecutar tras corregir la causa; las
+pruebas locales comprueban reutilización, pero no demuestran idempotencia AWS
+real. Verificar rutas/configuración efectivas y pruebas A/B después. No borrar
+recursos para recuperar un fallo parcial. Evitar despliegues concurrentes;
+la actualización de entorno usa RevisionId para detectar cambios externos.
+
+Referencias de comandos AWS usados:
+- https://docs.aws.amazon.com/cli/latest/reference/apigatewayv2/create-authorizer.html
+- https://docs.aws.amazon.com/cli/latest/reference/apigatewayv2/create-route.html
+- https://docs.aws.amazon.com/cli/latest/reference/lambda/update-function-configuration.html
 
 ## Pruebas y pendientes para interfaz
 

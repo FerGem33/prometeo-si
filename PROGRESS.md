@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T33 preparación local · stringbuilder: identidad verificada por authorizer y proyectos draft. T32 revisión humana D7/PDF pendiente. T31 hecha. |
 | Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Continuar T33 local: convertir configuración preparada en despliegue idempotente de rutas JWT/paquete/permisos; implementar registro/login y luego pruebas A/B reales antes de activar UI. Cargas esperan aprobación T30/D3; D7/PDF espera revisor. Ver `docs/T33_API_PROYECTOS.md`. |
+| Siguiente paso exacto | Continuar T33 con registro/login Cognito e integración de sesión; tras aprobación T30, el dueño publica paquete y configura rutas con `infra/deploy_projects.py --apply --contract-approved`, y verifica dos usuarios reales. Cargas esperan D3; D7/PDF espera revisor. Ver `docs/T33_API_PROYECTOS.md`. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -95,6 +95,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 despliegue preparable y protección de configuración
+- Sincronización trajo `9c2abcb` con cambios del equipo de interfaz; se conservaron. Esta entrega modifica solo infraestructura, pruebas de API y documentación.
+- `infra/20_api.sh` ahora empaqueta projects.py y combina variables existentes con MODEL_ID/CF_URL; conserva CORS de proyectos cuando ya están activados, evitando que un despliegue MVP elimine su configuración.
+- `infra/deploy_projects.py` prepara por defecto sin llamadas AWS. Aplicación explícita tras T30: verifica identidad/cuenta/stage/integración, reutiliza authorizer, configura cuatro rutas JWT y permisos de tabla/invocación acotados y combina variables con RevisionId. No borra/reemplaza recursos ni altera auth de las rutas MVP.
+- Verificación: 70 tests API Python 3.12 (incluye dobles de dos corridas, reutilización, conservación de variables y rechazos de configuración), 98 web tras sincronización; bash -n, preparación sin AWS, validate_pack, check_agnostic y diff-check pasan. No hay prueba de despliegue real en esta entrega.
+- T33 sigue en curso: faltan login/registro, aprobación T30, aplicación final por el dueño y verificación A/B con Cognito real. Las cargas esperan D3. Guion actualizado en `docs/T33_API_PROYECTOS.md`; no se ejecutó deploy ni se modificó el pack publicado.
 
 ### 2026-11-15 · T33 proyectos locales y configuración revisable
 - `api/projects.py` implementa creación/listado/consulta/edición de drafts vacíos; partición DynamoDB por sub, 404 ajeno, escrituras condicionales, Idempotency-Key por usuario/payload y cursor limitado a su partición. `handler.py` deriva rutas y responde CORS de proyectos. Boto3 1.44.3 es dependencia explícita.

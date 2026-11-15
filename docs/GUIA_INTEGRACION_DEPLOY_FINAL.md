@@ -68,6 +68,11 @@ Los fixtures permiten construir pantallas, pero no demuestran integración real.
   permisos de API/worker y asociación SQS-Lambda. Acotar permisos a los ARN y
   prefijos necesarios. Documentar cada cambio y sus outputs.
 
+El avance T33 ya dispone de `infra/deploy_projects.py` para preparar/aplicar
+configuración de proyectos sobre la API existente; su alcance y requisitos
+están en `T33_API_PROYECTOS.md`. Aún falta probarlo en AWS y terminar sesiones,
+cargas y worker; no equivale al despliegue completo descrito abajo.
+
 **Entregable indispensable:** un comando reproducible para desplegar backend C
 y worker, con preflight, dependencias, variables, orden y comprobaciones. Hoy
 no hay un script específico completo para ese despliegue. Su nombre y comando

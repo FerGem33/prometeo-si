@@ -18,7 +18,7 @@ trap 'rm -rf "$TMP"' EXIT
 # Entorno de empaquetado aislado: wheels Linux, no dependencias nativas macOS.
 "$PYTHON" -m venv "$TMP/venv"
 "$TMP/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 --implementation cp --python-version 3.12 --target "$TMP/package" -r api/requirements.txt
-cp api/handler.py api/verify.py "$TMP/package/"
+cp api/handler.py api/verify.py api/projects.py "$TMP/package/"
 cp web/public/demo/pack.json "$TMP/package/pack.json"
 "$PYTHON" -I - "$TMP" <<'PY'
 from pathlib import Path
@@ -30,6 +30,11 @@ with ZipFile(root/'lambda.zip','w',ZIP_DEFLATED) as z:
         if p.is_file() and '__pycache__' not in p.parts: z.write(p,p.relative_to(package))
 PY
 aws bedrock get-inference-profile --inference-profile-identifier "$MODEL_ID" > "$TMP/model.json"
+# Preserve unrelated environment variables, including future project/worker settings.
+if ! aws lambda get-function-configuration --function-name "$NAME" > "$TMP/existing-function.json" 2> "$TMP/error"; then
+  grep -q ResourceNotFoundException "$TMP/error" || { cat "$TMP/error" >&2; exit 1; }
+  printf '%s' '{}' > "$TMP/existing-function.json"
+fi
 "$PYTHON" -I - "$TMP" "$CF_URL" "$MODEL_ID" <<'PY'
 import json,sys
 from pathlib import Path
@@ -37,8 +42,13 @@ root=Path(sys.argv[1]); profile=json.loads((root/'model.json').read_text())
 resources=[profile['inferenceProfileArn']]+[m['modelArn'] for m in profile['models']]
 (root/'trust.json').write_text(json.dumps({'Version':'2012-10-17','Statement':[{'Effect':'Allow','Principal':{'Service':'lambda.amazonaws.com'},'Action':'sts:AssumeRole'}]}))
 (root/'policy.json').write_text(json.dumps({'Version':'2012-10-17','Statement':[{'Effect':'Allow','Action':'bedrock:InvokeModel','Resource':resources}]}))
-(root/'env.json').write_text(json.dumps({'Variables':{'MODEL_ID':sys.argv[3],'CF_URL':sys.argv[2]}}))
-(root/'cors.json').write_text(json.dumps({'AllowOrigins':[sys.argv[2]],'AllowMethods':['POST','OPTIONS'],'AllowHeaders':['content-type'],'MaxAge':300}))
+env=json.loads((root/'existing-function.json').read_text()).get('Environment',{}).get('Variables',{})
+env.update({'MODEL_ID':sys.argv[3],'CF_URL':sys.argv[2]})
+(root/'env.json').write_text(json.dumps({'Variables':env}))
+projects=bool(env.get('COGNITO_ISSUER'))
+(root/'cors.json').write_text(json.dumps({'AllowOrigins':[sys.argv[2]],
+    'AllowMethods':['GET','POST','PATCH','OPTIONS'] if projects else ['POST','OPTIONS'],
+    'AllowHeaders':['content-type','authorization','idempotency-key'] if projects else ['content-type'],'MaxAge':300}))
 PY
 ROLE_ARN=$(aws iam list-roles --query "Roles[?RoleName=='${ROLE_NAME}'].Arn | [0]" --output text)
 if [[ "$ROLE_ARN" == None ]]; then
