@@ -373,3 +373,26 @@ def test_propose_accepts_batch_of_30_and_rejects_31():
     h.validate_propose_request({'documents': [doc(i) for i in range(30)]})
     with pytest.raises(ValueError):
         h.validate_propose_request({'documents': [doc(i) for i in range(31)]})
+
+
+def test_purpose_modules_are_declarative_and_invalid_modules_are_discarded():
+    variables = [{'id': 'o2', 'type': 'numeric'}, {'id': 'p', 'type': 'numeric'}]
+    valid = {'id': 'case', 'type': 'scenario_input', 'title': 'Describe your case',
+             'description': 'User inputs only.', 'variables': ['o2', 'p']}
+    invalid = [dict(valid, id='script', type='script'),
+               dict(valid, id='unknown', variables=['missing']),
+               dict(valid, id='execute', code='alert(1)'),
+               dict(valid)]
+    result = h.sanitize_design_blueprint({'purpose': 'untrusted rewrite', 'modules': [valid, *invalid]},
+                                         variables, 'Compare documented conditions')
+    assert result['purpose'] == 'Compare documented conditions'
+    assert result['modules'] == [valid]
+    assert len(result['discardedModules']) == len(invalid)
+    assert result['sectionOrder']
+
+
+def test_malformed_modules_preserve_the_base_blueprint():
+    result = h.sanitize_design_blueprint({'modules': 'not-an-array'}, [])
+    assert result['modules'] == []
+    assert result['discardedModules']
+    assert result['sectionOrder']

@@ -105,7 +105,10 @@ DESIGN_SYSTEM = (
     '"highlightedVariables": ["var_id_1"], '
     '"variableGroups": [{"id": "grp1", "label": "Group Label", "variables": ["var_id_1"]}], '
     '"defaultAxes": ["numeric_var_x", "numeric_var_y"], '
+    '"modules": [{"id":"module_id","type":"scenario_input","title":"Title","description":"Description","variables":["var_id_1"]}], '
     '"hideMlCard": false, "rationale": "Explanation for choices"}. '
+    'The instruction is the research purpose. Modules may only be scenario_input, classification, key_papers, case_notes, free_chat. '
+    'Modules are declarative data, never executable code or scientific conclusions. '
     'Only use section IDs from: graphical_abstract, map, heat, gaps, graph, data_methods. '
     'Only use variable IDs that exist in the submitted variables. defaultAxes must contain 0 to 2 numeric variable IDs.'
 )
@@ -276,7 +279,7 @@ def validate_design_request(data):
         raise ValueError('Invalid stats')
 
 
-def sanitize_design_blueprint(output, submitted_variables):
+def sanitize_design_blueprint(output, submitted_variables, purpose=''):
     if not isinstance(output, dict):
         output = {}
 
@@ -332,7 +335,31 @@ def sanitize_design_blueprint(output, submitted_variables):
     hide_ml = bool(output.get('hideMlCard', False))
     rationale = str(output.get('rationale', ''))[:2000].strip()
 
+    modules, discarded, module_ids = [], [], set()
+    raw_modules = output.get('modules', [])
+    if not isinstance(raw_modules, list):
+        raw_modules = []
+        discarded.append('Modules must be an array.')
+    for index, module in enumerate(raw_modules):
+        if (not isinstance(module, dict) or set(module) != {'id', 'type', 'title', 'description', 'variables'}
+                or not isinstance(module.get('id'), str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', module['id'])
+                or module['id'] in module_ids
+                or module.get('type') not in ('scenario_input', 'classification', 'key_papers', 'case_notes', 'free_chat')
+                or not isinstance(module.get('title'), str) or not 1 <= len(module['title'].strip()) <= 200
+                or not isinstance(module.get('description'), str) or len(module['description']) > 1000
+                or not isinstance(module.get('variables'), list)
+                or any(not isinstance(v, str) or v not in valid_var_ids for v in module['variables'])
+                or (module['type'] in ('scenario_input', 'classification', 'case_notes') and not module['variables'])
+                or len(set(module['variables'])) != len(module['variables'])):
+            discarded.append(f'Module {index+1} discarded: invalid schema, duplicate ID or unknown variable.')
+            continue
+        module_ids.add(module['id'])
+        modules.append({**module, 'title': module['title'].strip()})
+
     return {
+        'purpose': purpose.strip(),
+        'modules': modules,
+        'discardedModules': discarded,
         'title': title,
         'kicker': kicker,
         'density': density,
@@ -541,7 +568,7 @@ def handler(event, context=None):
                 'variables': data['variables'],
                 'stats': data.get('stats', {}),
             })
-            blueprint = sanitize_design_blueprint(output, data['variables'])
+            blueprint = sanitize_design_blueprint(output, data['variables'], data['instruction'])
             return reply(200, blueprint, origin)
     except Exception:
         # No provider errors, user text or credentials in public responses/logs.

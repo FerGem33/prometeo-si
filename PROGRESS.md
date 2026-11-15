@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Paper inteligente guiado por propósito · stringbuilder, rama nasa2genui.** Implementación de docs/SPEC_PAPER_INTELIGENTE_POR_PROPOSITO.md en checkout aislado; sin mezclar cambios locales de main. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | Extender contratos/puntuación/selección y renderizador de módulos según la spec. Confirmación solicitada al dueño para escala A–D, alcance del chat, variables manuales y persistencia; avanzar trabajo independiente mientras responde. No desplegar web sin revisión humana. El estado AWS de esta rama es histórico: no ejecutarlo como si reemplazara main. |
+| Siguiente paso exacto | Confirmar decisiones §7 de la spec con el dueño; completar classification/free_chat, política de variables manuales y persistencia. Propósito/puntuación/selección y scenario_input/case_notes/key_papers implementados localmente, con pruebas. Relevo: docs/PAPER_POR_PROPOSITO_IMPLEMENTACION.md. No desplegar web sin revisión humana ni reemplazar el backend de main con el estado histórico de esta rama. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -99,6 +99,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Paper por propósito: entrega parcial, decisiones pendientes
+- Base nasa2genui 0f08553; inicio documentado/subido en 67d74b7. Propósito obligatorio en Interface design, ejemplo desde corpus, selección de variables sin captura de valores; variables manuales definidas con nombre/tipo/unidad y etiqueta user-defined. Un caso nuevo comienza sin valores ficticios; se captura después en el informe. Blueprint conservado también al usar el pack de referencia, con partición del motor preservada.
+- Puntuación local determinista con cinco componentes y pesos publicados, orden estable y citas cotejadas contra filas/páginas. El pack de referencia usa procedencia real o registro normalizado identificado, sin fingir cita literal. Propuestas sin fuente se excluyen. Contratos de módulos y /design validan campos/tipos/variables; descartan inválidos y mantienen el informe base. No se cambió el modelo ni se desplegó API.
+- Renderizadores registrados: scenario_input valida rango/unidades y requiere envío; case_notes interpreta localmente y exige confirmación; key_papers usa assess/explainRank con registros citados y plantilla rotulada. No se agregaron classification/free_chat mientras faltan las decisiones §7; las notas A–D de estudios conservan su significado previo, no se renombraron como cobertura global.
+- Verificación final: 223 web pasan/1 omitida preexistente por ruta local NASA; lote real de 23 fuentes y bundle revisado de ebullición (2 estudios/51 registros) sí ejecutados con PROMETEO_LOTE_DIR/PROMETEO_PUBLICATION_PATH. 164 pruebas API de esta rama pasan, build TypeScript/Vite y check_agnostic pasan; aviso de bundle mayor de 500 kB persiste. Fallos intermedios y comandos detallados en docs/PAPER_POR_PROPOSITO_IMPLEMENTACION.md. No se cambiaron los vectores científicos congelados.
+- QA de UI parcial en Chrome: propósito vacío bloquea Continue y Variables. Sin revisión visual humana completa ni móvil. El navegador integrado no estaba disponible y la interacción nativa posterior cambió de foco; no se presenta como aceptación total. Vista local aislada en 127.0.0.1:5175, sin llamadas de IA.
+- Estado: implementación en curso, no spec completa. Faltan confirmación de escala A–D, chat solo corpus, clasificación de variables manuales y persistencia; después completar renderizadores, síntesis narrativa citada y pruebas de interacción. Se conserva main sin mezclar sus cambios locales ni su infraestructura más reciente. No deploy web/AWS.
 
 ### 2026-11-15 · Inicio de paper guiado por propósito
 - Dueño solicita implementar la especificación recibida, documentar, commit y push con su identidad Git. Copia de referencia en docs/SPEC_PAPER_INTELIGENTE_POR_PROPOSITO.md. Base expresa: nasa2genui, commit 0f08553; worktree aislado para conservar main y sus cambios locales.

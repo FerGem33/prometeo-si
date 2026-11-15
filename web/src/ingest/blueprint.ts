@@ -7,6 +7,7 @@
  */
 
 import type { Lens, Pack, Preset } from "../engine/types";
+import { compileModules, validateModules } from "./modules";
 import type {
   DesignPresetFlag,
   ExtractedVariable,
@@ -511,7 +512,13 @@ export function compileUiBlueprint(
       .slice(0, 2)
       .join(" & ")} with ${density} density based on directives.`;
 
+  const localModules = compileModules(instr.trim(), vars, presetFlags.includes("compare"));
+  const validated = validateModules(remoteBlueprint?.modules ?? localModules, vars.filter(v => v.include).map(v => v.id));
   return {
+    purpose: instr.trim(),
+    modules: validated.modules.length ? validated.modules : localModules,
+    discardedModules: [...validated.discarded, ...(Array.isArray(remoteBlueprint?.discardedModules)
+      ? remoteBlueprint.discardedModules.filter((x): x is string => typeof x === "string").map(x => x.slice(0, 200)) : [])],
     title,
     kicker,
     variablesLayout,

@@ -15,6 +15,7 @@ import { Provenance } from "./components/Provenance";
 import { Cover } from "./components/Cover";
 import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
+import { PurposeModules } from "./components/PurposeModules";
 import type { EvaluationDraft } from "./components/ScenarioStep";
 import { ProcessingStep } from "./components/ProcessingStep";
 import { ChamberFigure } from "./components/ChamberFigure";
@@ -161,7 +162,7 @@ function Flow({ data }: { data: Data }) {
   };
 
   const reportData = useMemo<Data>(() => {
-    if (activeCustomDraft && activeCustomDraft.isCustomCorpus) {
+    if (activeCustomDraft) {
       return {
         pack: activeCustomDraft.pack,
         lens: activeCustomDraft.lens,
@@ -205,7 +206,7 @@ function Flow({ data }: { data: Data }) {
         onOpen={(p, e, draft) => {
           setGoal(p.intent);
           setPendingDraft(null);
-          setActiveCustomDraft(draft?.isCustomCorpus ? draft : null);
+          setActiveCustomDraft(draft ?? null);
           if (e) {
             setScenario(e.scenario);
             setAxes(e.axes);
@@ -232,16 +233,8 @@ function Flow({ data }: { data: Data }) {
           go("processing");
         }}
         onSubmitDraft={(draft) => {
-          if (draft.isCustomCorpus) {
-            setPendingDraft(draft);
-            go("processing");
-          } else {
-            setActiveCustomDraft(null);
-            setPendingDraft(null);
-            setScenario(draft.scenario);
-            setExtras(draft.extras ?? []);
-            go("processing");
-          }
+          setPendingDraft(draft);
+          go("processing");
         }}
       />
     );
@@ -253,7 +246,7 @@ function Flow({ data }: { data: Data }) {
         onBack={() => go("scenario")}
         onComplete={(finalDraft) => {
           const resolved = finalDraft ?? pendingDraft;
-          if (resolved?.isCustomCorpus) {
+          if (resolved) {
             setActiveCustomDraft(resolved);
             setScenario(resolved.scenario);
             setExtras(resolved.extras ?? []);
@@ -509,6 +502,8 @@ function Report({
             <KeyFindings findings={r.finds} />
           </div>
 
+          {blueprint && <PurposeModules blueprint={blueprint} scenario={scenario} onChange={setScenario} />}
+
           <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
             <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} isCustomCorpus={isCustomCorpus} nasa={nasa} />
           </Fold>
@@ -545,7 +540,7 @@ function Report({
                 {t("Change values")}
               </button>
             </section>
-            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} isCustomCorpus={isCustomCorpus} />
+            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} isCustomCorpus={isCustomCorpus || Boolean(blueprint)} />
           </aside>
 
           <Fold title={t("Save or compare variants of this scenario")} hint={t("kept in this browser only")}>
