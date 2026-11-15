@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T08 (Codex · laptop stringbuilder) |
+| Tarea en curso | T09 (Codex · stringbuilder); T08 pendiente de revisión visual |
 | Último commit verificado | T07 |
 | Siguiente paso exacto | T08: abrir y verificar visualmente https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200 confirmados); equipo integra cambios, dueño publica al final siguiendo infra/README.md |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
@@ -45,7 +45,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T06 | Escenario y figuras | P0 | hecha | Claude · ferlr | (este commit) | Panel de escenario (sliders, selector, presets), Fig. 1 mapa, Fig. 2 cercanía, Fig. 3 huecos, niveles con icono+texto. Preset lunar: O₂ Near/not covered, presión Not studied, PMMA Studied. ~42 ms por paso de slider |
 | T07 | Procedencia, PDF y URL | P0 | hecha | Claude · ferlr | (este commit) | Panel de procedencia (archivo, fila, valor original, conversión, DOI, SHA-256), Export PDF (9 páginas A4, docs/screens/t07_export.pdf), escenario en la URL. Sin desbordes a 400 px |
 | T08 | Infra web (CloudFront) | P0 | en curso | Codex · stringbuilder | este commit | Scripts y despliegue ejecutados; repetición reutiliza IDs; CloudFront Deployed y HTTP 200; revisión visual pendiente |
-| T09 | Lambda `/ask` y `/analysis` | P1 | pendiente | | | |
+| T09 | Lambda `/ask` y `/analysis` | P1 | en curso | Codex · stringbuilder | este commit | Contratos, validación y pruebas locales; Bedrock converse verificado |
 | T10 | Infra API | P1 | pendiente | | | |
 | T11 | UI de preguntas y análisis | P1 | pendiente | | | |
 | T12 | Ficha de datos para ML | P2 | pendiente | | | |
