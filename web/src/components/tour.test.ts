@@ -36,7 +36,6 @@ describe("JudgeTour", () => {
       expect(step.pitch(ctx).length).toBeGreaterThan(40);
       expect(step.takeaway).toBeTruthy();
       expect(step.target).toMatch(/\S/);
-      expect(step.look).toBeTruthy();
     }
   });
 
@@ -49,7 +48,7 @@ describe("JudgeTour", () => {
   });
 
   it("compares conditions and never predicts an outcome", () => {
-    const text = TOUR_STEPS.flatMap((s) => [s.title, s.pitch(ctx), s.takeaway, s.look]).join(" ");
+    const text = TOUR_STEPS.flatMap((s) => [s.title, s.pitch(ctx), s.takeaway]).join(" ");
     expect(text).not.toMatch(/\b(safe|safety|burns?|ignites?|hallucinat\w*)\b/i);
   });
 

@@ -1,99 +1,76 @@
 /* Guided tour. A panel docked to the bottom of the window (to the right on wide screens) that reserves its own
    space, so the page stays visible and usable. Same identity as report.css: paper, ink, one accent, no shadows. */
-:root { --tour-w: 400px; }
+:root { --tour-w: 440px; }
 
 /* ---------- launcher ---------- */
 .tour-launch {
   position: fixed; right: 20px; bottom: 20px; z-index: 50;
   display: inline-flex; align-items: center; gap: 10px;
-  font: 500 13.5px/1.2 var(--sans); color: var(--ink);
+  font: 500 14.5px/1.2 var(--sans); color: var(--ink);
   background: var(--paper); border: 1.5px solid var(--ink); border-radius: 2px;
-  padding: 9px 14px; cursor: pointer;
+  padding: 10px 16px; cursor: pointer;
 }
 .tour-launch b { font-weight: 600; }
 .tour-launch:hover { border-color: var(--accent); }
 .tour-launch-mark {
-  display: inline-grid; place-items: center; width: 20px; height: 20px;
-  background: var(--accent-fill); color: var(--on-accent); border-radius: 2px; font-size: 9px;
+  display: inline-grid; place-items: center; width: 22px; height: 22px;
+  background: var(--accent-fill); color: var(--on-accent); border-radius: 2px; font-size: 10px;
 }
 body:has(.prov) .tour-launch { display: none; }
 
 /* ---------- docked panel ---------- */
 .tour-dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
-  max-height: 52vh; overflow-y: auto;
+  max-height: 55vh; overflow-y: auto;
   background: var(--paper); color: var(--ink);
   border-top: 2px solid var(--accent);
   font-family: var(--sans);
 }
 .tour-inner {
-  max-width: 1280px; margin: 0 auto; padding: 8px 28px 16px;
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  max-width: 1320px; margin: 0 auto; padding: 14px 32px 20px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
   grid-template-areas: "top top" "main take" "main nav" "main keys";
-  grid-template-rows: auto auto auto 1fr; gap: 12px 44px;
+  grid-template-rows: auto auto auto 1fr; gap: 12px 48px;
 }
 
-.tour-top {
-  grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  border-bottom: 1px solid var(--rule-2); padding-bottom: 6px;
-}
-.tour-agenda { display: flex; flex-wrap: wrap; gap: 2px; list-style: none; margin: 0; padding: 0; }
-.tour-agenda button {
-  display: inline-flex; align-items: center; gap: 7px;
-  font: 500 13px/1 var(--sans); color: var(--ink-3);
-  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
-  padding: 7px 9px 6px; cursor: pointer;
-}
-.tour-agenda i {
-  display: inline-grid; place-items: center; width: 19px; height: 19px;
-  font-style: normal; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
-  border: 1px solid currentColor; border-radius: 2px;
-}
-.tour-agenda .done button { color: var(--ink-2); }
-.tour-agenda .now button { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
-.tour-agenda .now i { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
-.tour-agenda button:hover { color: var(--ink); }
-
-.tour-close {
-  font: 500 13px/1 var(--sans); color: var(--ink-2); white-space: nowrap;
-  background: none; border: 1px solid var(--rule); border-radius: 2px; padding: 7px 11px; cursor: pointer;
-}
-.tour-close:hover { color: var(--ink); border-color: var(--ink-3); }
-.tour-close span { font-size: 16px; margin-left: 4px; }
-
-.tour-main { grid-area: main; min-width: 0; }
+/* Only the current stop is named; there is no list of all stops. */
+.tour-top { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .tour-kicker {
-  margin: 2px 0 4px; font: 600 12px/1.2 var(--sans-c);
+  margin: 0; font: 600 14px/1.2 var(--sans-c);
   letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
 }
-.tour-title { margin: 0 0 8px; font: 600 25px/1.2 var(--serif); color: var(--ink); }
-.tour-title:focus { outline: none; }
-.tour-pitch { margin: 0 0 10px; max-width: 80ch; font: 400 15.5px/1.6 var(--sans); color: var(--ink); }
-.tour-look { margin: 0; font: 400 13.5px/1.45 var(--sans); color: var(--ink-2); }
-/* Legend of the outline drawn on the page. */
-.tour-look::before { content: ""; display: inline-block; width: 16px; height: 10px; margin-right: 8px; vertical-align: -1px; border: 2px solid var(--accent); }
-.tour-look b { font-weight: 600; color: var(--ink); }
-
-.tour-takeaway { grid-area: take; align-self: start; border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; margin-top: 4px; }
-.tour-takeaway b {
-  display: block; margin-bottom: 4px; font: 600 11.5px/1.2 var(--sans-c);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+.tour-close {
+  font: 500 14.5px/1 var(--sans); color: var(--ink-2); white-space: nowrap;
+  background: none; border: 1px solid var(--rule); border-radius: 2px; padding: 8px 12px; cursor: pointer;
 }
-.tour-takeaway p { margin: 0; font: italic 400 17.5px/1.4 var(--serif); color: var(--ink); }
+.tour-close:hover { color: var(--ink); border-color: var(--ink-3); }
+.tour-close span { font-size: 18px; margin-left: 4px; }
 
-.tour-nav { grid-area: nav; display: flex; gap: 8px; }
+.tour-main { grid-area: main; min-width: 0; }
+.tour-title { margin: 0 0 10px; font: 600 30px/1.2 var(--serif); color: var(--ink); }
+.tour-title:focus { outline: none; }
+.tour-pitch { margin: 0; max-width: 72ch; font: 400 18px/1.6 var(--sans); color: var(--ink); }
+
+.tour-takeaway { grid-area: take; align-self: start; border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; margin-top: 6px; }
+.tour-takeaway b {
+  display: block; margin-bottom: 6px; font: 600 13px/1.2 var(--sans-c);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
+}
+.tour-takeaway p { margin: 0; font: 500 18px/1.5 var(--sans); color: var(--ink); }
+
+.tour-nav { grid-area: nav; display: flex; gap: 10px; }
 .tour-btn {
-  font: 600 14px/1.2 var(--sans); color: var(--ink);
+  font: 600 16px/1.2 var(--sans); color: var(--ink);
   background: var(--surface-control, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
-  padding: 9px 14px; cursor: pointer;
+  padding: 11px 16px; cursor: pointer;
 }
 .tour-btn:hover:not(:disabled) { border-color: var(--ink-3); }
 .tour-btn.primary { flex: 1; background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .tour-btn.primary:hover { border-color: var(--ink); }
 .tour-btn:disabled { opacity: .45; cursor: default; }
-.tour-keys { grid-area: keys; margin: 0; font: 400 12px/1.4 var(--sans); color: var(--ink-3); }
+.tour-keys { grid-area: keys; margin: 0; font: 400 13.5px/1.4 var(--sans); color: var(--ink-3); }
 
-.tour-launch:focus-visible, .tour-agenda button:focus-visible, .tour-close:focus-visible, .tour-btn:focus-visible {
+.tour-launch:focus-visible, .tour-close:focus-visible, .tour-btn:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
@@ -116,15 +93,11 @@ html[data-tour] .prov { bottom: calc(var(--tour-h, 0px) + 16px); max-height: cal
 @media (min-width: 1600px) {
   .tour-dock { top: 0; left: auto; width: var(--tour-w); max-height: none; border-top: 0; border-left: 2px solid var(--accent); }
   .tour-inner {
-    min-height: 100%; padding: 18px 26px 22px;
+    min-height: 100%; padding: 22px 30px 26px;
     grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "take" "nav" "keys";
-    grid-template-rows: none; align-content: start; gap: 18px;
+    grid-template-rows: none; align-content: start; gap: 22px;
   }
-  .tour-top { flex-direction: column-reverse; align-items: stretch; gap: 10px; padding-bottom: 14px; }
-  .tour-close { align-self: flex-end; }
-  .tour-agenda { flex-direction: column; }
-  .tour-agenda button { width: 100%; border-bottom: 0; border-left: 2px solid transparent; padding: 6px 10px; }
-  .tour-agenda .now button { border-left-color: var(--accent); background: var(--accent-wash); }
+  .tour-top { padding-bottom: 14px; border-bottom: 1px solid var(--rule-2); }
 
   html[data-tour] body { padding-bottom: 0; padding-right: var(--tour-w); }
   html[data-tour] .page { width: min(1440px, calc(100vw - var(--tour-w) - 40px)); }
@@ -133,20 +106,20 @@ html[data-tour] .prov { bottom: calc(var(--tour-h, 0px) + 16px); max-height: cal
   html[data-tour] .cols > .rail { max-height: calc(100vh - 24px); }
 }
 
-/* Phones: numbers only in the agenda, one column that scrolls inside the panel, navigation always in view. */
+/* Phones: one column that scrolls inside the panel, navigation always in view. */
 @media (max-width: 700px) {
-  .tour-dock { max-height: 46vh; }
+  .tour-dock { max-height: 48vh; }
   .tour-inner {
     grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "take" "nav";
-    grid-template-rows: none; padding: 4px 16px 0; gap: 8px;
+    grid-template-rows: none; padding: 10px 16px 0; gap: 10px;
   }
-  .tour-agenda span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .tour-agenda button { padding: 6px 3px; }
-  .tour-close { padding: 6px 8px; }
-  .tour-title { font-size: 19px; }
-  .tour-pitch { font-size: 14.5px; line-height: 1.5; margin-bottom: 6px; }
+  .tour-kicker { font-size: 13px; }
+  .tour-close { padding: 7px 10px; font-size: 14px; }
+  .tour-title { font-size: 22px; margin-bottom: 6px; }
+  .tour-pitch { font-size: 16px; line-height: 1.55; }
   .tour-takeaway p { font-size: 16px; }
-  .tour-nav { position: sticky; bottom: 0; background: var(--paper); padding: 8px 0 12px; border-top: 1px solid var(--rule-2); }
+  .tour-nav { position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 14px; border-top: 1px solid var(--rule-2); }
+  .tour-btn { font-size: 15px; }
   .tour-keys { display: none; }
   .tour-launch { right: 12px; bottom: 12px; }
 }

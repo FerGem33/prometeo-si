@@ -25,8 +25,6 @@ export interface TourStep {
   pitch: (c: TourContext) => string;
   /** The element on the page the stop talks about; it is outlined and scrolled into view. */
   target: string;
-  /** What the outline marks, so the presenter can point at it. */
-  look: string;
   takeaway: string;
   /** A control clicked on arrival, to show the feature working (for example a source link). */
   click?: string;
@@ -50,7 +48,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         c.sources,
       ),
     target: ".cover .example",
-    look: tx("The corpus behind this demo, counted from the evidence pack."),
     takeaway: tx("Prometeo turns that scattered record into one comparable, cited corpus."),
   },
   {
@@ -65,7 +62,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         c.presetBlurb,
       ),
     target: ".step .stepper",
-    look: tx("The four steps of the form."),
     takeaway: tx("Every condition that enters the comparison is explicit and editable."),
   },
   {
@@ -80,7 +76,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         c.units,
       ),
     target: ".proc-status-col",
-    look: tx("The harmonization steps run by the engine."),
     takeaway: tx("Levels, grades and findings are computed, not generated: they can be audited and reproduced."),
   },
   {
@@ -93,7 +88,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         "Each condition of the scenario receives one level: Studied, Near, not covered, Not studied or Scarce evidence, always written in words and never shown by color alone. Key findings state the largest gaps, each with its sources.",
       ),
     target: ".page .top",
-    look: tx("The evidence card and the key findings."),
     takeaway: tx("Prometeo compares conditions with the record; it does not predict outcomes. A gap is reported as a gap."),
   },
   {
@@ -107,7 +101,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         c.unit,
       ),
     target: ".page figure.ga",
-    look: tx("The graphical abstract: tested range per variable and the scenario value."),
     takeaway: tx("Blank regions point to the experiment that would close the gap."),
   },
   {
@@ -122,7 +115,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
     target: ".prov",
     click: ".page figure.ga .src",
     leave: ".prov header button",
-    look: tx("The source panel of a value in the graphical abstract."),
     takeaway: tx("Any number in the report can be checked against the original record in one click."),
   },
   {
@@ -136,7 +128,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         c.question,
       ),
     target: ".page .assistant-panel",
-    look: tx("The questions and analysis panel."),
     takeaway: tx("The AI helps to ask and to explain; it never sets a level, a grade or a finding."),
   },
   {
@@ -149,7 +140,6 @@ export const TOUR_STEPS: TourStep[] = lazy([
         "The report goes out as PDF or Markdown. The harmonized records go out as CSV with units, DOI and a study group for leakage-free splits, together with a datacard that lists conversions, rejected columns and what was not assessed.",
       ),
     target: ".dossier-export-bar",
-    look: tx("The dataset export of the dossier."),
     takeaway: tx("The same corpus serves a design review and a machine-learning dataset, with its provenance intact."),
   },
 ]);
@@ -216,7 +206,6 @@ export function JudgeTour({
   const { pack, lens } = useData();
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
-  const [found, setFound] = useState(true);
   const dock = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const step = TOUR_STEPS[idx];
@@ -296,12 +285,10 @@ export function JudgeTour({
     let settle = 0;
     const stop = () => cancelled;
     clearFocus();
-    setFound(true);
     (async () => {
       if (step.click) (await waitFor(step.click, 3000, stop))?.click();
       const el = await waitFor(step.target, 3000, stop);
-      if (cancelled) return;
-      if (!el) return setFound(false);
+      if (cancelled || !el) return;
       el.setAttribute(FOCUS, "");
       reveal(el, dock.current);
       settle = window.setTimeout(() => !cancelled && reveal(el, dock.current, true), 900);
@@ -352,30 +339,17 @@ export function JudgeTour({
     <section ref={dock} className="tour-dock noprint" aria-label={t("Guided tour of Prometeo")}>
       <div className="tour-inner">
         <header className="tour-top">
-          <ol className="tour-agenda" aria-label={t("Stops of the tour")}>
-            {TOUR_STEPS.map((s, i) => (
-              <li key={s.id} className={i === idx ? "now" : i < idx ? "done" : ""}>
-                <button type="button" onClick={() => go(i)} aria-current={i === idx ? "step" : undefined}>
-                  <i>{i + 1}</i>
-                  <span>{s.name}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
+          <p className="tour-kicker">{t("Stop {0} of {1} · {2}", idx + 1, TOUR_STEPS.length, step.name)}</p>
           <button type="button" className="tour-close" onClick={close}>
             {t("Close tour")} <span aria-hidden="true">×</span>
           </button>
         </header>
 
         <div className="tour-main" aria-live="polite">
-          <p className="tour-kicker">{t("Stop {0} of {1} · {2}", idx + 1, TOUR_STEPS.length, step.name)}</p>
           <h2 className="tour-title" ref={heading} tabIndex={-1}>
             {step.title}
           </h2>
           <p className="tour-pitch">{step.pitch(ctx)}</p>
-          <p className="tour-look">
-            <b>{found ? t("Outlined on the page:") : t("Not on screen:")}</b> {step.look}
-          </p>
         </div>
 
         <div className="tour-takeaway">
