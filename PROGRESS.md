@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33 API drafts desplegada; herramienta local registro/confirmación/login SRP y A/B implementada. Falta ejecutarla con dos cuentas reales y confirmar aislamiento remoto. T32 D7/PDF pendiente. T31 hecha. |
+| Tarea en curso | T33: registro, confirmación, login SRP y prueba A/B real de proyectos vacíos comprobados. Siguen pendientes cargas D3 y gestión completa de proyectos. T32 D7/PDF pendiente; T31 hecha. |
 | Último commit verificado | T33 despliegue `4268b90` (JWT/HTTP y regresión MVP); T31 `56e42d5`. Verificación nueva local de cliente Cognito en esta entrega; no se presume A/B real. |
-| Siguiente paso exacto | Dueño: seguir `tools/cognito/README.md`, registrar/confirmar dos correos propios, ejecutar login y `node tools/cognito/cli.mjs ab` con entradas ocultas; revisar recibo `/tmp/prometeo-t33-ab.json` sin tokens. Después cerrar A/B real y preparar cargas/worker tras D3. Pendientes generales en `docs/ESTADO_AWS_BACKEND.md`. |
+| Siguiente paso exacto | Cerrar T30/D3 con límites/costo revisados antes de habilitar cargas; después implementar tickets/finalización y worker T34, y verificar lote real/corrupto. Registro/login y aislamiento de drafts ya pasaron; evidencia en `docs/T33_PRUEBA_USUARIOS.md`. DELETE y edición de intención de proyectos procesados siguen pendientes. D7/PDF requiere revisor. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -61,7 +61,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
-| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | API drafts desplegada; helper local register/confirm/login SRP y A/B listo. Falta registro/login real, A/B remoto y cargas T30/D3; no declarar hecha |
+| T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | Registro/confirmación/login SRP y 14 comprobaciones HTTP A/B reales pasan. Faltan cargas T30/D3 y gestión completa (DELETE/lente); `docs/T33_PRUEBA_USUARIOS.md` |
 | T34–T37 | Worker, revisión y publicación | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus); revisión T32/D7 pendiente |
 
 ## Aceptación final (T15)
@@ -95,6 +95,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 confirmación y aislamiento A/B reales
+- Ambos códigos de correo fueron aceptados por Cognito. Dos inicios de sesión SRP reales terminaron correctamente, con almacenamiento local solo en memoria.
+- `node tools/cognito/cli.mjs ab` terminó con código 0. Catorce comprobaciones HTTP esperadas: 401/401/204 para auth/CORS; dos creaciones y repetición idempotente 201; cambio de payload con misma clave 409; lecturas cruzadas A→B/B→A y edición A→B 404; lectura/edición propia y ambos listados 200. El script confirmó IDs diferentes, repetición sin duplicado y ausencia del proyecto ajeno en cada listado.
+- Recibo local `/tmp/prometeo-t33-ab.json`; evidencia durable sin correos/credenciales en `docs/T33_PRUEBA_USUARIOS.md`. Dos drafts vacíos quedaron para limpieza posterior, con IDs en el informe. No se borran porque DELETE sigue pendiente.
+- T33 permanece en curso por cargas D3 y gestión completa; la comprobación de usuarios/drafts ya está demostrada contra Cognito/API Gateway/Lambda/DynamoDB reales. No equivale a pruebas de uploads/worker/publicación ni a una auditoría completa de autorización.
 
 ### 2026-11-15 · T33 registro real de dos cuentas de prueba
 - El dueño proporcionó dos correos bajo su control y autorizó su registro. Tras corregir una contraseña rechazada por Cognito, ambas llamadas reales SignUp terminaron correctamente mediante la CLI SRP; Cognito indicó envío de confirmación y cuentas aún no confirmadas.

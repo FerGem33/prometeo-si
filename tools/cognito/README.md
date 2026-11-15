@@ -33,7 +33,8 @@ node tools/cognito/cli.mjs login
 indicado. `confirm` pide correo y código recibido. `login` comprueba SRP sin
 imprimir el ID token. Cognito aplica la política de contraseña del pool; el
 script no la relaja. No compartir contraseñas, códigos ni tokens por chat.
-No usar correos ajenos. No se hicieron registros reales en esta entrega.
+No usar correos ajenos. Dos registros reales del dueño, confirmación y SRP
+ya se comprobaron; evidencia en `docs/T33_PRUEBA_USUARIOS.md`.
 
 ## Verificar aislamiento con las dos cuentas
 
@@ -81,8 +82,8 @@ npm test --prefix tools/cognito
 Seis pruebas: construcción del SDK real sin red y dobles para registro,
 confirmación sin transferencia de alias, SRP, errores/desafíos, sesión inválida
 y almacenamiento aislado/limpieza. No prueban correos enviados, login real ni
-aislamiento A/B remoto; solo se registrarán como comprobados tras ejecutar los
-comandos con las cuentas confirmadas y revisar el recibo.
+aislamiento A/B remoto por sí solas. Esos flujos se ejecutaron y comprobaron
+por separado con las cuentas confirmadas; ver `docs/T33_PRUEBA_USUARIOS.md`.
 
 Referencias de API: declaraciones `index.d.ts` del paquete fijado y
 [ejemplo AWS de Cognito con interfaz propia](https://github.com/aws-samples/sample-aws-cognito-oidc-saml-proxy/blob/main/examples/custom-ui/README.md).

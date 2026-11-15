@@ -1,8 +1,9 @@
 # T33: entrega local de identidad y proyectos
 
 Estado: API de proyectos vacíos desplegada el 15-nov con aprobación acotada
-del dueño. T33 no está hecha: faltan login/registro y prueba A/B con sesiones
-reales. T30 completo/D3 siguen pendientes; no habilitar cargas. Pack sin cambios.
+del dueño. Registro/confirmación/login SRP y A/B con dos usuarios reales pasaron;
+ver `T33_PRUEBA_USUARIOS.md`. T33 no está hecha: faltan cargas y gestión completa.
+T30 completo/D3 siguen pendientes; no habilitar cargas. Pack sin cambios.
 
 ## Rutas implementadas
 
@@ -142,27 +143,28 @@ Pruebas de proyectos usan dobles locales de tabla y claims. Comprueban
 aislamiento A/B, ausencia de claims, emisor/audiencia/expiración/tipo inválidos,
 validación de entrada, reintentos con clave, concurrencia, paginación,
 errores sanitizados y CORS. **No demuestran** firma JWT real, IAM ni aislamiento
-del despliegue AWS. Validación real con Cognito/API Gateway/DynamoDB pendiente.
+del despliegue AWS. La validación real se ejecutó por separado y está registrada
+en `T33_PRUEBA_USUARIOS.md`.
 
 La interfaz puede preparar lista/creación/consulta/edición de draft con el
 contrato `Project` y `Page<Project>`, conservando estados de carga y errores
-401/404/409. Falta login/registro Cognito, rutas DELETE, uploads D3, worker y
+401/404/409. Falta conectar pantallas de login/registro, rutas DELETE, uploads D3, worker y
 lente de proyectos procesados. No conectar estas pantallas a producción hasta
 que exista backend desplegado y verificado.
 
-## Comprobación HTTP real y prueba A/B pendiente
+## Comprobación HTTP real y prueba A/B completada
 
 Para obtener las sesiones mediante registro/confirmación/login SRP, usar
 [`tools/cognito/README.md`](../tools/cognito/README.md). Su modo `ab` evita copiar
 tokens a la terminal o al chat: inicia ambas sesiones y pasa los ID tokens
-al entorno del smoke en memoria. Cliente local implementado; flujos reales aún
-pendientes de las dos cuentas del dueño.
+al entorno del smoke en memoria. Dos cuentas del dueño se registraron,
+confirmaron e iniciaron sesión; la prueba A/B terminó con código 0 y 14 checks.
 
 `api/check_projects_live.py` comprobó 401 sin sesión, 401 con token inválido y
 204 en CORS. `/ask` y `/analysis` regresaron 200; analysis fue mode=ai con tres
 oraciones citadas. Authorizer `m6kz2q`, integración `ga1agdj`, cuatro rutas JWT;
-`$default` permanece público para el MVP. Esto no prueba aún acceso autorizado
-ni aislamiento de DynamoDB en ejecución real.
+`$default` permanece público para el MVP. La prueba A/B posterior comprobó
+acceso autorizado y rechazo cruzado de los drafts concretos en ejecución real.
 
 ```bash
 source infra/outputs.env
@@ -179,4 +181,5 @@ Con ambos tokens, el mismo comando crea dos drafts de prueba, verifica lecturas,
 listados, edición propia, 404 cruzado e idempotencia. La salida contiene sus IDs;
 conservarlos para limpieza posterior del dueño. No se borran automáticamente:
 DELETE aún no está implementado. El script es operativo, no ejecuta registro
-ni inicio de sesión; esas sesiones siguen siendo el requisito pendiente.
+ni inicio de sesión por sí solo; el wrapper Cognito ya obtuvo ambas sesiones
+durante la prueba real documentada.

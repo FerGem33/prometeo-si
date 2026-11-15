@@ -8,12 +8,13 @@ T31 ya creó los recursos base; el despliegue completo requiere terminar T33–T
 T33 dispone de un [avance de despliegue de proyectos](../docs/T33_API_PROYECTOS.md):
 `python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy`
 prepara configuración sin llamadas AWS. La aplicación es explícita, requiere
-aprobación T30 registrada y todavía necesita verificarse en AWS con dos usuarios.
+aprobación T30 registrada; el alcance de drafts ya se verificó con dos usuarios reales.
 No implementa cargas ni despliega worker.
 
 El 15-nov se aplicó el alcance de proyectos vacíos con autorización del dueño:
 API y cuatro rutas JWT desplegadas, 401 sin sesión/token inválido y CORS 204
-comprobados. Falta la prueba con dos usuarios válidos para cerrar T33.
+comprobados. Registro, confirmación, login SRP y aislamiento A/B real pasaron;
+T33 sigue en curso por cargas D3 y gestión completa de proyectos.
 
 Para obtener esas sesiones y ejecutar A/B: [herramienta Cognito local](../tools/cognito/README.md).
 Para conocer lo que falta de infraestructura y backend: [estado AWS/backend](../docs/ESTADO_AWS_BACKEND.md).
