@@ -8,7 +8,7 @@ import { overallText, levelBasis, whyText } from "../report/text";
 import { doiOf, num, scenarioValueText, studyShort, varOf } from "../report/format";
 import { explainStudy, valueWithUnit } from "../report/ranking";
 import { t, many } from "../i18n";
-import { NasaApparatus, type NasaInfo } from "./NasaApparatus";
+import { NasaApparatus, ReferenceScenarios, type NasaInfo } from "./NasaApparatus";
 
 const GRADES: Grade[] = ["A", "B", "C", "D"];
 
@@ -171,6 +171,7 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
         {top ? t("The closest {0} is {1} (grade {2}, d = {3}).", unit, studyShort(pack, top.study), top.grade, top.distance) : t("No {0} has records comparable with it.", unit)}
       </p>
 
+      {nasa?.scenarios && <ReferenceScenarios scenarios={nasa.scenarios} />}
       {nasa && (
         <div className="ga-nasa">
           <NasaApparatus {...nasa} compact />

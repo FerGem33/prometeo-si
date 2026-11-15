@@ -19,6 +19,7 @@ import type { EvaluationDraft } from "./components/ScenarioStep";
 import { ProcessingStep } from "./components/ProcessingStep";
 import { ChamberFigure } from "./components/ChamberFigure";
 import { NasaApparatus } from "./components/NasaApparatus";
+import { allHabitatPresets } from "./components/HabitatFigure";
 import { detectNasaCorpus } from "./ingest/nasaDetect";
 import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
@@ -286,6 +287,7 @@ function Flow({ data }: { data: Data }) {
           blueprint={activeCustomDraft?.blueprint}
           isCustomCorpus={Boolean(activeCustomDraft?.isCustomCorpus)}
           customDraft={activeCustomDraft?.isCustomCorpus ? activeCustomDraft : null}
+          referenceLens={lens}
           scenario={scenario}
           setScenario={setScenario}
           extras={extras}
@@ -333,6 +335,7 @@ function Report({
   blueprint,
   isCustomCorpus,
   customDraft,
+  referenceLens,
   scenario,
   setScenario,
   extras,
@@ -351,6 +354,7 @@ function Report({
   blueprint?: UiBlueprint;
   isCustomCorpus?: boolean;
   customDraft?: EvaluationDraft | null;
+  referenceLens?: Lens;
   scenario: Scenario;
   setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void;
   extras: Extra[];
@@ -415,8 +419,9 @@ function Report({
   const nasa = useMemo(() => {
     if (!customDraft) return undefined;
     const d = detectNasaCorpus(customDraft.docs, customDraft.variables);
-    return d.isNasa && d.apparatus ? { apparatus: d.apparatus, matched: d.matched } : undefined;
-  }, [customDraft]);
+    if (!d.isNasa || !d.apparatus) return undefined;
+    return { apparatus: d.apparatus, matched: d.matched, scenarios: referenceLens ? allHabitatPresets(referenceLens) : undefined };
+  }, [customDraft, referenceLens]);
 
   const unit = lens.unit_of_study ?? "study";
   const where = partitionPhrase(pack, lens, r.part?.value);

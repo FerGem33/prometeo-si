@@ -45,6 +45,45 @@ export function isOutcomeColumn(nameOrLabel: string): boolean {
   return OUTCOME_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+// Bookkeeping columns: identifiers, dates and free-text notes. They stay listed but are not compared by default.
+const BOOKKEEPING = [
+  /\b(test|run|experiment|matrix|case|sample|record|row|serial)\s*(number|no\.?|num|#|id)(\b|$)/i,
+  /\b(id|script|date|day|gmt|timestamp)\b/i,
+  /^(test|tests\s+run|run|case|script|num\b.*)$/i,
+  /\b(comments?|notes?|remarks?|key\s+results|key\s+observations|observations|findings)\b/i,
+];
+const FRAGMENT_START = new Set(["a", "an", "of", "on", "that", "this", "with", "and", "or", "to", "is", "was", "were", "by", "as"]);
+
+/** True when an extracted column or PDF phrase is bookkeeping or a text fragment rather than a variable. */
+export function isNoiseVariable(label: string, kind: "table" | "paper"): boolean {
+  const words = label.replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+  if (BOOKKEEPING.some((re) => re.test(words))) return true;
+  if (kind === "table") return false;
+  // PDF regex matches: figure captions, mid-sentence cuts and long phrases are not variable names.
+  const tokens = label.trim().split(/\s+/);
+  return (
+    tokens.length > 4 ||
+    /\b(fig(ure)?|table)\.?\s*\d/i.test(label) ||
+    /(^|\s)\d+(\.\d+)?(\s|$)/.test(label) ||
+    (/^[a-z]/.test(tokens[0]) && tokens[0].length <= 2 && tokens.length > 1) ||
+    FRAGMENT_START.has(tokens[0].toLowerCase())
+  );
+}
+
+/** Free-text categorical column: almost every row is a different string. */
+function isFreeText(categories: string[] | undefined, nonEmpty: number): boolean {
+  if (!categories || categories.length < 6) return false;
+  const meanLen = categories.reduce((n, c) => n + c.length, 0) / categories.length;
+  return categories.length >= 0.6 * nonEmpty || meanLen > 40;
+}
+
+// "N/A (no departure observed)", "None", "Value": a column holding only placeholders records nothing to compare.
+const PLACEHOLDER = /^(n\/?a\b.*|none|null|nan|value|not applicable|-+|—)$/i;
+const isPlaceholderOnly = (categories: string[] | undefined) =>
+  !!categories && categories.length > 0 && categories.every((c) => PLACEHOLDER.test(c.trim()));
+
+const byName = (a: UploadedDoc, b: UploadedDoc) => a.name.localeCompare(b.name, undefined, { numeric: true });
+
 // ============================================================================
 // 2. Slug Normalization
 // ============================================================================
@@ -260,7 +299,7 @@ export function extractVariablesFromDocs(
 ): ExtractedVariable[] {
   const candidates: CandidateVariable[] = [];
 
-  for (const doc of docs) {
+  for (const doc of [...docs].sort(byName)) {
     // CSV / Tabular Doc
     if (doc.kind === "table" && doc.table) {
       for (const col of doc.table.columns) {
@@ -290,7 +329,10 @@ export function extractVariablesFromDocs(
           median: col.median,
           categories: col.categories ? [...col.categories] : undefined,
           mode: col.mode,
-          include: !isOutcome,
+          include:
+            !isOutcome &&
+            !isNoiseVariable(col.label || col.name, "table") &&
+            !(col.type === "categorical" && (isFreeText(col.categories, col.nonEmptyCount) || isPlaceholderOnly(col.categories))),
           citations: [citation],
         });
       }
@@ -299,7 +341,7 @@ export function extractVariablesFromDocs(
     // PDF Paper Doc
     if (doc.kind === "paper" && doc.paper) {
       for (const finding of doc.paper.findings) {
-        const slug = slugifyVariable(finding.rawName || finding.label);
+        const slug = slugifyVariable(finding.label || finding.rawName);
         const citation: VariableCitation = {
           docId: doc.id,
           docName: doc.name,
@@ -329,7 +371,7 @@ export function extractVariablesFromDocs(
           median: undefined,
           categories: finding.categories ? [...finding.categories] : undefined,
           mode: finding.categories?.[0],
-          include: true,
+          include: !isNoiseVariable(finding.label, "paper"),
           citations: [citation],
         });
       }
@@ -460,7 +502,38 @@ export function extractVariablesFromDocs(
     });
   }
 
-  return results;
+  // Numbered channel series (e.g. "Power1" … "Power12"): per-channel settings stay listed, not compared by default.
+  const stem = (l: string) => (/\D\d{1,3}$/.test(l) ? l.replace(/\d+$/, "").toLowerCase() : null);
+  const stems = new Map<string, number>();
+  for (const v of results) {
+    const s = stem(v.label);
+    if (s) stems.set(s, (stems.get(s) ?? 0) + 1);
+  }
+  for (const v of results) {
+    const s = stem(v.label);
+    if (s && (stems.get(s) ?? 0) >= 3) v.include = false;
+  }
+
+  // Compared variables first, then those recorded by more documents, numeric before categorical.
+  return results
+    .map((v, i) => ({ v, i }))
+    .sort(
+      (a, b) =>
+        Number(b.v.include) - Number(a.v.include) ||
+        new Set(b.v.citations.map((c) => c.docId)).size - new Set(a.v.citations.map((c) => c.docId)).size ||
+        Number(a.v.type !== "numeric") - Number(b.v.type !== "numeric") ||
+        a.i - b.i
+    )
+    .map((x) => x.v);
+}
+
+/** Readable study name from a file name: drops the extension, a repeated "ID__ID_" prefix and underscores. */
+export function studyShortName(fileName: string): string {
+  const base = fileName.replace(/\.[^.]+$/, "");
+  const m = base.match(/^(.+?)__(.*)$/);
+  const rest = m && m[2].startsWith(m[1]) ? m[2].slice(m[1].length).replace(/^[_\s-]+/, "") : null;
+  const tidy = (s: string) => s.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+  return m && rest ? `${m[1]} · ${tidy(rest)}` : tidy(base);
 }
 
 // ============================================================================
@@ -515,9 +588,9 @@ export function buildPackFromDocs(
   const customRecords: DataRecord[] = [];
   const customMappingTables: Mapping["tables"] = [];
 
-  for (const doc of docs) {
+  for (const doc of [...docs].sort(byName)) {
     const studyId = `study-${doc.id}`;
-    const studyShort = doc.name.replace(/\.[^.]+$/, "");
+    const studyShort = studyShortName(doc.name);
     const studyTitle = doc.paper?.title || doc.name;
 
     const source: Source = {
@@ -651,7 +724,7 @@ export function buildPackFromDocs(
     if (doc.kind === "paper" && doc.paper) {
       for (let fIdx = 0; fIdx < doc.paper.findings.length; fIdx++) {
         const finding = doc.paper.findings[fIdx];
-        const slug = slugifyVariable(finding.rawName || finding.label);
+        const slug = slugifyVariable(finding.label || finding.rawName);
         const mappedVar = includedVarMap.get(slug);
 
         const recordId = `${studyId}/${doc.id}/p${finding.page}/f${fIdx + 1}`;

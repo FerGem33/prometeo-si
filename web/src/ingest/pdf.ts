@@ -400,6 +400,9 @@ function extractVerbatimQuote(
   return quote.length > 0 ? quote : fullText.slice(matchIndex, matchIndex + matchLength);
 }
 
+// "4:00 PM" is a clock time, not picomolar.
+const isClockSuffix = (u: string) => u === "AM" || u === "PM";
+
 const STOP_PREFIXES = new Set([
   "the", "a", "an", "for", "with", "we", "our", "and", "or", "in", "at", "during",
   "using", "utilized", "maintained", "measured", "recorded", "observed", "determined",
@@ -410,6 +413,10 @@ const STOP_PREFIXES = new Set([
 function cleanLabel(raw: string): { label: string; unitInLabel: string | null } {
   let cleaned = raw.replace(/^[:=]+|[:=]+$/g, "").trim();
   let unitInLabel: string | null = null;
+  // "A 2 (Condition" -> "Condition": an unclosed parenthesis opens the variable name.
+  if ((cleaned.match(/\(/g) ?? []).length > (cleaned.match(/\)/g) ?? []).length) {
+    cleaned = cleaned.slice(cleaned.lastIndexOf("(") + 1).trim();
+  }
 
   // Check parenthesized or bracketed unit: e.g. "Pressure (kPa)" or "Temperature [K]"
   const unitMatch = cleaned.match(/^(.*?)\s*[\(\[]([^\(\)\[\]]+)[\)\]]\s*$/);
@@ -510,9 +517,18 @@ export function parsePaperPages(
   const { exact, lowerMap } = getKnownUnits();
   const unitPattern = "[A-Za-z°µΩ%][A-Za-z0-9°µΩ%/()·*\\-_]*";
 
+  // Nothing after a "References" heading is a finding: citations would read as variables.
+  let inReferences = false;
   for (const page of pages) {
-    const text = page.text;
+    if (inReferences) break;
+    let text = page.text;
     if (!text) continue;
+    // Only in the second half of the document, so a table of contents does not cut the paper.
+    const refs = page.page > pages.length / 2 ? text.search(/\n\s*(references|bibliography|literature cited)\s*\n/i) : -1;
+    if (refs >= 0) {
+      text = text.slice(0, refs);
+      inReferences = true;
+    }
 
     // Pattern 1: Tolerance notation (e.g. "Pressure: 100 ± 5 kPa" or "100 +/- 5 kPa")
     const toleranceRegex = new RegExp(
@@ -530,7 +546,7 @@ export function parsePaperPages(
       const resolvedUnit = exact.has(rawUnit)
         ? rawUnit
         : lowerMap.get(rawUnit.toLowerCase());
-      if (!resolvedUnit) continue;
+      if (!resolvedUnit || isClockSuffix(rawUnit)) continue;
 
       const { label } = cleanLabel(rawName);
       if (!label || label.length < 2) continue;
@@ -567,7 +583,7 @@ export function parsePaperPages(
       const resolvedUnit = exact.has(rawUnit)
         ? rawUnit
         : lowerMap.get(rawUnit.toLowerCase());
-      if (!resolvedUnit) continue;
+      if (!resolvedUnit || isClockSuffix(rawUnit)) continue;
 
       const { label } = cleanLabel(rawName);
       if (!label || label.length < 2) continue;
@@ -599,7 +615,7 @@ export function parsePaperPages(
       const resolvedUnit = exact.has(rawUnit)
         ? rawUnit
         : lowerMap.get(rawUnit.toLowerCase());
-      if (!resolvedUnit) continue;
+      if (!resolvedUnit || isClockSuffix(rawUnit)) continue;
 
       const { label } = cleanLabel(rawName);
       if (!label || label.length < 2) continue;
@@ -633,7 +649,7 @@ export function parsePaperPages(
       const resolvedUnit = exact.has(rawUnit)
         ? rawUnit
         : lowerMap.get(rawUnit.toLowerCase());
-      if (!resolvedUnit) continue;
+      if (!resolvedUnit || isClockSuffix(rawUnit)) continue;
 
       const { label, unitInLabel } = cleanLabel(rawName);
       if (!label || label.length < 2) continue;

@@ -210,6 +210,7 @@ export const FLOW: Record<string, string> = {
   "· Harmonizing evidence": "· Armonizando la evidencia",
   "Back to scenario": "Volver al escenario",
   "Isometric Chamber · Evidence Harmonization": "Cámara isométrica · Armonización de la evidencia",
+  "Evidence Harmonization": "Armonización de la evidencia",
   "Preparing your evidence report": "Preparando su informe de evidencia",
   "{0} staged document(s) and ": "{0} documento(s) preparado(s) y ",
   "Harmonization steps": "Pasos de armonización",

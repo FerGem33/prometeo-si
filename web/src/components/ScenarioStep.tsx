@@ -7,6 +7,8 @@ import {
   suggestDesignPrompts,
 } from "../ingest/blueprint";
 import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
+import { detectNasaCorpus } from "../ingest/nasaDetect";
+import { NasaApparatus } from "./NasaApparatus";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
 import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
@@ -153,7 +155,8 @@ export function ScenarioStep({
     let active = true;
     docStore.list().then((list) => {
       if (active && list.length > 0) {
-        setDocs(list);
+        // Merge, do not overwrite: files added before hydration finished must not be lost or duplicated.
+        setDocs((prev) => mergeUploadedDocs([], [...list, ...prev]).docs);
         setScope("uploaded");
       }
     }).catch(() => {});
@@ -299,6 +302,7 @@ export function ScenarioStep({
     const incomingFiles = Array.from(list);
     setIsParsing(true);
     const newDocs: UploadedDoc[] = [];
+    const skipped: string[] = [];
     const rows: FileProgress[] = incomingFiles.map((f) => ({ name: f.name, stage: "Reading" }));
     setProgress(rows);
     const mark = (i: number, stage: FileProgress["stage"]) => {
@@ -333,6 +337,10 @@ export function ScenarioStep({
         const bytes = new Uint8Array(arrayBuffer);
         mark(index, "Hashing");
         const sha256 = await sha256Hex(bytes);
+        if (docs.some((d) => d.sha256 === sha256) || newDocs.some((d) => d.sha256 === sha256)) {
+          skipped.push(file.name);
+          continue;
+        }
         mark(index, "Parsing");
 
         if (mediaType === "application/pdf") {
@@ -421,10 +429,10 @@ export function ScenarioStep({
     }
 
     const { docs: merged, duplicates, overflow } = mergeUploadedDocs(docs, newDocs);
-    setDocs(merged);
+    setDocs((prev) => mergeUploadedDocs(prev, newDocs).docs);
     setProgress([]);
-    if (duplicates.length > 0) {
-      setDuplicateNotices((prev) => [...prev, ...duplicates]);
+    if (duplicates.length + skipped.length > 0) {
+      setDuplicateNotices((prev) => [...prev, ...skipped, ...duplicates]);
     }
     if (overflow.length > 0) {
       setOverflowNotices((prev) => [...prev, ...overflow]);
@@ -573,6 +581,11 @@ export function ScenarioStep({
   };
 
   const readyDocs = docs.filter((d) => d.status === "done");
+  // Isometric apparatus while loading, only when the uploaded documents are space research.
+  const nasaDocs = useMemo(() => {
+    const d = detectNasaCorpus(readyDocs, []);
+    return d.isNasa && d.apparatus ? { apparatus: d.apparatus, matched: d.matched } : null;
+  }, [docs]); // eslint-disable-line react-hooks/exhaustive-deps
   const hasOnlyFailedDocs = scope !== "demo" && docs.length > 0 && readyDocs.length === 0;
 
   // Draft submission
@@ -622,7 +635,7 @@ export function ScenarioStep({
       },
     };
 
-    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens);
+    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens, scope);
 
     const draft: EvaluationDraft = {
       docs,
@@ -1005,6 +1018,8 @@ export function ScenarioStep({
                 ))}
               </ul>
             )}
+
+            {nasaDocs && <NasaApparatus apparatus={nasaDocs.apparatus} matched={nasaDocs.matched} compact />}
 
             {/* Optional Bedrock /propose AI enrichment button */}
             {docs.some((d) => d.status === "done") && (

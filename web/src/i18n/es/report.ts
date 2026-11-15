@@ -641,6 +641,9 @@ export const REPORT: Record<string, string> = {
   "Only flagged records cover it ({0}, {1}).": "Solo lo cubren registros con marca ({0}, {1}).",
   "Inside the tested range {0}{1}, but no single test covers this value.": "Dentro del rango probado {0}{1}, pero ninguna prueba cubre este valor.",
   "0 of {0} comparable tests use it.": "0 de {0} pruebas comparables lo usan.",
+  "Reference scenarios": "Escenarios de referencia",
+  "Scenarios of the reference pack, drawn for context. Their values come from the cited source; they are not compared with the uploaded corpus, whose variables differ.": "Escenarios del paquete de referencia, dibujados como contexto. Sus valores vienen de la fuente citada; no se comparan con el corpus cargado, cuyas variables son otras.",
+  "{0}; and {1} more variables": "{0}; y {1} variables más",
   "This report places a proposed scenario ({0}) against {1} and {2} from {3} ({4}).": "Este informe sitúa un escenario propuesto ({0}) frente a {1} y {2} de {3} ({4}).",
   " Records with a different {0} are never compared with each other: the scenario falls in “{1}”{2}, which leaves {3} comparable {4}.":
     " Los registros con distinto valor de {0} nunca se comparan entre sí: el escenario cae en «{1}»{2}, lo que deja {3} {4} comparables.",
