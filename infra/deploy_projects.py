@@ -98,10 +98,10 @@ def configure(root, env, call=aws):
          '--policy-name', 'prometeo-hack-projects', '--policy-document', json.dumps(documents['projects-policy.json']))
     variables = config.get('Environment', {}).get('Variables', {})
     variables.update(documents['projects-env-merge.json'])
-    call('lambda', 'wait', 'function-updated-v2', '--function-name', function)
+    call('lambda', 'wait', 'function-updated', '--function-name', function)
     call('lambda', 'update-function-configuration', '--function-name', function,
          '--environment', json.dumps({'Variables': variables}), '--revision-id', config['RevisionId'])
-    call('lambda', 'wait', 'function-updated-v2', '--function-name', function)
+    call('lambda', 'wait', 'function-updated', '--function-name', function)
     call('apigatewayv2', 'update-api', '--api-id', api_id, '--cors-configuration', json.dumps({
         'AllowOrigins': [env['CF_URL']], 'AllowMethods': ['GET', 'POST', 'PATCH', 'OPTIONS'],
         'AllowHeaders': ['content-type', 'authorization', 'idempotency-key'], 'MaxAge': 300}))

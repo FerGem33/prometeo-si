@@ -62,9 +62,10 @@ Contrato completo en `docs/CONTRATOS_FASE2.md` §4.
   cotejan contra el pack. `api/events/analysis_lunar.json` es la petición real del preset lunar.
 - 38 pruebas. No se ha probado contra Bedrock desde esta laptop (sin perfil `prometeo`).
 
-## Avance local del bloque C (T33)
+## Avance del bloque C (T33)
 
 La API de proyectos draft y la configuración para revisión están documentadas
-en [`docs/T33_API_PROYECTOS.md`](../docs/T33_API_PROYECTOS.md). Aún no están
-desplegadas; el script MVP no las activa. Incluye pruebas locales y pendientes
+en [`docs/T33_API_PROYECTOS.md`](../docs/T33_API_PROYECTOS.md). Ya están
+desplegadas en su alcance de drafts; falta prueba A/B real y login/registro.
+La guía incluye pruebas locales y pendientes
 para autenticación, integración y aprobación T30/D3.

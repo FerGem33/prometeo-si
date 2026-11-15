@@ -1,5 +1,10 @@
 # T33: permisos pendientes para desplegar
 
+**Actualización:** el dueño añadió permisos y renovó SSO; se completó el
+despliegue acotado de drafts. El bloqueo descrito abajo es histórico. Los
+waiters se corrigieron para usar GetFunctionConfiguration, sin ampliar acceso
+a GetFunction. Resultados reales y prueba A/B pendiente en `T33_API_PROYECTOS.md`.
+
 ## Resultado real del preflight
 
 El perfil `prometeo` autentica en cuenta `352818909129` con el rol SSO

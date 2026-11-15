@@ -1,8 +1,8 @@
 # T33: entrega local de identidad y proyectos
 
-Estado: implementación local parcial. No desplegada. T33 no está hecha.
-T30/D3 siguen pendientes; no habilitar cargas ni interpretar esta entrega como
-aprobación del contrato. No hubo llamadas AWS ni cambios al pack publicado.
+Estado: API de proyectos vacíos desplegada el 15-nov con aprobación acotada
+del dueño. T33 no está hecha: faltan login/registro y prueba A/B con sesiones
+reales. T30 completo/D3 siguen pendientes; no habilitar cargas. Pack sin cambios.
 
 ## Rutas implementadas
 
@@ -104,7 +104,8 @@ python3.12 -I infra/deploy_projects.py --output-dir /tmp/prometeo-t33-deploy \
   --apply --contract-approved
 ```
 
-No se ejecutaron estos comandos de aplicación en esta entrega. El flag no
+Los comandos se ejecutaron en la continuación del 15-nov: API y dos corridas
+de configuración completadas con código 0. El flag no
 autentica al aprobador: exige una decisión humana ya documentada. El script
 verifica cuenta/rol no root, Lambda/rol exactos, API, stage `$default` auto-deploy
 y una integración v2 existente. Reutiliza authorizer si coincide; detiene
@@ -148,3 +149,28 @@ contrato `Project` y `Page<Project>`, conservando estados de carga y errores
 401/404/409. Falta login/registro Cognito, rutas DELETE, uploads D3, worker y
 lente de proyectos procesados. No conectar estas pantallas a producción hasta
 que exista backend desplegado y verificado.
+
+## Comprobación HTTP real y prueba A/B pendiente
+
+`api/check_projects_live.py` comprobó 401 sin sesión, 401 con token inválido y
+204 en CORS. `/ask` y `/analysis` regresaron 200; analysis fue mode=ai con tres
+oraciones citadas. Authorizer `m6kz2q`, integración `ga1agdj`, cuatro rutas JWT;
+`$default` permanece público para el MVP. Esto no prueba aún acceso autorizado
+ni aislamiento de DynamoDB en ejecución real.
+
+```bash
+source infra/outputs.env
+python3.12 -I api/check_projects_live.py --output /tmp/prometeo-t33-http.json
+```
+
+Para A/B, proporcionar `T33_TOKEN_A` y `T33_TOKEN_B` en el entorno local de la
+terminal (ID tokens vigentes de dos usuarios diferentes del pool). No ponerlos
+en comandos compartidos, capturas, chat, archivos versionados ni logs. El script
+no los imprime ni persiste y solo usa el token en Authorization. Tras la prueba,
+ejecutar `unset T33_TOKEN_A T33_TOKEN_B`.
+
+Con ambos tokens, el mismo comando crea dos drafts de prueba, verifica lecturas,
+listados, edición propia, 404 cruzado e idempotencia. La salida contiene sus IDs;
+conservarlos para limpieza posterior del dueño. No se borran automáticamente:
+DELETE aún no está implementado. El script es operativo, no ejecuta registro
+ni inicio de sesión; esas sesiones siguen siendo el requisito pendiente.

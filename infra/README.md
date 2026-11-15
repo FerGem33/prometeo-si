@@ -11,6 +11,10 @@ prepara configuración sin llamadas AWS. La aplicación es explícita, requiere
 aprobación T30 registrada y todavía necesita verificarse en AWS con dos usuarios.
 No implementa cargas ni despliega worker.
 
+El 15-nov se aplicó el alcance de proyectos vacíos con autorización del dueño:
+API y cuatro rutas JWT desplegadas, 401 sin sesión/token inválido y CORS 204
+comprobados. Falta la prueba con dos usuarios válidos para cerrar T33.
+
 ## Estado comprobado
 
 Web: https://dursf4nho4zl6.cloudfront.net

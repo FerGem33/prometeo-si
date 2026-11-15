@@ -8,9 +8,9 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T33: despliegue solicitado por dueño; preflight AWS detenido por AccessDenied en lambda:GetFunctionConfiguration del rol SSO T31. Código local listo para proyectos draft; identidad JWT real pendiente. T32 revisión humana D7/PDF pendiente. T31 hecha. |
+| Tarea en curso | T33 API de proyectos vacíos desplegada; JWT/rutas comprobados sin sesión y con token inválido. Pendientes registro/login y prueba A/B con dos sesiones reales. T32 D7/PDF pendiente. T31 hecha. |
 | Último commit verificado | T31 `56e42d5`, dos corridas reales correctas; T18 reproducible en `97d1613`. Evaluación T32 en `docs/T32_EVALUACION.md`; API/web no cambiaron. |
-| Siguiente paso exacto | Administrador revisa/añade `infra/t33-deployer-policy.json` al permission set del perfil prometeo y reprovisiona; dueño renueva SSO. Registrar aprobación del alcance cuentas/proyectos y reanudar preflight/despliegue T33 y pruebas reales A/B. Ver `docs/T33_PERMISOS_DESPLIEGUE.md`. Cargas esperan D3; D7/PDF espera revisor. |
+| Siguiente paso exacto | Completar registro/login y obtener dos sesiones de usuario distintas para ejecutar `api/check_projects_live.py` con T33_TOKEN_A/B solo en el entorno local; nunca compartirlas en chat/Git. Cerrar aislamiento A/B real antes de dar T33 por hecha. Cargas esperan D3; D7/PDF espera revisor. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -95,6 +95,19 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T33 API de proyectos desplegada y comprobaciones HTTP
+- Tras actualizar permisos SSO y autorización del dueño, se publicó código en Lambda existente y se configuraron las cuatro rutas JWT. Primer intento parcial falló: waiter FunctionUpdatedV2 usa GetFunction, no GetFunctionConfiguration. Se corrigieron scripts a FunctionUpdated/FunctionActive (comprobado con modelo botocore) para usar el permiso ya aprobado.
+- Reejecución API: código 0 y `API publicada`. Configuración T33: dos ejecuciones completas con código 0; recursos reutilizados. Authorizer observado `m6kz2q`, integración existente `ga1agdj`. GET/POST /projects y GET/PATCH /projects/{id} tienen JWT; ruta `$default` del MVP mantiene NONE. IDs de API/Lambda/rol no cambiaron; outputs.env solo reordenó sus líneas.
+- HTTP real con `api/check_projects_live.py`: sin sesión 401; token inválido 401; preflight con Authorization/Content-Type/Idempotency-Key 204 y origen CF_URL correcto. Registro local `/tmp/prometeo-t33-http.json`, sin tokens.
+- Regresión real: `/ask` 200 → o2=25, p=0.5, material=Nomex; `/analysis` 200 → mode=ai, tres oraciones citadas, dropped=0. Respuestas locales en `/tmp/prometeo-t33-ask.json` y `/tmp/prometeo-t33-analysis.json`.
+- API 71 tests Python 3.12, validate_pack, check_agnostic y diff-check pasan. El smoke ofrece prueba A/B con tokens de dos cuentas por entorno; todavía NO ejecutada por faltar esas sesiones. Rechazar token inválido no prueba acceso autorizado ni lectura/escritura DynamoDB real.
+- T33 sigue en curso por login/registro, A/B real y cargas (D3). T30 se aprobó solo para drafts; resto del contrato/límites sigue pendiente. No se desplegó web ni se publicaron datos nuevos.
+
+### 2026-11-15 · T33 autorización de despliegue acotado y reanudación
+- El dueño confirmó actualización del permission set, login SSO y lectura de Lambda Active, y pidió continuar el despliegue por tareas. Se registra autorización para publicar/configurar la API de proyectos vacíos documentada en `docs/T33_API_PROYECTOS.md` (POST/GET/GET-id/PATCH con JWT y aislamiento por usuario).
+- Esta aprobación acotada permite aplicar T33 de drafts; no cierra T30 completo ni D3 de cargas ni D7 de revisión científica. No habilitar uploads ni declarar T33 hecha sin verificación real.
+- Preflight local: main sincronizada, API 71 tests, bash -n y preparación de configuración pasan. Siguiente: despliegue de código y configuración JWT, comprobaciones reales y registrar resultados.
 
 ### 2026-11-15 · T33 intento de preflight para despliegue por etapas
 - El dueño autorizó desplegar y revisar tarea por tarea. `git pull --rebase`: main al día. STS real confirma cuenta `352818909129`, rol `AWSReservedSSO_Prometeo-T31_e5fccb7bc636c4a5/prometeo-admin`.

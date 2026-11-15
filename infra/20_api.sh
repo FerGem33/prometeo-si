@@ -67,12 +67,12 @@ if [[ "$FUNCTION_ARN" == None ]]; then
     sleep 5
   done
   FUNCTION_ARN=$("$PYTHON" -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["FunctionArn"])' "$TMP/function.json")
-  aws lambda wait function-active-v2 --function-name "$NAME"
+  aws lambda wait function-active --function-name "$NAME"
 else
   aws lambda update-function-code --function-name "$NAME" --architectures arm64 --zip-file "fileb://$TMP/lambda.zip" > /dev/null
-  aws lambda wait function-updated-v2 --function-name "$NAME"
+  aws lambda wait function-updated --function-name "$NAME"
   aws lambda update-function-configuration --function-name "$NAME" --runtime python3.12 --handler handler.handler --role "$ROLE_ARN" --timeout 29 --memory-size 512 --environment "file://$TMP/env.json" > /dev/null
-  aws lambda wait function-updated-v2 --function-name "$NAME"
+  aws lambda wait function-updated --function-name "$NAME"
 fi
 API_ID=${API_ID:-None}
 if [[ "$API_ID" != None ]]; then
