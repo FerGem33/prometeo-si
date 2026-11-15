@@ -21,8 +21,8 @@ trap 'rm -rf "$TMP"' EXIT
 # Entorno de empaquetado aislado: wheels Linux, no dependencias nativas macOS.
 "$PYTHON" -m venv "$TMP/venv"
 "$TMP/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 --implementation cp --python-version 3.12 --target "$TMP/package" -r api/requirements.txt
-cp api/handler.py api/verify.py api/projects.py api/upload_tickets.py api/deletions.py api/schema_review.py "$TMP/package/"
-cp pipeline/ingest.py pipeline/review_extract.py "$TMP/package/"
+cp api/handler.py api/verify.py api/projects.py api/upload_tickets.py api/deletions.py api/schema_review.py api/evidence.py api/workspace.py api/paper_review.py api/paper_worker.py api/evaluate_papers.py api/ingest_propose.py "$TMP/package/"
+cp pipeline/ingest.py pipeline/review_extract.py pipeline/publish_bundle.py pipeline/review_records.py "$TMP/package/"
 cp web/public/demo/pack.json "$TMP/package/pack.json"
 "$PYTHON" -I - "$TMP" <<'PY'
 from pathlib import Path
@@ -52,7 +52,7 @@ origins=[sys.argv[2]]+[o for o in sys.argv[4].split(',') if o]
 (root/'env.json').write_text(json.dumps({'Variables':env}))
 projects=bool(env.get('COGNITO_ISSUER'))
 (root/'cors.json').write_text(json.dumps({'AllowOrigins':origins,
-    'AllowMethods':['GET','POST','PATCH','DELETE','OPTIONS'] if projects else ['POST','OPTIONS'],
+    'AllowMethods':['GET','POST','PUT','PATCH','DELETE','OPTIONS'] if projects else ['POST','OPTIONS'],
     'AllowHeaders':['content-type','authorization','idempotency-key'] if projects else ['content-type'],'MaxAge':300}))
 PY
 if aws iam get-role --role-name "$ROLE_NAME" > "$TMP/role.json" 2> "$TMP/error"; then

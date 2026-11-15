@@ -1,5 +1,12 @@
 # T33: registro, confirmación, login SRP y prueba A/B
 
+**Actualización del relevo:** cargas/DELETE pasaron19 comprobaciones reales.
+Con `uploads <source> --cleanup --originals` también se verifica propiedad de
+la URL del original y descarga S3 con cotejo SHA:23 HTTP+un cotejo pasan.
+La URL firmada y los tokens nunca se guardan en el recibo. Ver
+`docs/T36_REVISION_LOCAL.md` y `docs/t36-original-smoke-2026-11-15.json`.
+Las limitaciones históricas de cargas/DELETE descritas abajo ya están superadas.
+
 Herramienta local para el dueño y para verificar integración sin construir las
 pantallas del equipo frontend. SDK `amazon-cognito-identity-js` 6.3.22 fijado con
 lockfile. No requiere llaves AWS, privilegios IAM ni secreto de cliente.

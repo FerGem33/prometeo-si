@@ -14,9 +14,9 @@ import uuid
 from boto3.dynamodb.types import TypeSerializer
 
 try:
-    from .projects import fail, stamp
+    from .projects import conditional, fail, stamp
 except ImportError:
-    from projects import fail, stamp
+    from projects import conditional, fail, stamp
 
 
 @dataclass(frozen=True)
@@ -276,21 +276,51 @@ class UploadTickets:
                 **({'error_code': item['error_code']} if item.get('error_code') else {})})
         return {'project_status': parent['status'], 'jobs': jobs, 'totals': totals}
 
-    def resume(self, uid, pid):
+    def resume(self, uid, pid, data=None):
         parent = self.projects.get(uid, pid)
+        data = {} if data is None else data
+        if not isinstance(data, dict) or set(data)-{'doc_ids'}:
+            fail(400, 'invalid_request', 'Expected optional doc_ids')
+        selected = data.get('doc_ids')
+        if selected is not None and (not isinstance(selected, list) or not 1 <= len(selected) <= 30
+                or not all(isinstance(d, str) and re.fullmatch(r'doc_[a-f0-9]{32,64}', d) for d in selected)):
+            fail(400, 'invalid_request', 'Invalid selected documents')
         if parent['status'] not in ('processing', 'failed'):
             fail(409, 'conflict', 'Only failed or processing projects can resume ingestion')
         # Full ownership-checked listing; pending dispatch is durable even after a failed send.
         listing = self.jobs(uid, pid)
+        if selected is not None and not set(selected) <= {j['doc_id'] for j in listing['jobs']}:
+            fail(404, 'not_found', 'Selected document not found')
         count = 0
         for job in listing['jobs']:
+            if selected is not None and job['doc_id'] not in selected:
+                continue
             item = self.get(pid, job['doc_id'])
             if (item['stage'] == 'upload' or item['status'] in ('done', 'skipped')
                     or item['status'] == 'running' and item.get('worker_until', 0) >= time.time()):
                 continue
+            try:
+                self.table.update_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+item['id']},
+                    UpdateExpression='SET dispatch_pending = :true, #status = :queued, worker_until = :zero',
+                    ConditionExpression='attribute_exists(PK) AND expected_sha256 = :hash AND #status <> :done AND #status <> :skipped AND #status <> :deleting AND (attribute_not_exists(worker_until) OR worker_until < :now)',
+                    ExpressionAttributeNames={'#status': 'status'},
+                    ExpressionAttributeValues={':true': True, ':queued': 'queued', ':zero': 0, ':hash': item['expected_sha256'],
+                        ':done': 'done', ':skipped': 'skipped', ':deleting': 'deleting', ':now': int(time.time())})
+            except Exception as exc:
+                if conditional(exc): continue
+                raise
             item['dispatch_pending'] = True
             self.dispatch(uid, pid, item)
             count += 1
+        if count:
+            try:
+                self.table.update_item(Key={'PK': 'U#'+uid, 'SK': 'P#'+pid},
+                    UpdateExpression='SET #status = :processing, revision = revision + :one, updated_at = :now',
+                    ConditionExpression='revision = :revision AND (#status = :processing OR #status = :failed)',
+                    ExpressionAttributeNames={'#status': 'status'},
+                    ExpressionAttributeValues={':processing': 'processing', ':failed': 'failed', ':revision': parent['revision'], ':one': 1, ':now': stamp()})
+            except Exception as exc:
+                if not conditional(exc): raise
         return {'reenqueued': count}
 
 

@@ -1,0 +1,209 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConfigureOnlyCorpusUploadCors",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketCORS",
+        "s3:PutBucketCORS"
+      ],
+      "Resource": "arn:aws:s3:::prometeo-hack-corpus-352818909129"
+    },
+    {
+      "Sid": "ReadAndDeployExistingApiLambda",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetFunctionConfiguration",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:UpdateFunctionCode",
+        "lambda:GetPolicy",
+        "lambda:AddPermission"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-api"
+    },
+    {
+      "Sid": "InspectAndConfigureExistingApiRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:PutRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role"
+    },
+    {
+      "Sid": "AttachOnlyBasicLoggingPolicy",
+      "Effect": "Allow",
+      "Action": "iam:AttachRolePolicy",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PolicyARN": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        }
+      }
+    },
+    {
+      "Sid": "PassOnlyExistingApiRoleToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-api-role",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "lambda.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "ReadApprovedModelProfile",
+      "Effect": "Allow",
+      "Action": "bedrock:GetInferenceProfile",
+      "Resource": "arn:aws:bedrock:us-east-1:352818909129:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    },
+    {
+      "Sid": "ReadExistingApiConfiguration",
+      "Effect": "Allow",
+      "Action": "apigateway:GET",
+      "Resource": [
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/integrations",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/authorizers",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/stages/$default"
+      ]
+    },
+    {
+      "Sid": "CreateProjectRoutesAndAuthorizer",
+      "Effect": "Allow",
+      "Action": "apigateway:POST",
+      "Resource": [
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/authorizers"
+      ]
+    },
+    {
+      "Sid": "UpdateExistingApiAndRoutes",
+      "Effect": "Allow",
+      "Action": "apigateway:PATCH",
+      "Resource": [
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/routes/*",
+        "arn:aws:apigateway:us-east-1::/apis/ve5oqmsyie/stages/$default"
+      ]
+    },
+    {
+      "Sid": "CheckIngestQueueBeforeMapping",
+      "Effect": "Allow",
+      "Action": "sqs:GetQueueAttributes",
+      "Resource": [
+        "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest",
+        "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest-dlq"
+      ]
+    },
+    {
+      "Sid": "ReadOnlyWorkerReportsForVerification",
+      "Effect": "Allow",
+      "Action": "logs:FilterLogEvents",
+      "Resource": "arn:aws:logs:us-east-1:352818909129:log-group:/aws/lambda/prometeo-hack-worker:*"
+    },
+    {
+      "Sid": "InspectOnlyWorkerDlqWithoutDeletion",
+      "Effect": "Allow",
+      "Action": "sqs:ReceiveMessage",
+      "Resource": "arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest-dlq"
+    },
+    {
+      "Sid": "CreateAndConfigureWorkerRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:CreateRole",
+        "iam:PutRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-worker-role"
+    },
+    {
+      "Sid": "WorkerAttachOnlyBasicLoggingPolicy",
+      "Effect": "Allow",
+      "Action": "iam:AttachRolePolicy",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-worker-role",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PolicyARN": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        }
+      }
+    },
+    {
+      "Sid": "PassOnlyWorkerRoleToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::352818909129:role/prometeo-hack-worker-role",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "lambda.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "CreateAndDeployWorkerLambda",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetFunctionConfiguration",
+        "lambda:CreateFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:TagResource"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-worker"
+    },
+    {
+      "Sid": "CreateMappingOnlyForWorker",
+      "Effect": "Allow",
+      "Action": "lambda:CreateEventSourceMapping",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "lambda:FunctionArn": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-worker"
+        }
+      }
+    },
+    {
+      "Sid": "ReadMappings",
+      "Effect": "Allow",
+      "Action": "lambda:GetEventSourceMapping",
+      "Resource": "arn:aws:lambda:us-east-1:352818909129:event-source-mapping:*"
+    },
+    {
+      "Sid": "UpdateOnlyWorkerMapping",
+      "Effect": "Allow",
+      "Action": "lambda:UpdateEventSourceMapping",
+      "Resource": "arn:aws:lambda:us-east-1:352818909129:event-source-mapping:*",
+      "Condition": {
+        "StringEquals": {
+          "lambda:FunctionArn": "arn:aws:lambda:us-east-1:352818909129:function:prometeo-hack-worker"
+        }
+      }
+    },
+    {
+      "Sid": "InspectExistingWebDistribution",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:GetDistribution",
+        "cloudfront:GetInvalidation",
+        "cloudfront:CreateInvalidation"
+      ],
+      "Resource": "arn:aws:cloudfront::352818909129:distribution/E2SO4K789H7YOQ"
+    },
+    {
+      "Sid": "ListExistingWebBucketForSync",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::prometeo-hack-web-352818909129"
+    },
+    {
+      "Sid": "UploadExistingWebAssetsWithoutDeletion",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::prometeo-hack-web-352818909129/*"
+    }
+  ]
+}

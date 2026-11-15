@@ -76,10 +76,13 @@ def main():
             if not upload['url'].startswith('https://prometeo-hack-corpus-352818909129.s3.'):
                 raise ValueError('Unexpected signed upload destination')
             send('PUT', upload['url'], 200, raw, upload['headers'], auth=False)
-            send('POST', endpoint + '/' + ticket['doc_id'] + '/complete', 200, {'sha256': digest})
             receipt['documents'].append({'name': name, 'doc_id': ticket['doc_id'], 'bytes': len(raw),
                                          'sha256': digest, 'control': name == 'corrupt-control.csv'})
             print(f'uploaded {index + 1}/{len(uploads)} {name[:70]}', flush=True)
+        # Reserve the whole initial corpus while the project is still a draft.
+        # Completing the first upload starts processing; later reservations then fail correctly.
+        for doc in receipt['documents']:
+            send('POST', endpoint + '/' + doc['doc_id'] + '/complete', 200, {'sha256': doc['sha256']})
         while True:
             jobs = send('GET', API + '/projects/' + pid + '/jobs', 200)
             receipt['polls'].append({'t': round(time.time() - started), 'project_status': jobs['project_status'],

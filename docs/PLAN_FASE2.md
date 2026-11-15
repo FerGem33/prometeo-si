@@ -248,3 +248,62 @@ git diff infra/outputs.env   # solo IDs, ARNs y URLs nuevos
 ```
 
 Costo esperado mientras no haya uso: casi nulo (DynamoDB bajo demanda, SQS y Cognito dentro de la capa gratuita, S3 vacío). Anotar en `PROGRESS.md` los IDs creados y marcar T31.
+
+## 9. Trabajo restante y riesgos (revisión del 15-nov, commit `d0308e9`)
+
+Lo que se verificó en esta revisión: 104 pruebas web, 188 de API, pipeline y herramientas, el build, `check_agnostic.sh` y la ausencia de coautoría en los commits. Todo pasa.
+Lo publicado sigue siendo `index-Ben2isQ8.js` (T16): **nada de la interfaz nueva está en línea todavía**.
+
+### 9.1 Cuánto falta
+
+Actualización tras el cierre del backend del 15-nov: la estimación anterior del 40 %
+ya no describe el backend. Se conserva la revisión visual pendiente; estado vivo
+en PROGRESS.md y contrato desplegado en [la guía final](BACKEND_INTEGRACION_FINAL.md).
+
+| Bloque | Hecho | Falta | Esfuerzo |
+|---|---|---|---|
+| A | T16–T19 | Nada | — |
+| B, pantallas | La interfaz de alexteori14 trae grafo, variantes, qué cambió, espacio de trabajo, ficha ML y comparación | Revisión del §9.2 y unificación con el motor (§9.3) | 0.5–1 día de interfaz |
+| C, backend | T30–T34 operativos; 42 rutas JWT con revisión/PDF, correcciones/claims, variantes, intención/lente e inferencia de proyectos comprobadas en AWS; T38 publicada | Aceptación científica de las demás fuentes del corpus; integración/aceptación visual completa de T35–T37 | Backend del MVP listo para integrar; revisión de datos separada |
+| C, pantallas | Nada | Sesión y proyectos; carga con progreso; revisión del esquema; correcciones y conflictos; publicar y abrir el pack. Contratos en `CONTRATOS_FASE2.md` §5, ejemplos en `docs/fixtures/fase2/` | 1.5–3 días de interfaz |
+
+Las políticas ya permiten desplegar/ejecutar el backend existente y las pruebas
+reales pasaron. La simulación administrativa del mapping fue omitida por
+instrucción del dueño y no se marca aprobada; no es un bloqueo de ejecución.
+No se vuelve a desplegar la web hasta cumplir §9.2/§9.3.
+
+### 9.2 Revisar la interfaz nueva antes de publicar la web
+
+La interfaz de alexteori14 (`d1a308f`, `b752713`) entró directo a `main`, aunque D11 dejaba la interfaz en la rama `frontend`.
+El próximo `infra/deploy_web.sh` la publicará. **Ningún agente publica la web hasta que una persona haya revisado estos puntos y lo haya anotado en `PROGRESS.md`:**
+
+1. **La llama sugiere una predicción.** En `web/src/components/ChamberFigure.tsx` la llama crece en la fase "Ignition" (`flameBoost`). Eso choca con "Prometeo compara condiciones; no predice llamas" (`AGENTS.md` §5). La animación no debe variar con el escenario ni insinuar un resultado.
+2. **Hay textos del dominio escritos a mano.** `ChamberFigure.tsx` y otros componentes fijan frases como "PMMA, Nomex, SIBAL…" o "Energizes the hot-wire igniter…". Deben salir de `lens` y `pack` (`AGENTS.md` §6), o el segundo dominio (T37) mostrará textos de combustión.
+3. **El estilo rompe las reglas de diseño.** Unas 40 reglas CSS usan gradientes, sombras o `backdrop-filter`, y la paleta es gris en lugar de la del artículo (`AGENTS.md` §7).
+4. **Hay sonido y un "judge tour".** Se pueden quedar si están apagados por defecto y no presentan nada grabado como si fuera IA en vivo.
+5. **Se versionaron archivos ajenos al producto.** `.agents/skills/` trae 172 archivos y unas 100 mil líneas de skills de agente. Hay que decidir si se quitan de git.
+
+### 9.3 Una sola implementación de la lógica
+
+La interfaz no usa las funciones del motor del bloque B: `graph`, `explainRank`, `partLevels` y `diffAssessment` (`web/src/engine/extend.ts`), ni `web/src/contracts/workspace.ts`.
+En su lugar reimplementa la misma lógica en `web/src/report/graph.ts`, `diff.ts`, `variants.ts` y `workspace.ts`. Esa lógica duplicada no está cubierta por los vectores del motor y puede dar niveles o diferencias distintos.
+Antes de construir encima las pantallas del bloque C:
+- `web/src/report/` pasa a ser una capa de presentación que llama al motor;
+- las diferencias de resultado se resuelven a favor del motor y de sus vectores, o se corrige el motor con un vector nuevo explicado en el commit.
+
+### 9.4 Aprobaciones delegadas
+
+Daniel Sun registró en `DECISIONES_CIERRE.md` §8 que el agente de la laptop AWS aplica sus propias recomendaciones en la revisión de PDF (T32) y en el esquema del corpus de ebullición (T35/T37).
+**El dueño del repositorio la confirmó el 15-nov.** Las aprobaciones son válidas con las condiciones de §8:
+- criterio conservador;
+- cada aprobación marcada como "aprobación delegada, sin revisión humana línea por línea", con hashes;
+- el informe y el pitch no la presentan como revisión experta.
+
+### 9.5 Ruta corta, si hay una fecha cerca
+
+1. Un administrador aplica la política de IAM consolidada.
+2. El equipo de interfaz corrige los puntos 1–3 del §9.2. Después se publica la web, con T38 incluida.
+3. El agente cierra T34 y T37 con el segundo dominio, para mostrar que el sistema funciona con otro tema.
+4. Para el pitch bastan dos pantallas del bloque C: carga de documentos y revisión del esquema. T36 puede esperar.
+
+Con esa ruta quedan unas 6 h de agente y 1–1.5 días de interfaz.

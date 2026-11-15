@@ -146,8 +146,8 @@ def test_refuses_unexpected_route_integration(config):
     assert not aws.writes
 
 
-@pytest.mark.parametrize('schema,originals', [(False, False), (True, False), (False, True), (True, True)])
-def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypatch, schema, originals):
+@pytest.mark.parametrize('schema,originals,evidence', [(False, False, False), (True, False, False), (False, True, False), (True, True, False), (True, True, True)])
+def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypatch, schema, originals, evidence):
     root, env, aws = config
     values = {'CORPUS_BUCKET': 'prometeo-hack-corpus-352818909129',
               'INGEST_QUEUE_ARN': 'arn:aws:sqs:us-east-1:352818909129:prometeo-hack-ingest',
@@ -155,12 +155,12 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
     for k, v in values.items():
         monkeypatch.setenv(k, v)
     output = root/'uploads'
-    monkeypatch.setattr(sys, 'argv', ['prepare', '--output-dir', str(output), '--uploads'] + (['--schema'] if schema else []) + (['--originals'] if originals else []))
+    monkeypatch.setattr(sys, 'argv', ['prepare', '--output-dir', str(output), '--uploads'] + (['--schema'] if schema else []) + (['--originals'] if originals else []) + (['--evidence'] if evidence else []))
     prepare_projects.main()
     deploy_projects.configure(output, env, aws)
     deploy_projects.configure(output, env, aws)
     # 4 project routes + 5 upload routes + 2 DELETE routes (T33), each with its own invoke permission.
-    expected = 11 + 3 * schema + originals
+    expected = 11 + 3 * schema + originals + 27 * evidence
     assert len(aws.routes) == expected and len(aws.authorizers) == 1 and len(aws.statements) == expected
     assert {'DELETE /projects/{id}', 'DELETE /projects/{id}/documents/{doc_id}'} <= {r['RouteKey'] for r in aws.routes}
     assert aws.variables['UPLOADS_ENABLED'] == 'true'
@@ -177,3 +177,16 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
         assert any(s['Resource'].endswith('/schema/*') for s in policy['Statement'])
     if originals:
         assert 'POST /projects/{id}/documents/{doc_id}/url' in {r['RouteKey'] for r in aws.routes}
+    if evidence:
+        assert {'PUT /projects/{id}/proposals/{pid}', 'POST /projects/{id}/ask',
+                'POST /projects/{id}/analysis', 'POST /projects/{id}/claims',
+                'POST /projects/{id}/documents/{doc_id}/proposal',
+                'POST /projects/{id}/paper-candidates/{cid}/review', 'PUT /projects/{id}/lens'} <= {r['RouteKey'] for r in aws.routes}
+        assert any(s['Resource'].endswith('/text/reviews/*') for s in policy['Statement'])
+        assert any(s['Resource'].endswith('/pack/*') for s in policy['Statement'])
+def test_development_origins_are_explicit_and_default_remains_closed():
+    assert deploy_projects.allowed_origins({'CF_URL': 'https://web.test'}) == ['https://web.test']
+    assert deploy_projects.allowed_origins({'CF_URL': 'https://web.test', 'EXTRA_ORIGINS': 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5173'}) == [
+        'https://web.test', 'http://localhost:5173', 'http://127.0.0.1:5173']
+    for value in ('*', 'https://*.example.com', 'http://outside.test', 'https://outside.test/path', 'https://user:secret@outside.test'):
+        with pytest.raises(ValueError): deploy_projects.allowed_origins({'CF_URL': 'https://web.test', 'EXTRA_ORIGINS': value})

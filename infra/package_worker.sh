@@ -13,7 +13,7 @@ trap 'rm -rf "$TMP"' EXIT
 "$TMP/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
   --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 \
   --implementation cp --python-version 3.12 --target "$TMP/package" -r api/requirements-worker.txt
-cp api/ingest_worker.py api/ingest_propose.py api/extract_worker.py api/schema_review.py api/projects.py "$TMP/package/"
+cp api/ingest_worker.py api/ingest_propose.py api/extract_worker.py api/paper_worker.py api/evaluate_papers.py api/schema_review.py api/projects.py "$TMP/package/"
 cp pipeline/ingest.py pipeline/review_extract.py "$TMP/package/"
 cp pipeline/ingest.py "$TMP/package/ingest_core.py"
 "$PYTHON" -I - "$TMP/package" "$OUTPUT" <<'PY'

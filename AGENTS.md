@@ -66,6 +66,8 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
   - **sin vocabulario de dominio** (`scripts/check_agnostic.sh` debe pasar);
   - todo lo específico entra por `pack`, `mapping` y `lens`.
 - **Componentes:** sin textos del dominio escritos a mano. Títulos, etiquetas y presets salen de `lens` y `pack`.
+- **Una sola lógica:** la interfaz llama al motor (`web/src/engine/`, incluido `extend.ts`) y a `web/src/contracts/`. No reimplementa en componentes ni en `web/src/report/` niveles, rankings, grafos, diferencias ni el espacio de trabajo. Si al motor le falta algo, se agrega ahí con su vector de prueba. Hay duplicados pendientes de unificar: `docs/PLAN_FASE2.md` §9.3.
+- **Publicar la web:** antes de `infra/deploy_web.sh`, confirma en `PROGRESS.md` que una persona revisó la interfaz contra §5–§7. La revisión pendiente está en `docs/PLAN_FASE2.md` §9.2.
 - **Vectores de prueba:** `web/src/engine/golden.test.ts` usa datos reales. Si un vector falla, el motor está mal o el pack cambió. Investiga antes de tocar el vector, y si lo cambias, explica por qué en el commit.
 - **Python:** 3.12. En `pipeline/` solo librería estándar. Ejecutar scripts que leen datos con `python3 -I`.
 - **Bedrock:** SDK oficial `anthropic` (`AnthropicBedrock`) y modelo desde `MODEL_ID`. Nunca escribas el ID de modelo en el código. No inventes la API del SDK: consulta su documentación.

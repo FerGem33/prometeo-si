@@ -1,4 +1,4 @@
-"""T34 ingestion through proposed schema only. Never approves/extracts/publishes.
+"""T34 proposals and T35 explicitly approved extraction. Never grants approval or publishes.
 
 Source bytes are read only by this worker. The API records expected_sha256;
 verified sha256 is written here after comparison. SQS retries use checkpoints.
@@ -139,11 +139,19 @@ class Worker:
         parent = self.table.get_item(Key={'PK': 'U#'+uid, 'SK': 'P#'+pid}, ConsistentRead=True).get('Item')
         key = {'PK': 'P#'+pid, 'SK': 'D#'+did}
         item = self.table.get_item(Key=key, ConsistentRead=True).get('Item')
-        if parent and (parent.get('status') == 'deleting' or not item or item.get('status') == 'deleting'):
+        if item and item.get('object_key') != f'u/{uid}/p/{pid}/raw/{did}':
+            raise DocumentFailure('invalid_document')
+        if not parent or parent.get('status') == 'deleting' or not item or item.get('status') == 'deleting':
             return  # Removed by the owner (T33 DELETE) after the message was queued: nothing to process.
-        if not parent or not item or item['object_key'] != f'u/{uid}/p/{pid}/raw/{did}' or not item.get('expected_sha256'):
+        if not item.get('expected_sha256'):
             raise DocumentFailure('invalid_document')
         if item['status'] in ('done', 'skipped'):
+            if item.get('proposal_origin') == 'manual':
+                expected = f'u/{uid}/p/{pid}/text/{did}/manual-'
+                if (item.get('sha256') != item['expected_sha256']
+                        or not re.fullmatch(re.escape(expected)+r'[a-f0-9]{64}\.json', item.get('proposal_key', ''))):
+                    raise DocumentFailure('completed_document_requires_review')
+                return  # Source-bound manual recovery supersedes the rejected proposal job.
             if item.get('worker_version') != VERSION or item.get('sha256') != item['expected_sha256']:
                 raise DocumentFailure('completed_document_requires_review')
             return
@@ -194,7 +202,10 @@ class Worker:
                             adapter.propose(self.client, self.model, content, raw_output=path)
                         finally:
                             if path.exists():
-                                self.save(raw_key, json.loads(path.read_text()))
+                                saved = json.loads(path.read_text())
+                                self.save(raw_key, saved)
+                                print(json.dumps({'event': 'bedrock_usage', 'doc_id': did,
+                                    'request_sha256': request_hash, 'usage': saved.get('usage', {})}), flush=True)
                     response = self.read_json(raw_key)
                 if response.get('stop_reason') != 'end_turn':
                     raise DocumentFailure('model_unavailable')
@@ -208,11 +219,13 @@ class Worker:
                 'worker_version': VERSION, 'worker_until': 0, 'dispatch_pending': False}, lease)
             self.finish_project(uid, pid)
         except Exception as exc:
-            reason = str(exc) if isinstance(exc, DocumentFailure) else 'internal'
+            reason = str(exc)[:400] if isinstance(exc, (DocumentFailure, ValueError)) else type(exc).__name__
             public_code = reason if reason in ('too_large', 'too_many_pages', 'no_text_layer', 'model_unavailable') else 'unreadable'
             self.update(key, {'status': 'failed', 'error_code': public_code, 'failure_reason': reason,
                               'worker_until': 0}, lease)
             self.finish_project(uid, pid)
+            print(json.dumps({'event': 'document_failed', 'doc_id': did, 'stage': 'ingest',
+                              'reason': reason}), flush=True)
             raise
 
     def finish_project(self, uid, pid):
@@ -249,7 +262,7 @@ def handler(event, context=None):
     for record in event['Records']:
         try:
             message = json.loads(record['body'])
-            if message.get('action') == 'extract':
+            if message.get('action') in ('extract', 'paper_extract'):
                 try:
                     from . import extract_worker, schema_review
                     from .projects import Projects
@@ -257,7 +270,14 @@ def handler(event, context=None):
                     import extract_worker, schema_review
                     from projects import Projects
                 repository = schema_review.service(Projects(worker.table))
-                extract_worker.process(message, record['messageId'], repository)
+                if message['action'] == 'paper_extract':
+                    try:
+                        from . import paper_worker
+                    except ImportError:
+                        import paper_worker
+                    paper_worker.process(message, record['messageId'], repository, worker.client, worker.model)
+                else:
+                    extract_worker.process(message, record['messageId'], repository)
             else:
                 worker.process(message, record['messageId'])
         except Exception:

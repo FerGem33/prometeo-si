@@ -133,7 +133,14 @@ def edit_schema(schema, edits, version):
         require(isinstance(edit, dict), 'invalid edit')
         op = edit.get('op')
         variables = {v['id']: v for v in result['variables']}
-        if op == 'set_status':
+        if op == 'add_variable':
+            value = edit.get('variable')
+            require(isinstance(value, dict) and value.get('id') not in variables
+                    and isinstance(value.get('id'), str) and re.fullmatch(r'[a-z][a-z0-9_]{0,63}', value['id'])
+                    and value.get('type') in ('num', 'cat') and isinstance(value.get('label'), str)
+                    and value['label'].strip() and isinstance(value.get('evidence'), list) and value['evidence'], 'Invalid reviewed variable')
+            result['variables'].append({**copy.deepcopy(value), 'status': 'proposed', 'merged_from': []})
+        elif op == 'set_status':
             require(edit.get('status') in ('proposed', 'approved', 'flagged', 'rejected'), 'invalid review status')
             if edit.get('target') == 'variable':
                 require(edit.get('id') in variables, 'unknown variable')
