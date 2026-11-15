@@ -1,9 +1,10 @@
 # API · T09
 
 Lambda Python 3.12, HTTP API payload v2; entrypoint `handler.handler`.
-El modelo viene de `MODEL_ID` en `infra/config.env`; esta cuenta todavía opera
-con `us.anthropic.claude-haiku-4-5-20251001-v1:0`. Haiku 5.5 figura activo en
-Bedrock, pero la invocación real fue denegada para esta cuenta (HTTP 403).
+El modelo viene de `MODEL_ID` en `infra/config.env`: el dueño aprobó conservar
+`us.anthropic.claude-haiku-4-5-20251001-v1:0` (D6, 15-nov). No se requiere
+habilitar Haiku 5.5. `BEDROCK_MODEL_ID` puede usarse en comandos manuales;
+la aplicación y los scripts de deploy leen `MODEL_ID`.
 SDK oficial `AnthropicBedrock`, versión 2.8.0, para el Messages API de Bedrock.
 Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v2.8.0
 

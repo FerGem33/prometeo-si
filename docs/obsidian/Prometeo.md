@@ -40,6 +40,6 @@ Informe interactivo que compara un escenario propuesto con registros de experime
 - `npm run build --prefix web`: compilación TypeScript y Vite aprobada.
 - `api/.venv/bin/python -m pytest api/`: 39 pruebas aprobadas.
 - `scripts/check_agnostic.sh`: aprobado.
-- API publicada en Haiku 4.5 con Anthropic SDK 2.8.0; Haiku 5.5 permanece pendiente de acceso de cuenta (Bedrock 403).
+- API publicada en Haiku 4.5 con Anthropic SDK 2.8.0. D6 cerrada por el dueño el 15-nov: se conserva Haiku 4.5 y se descarta la migración a 5.5.
 - Revisión pública: CloudFront en Chrome incógnito, viewport responsive 400 × 899, preguntas de escenario y de contenido, favicon HTTP 200 y vista de impresión de 16 páginas.
 - T16 publicó API y web desde otra laptop con los recursos existentes; el punto 9 de aceptación quedó verificado.
