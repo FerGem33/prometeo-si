@@ -62,7 +62,7 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
   const analysis = result?.key === key && result.analysis.sentences.length ? result.analysis : { mode: "template", sentences: fallback };
 
   return <section className="assistant-panel" aria-label={t("Scenario questions and analysis")}>
-    <div className="noprint">
+    <div className="assistant-ask noprint">
       <form onSubmit={(event) => { event.preventDefault(); void ask(); }}>
         <label htmlFor="scenario-question">{t("Ask about a scenario")}</label>
         <div className="question-row">
@@ -81,6 +81,7 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
         }}>{v.label}: {scenarioValueText(pack, id, scenario.values[id])} {t("· Edit")}</button>;
       })}</div>
     </div>
+    <div className="assistant-analysis">
     <h2 className="sec">{t("Analysis")}</h2>
     <p className="tblnote">{analysis.mode === "ai" ? t("AI-assisted selection · verified evidence sentences") : t("Template-based analysis · no live AI text")}{analysis.mode === "ai" && getLang() !== "en" ? ` ${t("The analysis sentences are written in English.")}` : ""}</p>
     {analysis.sentences.length ? <ul>{analysis.sentences.map((s) => <li key={s.finding}>
@@ -91,5 +92,6 @@ export function AssistantPanel({ scenario, levels, findings, onChange }: {
         return doi ? <a key={id} href={doi.url} target="_blank" rel="noreferrer">{study.short}</a> : <span key={id}>{study.short}</span>;
       })}</span>
     </li>)}</ul> : <p>{t("No sourced analysis is available for these conditions.")}</p>}
+    </div>
   </section>;
 }

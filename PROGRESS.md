@@ -581,3 +581,9 @@ Una entrada por sesión de agente, la más reciente arriba.
 - Siguiente paso exacto: …
 - Ojo con: …
 -->
+
+### 2026-11-15 · Claude · Daniel — informe "respuesta primero" (rama frontend)
+
+- Hecho: el informe se lee en cuatro niveles (Answer, Why, Explore the evidence, Data, sources and methods) con barra fija de secciones; acciones reducidas a Save to workspace, Dossier & export y menú More. La frase del veredicto la genera `verdictText` en `web/src/report/text.ts` a partir de los conteos de notas del motor. Se quitó el riel lateral; ninguna función se eliminó.
+- Verificado con: `tsc --noEmit`, `vitest run` (114 pasan), `vite build`, `scripts/check_agnostic.sh`; capturas en tema claro, oscuro y 400 px en español.
+- Ojo con: en Git Bash `vitest` falla por la letra de unidad en minúscula; ejecutarlo desde PowerShell. El tour de jueces usa las clases `.top`, `figure.ga .ga-a`, `.assistant-panel`, `.keys` y `#methods`: se conservaron, pero no se recorrió el tour completo tras el cambio.

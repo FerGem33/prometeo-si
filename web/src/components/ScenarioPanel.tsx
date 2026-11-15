@@ -43,8 +43,32 @@ export function RangeStrip({ v, tested, value }: { v: NumVariable; tested?: Rang
   );
 }
 
+/** The preset scenarios of the lens, as one row of choices. The pressed one is the preset the scenario matches. */
+export function PresetChips({ scenario, onChange }: { scenario: Scenario; onChange: (s: Scenario) => void }) {
+  const { lens } = useData();
+  const presets = useMemo(() => allHabitatPresets(lens), [lens]);
+  const preset = matchingHabitatPreset(lens, scenario);
+  return (
+    <div className="presets" role="group" aria-label={t("Preset scenarios")}>
+      {presets.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          className="chip"
+          data-preset={p.id}
+          aria-pressed={preset === p.id}
+          title={t("{0} Source: {1}.", p.blurb, p.source)}
+          onClick={() => onChange(habitatScenario(lens, p.id))}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** The selected habitat, its conditions and the baseline comparison. Always in view; the variables table folds away. */
-export function HabitatPanel({ scenario, onChange }: { scenario: Scenario; onChange: (s: Scenario) => void }) {
+export function HabitatPanel({ scenario }: { scenario: Scenario }) {
   const { pack, lens } = useData();
   const [selectedBaseline, setSelectedBaseline] = useState<string>("earth_std");
   const vars = pack.schema.variables.filter((v) => !(v.type === "cat" && v.role === "partition"));
@@ -59,21 +83,6 @@ export function HabitatPanel({ scenario, onChange }: { scenario: Scenario; onCha
     <section className="hab-panel noprint" aria-label={t("Proposed scenario")}>
       <div className="hab-head">
         <h2>{t("Proposed scenario")}</h2>
-        <div className="presets" role="group" aria-label={t("Preset scenarios")}>
-          {presets.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="chip"
-              data-preset={p.id}
-              aria-pressed={preset === p.id}
-              title={t("{0} Source: {1}.", p.blurb, p.source)}
-              onClick={() => onChange(habitatScenario(lens, p.id))}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="hab-body">

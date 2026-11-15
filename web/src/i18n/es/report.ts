@@ -673,4 +673,28 @@ export const REPORT: Record<string, string> = {
   "vol %": "% vol",
   "wt %": "% en peso",
   "% RH": "% HR",
+  // Report in four layers: answer, why, explore, sources.
+  Answer: "Respuesta",
+  More: "Más",
+  "Report sections": "Secciones del informe",
+  "Other report actions": "Otras acciones del informe",
+  "the same answer in full sentences, as in the printed report": "la misma respuesta en frases completas, como en el informe impreso",
+  "Why: each condition against what was tested": "Por qué: cada condición frente a lo que se ha probado",
+  "Click a scale to move a value; every figure, table and sentence is recomputed.": "Haz clic en una escala para mover un valor; cada figura, tabla y frase se recalcula.",
+  "Try another scenario:": "Probar otro escenario:",
+  "Explore the evidence": "Explorar la evidencia",
+  "Read the detail": "Leer el detalle",
+  "Figure {0} · Coverage and gaps": "Figura {0} · Cobertura y vacíos",
+  "comparable tests in each region; select a cell to move the scenario": "pruebas comparables en cada región; selecciona una celda para mover el escenario",
+  "Figure {0} · Evidence network": "Figura {0} · Red de evidencia",
+  "how the scenario, its variables and the sources are linked": "cómo se enlazan el escenario, sus variables y las fuentes",
+  "isometric model and comparison against a baseline": "modelo isométrico y comparación con una referencia",
+  "datasets and their DOIs": "conjuntos de datos y sus DOI",
+  "Grade A is reached by {0} of {1} {2}: a comparable record lies close to the scenario and no variable is missing.":
+    "Alcanzan la nota A {0} de {1} {2}: un registro comparable queda cerca del escenario y no falta ninguna variable.",
+  "No {3} is graded A. Grade B is reached by {0} of {1} {2}: inside the tested range, with missing variables or a larger distance.":
+    "{Ningún|Ninguna} {3} tiene nota A. Alcanzan la nota B {0} de {1} {2}: dentro del rango probado, con variables ausentes o una distancia mayor.",
+  "No {3} is graded better than C. Comparable records exist in {0} of {1} {2}, all outside the tested range of this scenario.":
+    "{Ningún|Ninguna} {3} tiene una nota mejor que C. Hay registros comparables en {0} de {1} {2}, todos fuera del rango probado para este escenario.",
+  "None of the {1} {2} has records comparable with this scenario.": "{Ninguno|Ninguna} de {los|las} {1} {2} tiene registros comparables con este escenario.",
 };

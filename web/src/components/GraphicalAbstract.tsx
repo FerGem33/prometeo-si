@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { corpusSummary } from "../engine";
-import type { AxisScore, Grade, NumVariable, OverallEvidence, Scenario, StudyResult, VariableEvidence } from "../engine";
+import type { AxisScore, Grade, NumVariable, Scenario, StudyResult, VariableEvidence } from "../engine";
 import { Src, useData, useProv } from "./ctx";
 import { LevelTag } from "./ScenarioPanel";
 import { REASON } from "./Tables";
-import { overallText, levelBasis, whyText } from "../report/text";
+import { levelBasis, whyText } from "../report/text";
 import { doiOf, num, scenarioValueText, studyShort, varOf } from "../report/format";
 import { explainStudy, valueWithUnit } from "../report/ranking";
 import { t, many } from "../i18n";
@@ -112,14 +112,70 @@ function Bars({ axes, name }: { axes: Axis[]; name: string | null }) {
   );
 }
 
-export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, overall, comparable }: {
+/** Each active variable once: its value, the range covered by comparable tests, its level and the basis of that level. */
+export function ScenarioRanges({ scenario, onChange, levels }: { scenario: Scenario; onChange: (s: Scenario) => void; levels: VariableEvidence[] }) {
+  const { pack, lens } = useData();
+
+  const moveTo = (v: NumVariable, e: React.MouseEvent<HTMLDivElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+    const step = v.step ?? (v.range[1] - v.range[0]) / 100;
+    const x = Number((Math.round((v.range[0] + f * (v.range[1] - v.range[0])) / step) * step).toFixed(6));
+    onChange({ ...scenario, values: { ...scenario.values, [v.id]: Math.min(v.range[1], Math.max(v.range[0], x)) } });
+  };
+
+  return (
+    <figure className="ga ga-why" id="summary">
+      <section className="ga-a" aria-label={t("Scenario against the tested range")}>
+        {levels.length === 0 && <p className="hint">{t("No variable is part of the scenario.")}</p>}
+        {levels.map((lv) => {
+          const v = varOf(pack, lv.variable);
+          const numeric = v.type === "num" && typeof lv.value === "number";
+          const pos = (x: number) => (numeric ? Math.min(100, Math.max(0, ((x - (v as NumVariable).range[0]) / ((v as NumVariable).range[1] - (v as NumVariable).range[0])) * 100)) : 0);
+          return (
+            <div className="ga-var" key={lv.variable}>
+              <div className="ga-var-head">
+                <span className="ga-var-name">{v.long ?? v.label}</span>
+                <b className="val">{scenarioValueText(pack, lv.variable, lv.value)}</b>
+              </div>
+              <div className="ga-var-scale">
+                {numeric && (
+                  <>
+                    <div className={lv.tested ? "ga-track" : "ga-track none"} title={t("Click to move the scenario value here")} onClick={(e) => moveTo(v as NumVariable, e)}>
+                      {lv.tested && <span className="ga-band" style={{ left: `${pos(lv.tested[0])}%`, width: `${Math.max(0.8, pos(lv.tested[1]) - pos(lv.tested[0]))}%` }} />}
+                      <span className="ga-mark" style={{ left: `${pos(lv.value as number)}%` }} />
+                    </div>
+                    <div className="ga-scale">
+                      <span>{num((v as NumVariable).range[0])}</span>
+                      <span>
+                        {num((v as NumVariable).range[1])} {(v as NumVariable).unit}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="ga-var-level">
+                <LevelTag level={lv.level} />
+                <p className="ga-basis">
+                  <Src id={lv.source}>{levelBasis(pack, lens, lv)}</Src>
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        <p className="ga-key">
+          <span className="k-band" /> {t("range covered by comparable tests")} <span className="k-mark" /> {t("scenario value")}
+        </p>
+      </section>
+    </figure>
+  );
+}
+
+/** Closeness of one source to the scenario on each variable, and every source by grade to choose from. */
+export function ClosenessPanels({ scenario, ranking, close }: {
   scenario: Scenario;
-  onChange: (s: Scenario) => void;
   ranking: StudyResult[];
   close: Record<string, Record<string, AxisScore>>;
-  levels: VariableEvidence[];
-  overall: OverallEvidence;
-  comparable: number;
 }) {
   const { pack, lens } = useData();
   const openProv = useProv();
@@ -144,85 +200,15 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
     [pack, scenario, close, selId],
   );
 
-  const moveTo = (v: NumVariable, e: React.MouseEvent<HTMLDivElement>) => {
-    const box = e.currentTarget.getBoundingClientRect();
-    const f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
-    const step = v.step ?? (v.range[1] - v.range[0]) / 100;
-    const x = Number((Math.round((v.range[0] + f * (v.range[1] - v.range[0])) / step) * step).toFixed(6));
-    onChange({ ...scenario, values: { ...scenario.values, [v.id]: Math.min(v.range[1], Math.max(v.range[0], x)) } });
-  };
-
   const study = sel ? pack.studies.find((s) => s.id === sel.study) : undefined;
   const doi = sel ? doiOf(pack, sel.study) : null;
 
   return (
-    <figure className="ga" id="summary">
-      <h2>{t("Graphical abstract")}</h2>
-      <p className="ga-lead">
-        <b>{comparable.toLocaleString("en-US")}</b> {t("of")} {(pack.meta.stats.tests ?? 0).toLocaleString("en-US")} {t("tests are comparable with this scenario. Overall evidence is")} <b>{overallText(overall.level, unit)}</b>.{" "}
-        {top ? t("The closest {0} is {1} (grade {2}, d = {3}).", unit, studyShort(pack, top.study), top.grade, top.distance) : t("No {0} has records comparable with it.", unit)}
-      </p>
-
+    <figure className="ga ga-close">
       <div className="ga-grid">
-        <section className="ga-a" aria-label={t("Scenario against the tested range")}>
-          <h3>
-            <i>a</i> {t("Scenario against the tested range")}
-          </h3>
-          {levels.length === 0 && <p className="hint">{t("No variable is part of the scenario.")}</p>}
-          {levels.map((lv) => {
-            const v = varOf(pack, lv.variable);
-            const numeric = v.type === "num" && typeof lv.value === "number";
-            const pos = (x: number) => (numeric ? Math.min(100, Math.max(0, ((x - (v as NumVariable).range[0]) / ((v as NumVariable).range[1] - (v as NumVariable).range[0])) * 100)) : 0);
-            return (
-              <div className="ga-var" key={lv.variable}>
-                <div className="ga-var-head">
-                  <b>{v.long ?? v.label}</b>
-                  <span className="val">{scenarioValueText(pack, lv.variable, lv.value)}</span>
-                  <LevelTag level={lv.level} />
-                </div>
-                {numeric && (
-                  <>
-                    <div className={lv.tested ? "ga-track" : "ga-track none"} title={t("Click to move the scenario value here")} onClick={(e) => moveTo(v as NumVariable, e)}>
-                      {lv.tested && <span className="ga-band" style={{ left: `${pos(lv.tested[0])}%`, width: `${Math.max(0.8, pos(lv.tested[1]) - pos(lv.tested[0]))}%` }} />}
-                      <span className="ga-mark" style={{ left: `${pos(lv.value as number)}%` }} />
-                    </div>
-                    <div className="ga-scale">
-                      <span>{num((v as NumVariable).range[0])}</span>
-                      <span>
-                        {num((v as NumVariable).range[1])} {(v as NumVariable).unit}
-                      </span>
-                    </div>
-                  </>
-                )}
-                <p className="ga-basis">
-                  <Src id={lv.source}>{levelBasis(pack, lens, lv)}</Src>
-                </p>
-              </div>
-            );
-          })}
-          <p className="ga-key">
-            <span className="k-band" /> {t("range covered by comparable tests")} <span className="k-mark" /> {t("scenario value")}
-          </p>
-        </section>
-
-        <section className="ga-b" aria-label={t("Closeness by variable")}>
-          <h3>
-            <i>b</i> {t("Closeness by variable")}{selName ? ` · ${selName}` : ""}
-          </h3>
-          {axes.length >= 3 ? <Radar axes={axes} name={selName} onVertex={openProv} /> : <Bars axes={axes} name={selName} />}
-          <p className="ga-key">
-            {selName && (
-              <>
-                <span className="k-sel" /> {selName}{" "}
-              </>
-            )}
-            <span className="k-best" /> {t("best reached by any")} {unit}
-          </p>
-        </section>
-
         <section className="ga-c" aria-label={t("The {0} by grade", many(unit))}>
           <h3>
-            <i>c</i> {t("The")} {ranking.length} {many(unit)} {t("by grade")}
+            <i>a</i> {t("The")} {ranking.length} {many(unit)} {t("by grade")}
           </h3>
           {GRADES.map((g) => {
             const members = ranking.filter((r) => r.grade === g);
@@ -289,10 +275,25 @@ export function GraphicalAbstract({ scenario, onChange, ranking, close, levels, 
             </div>
           )}
         </section>
+
+        <section className="ga-b" aria-label={t("Closeness by variable")}>
+          <h3>
+            <i>b</i> {t("Closeness by variable")}{selName ? ` · ${selName}` : ""}
+          </h3>
+          {axes.length >= 3 ? <Radar axes={axes} name={selName} onVertex={openProv} /> : <Bars axes={axes} name={selName} />}
+          <p className="ga-key">
+            {selName && (
+              <>
+                <span className="k-sel" /> {selName}{" "}
+              </>
+            )}
+            <span className="k-best" /> {t("best reached by any")} {unit}
+          </p>
+        </section>
       </div>
 
       <figcaption>
-        <b>{t("Graphical abstract |")}</b> <b>a</b>{t(", each active variable on its full scale: the dark band is the range covered by comparable tests and the red mark is the scenario value; click a scale to move the value.")} <b>b</b>{t(", closeness (0–100) of the selected")} {unit} {t("to the scenario on each variable, with the best value reached by any")} {unit} {t("as a dashed outline. A dashed spoke means the")} {unit} {t("does not record that variable: it is absent, not zero. The order of the axes changes the shape of the polygon, so read each axis on its own.")} <b>c</b>{t(", every")} {unit} {t("by grade; select one to see its values and sources. All values are computed by rule from the evidence pack; nothing here predicts an outcome.")}
+        <b>a</b>{t(", every")} {unit} {t("by grade; select one to see its values and sources. All values are computed by rule from the evidence pack; nothing here predicts an outcome.")} <b>b</b>{t(", closeness (0–100) of the selected")} {unit} {t("to the scenario on each variable, with the best value reached by any")} {unit} {t("as a dashed outline. A dashed spoke means the")} {unit} {t("does not record that variable: it is absent, not zero. The order of the axes changes the shape of the polygon, so read each axis on its own.")}
       </figcaption>
     </figure>
   );
