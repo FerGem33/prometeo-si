@@ -135,6 +135,15 @@ def test_editing_after_approval_revokes_it():
     assert service.parent['extraction_dispatch_pending'] is False
 
 
+def test_changed_parsed_values_invalidate_review_even_with_unchanged_source_hash():
+    service = Memory()
+    prepare(service)
+    service.docs[DID]['rows'][0]['values'][0] = '99'
+    with pytest.raises(ApiError) as exc:
+        Schemas.get(service, 'owner', PID)
+    assert exc.value.status == 409
+
+
 def test_conversion_required_and_constants_with_unreviewed_scope_fail():
     service = Memory()
     changed = prepare(service)

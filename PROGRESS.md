@@ -64,7 +64,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T33 | Cuenta y proyectos | fase 2 · C | hecha (verificación relevo) | stringbuilder; Claude · Daniel | esta entrega | A/B previo y 19 comprobaciones reales de cargas/DELETE pasan; 11 rutas JWT desplegadas y recursos reutilizados. Recibo docs/t33-upload-smoke-2026-11-15.json. Edición de intención procesada/lente y pantallas siguen en T35/T37/interfaz; no se declara completo ese recorrido |
 | T34 | Worker | fase 2 · C | en curso (local) | stringbuilder; Claude · Daniel | esta entrega | Worker, despliegue (`infra/deploy_worker.py`) y política de operador listos y probados con dobles. Descarta mensajes de documentos borrados. Lote real con `cli.mjs batch … --limit 10 --corrupt`. Falta: desplegar, lote/DLQ real y medir memoria/costo (RELEVO §3–4) |
 | T35 | Revisión del esquema | fase 2 · C | en curso | stringbuilder | esta entrega | API versionada y extracción tabular con aprobación vinculada a fuentes; 135 pruebas API pasan con dobles. Rutas aún no activadas; faltan prueba AWS, PDF integrado, pantalla y pack T37. `docs/T35_REVISION_API.md` |
-| T37 | Publicación y segundo dominio | fase 2 · C | pendiente | | | Corpus de ebullición regenerado: 23/23 hashes coinciden con manifiesto. Aprobación concreta del esquema delegada por el dueño; aún no aplicada a una propuesta de ese corpus |
+| T37 | Publicación y segundo dominio | fase 2 · C | en curso (local) | stringbuilder | esta entrega | Constructor versionado y revisión delegada v1 de dos tablas reales: 51 registros, 5 celdas rechazadas, 0 conflictos/llamadas Bedrock. validate_pack y motor sin cambios pasan. Faltan lote completo, APIs/publicación, lente/síntesis/pantallas; docs/T37_PUBLICACION_LOCAL.md |
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | pendiente | | | Requiere borrador extraído; conservar original, autor y cita; pendientes APIs y pantalla |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | pendiente | | | Contrato §5.10 aprobado 15-nov: CSV con unidad, DOI, `group_id` por estudio, valor original y `datacard.json`; sin AWS |
 
@@ -99,6 +99,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · T37 constructor local y aprobación delegada acotada
+- `publish_bundle.py` exige esquema aprobado y metadatos revisados con hashes; recalcula extracción tabular, exige identidad de estudio/DOI/kind sustentado, sigma positivo y presets citados, bloquea conflictos y genera pack/lens/mapping/recibo en carpeta nueva fuera de demo.
+- Aplicada revisión delegada v1 `docs/t37/revision_local.json` solo a PSI-46/PSI-87. Autoridad explícita del dueño, sin revisión humana línea por línea. Otras fuentes/prosa/PDF/simulaciones permanecen fuera de esta prueba; no se aprueba el lote completo ni se confunde potencia con flujo de calor.
+- Datos reales locales: 6+45=51 registros, dos estudios, ocho variables, cinco celdas ambiguas rechazadas sin relleno, cero conflictos. Cero llamadas Bedrock/tokens de esta prueba. Hashes/artifactos completos en /tmp/prometeo-t37-local-v1; no se suben datos extraídos a Git.
+- Cuatro pruebas del constructor pasan con Python3.12. validate_pack del bundle final: OK (2/51/2), /tmp/prometeo-t37-local-v1-final. Una prueba de integración ejecuta el motor existente y pasa; check_agnostic pasa. Añadido hash del documento parseado para invalidar también cambios de celdas que conservaran el campo SHA del original: 136 API pasan. 99 web pasan con bundle; build pasa tras npm ci (faltaba framer-motion instalado), con aviso de chunk >500kB. Detalles reproducibles y límites en docs/T37_PUBLICACION_LOCAL.md. T37 sigue en curso: faltan API/síntesis/lote/pantallas; AWS después por instrucción del dueño.
 
 ### 2026-11-15 · Cierre del smoke T33; T34 pendiente de permisos
 - `infra/20_api.sh` y `deploy_projects.py --uploads --apply --contract-approved` terminaron0. API ve5oqmsyie, Lambda prometeo-hack-api y rol existentes conservados; 11 rutas JWT. CORS solo CloudFront; DELETE permitido.

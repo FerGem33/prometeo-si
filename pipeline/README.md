@@ -326,3 +326,10 @@ estudios, 1986 registros, 22 fuentes; `validate_pack.py` pasó y los tres `cmp` 
 El destino temporal está en `/tmp/prometeo-t18/`; no se añadieron fuentes ni artefactos a Git.
 Esta evidencia verifica igualdad para la descarga disponible y la versión vigente de
 `pipeline/lens.json`/mapping. Cambios posteriores en esos insumos requieren repetir la prueba.
+
+## Publicación local T37
+
+`publish_bundle.py` construye un borrador inmutable con aprobación del esquema
+y metadatos ligados a fuentes. `prepare_boiling_local.py` reproduce la revisión
+delegada acotada de dos tablas de ebullición; no publica la demo ni llama AWS.
+Comandos, decisión, evidencia y límites: [T37_PUBLICACION_LOCAL](../docs/T37_PUBLICACION_LOCAL.md).

@@ -98,11 +98,13 @@ class Schemas:
             if parent['status'] != 'awaiting_review':
                 fail(409, 'conflict', 'Project is not ready for review')
             value = review.review_request(joint_schema(documents, proposals), documents)
+            value['parsed_sha256'] = review.digest(documents)
             self.persist(uid, pid, parent, value, None)
             return value, documents
         meta = self.metadata(pid, int(version))
         value = self.load(meta['artifact_key'])
-        if meta['artifact_sha256'] != review.digest(value) or value['documents'] != review.snapshot(documents):
+        if (meta['artifact_sha256'] != review.digest(value) or value['documents'] != review.snapshot(documents)
+                or value.get('parsed_sha256') != review.digest(documents)):
             fail(409, 'conflict', 'Schema or corpus changed; review a new version')
         return value, documents
 
@@ -151,6 +153,7 @@ class Schemas:
         except ValueError as exc:
             fail(400, 'invalid_request', str(exc))
         next_value = review.review_request(edited, documents)
+        next_value['parsed_sha256'] = review.digest(documents)
         self.persist(uid, pid, self.projects.get(uid, pid), next_value, schema['version'])
         return edited
 
@@ -169,6 +172,7 @@ class Schemas:
             approved = review.approve(value, schema, documents, schema['version'], uid)
         except ValueError as exc:
             fail(409, 'conflict', str(exc))
+        approved['parsed_sha256'] = review.digest(documents)
         if 'review_authority' in data:
             note = data['review_authority']
             if not isinstance(note, str) or not 1 <= len(note) <= 1000:
