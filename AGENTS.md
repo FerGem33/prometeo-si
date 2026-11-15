@@ -24,6 +24,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
    - "Siguiente paso exacto";
    - URL y `MODEL_ID` si cambiaron.
 3. `git add -A && git commit -m "T0x: <qué>" && git push`.
+   - **Nunca agregues coautoría ni firmas de agente al commit:** nada de `Co-Authored-By`, `Generated with`, ni menciones al agente o al modelo en el mensaje. El autor es la persona dueña de la laptop. Aplica también a descripciones de PR.
 4. Sigue con la siguiente tarea. No pidas confirmación entre tareas salvo que haya un bloqueo real.
 
 ## 3. Si se va a acabar el uso de la cuenta o la sesión

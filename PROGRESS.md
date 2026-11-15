@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 hechas |
-| Último commit verificado | `67a81e1` (corrección de sugerencia y prueba); web y Lambda publicados |
+| Último commit verificado | `3720861` en `main` (fase 2, sin desplegar); lo publicado sigue siendo `67a81e1` |
 | Siguiente paso exacto | Con perfil `prometeo`: guion de `docs/PLAN_FASE2.md` §7 (deploy de API y web, comprobación de `/ask` y `/analysis`). Interfaz: `docs/CONTRATOS_FASE2.md` §6. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -94,6 +94,7 @@ Una entrada por sesión de agente, la más reciente arriba.
 - **Corrección a la entrada anterior:** `/analysis` no devuelve "una sola oración para el preset lunar"; esa prueba usó `api/events/analysis.json`, que solo trae un hallazgo.
 - **Verificado:** web 54/54, API 38/38 (`.venv` local con Python 3.14, no el 3.12 del proyecto), build, `check_agnostic.sh`, `validate_pack.py`.
 - **Siguiente paso exacto:** en la laptop con perfil `prometeo`, seguir `docs/PLAN_FASE2.md` §7: `infra/20_api.sh`, `infra/deploy_web.sh` y los `curl` de comprobación. Si `/ask` devuelve `unsupported` donde debería haber condiciones, ajustar `ASK_SYSTEM`.
+- **Historia reescrita:** los commits `7b582f3` y `d023aa8` se rehicieron sin la línea de coautoría y ahora son `7b663ed` y `3720861` (mismo contenido). Quien los haya bajado: `git fetch && git reset --hard origin/main` si no tiene cambios locales, o `git pull --rebase`. Regla nueva en `AGENTS.md` §2: ningún commit lleva coautoría de agentes.
 - **Ojo con:** `pipeline/tools/` y `tools/` son copias locales de la descarga de PSI, sin versionar; `data/psi` sigue fuera de git (decisión D9 abierta).
 
 ### 2026-11-14 22:50 CST · Claude · ferlr · revisión del MVP y plan de fase 2
