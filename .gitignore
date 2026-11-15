@@ -18,3 +18,7 @@ tools/psi/data/datos_psi
 ## Corpus de PSI descargados (D9: fuera de git)
 tools/psi/data/
 .playwright-cli/
+
+# Capturas de perfiles del jurado: no se versionan (docs/demo_and_pitch/jurado.md)
+docs/demo_and_pitch/**/*.jpg
+docs/demo_and_pitch/**/*.png

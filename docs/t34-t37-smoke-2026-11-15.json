@@ -1,0 +1,325 @@
+{
+  "kind": "real_aws_smoke_not_full_acceptance",
+  "date": "2026-11-15",
+  "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "account": "352818909129",
+  "mapping_uuid": "01099ec2-85e7-4271-9a74-9ac80f6289fe",
+  "iam_simulation": "omitted_by_owner_not_passed",
+  "batch": {
+    "project_id": "prj_c0eb8d4ded5a73dc320a7d93acf469fa02ecf401bb9125e1ff3eb87f9ace4dd2",
+    "normal_total": 10,
+    "valid": 8,
+    "rejected_pdfs": 2,
+    "control_failed": true,
+    "responses": 14,
+    "input_tokens": 94795,
+    "output_tokens": 20217,
+    "usage_scope": "batch proposals only; excludes separate workflow proposals and synthesis",
+    "items": [
+      {
+        "doc_id": "doc_1c1ac978e8abf9c706efb7361b28171d4df3caa260cf31ece45c606ce53c150a",
+        "name": "PSI-46__PSI-46_Presentations_TheConstrainedVaporBubble40mmCapillaryExperimentOnTheISS.pdf",
+        "status": "done",
+        "reason": null,
+        "responses": 2
+      },
+      {
+        "doc_id": "doc_1e3a0ae7167a21be525858112b087c288a7d3a2c0f1259f84f08e445930b0557",
+        "name": "PSI-138__PSI-138_Experimental table_FC72_Working Fluid_Properties.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_5882a5145bc9e91b4f6bbae117e7417a5e43da5813266988904cded57ced8b04",
+        "name": "PSI-45__PSI-45_Experimental table_CVB2.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_596a63558b881db801de149ae509967e7892442fe5aefaa61254af4b88d7dfda",
+        "name": "PSI-46__PSI-46_Experimental table_CVB.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 2
+      },
+      {
+        "doc_id": "doc_5ab343e3bfc69e6ac5fc506820714932493aa242e4dfa0311681260b9be021a6",
+        "name": "corrupt-control.csv",
+        "status": "failed",
+        "reason": "unreadable",
+        "responses": 0
+      },
+      {
+        "doc_id": "doc_5b54ab1f7b603f50442b781e8856782d81c3ac9624abab2d811b845954444ed1",
+        "name": "PSI-4__PSI-4_Experimental table_AsRunEPMT_FBCEFBM.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_66a47e1d990a9f7eb99d3b03b71a13cc4f8eb9752ef1b133b5a01783cf6391e9",
+        "name": "PSI-46__PSI-46_Reports_2013 - FinalReport_CVB.pdf",
+        "status": "failed",
+        "reason": "evidence not found at location",
+        "responses": 2
+      },
+      {
+        "doc_id": "doc_67d60261eec2ef32a3d2535b6a2384670ed0ffca57a4f232474e04e9106b50c0",
+        "name": "PSI-46__PSI-46_Reports_The Constrained Vapor Bubble Heat Pipe - on Earth and in Space.pdf",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_c8b6dd9f35cdac9870c8b632f3f5eae5957c1722e88b52daf65810c4335cb267",
+        "name": "PSI-138__PSI-138_Experimental table_Simulation Parameters_Effect of Subcooling.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_e0440df71aa0a3ebe9f8d6857d03ef4acf273ca8727a10919076d867d259c65c",
+        "name": "PSI-138__PSI-138_Experimental table_Simulation Parameters_Pool Boiling on Biphilic Surfaces.csv",
+        "status": "done",
+        "reason": null,
+        "responses": 1
+      },
+      {
+        "doc_id": "doc_e970123cace59ff2519a4eb371907817b196a222db8fb4a2b6753bf5a713de5e",
+        "name": "PSI-46__PSI-46_Presentations_APS_ISS_JLP.pdf",
+        "status": "failed",
+        "reason": "evidence not found at location",
+        "responses": 2
+      }
+    ]
+  },
+  "dlq": {
+    "checked_at": "2026-11-15T16:28:15.276447+00:00",
+    "messages": [
+      {
+        "project_id": "prj_c0eb8d4ded5a73dc320a7d93acf469fa02ecf401bb9125e1ff3eb87f9ace4dd2",
+        "doc_id": "doc_e970123cace59ff2519a4eb371907817b196a222db8fb4a2b6753bf5a713de5e",
+        "receive_count": 8
+      },
+      {
+        "project_id": "prj_c0eb8d4ded5a73dc320a7d93acf469fa02ecf401bb9125e1ff3eb87f9ace4dd2",
+        "doc_id": "doc_66a47e1d990a9f7eb99d3b03b71a13cc4f8eb9752ef1b133b5a01783cf6391e9",
+        "receive_count": 4
+      },
+      {
+        "project_id": "prj_c0eb8d4ded5a73dc320a7d93acf469fa02ecf401bb9125e1ff3eb87f9ace4dd2",
+        "doc_id": "doc_5ab343e3bfc69e6ac5fc506820714932493aa242e4dfa0311681260b9be021a6",
+        "receive_count": 4
+      }
+    ],
+    "control_found": true,
+    "deleted": false,
+    "replayed": false,
+    "read_visibility_seconds": 30
+  },
+  "workflow": {
+    "checks": [
+      {
+        "method": "GET",
+        "path": "/projects/prj_c0eb8d4ded5a73dc320a7d93acf469fa02ecf401bb9125e1ff3eb87f9ace4dd2/diagnostics",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects",
+        "http": 201
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/documents",
+        "http": 201
+      },
+      {
+        "method": "PUT",
+        "path": "S3 signed object",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/documents",
+        "http": 201
+      },
+      {
+        "method": "PUT",
+        "path": "S3 signed object",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/documents/doc_ecda00d05a150031d3848042c4b90c7bf879e585316373065d31818e7f65c91e/complete",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/documents/doc_c927b57deb7f24186a6ca875824f2b35695d7da61522a5a0bbbd96f4569801fa/complete",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/diagnostics",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/ingest/resume",
+        "http": 202
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/schema",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/schema",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/schema/approve",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/jobs",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/records",
+        "http": 200
+      },
+      {
+        "method": "PATCH",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/records/doc_ecda00d05a150031d3848042c4b90c7bf879e585316373065d31818e7f65c91e%3Arow%3A2",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/publish",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/pack",
+        "http": 401
+      },
+      {
+        "method": "GET",
+        "path": "S3 signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "S3 signed object",
+        "http": 200
+      },
+      {
+        "method": "GET",
+        "path": "S3 signed object",
+        "http": 200
+      },
+      {
+        "method": "POST",
+        "path": "/projects/prj_caf172e0a0ba42939157ee2eb06020a4/synthesis",
+        "http": 200
+      }
+    ],
+    "sources": [
+      {
+        "doc_id": "doc_ecda00d05a150031d3848042c4b90c7bf879e585316373065d31818e7f65c91e",
+        "name": "PSI-46__PSI-46_Experimental table_CVB.csv",
+        "sha256": "9ff059b65bfd56bcbb7deed869fc282de2cc4d021cb364a32f46cf77b774cc88",
+        "study": "PSI-46"
+      },
+      {
+        "doc_id": "doc_c927b57deb7f24186a6ca875824f2b35695d7da61522a5a0bbbd96f4569801fa",
+        "name": "PSI-87__PSI-87_Experimental table_Experimental Table - PBE.csv",
+        "sha256": "40e88bbe8d63371dc57eeee095017f53e4b93307256a1e18f36d78dfef208e2f",
+        "study": "PSI-87"
+      }
+    ],
+    "project_id": "prj_caf172e0a0ba42939157ee2eb06020a4",
+    "approved": {
+      "version": 3,
+      "authority": "Aprobado por delegación del dueño (15-nov); recomendación del agente, sin revisión humana línea por línea"
+    },
+    "first_pack_version": 1,
+    "correction": {
+      "record_id": "doc_ecda00d05a150031d3848042c4b90c7bf879e585316373065d31818e7f65c91e:row:2",
+      "variable": "human_substrate",
+      "same_value_confirmation": true
+    },
+    "final_pack_version": 2,
+    "records": 51,
+    "studies": 2,
+    "synthesis": {
+      "mode": "template",
+      "sentences": 5
+    }
+  },
+  "checks": {
+    "api_tests_passed": 155,
+    "web_tests_passed": 104,
+    "web_tests_skipped": 2,
+    "real_bundle_engine_tests_passed": 1,
+    "validate_pack": "OK 2 studies / 51 records / 2 sources",
+    "check_agnostic": "OK",
+    "demo_changed": false,
+    "new_web_deploy": false,
+    "cloudwatch_report": []
+  },
+  "worker_final_state": "Disabled"
+}

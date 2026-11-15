@@ -71,7 +71,7 @@ export type VariableProposal = {
   id: string; // stable slug proposed by the model, editable until approval
   label: string;
   type: "num" | "cat";
-  unit?: string; // num
+  unit?: string | null; // num; categorical units are null
   role?: "partition";
   sigma?: number; // num: scale used in distances; proposed from the spread of the data, editable
   range?: [number, number];
@@ -106,6 +106,7 @@ export type SchemaProposal = {
 
 /** Reviewer decisions, applied in order. The server validates each one and returns the new SchemaProposal. */
 export type SchemaEdit =
+  | { op: "add_variable"; variable: Omit<VariableProposal, "status" | "records" | "merged_from"> }
   | { op: "set_status"; target: "variable" | "column"; id: string; doc_id?: string; status: ReviewStatus; note?: string }
   | { op: "rename"; variable: string; label: string }
   | { op: "merge"; into: string; from: string[] }
@@ -128,6 +129,16 @@ export type RecordDraft = {
   /** set when a reviewer changed a value: the original value and its citation are kept */
   corrections?: Record<string, { from: [number, number] | string | null; by: string; at: string; reason: string }>;
 };
+
+/** Optional reviewed identities/lens sent with schema approval; server binds actor and hashes. */
+export type CorpusMetadata = {
+  id: string;
+  documents: Record<string, { sha256: string; study: string; title: string; doi: string;
+    kind: "test" | "campaign"; kind_note: string; kind_evidence: Citation; license?: string | null }>;
+  lens: Lens;
+  thresholds: Pack["schema"]["thresholds"];
+};
+export type SchemaApprovalRequest = { version: number; metadata?: CorpusMetadata; review_authority?: string };
 
 export type Conflict = {
   id: string;
@@ -152,11 +163,41 @@ export type Claim = {
 };
 
 export type PublishResponse = { pack_version: number; lens_version: number; files: { pack: string; lens: string; mapping: string }; expires_in: number };
-export type PublishedFiles = { pack: Pack; lens: Lens };
+export type PaperCandidate = {
+  id: string;
+  variable: string;
+  value: [number, number] | string;
+  unit: string | null;
+  citation: Extract<Citation, { kind: "paper" }>;
+  scope: string;
+  proposed_scope?: string;
+  status: "awaiting_semantic_review" | "contextual" | "rejected";
+  origin?: "manual";
+  review?: { by: string; at: string; reason: string; scope: string | null; supports_value: boolean;
+    use_in_records: false; propagate_to_tables: false };
+};
 
-export type Proposal = { id: string; name: string; scenario: Scenario; created_at: string; updated_at: string };
+export type PaperCandidateInput = Pick<PaperCandidate, "variable" | "value" | "unit" | "scope"> & {
+  citation: Omit<Extract<Citation, { kind: "paper" }>, "verified">;
+};
+export type PaperReviewDecision =
+  | { status: "contextual"; reason: string; scope: string; supports_value: true }
+  | { status: "rejected"; reason: string };
+export type PaperExtractionProof = {
+  doc_id: string; selection: number[]; pages: number[] | null; artifact_sha256: string | null;
+  status: "pending" | "done" | "failed";
+  failure_review?: { by: string; at: string; reason: string; doc_id: string };
+};
+
+/** PDF context is separate from records; it never contributes to comparison levels. */
+export type PublicationPack = Pack & { contextual_evidence?: PaperCandidate[]; paper_extractions?: PaperExtractionProof[] };
+export type PublishedFiles = { pack: PublicationPack; lens: Lens };
+
+export type Proposal = { id: string; name: string; scenario: Scenario; created_at: string; updated_at: string;
+  pack_version?: number; lens_version?: number };
 
 export type SynthesisRequest = { study_ids: string[]; focus?: string };
-export type SynthesisResponse = { mode: "ai" | "template"; sentences: { text: string; citations: Citation[] }[]; dropped: number };
+export type SynthesisResponse = { mode: "ai" | "template"; sentences: { text: string; citations: Citation[]; study?: string }[]; dropped: number;
+  method?: "extractive_source_quotes"; fallback_reason?: string | null; represented_studies?: string[]; omitted_studies?: string[] };
 
 export type Page<T> = { items: T[]; next_cursor: string | null };

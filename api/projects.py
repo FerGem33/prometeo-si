@@ -1,6 +1,6 @@
 """T33 local project routes. Trust only a configured API Gateway JWT authorizer.
 
-Not activated by infra/20_api.sh yet. Never decode a caller-supplied JWT here.
+Routes are configured separately by deploy_projects.py. Never decode a caller-supplied JWT here.
 """
 import base64
 import hashlib
@@ -12,6 +12,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from functools import lru_cache
+from urllib.parse import unquote
 
 
 class ApiError(Exception):
@@ -51,7 +52,7 @@ def body(event):
             raw = base64.b64decode(raw, validate=True).decode('utf-8')
         if len(raw.encode('utf-8')) > 16000:
             raise ValueError()
-        data = json.loads(raw)
+        data = json.loads(raw, parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Nonfinite JSON')))
         if not isinstance(data, dict):
             raise ValueError()
         return data
@@ -150,9 +151,8 @@ class Projects:
         item = self.get(uid, pid)
         if all(item[k] == v for k, v in data.items()):
             return project(item)
-        # Draft-only until lens regeneration and ingestion are implemented.
-        if item['status'] != 'draft' or item['counts']['documents'] != 0:
-            fail(409, 'conflict', 'Only empty draft projects can be edited in this release')
+        if item['status'] in ('deleting', 'published') or item.get('published_files'):
+            fail(409, 'conflict', 'Published intentions require lens regeneration')
         old_revision = item['revision']
         item.update(data)
         item['revision'] = old_revision + 1
@@ -197,6 +197,81 @@ def handle(event):
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
+            source_text = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/text', path)
+            if source_text and method == 'GET':
+                repository = store(); repository.get(uid, source_text[1])
+                try:
+                    from .schema_review import service as schema_service
+                except ImportError:
+                    from schema_review import service as schema_service
+                return 200, schema_service(repository).source_text(uid, source_text[1], source_text[2], event.get('queryStringParameters') or {})
+            manual = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/documents/(doc_[a-f0-9]{32,64})/proposal', path)
+            if manual and method == 'POST':
+                repository = store(); repository.get(uid, manual[1])
+                try:
+                    from .schema_review import service as schema_service
+                except ImportError:
+                    from schema_review import service as schema_service
+                return 200, schema_service(repository).manual(uid, manual[1], manual[2], body(event))
+            diagnostic_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/diagnostics', path)
+            if diagnostic_path and method == 'GET':
+                try:
+                    from .schema_review import service as schema_service
+                except ImportError:
+                    from schema_review import service as schema_service
+                return 200, schema_service(store()).diagnostics(uid, diagnostic_path[1], event.get('queryStringParameters') or {})
+            evidence_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/(records|conflicts|publish|pack|synthesis|proposals|claims|ask|analysis|paper-candidates|papers|lens)(?:/([^/]+)(/resolve|/review|/extract)?)?', path)
+            if evidence_path:
+                repository = store()
+                repository.get(uid, evidence_path[1])
+                try:
+                    from .evidence import service as evidence_service
+                except ImportError:
+                    from evidence import service as evidence_service
+                evidence = evidence_service(repository)
+                pid, kind, identifier, resolution = evidence_path.groups()
+                identifier = unquote(identifier) if identifier else None
+                query = event.get('queryStringParameters') or {}
+                if kind == 'lens' and not identifier:
+                    if method == 'GET': return 200, evidence.lens(uid, pid)
+                    if method == 'PUT': return 200, evidence.lens(uid, pid, body(event))
+                if kind == 'paper-candidates':
+                    if method == 'GET' and not identifier: return 200, evidence.papers(uid, pid)
+                    if method == 'POST': return 200, evidence.papers(uid, pid, body(event), identifier)
+                if kind == 'papers' and identifier and resolution == '/review' and method == 'POST':
+                    return 200, evidence.papers(uid, pid, body(event), exclude_doc=identifier)
+                if kind == 'papers' and identifier and resolution == '/extract' and method == 'POST':
+                    return 202, evidence.extract_paper(uid, pid, identifier, body(event))
+                if kind == 'proposals':
+                    if method == 'GET': return 200, evidence.proposals(uid, pid, identifier, query=query)
+                    if method == 'PUT' and identifier: return 200, evidence.proposals(uid, pid, identifier, body(event))
+                    if method == 'DELETE' and identifier:
+                        evidence.proposals(uid, pid, identifier, delete=True)
+                        return 204, {}
+                if kind == 'claims':
+                    if method == 'GET' and not identifier: return 200, evidence.claims(uid, pid)
+                    if method == 'POST' and not identifier: return 201, evidence.claims(uid, pid, body(event))
+                    if method == 'DELETE' and identifier:
+                        evidence.claims(uid, pid, body(event), identifier)
+                        return 204, {}
+                if kind in ('ask', 'analysis') and method == 'POST' and not identifier:
+                    return 200, evidence.inference(uid, pid, kind, body(event))
+                if kind == 'records' and method == 'GET' and not identifier:
+                    return 200, evidence.list_records(uid, pid, query)
+                if kind == 'records' and identifier and method in ('PATCH', 'DELETE'):
+                    result = evidence.change(uid, pid, identifier, body(event), exclude=method == 'DELETE')
+                    return (204, {}) if method == 'DELETE' else (200, result)
+                if kind == 'conflicts' and method == 'GET' and not identifier:
+                    return 200, evidence.conflicts(uid, pid, query)
+                if kind == 'conflicts' and identifier and resolution and method == 'POST':
+                    return 200, evidence.resolve(uid, pid, identifier, body(event))
+                if kind == 'publish' and method == 'POST' and not identifier:
+                    return 200, evidence.publish(uid, pid, body(event) if event.get('body') else {})
+                if kind == 'pack' and method == 'GET' and not identifier:
+                    return 200, evidence.files(uid, pid)
+                if kind == 'synthesis' and method == 'POST' and not identifier:
+                    return 200, evidence.synthesis(uid, pid, body(event))
+                fail(405, 'method_not_allowed', 'Evidence method not available')
             schema_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/schema(/approve)?', path)
             if schema_path:
                 try:
@@ -235,7 +310,7 @@ def handle(event):
                 if jobs and method == 'GET':
                     return 200, uploads.jobs(uid, pid)
                 if resume and method == 'POST':
-                    return 202, uploads.resume(uid, pid)
+                    return 202, uploads.resume(uid, pid, body(event) if event.get('body') else {})
                 if completed and method == 'POST':
                     return 200, uploads.complete(uid, pid, completed[2], body(event))
                 if documents and method == 'POST':
@@ -249,12 +324,22 @@ def handle(event):
             if method == 'GET':
                 return 200, project(store().get(uid, match[1]))
             if method == 'PATCH':
-                return 200, store().patch(uid, match[1], body(event))
+                repository = store()
+                parent = repository.get(uid, match[1])
+                if not parent.get('published_files'):
+                    return 200, repository.patch(uid, match[1], body(event))
+                try:
+                    from .evidence import service as evidence_service
+                except ImportError:
+                    from evidence import service as evidence_service
+                return 200, evidence_service(repository).patch_project(uid, match[1], body(event))
             if method == 'DELETE':
                 return 204, deletions().delete_project(uid, match[1])
         fail(405, 'method_not_allowed', 'Method not available in this release')
     except ApiError as exc:
         return exc.status, {'error': {'code': exc.code, 'message': exc.message,
                                    **({'details': exc.details} if exc.details is not None else {})}}
-    except Exception:
+    except Exception as exc:
+        print(json.dumps({'event': 'project_error', 'type': type(exc).__name__,
+            'code': getattr(exc, 'response', {}).get('Error', {}).get('Code', '')}), flush=True)
         return 500, {'error': {'code': 'internal', 'message': 'Project service unavailable'}}

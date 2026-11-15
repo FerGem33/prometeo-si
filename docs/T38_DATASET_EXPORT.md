@@ -1,6 +1,8 @@
 # T38 — Dataset export y ficha reproducible
 
-Implementado localmente; despliegue pospuesto por el dueño junto con AWS.
+Publicado y comprobado el 15-nov después de aplicar la política consolidada.
+URL: https://dursf4nho4zl6.cloudfront.net/#report.
+El primer intento bloqueado por IAM queda como historial en PROGRESS.md.
 En el informe: **Dossier & export → Scope → Download records CSV** y
 **Download datacard JSON**. Ambos usan el mismo alcance. Son descargas separadas
 para evitar que el navegador bloquee descargas múltiples automáticas.
@@ -73,10 +75,10 @@ bash scripts/check_agnostic.sh
 ```
 
 QA de interfaz: `http://127.0.0.1:5174/#report`, Chrome headless/Playwright,
-1280×900 y390×844. Browser plugin no disponible; Playwright instalado solo en
+1280×900 y 390×844. Browser plugin no disponible; Playwright instalado solo en
 `/tmp/prometeo-t38-qa`, sin dependencias nuevas del proyecto. Descargas reales:
 268 registros comparables en CSV y datacard, hash CSV coincidente, 22 fuentes.
-Página correcta, contenido visible, sin overlay ni desborde horizontal a390px.
+Página correcta, contenido visible, sin overlay ni desborde horizontal a390 px.
 Capturas locales: `/tmp/prometeo-t38-desktop.png` y `/tmp/prometeo-t38-mobile.png`.
 
 La primera prueba observó el rechazo CORS esperado de `/analysis` desde
@@ -84,3 +86,16 @@ localhost: producción permite solo CloudFront. La repetición aisló el anális
 con un doble HTTP explícito `mode:template` y no hizo llamadas AWS: consola sin
 errores y ambas descargas verificadas. No demuestra análisis en vivo ni deploy;
 la regresión pública real anterior de `/ask` y `/analysis` está en PROGRESS.md.
+
+## Verificación publicada
+
+`infra/deploy_web.sh` terminó 0 y reutilizó bucket/distribución. Invalidación
+`IAAD71RW5QYWP8IJPPZV0H6U19`: Completed. Los tres JSON de demo publicados
+coinciden byte a byte con los locales después del sync; no se regeneró el pack.
+
+Chrome/Playwright sobre CloudFront, a 1280×900 y 390×844, sin interceptar la API:
+CSV y datacard descargados, 268 registros comparables, 22 fuentes, unidades y
+columnas de resultado presentes, SHA del CSV coincidente con la ficha. Sin
+overlay, errores de consola ni desborde horizontal a 390 px. `/analysis` real
+respondió HTTP 200, mode=ai, tres frases citadas. No es el doble HTTP de la QA
+local. Capturas/scripts/descargas públicos de verificación solo en `/tmp`.

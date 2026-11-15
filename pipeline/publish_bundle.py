@@ -22,7 +22,24 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def build(approval, documents, extraction, metadata, pack_version, lens_version):
+def approve_metadata(value, documents, reviewer, at, authority):
+    require(isinstance(value, dict) and set(value) == {'id', 'documents', 'lens', 'thresholds'}, 'Expected corpus metadata, lens and thresholds')
+    result = copy.deepcopy(value)
+    require(isinstance(result['documents'], dict) and isinstance(result['lens'], dict)
+            and isinstance(result['thresholds'], dict) and isinstance(result['id'], str), 'Invalid corpus metadata types')
+    require(set(result['documents']) == set(documents), 'Review every source identity')
+    for did, entry in result['documents'].items():
+        require(isinstance(entry, dict) and entry.get('sha256') == documents[did]['sha256'] and entry.get('study') and entry.get('title')
+                and isinstance(entry.get('doi'), str) and re.fullmatch(r'10\.\d{4,9}/\S+', entry['doi']), 'Reviewed study/DOI/hash required')
+        require(entry.get('kind') in ('test', 'campaign') and entry.get('kind_note')
+                and review.ingest.verify_citation(entry.get('kind_evidence'), documents)['verified'], 'Reviewed record kind evidence required')
+    result['parsed_documents_sha256'] = review.digest(documents)
+    result['approval'] = {'metadata_sha256': review.digest(result), 'sources': review.snapshot(documents),
+                         'by': reviewer, 'at': at, 'authority': authority}
+    return result
+
+
+def build(approval, documents, extraction, metadata, pack_version, lens_version, reviewed_state=None):
     variables = review.checked_approval(approval, documents)
     require(type(pack_version) is int and pack_version > 0 and type(lens_version) is int and lens_version > 0,
             'Publication versions must be positive integers')
@@ -37,8 +54,26 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
     # is not evidence that the stored values came from those sources.
     expected = review.extract_tables(approval, documents)
     require(all(extraction.get(k) == v for k, v in expected.items()), 'Extraction differs from approved sources')
+    if reviewed_state is not None:
+        spec = importlib.util.spec_from_file_location('review_records', Path(__file__).with_name('review_records.py'))
+        edits = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(edits)
+        edits.checked(reviewed_state, documents)
+        require(reviewed_state['schema_sha256'] == approval['schema_sha256'], 'Record review belongs to another schema')
+        expected = {**expected, 'records': [r for r in reviewed_state['records'] if not r.get('excluded')],
+                    'conflicts': [c for c in reviewed_state['conflicts'] if c['status'] == 'open']}
     require(not expected['conflicts'], 'Resolve conflicts before publication')
-    require(expected['records'], 'No verified table records to publish')
+    contextual = copy.deepcopy(reviewed_state.get('contextual_evidence', [])) if reviewed_state else []
+    for candidate in contextual:
+        citation = {k: v for k, v in candidate['citation'].items() if k != 'verified'}
+        checked = review.verify_paper_candidates({'candidates': [{k: candidate[k] for k in ('variable', 'value', 'unit', 'scope')}
+                                                               | {'citation': citation}]}, approval, documents)
+        context_decision = candidate.get('review', {})
+        require(not checked['rejected'] and candidate.get('status') == 'contextual'
+                and context_decision.get('supports_value') is True and context_decision.get('by') and context_decision.get('at')
+                and context_decision.get('reason') and context_decision.get('scope') and context_decision.get('use_in_records') is False
+                and context_decision.get('propagate_to_tables') is False, 'Explicit source-bound contextual PDF review required')
+    require(expected['records'] or contextual or reviewed_state and reviewed_state.get('claims'), 'No reviewed evidence to publish')
     entries = metadata['documents']
     require(set(entries) == set(documents), 'Review metadata for every source')
     sources, studies, records = [], {}, []
@@ -63,9 +98,12 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
                 'counts': {'records': 0, 'tests': 0, 'publications': 0, 'documents': 0}}
         sources.append({'id': did, 'kind': 'table' if document['kind'] == 'table' else 'paper',
             'name': document['name'], 'study': sid, 'sha256': document['sha256'],
-            'license': entry.get('license'), 'used': document['kind'] == 'table'})
+            'license': entry.get('license'), 'used': document['kind'] == 'table' or any(c['citation']['doc_id'] == did for c in contextual)
+                or bool(reviewed_state and any(c['citation']['doc_id'] == did for c in reviewed_state.get('claims', [])))})
         studies[sid]['counts']['documents'] += 1
-    used = set()
+    used = {c['variable'] for c in contextual}
+    if reviewed_state:
+        used.update(key for claim in reviewed_state.get('claims', []) for key in claim['variables'])
     for item in expected['records']:
         entry = entries[item['doc_id']]
         origins = {}
@@ -77,12 +115,15 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
                 'offset': (p.get('convert') or {}).get('offset'), 'constant': 'scope_rows' in p}
         used.update(item['values'])
         record = {'id': item['id'], 'study': entry['study'], 'label': f'{documents[item["doc_id"]]["name"]}, row {item["row"]}',
-            'kind': entry['kind'], 'values': item['values'], 'source': {'id': item['doc_id'], 'row': item['row']},
+            'kind': 'campaign' if item.get('alternative_of') else entry['kind'], 'values': item['values'], 'source': {'id': item['doc_id'], 'row': item['row']},
             'confidence': 'table', 'quote': None, 'orig': origins, 'citations': item['citations'],
             'flags': ['mapping_uncertain'] if item['flags'] else [], 'flag_notes': item['flags']}
+        for key in ('corrections', 'original_citations', 'correction_history', 'alternative_of', 'review_notes'):
+            if key in item:
+                record[key] = copy.deepcopy(item[key])
         records.append(record)
         studies[entry['study']]['counts']['records'] += 1
-        studies[entry['study']]['counts']['tests'] += int(entry['kind'] == 'test')
+        studies[entry['study']]['counts']['tests'] += int(record['kind'] == 'test')
         studies[entry['study']]['summary']['variables'] = sorted(set(studies[entry['study']]['summary']['variables']) | set(item['values']))
     schema_variables = []
     for key in sorted(used):
@@ -93,10 +134,17 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
             require(type(sigma) in (int, float) and math.isfinite(sigma) and sigma > 0,
                     'Explicit reviewed positive sigma required: '+key)
             bounds = [x for r in records if key in r['values'] for x in r['values'][key]]
+            bounds += [x for c in contextual if c['variable'] == key for x in c['value']]
+            if not bounds:
+                require(isinstance(v.get('range'), list) and len(v['range']) == 2
+                        and all(type(x) in (int, float) and math.isfinite(x) for x in v['range'])
+                        and v['range'][0] <= v['range'][1], 'Unmeasured numeric claim variable needs an explicitly reviewed control range')
+                bounds = v['range']
             value['range'] = [min(bounds), max(bounds)]  # Observed envelope, not a physical limit.
         schema_variables.append(value)
     lens = copy.deepcopy(metadata['lens'])
-    require(lens.get('title') and lens.get('presets') and lens.get('evidence', {}).get('min_studies', 0) > 0,
+    require(lens.get('title') and isinstance(lens.get('presets'), list)
+            and (not records or lens['presets']) and lens.get('evidence', {}).get('min_studies', 0) > 0,
             'Reviewed lens with sourced presets and evidence threshold required')
     require(all(key in used and variables[key]['type'] == 'num' for key in lens['default_axes']),
             'Lens axes must be published numeric variables')
@@ -120,7 +168,10 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
             'tests': sum(r['kind'] == 'test' for r in records), 'campaigns': sum(r['kind'] == 'campaign' for r in records),
             'flagged': sum(bool(r['flags']) for r in records), 'publications': 0, 'documents': len(documents)}},
         'schema': {'variables': schema_variables, 'thresholds': thresholds}, 'sources': sources,
-        'studies': list(studies.values()), 'records': records, 'claims': []}
+        'studies': list(studies.values()), 'records': records,
+        'claims': copy.deepcopy(reviewed_state['claims']) if reviewed_state is not None else [],
+        'contextual_evidence': contextual,
+        'paper_extractions': copy.deepcopy(reviewed_state.get('paper_extractions', [])) if reviewed_state else []}
     mapping = {'version': approval['schema']['version'], 'schema_sha256': approval['schema_sha256'],
         'approved_by': approval['schema']['approved_by'], 'approved_at': approval['schema']['approved_at'],
         'tables': [{'source': did, 'columns': [copy.deepcopy(c) for c in approval['schema']['columns'] if c['doc_id'] == did],
@@ -129,7 +180,7 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
     lens['lens_version'] = lens_version
     receipt = {'stage': 'publication_draft', 'published': False, 'pack_version': pack_version, 'lens_version': lens_version,
         'approval': decision, 'sources': review.snapshot(documents), 'rejected': expected['rejected'],
-        'limitations': ['Table extraction only; PDF conditions require contextual review before inclusion.'],
+        'limitations': ['PDF evidence is contextual only; never propagated to table records. Literal verification is not semantic support.'],
         'files': {name: review.digest(value) for name, value in [('pack', pack), ('lens', lens), ('mapping', mapping)]}}
     return {'pack': pack, 'lens': lens, 'mapping': mapping, 'receipt': receipt}
 

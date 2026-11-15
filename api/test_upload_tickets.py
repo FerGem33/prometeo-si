@@ -230,7 +230,14 @@ class CompleteRepository(Repository):
         self.parent['revision'] += 1
 
     def update_item(self, Key, **kwargs):
-        self.items[Key['PK'], Key['SK']]['dispatch_pending'] = False
+        if Key['PK'].startswith('U#'):
+            self.parent['status'] = 'processing'; self.parent['revision'] += 1
+        else:
+            item = self.items[Key['PK'], Key['SK']]
+            if ':queued' in kwargs['ExpressionAttributeValues']:
+                item.update(dispatch_pending=True, status='queued', worker_until=0)
+            else:
+                item['dispatch_pending'] = False
 
     def query(self, **kwargs):
         return {'Items': list(self.items.values())}
@@ -347,3 +354,14 @@ def test_full_batch_of_30_documents_then_limit():
     with pytest.raises(ApiError) as e:
         service.reserve('owner', 'prj_test', {**DATA, 'name': 'doc30.csv'})
     assert e.value.status == 422 and e.value.details['limit'] == 30 and repo.parent['counts']['documents'] == 30
+
+
+def test_selected_resume_keeps_pending_durable_when_sqs_fails(completed_upload):
+    service, repo, queue, did = completed_upload
+    service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
+    repo.items['P#prj_test', 'D#'+did].update(status='failed', worker_until=0)
+    queue.fail = True
+    with pytest.raises(RuntimeError):
+        service.resume('owner', 'prj_test', {'doc_ids': [did]})
+    assert service.get('prj_test', did)['status'] == 'queued'
+    assert service.get('prj_test', did)['dispatch_pending'] is True
