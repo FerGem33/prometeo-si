@@ -169,6 +169,13 @@ describe("parseJsonTableText", () => {
     expect(res.rows[1].values).toEqual(["gamma", "", "delta"]);
   });
 
+  it("strips UTF-8 BOM cleanly when parsing JSON", () => {
+    const json = "\uFEFF" + JSON.stringify([{ x: 10, y: 20 }]);
+    const res = parseJsonTableText(json);
+    expect(res.headers).toEqual(["x", "y"]);
+    expect(res.rows).toEqual([{ row: 2, values: ["10", "20"] }]);
+  });
+
   it("throws descriptive error on empty, invalid, or non-tabular JSON", () => {
     expect(() => parseJsonTableText("")).toThrow(/empty/i);
     expect(() => parseJsonTableText("{ bad json")).toThrow(/failed to parse json/i);
@@ -274,6 +281,18 @@ describe("parseTabularDocument", () => {
     );
     expect(result.headers).toEqual(["a", "b"]);
     expect(result.rows[0].values).toEqual(["1", "2"]);
+  });
+
+  it("parses JSON bytes with leading UTF-8 BOM", () => {
+    const jsonContent = "\uFEFF" + JSON.stringify([{ alpha: "a", beta: "b" }]);
+    const bytes = new TextEncoder().encode(jsonContent);
+    const result = parseTabularDocument(
+      "data_bom.json",
+      bytes,
+      "application/json"
+    );
+    expect(result.headers).toEqual(["alpha", "beta"]);
+    expect(result.rows[0].values).toEqual(["a", "b"]);
   });
 
   it("rejects unsupported media types like application/pdf", () => {

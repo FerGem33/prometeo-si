@@ -138,10 +138,17 @@ export function splitHeaderUnit(header: string): {
 }
 
 /**
+ * Strips leading UTF-8 BOM character (\uFEFF) if present.
+ */
+export function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
+/**
  * Auto-detects the delimiter (comma, tab, or semicolon) from CSV text.
  */
 export function detectDelimiter(text: string): string {
-  const clean = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const clean = stripBom(text);
 
   let inQuotes = false;
   let commas = 0;
@@ -180,13 +187,9 @@ export function parseCsvText(
   text: string,
   delimiter?: string
 ): { headers: string[]; rows: ParsedRow[] } {
-  if (!text || !text.trim()) {
+  const clean = stripBom(text ?? "");
+  if (!clean.trim()) {
     throw new Error("Empty CSV input: string is empty or contains only whitespace");
-  }
-
-  let clean = text;
-  if (clean.charCodeAt(0) === 0xfeff) {
-    clean = clean.slice(1);
   }
 
   const delim = delimiter ?? detectDelimiter(clean);
@@ -303,13 +306,14 @@ export function parseJsonTableText(text: string): {
   headers: string[];
   rows: ParsedRow[];
 } {
-  if (!text || !text.trim()) {
+  const clean = stripBom(text ?? "").trim();
+  if (!clean) {
     throw new Error("Empty JSON input");
   }
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(clean);
   } catch (err) {
     throw new Error(
       `Failed to parse JSON table: ${
