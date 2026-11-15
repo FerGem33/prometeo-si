@@ -1,0 +1,35 @@
+{
+  "scenario": {
+    "values": {
+      "p": 0.69,
+      "phase": "solid"
+    },
+    "active": [
+      "p",
+      "phase"
+    ]
+  },
+  "levels": [
+    {
+      "variable": "p",
+      "level": "not_studied"
+    }
+  ],
+  "findings": [
+    {
+      "id": "never_measured:p",
+      "code": "never_measured",
+      "variable": "p",
+      "params": {
+        "n": 268
+      },
+      "sources": [
+        "PSI-100",
+        "PSI-25",
+        "PSI-26",
+        "PSI-98",
+        "PSI-99"
+      ]
+    }
+  ]
+}

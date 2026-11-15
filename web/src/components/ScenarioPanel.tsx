@@ -3,6 +3,7 @@ import type { Scenario, VariableEvidence } from "../engine";
 import { useData, Src } from "./ctx";
 import { LEVELS, levelBasis } from "../report/text";
 import { num, scenarioValueText } from "../report/format";
+import { ChangeSummary } from "./ChangeSummary";
 import { matchingPreset, presetScenario } from "../state";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
@@ -75,13 +76,13 @@ export function ScenarioPanel({
           ))}
         </div>
       </div>
-      <table className="scn">
+      <table className="scn" aria-label="Proposed scenario values and evidence">
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Proposed value</th>
-            <th>Evidence level</th>
-            <th>Basis (comparable tests)</th>
+            <th scope="col">Variable</th>
+            <th scope="col">Proposed value</th>
+            <th scope="col">Evidence level</th>
+            <th scope="col">Basis (comparable tests)</th>
           </tr>
         </thead>
         <tbody>
@@ -148,6 +149,7 @@ export function ScenarioPanel({
           })}
         </tbody>
       </table>
+      <ChangeSummary levels={levels} />
       <p className="tblnote">
         Levels are computed by rule on the comparable tests (Methods). {Object.values(LEVELS).map((l) => `${l.icon} ${l.label}`).join(" · ")}. Prometeo compares conditions; it does not predict outcomes.
       </p>

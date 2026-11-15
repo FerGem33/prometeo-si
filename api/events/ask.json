@@ -1,0 +1,117 @@
+{
+  "question": "What if the base used 25% O\u2082 at 0.5 atm with Nomex?",
+  "schema": {
+    "variables": [
+      {
+        "id": "o2",
+        "label": "O\u2082",
+        "long": "Oxygen concentration",
+        "unit": "%",
+        "delta_unit": "percentage points",
+        "type": "num",
+        "sigma": 5,
+        "range": [
+          0,
+          100
+        ],
+        "step": 0.5,
+        "risk": {
+          "direction": "up",
+          "note": "Higher oxygen concentration makes materials much more flammable.",
+          "source": "NASA Space Apps 2026, Flame in Freefall challenge statement"
+        }
+      },
+      {
+        "id": "p",
+        "label": "Pressure",
+        "long": "Ambient pressure",
+        "unit": "atm",
+        "type": "num",
+        "sigma": 0.3,
+        "range": [
+          0,
+          5
+        ],
+        "step": 0.01,
+        "display_units": [
+          {
+            "unit": "psi",
+            "factor": 14.6959
+          },
+          {
+            "unit": "kPa",
+            "factor": 101.325
+          }
+        ]
+      },
+      {
+        "id": "flow",
+        "label": "Flow",
+        "long": "Forced flow velocity",
+        "unit": "cm/s",
+        "type": "num",
+        "sigma": 10,
+        "range": [
+          0,
+          100
+        ],
+        "step": 1
+      },
+      {
+        "id": "g",
+        "label": "Gravity",
+        "long": "Gravity level",
+        "unit": "g",
+        "type": "num",
+        "sigma": 0.05,
+        "range": [
+          0,
+          1
+        ],
+        "step": 0.01
+      },
+      {
+        "id": "material",
+        "label": "Material",
+        "long": "Fuel / material",
+        "type": "cat",
+        "penalty": 2
+      },
+      {
+        "id": "phase",
+        "label": "Fuel phase",
+        "long": "Fuel phase",
+        "type": "cat",
+        "role": "partition"
+      }
+    ],
+    "thresholds": {
+      "grade_a": 1.0,
+      "tolerance": 0.25,
+      "closeness_reach": 3
+    },
+    "flags": {
+      "unit_unconverted": {
+        "variables": [
+          "flow"
+        ],
+        "label": "Unit not converted",
+        "note": "Flow is recorded as a fan setting (voltage / steps), not in cm/s; it is left unconverted and does not enter any distance."
+      },
+      "suspect_value": {
+        "variables": [
+          "o2"
+        ],
+        "label": "Suspect value",
+        "note": "A companion column holds an implausible value (possible transcription error in the source table)."
+      },
+      "mapping_uncertain": {
+        "variables": [
+          "p"
+        ],
+        "label": "Value taken from a table note",
+        "note": "Pressure (~1 atm) is taken from a note in the table, not from a per-test column."
+      }
+    }
+  }
+}
