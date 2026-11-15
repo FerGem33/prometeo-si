@@ -452,9 +452,39 @@ export function ScenarioStep({
     });
   };
 
+  const setVariableLabel = (id: string, newLabel: string) => {
+    setCustomVarState((prev) => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? {}), label: newLabel },
+    }));
+  };
+
+  const readyDocs = docs.filter((d) => d.status === "done");
+  const hasOnlyFailedDocs = scope !== "demo" && docs.length > 0 && readyDocs.length === 0;
+
   // Draft submission
   const handleSubmit = () => {
     const activeVars = variables.filter((v) => v.include);
+    const activeVarIds = new Set(activeVars.map((v) => v.id));
+    const isCustom = scope !== "demo" && readyDocs.length > 0;
+
+    const finalActive = isCustom
+      ? activeVars.map((v) => v.id)
+      : scenario.active.filter((id) => activeVarIds.has(id));
+
+    const finalValues = { ...scenario.values };
+    for (const v of activeVars) {
+      if (finalValues[v.id] === undefined) {
+        if (v.type === "numeric") {
+          const min = v.min ?? 0;
+          const max = v.max ?? min + 100;
+          finalValues[v.id] = v.median ?? (min + max) / 2;
+        } else {
+          finalValues[v.id] = v.mode ?? v.categories?.[0] ?? "";
+        }
+      }
+    }
+
     const built = buildPackFromDocs(
       scope === "demo" ? [] : docs,
       activeVars,
@@ -465,7 +495,21 @@ export function ScenarioStep({
         title: blueprint.title,
       }
     );
-    const compiledLens = buildLensFromBlueprint(blueprint, built.pack, activeVars, lens);
+
+    const finalPack: Pack = {
+      ...built.pack,
+      schema: {
+        ...built.pack.schema,
+        variables: built.pack.schema.variables
+          .filter((pv) => activeVarIds.has(pv.id))
+          .map((pv) => {
+            const match = activeVars.find((v) => v.id === pv.id);
+            return match ? { ...pv, label: match.label, long: match.label } : pv;
+          }),
+      },
+    };
+
+    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens);
 
     const draft: EvaluationDraft = {
       docs,
@@ -474,17 +518,15 @@ export function ScenarioStep({
       presetFlags,
       variables,
       blueprint,
-      pack: built.pack,
+      pack: finalPack,
       lens: compiledLens,
       mapping: built.mapping,
       scenario: {
-        values: scenario.values,
-        active: scenario.active.filter((id) =>
-          variables.some((v) => v.id === id && v.include)
-        ),
+        values: finalValues,
+        active: finalActive,
       },
       extras,
-      isCustomCorpus: scope !== "demo" && docs.length > 0,
+      isCustomCorpus: isCustom,
     };
 
     if (onSubmitDraft) {
@@ -518,8 +560,14 @@ export function ScenarioStep({
               onChange={() => toggleVariableInclude(v.id)}
               aria-label={t("Include {0}", v.label)}
             />
-            <b>{v.label}</b>
           </label>
+          <input
+            type="text"
+            className="vlabel-input"
+            value={v.label}
+            aria-label={t("Edit label for {0}", v.id)}
+            onChange={(e) => setVariableLabel(v.id, e.target.value)}
+          />
           {v.unit && <small>{v.unit}</small>}
           {lv && <LevelTag level={lv.level} />}
           {citation && (
@@ -605,7 +653,13 @@ export function ScenarioStep({
               className={i === step ? "now" : i < step ? "done" : ""}
               aria-current={i === step ? "step" : undefined}
             >
-              <button type="button" onClick={() => setStep(i)}>
+              <button
+                type="button"
+                disabled={hasOnlyFailedDocs && i > 0}
+                onClick={() => {
+                  if (!hasOnlyFailedDocs || i === 0) setStep(i);
+                }}
+              >
                 <i>{i + 1}</i>
                 {t(label)}
               </button>
@@ -715,12 +769,24 @@ export function ScenarioStep({
               </em>
             </div>
 
-            {/* Deduplication notices */}
-            {duplicateNotices.map((name) => (
-              <div key={name} className="doc-notice">
-                {t("Duplicate file omitted: {0}", name)}
+            {/* Warning banner when all uploaded documents failed */}
+            {hasOnlyFailedDocs && (
+              <div className="doc-notice doc-notice-warning" role="alert">
+                <b>{t("All uploaded documents failed to process.")}</b>{" "}
+                <span>
+                  {t(
+                    "Please upload at least one valid document (PDF, CSV, TSV, JSON) or switch corpus scope to Demo to proceed."
+                  )}
+                </span>
               </div>
-            ))}
+            )}
+
+            {/* Deduplication notices */}
+            {duplicateNotices.length > 0 && (
+              <div className="doc-notice doc-notice-info">
+                <b>{t("Duplicate file(s) omitted (matching SHA-256): {0}", duplicateNotices.join(", "))}</b>
+              </div>
+            )}
 
             {/* Uploaded documents card list */}
             {docs.length > 0 && (
@@ -826,7 +892,7 @@ export function ScenarioStep({
               maxLength={4000}
               value={instruction}
               onChange={(e) => handleInstructionChange(e.target.value)}
-              placeholder={t("e.g. Focus on flammability boundaries, highlight oxygen concentration and pressure, prioritize gap analysis")}
+              placeholder={t("e.g. Highlight key parameters, compare studies, and prioritize gap analysis")}
             />
 
             {/* Quick focus presets */}
@@ -1034,6 +1100,7 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
+              disabled={step === 0 && hasOnlyFailedDocs}
               onClick={() => setStep(step + 1)}
             >
               {t("Continue")}
@@ -1042,7 +1109,7 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
-              disabled={includedCount === 0}
+              disabled={includedCount === 0 || hasOnlyFailedDocs}
               onClick={handleSubmit}
             >
               {t("Compare against the evidence")}

@@ -1203,6 +1203,27 @@ body:has(.screen) { background: var(--paper); }
   margin-top: 10px;
 }
 
+.doc-notice-warning {
+  background: var(--accent-wash, rgba(163, 39, 27, 0.18));
+  border: 1.5px solid var(--accent);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.doc-notice-warning b {
+  color: var(--accent);
+}
+
+.doc-notice-info {
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+
+.doc-notice-info b {
+  color: var(--ink);
+}
+
 .scope-selector {
   display: flex;
   flex-direction: column;
@@ -1396,6 +1417,29 @@ body:has(.screen) { background: var(--paper); }
 
 .vrow-excluded {
   opacity: 0.55;
+}
+
+.vlabel-input {
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 2px 6px;
+  max-width: 280px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.vlabel-input:hover {
+  border-color: var(--rule);
+}
+
+.vlabel-input:focus {
+  background: var(--surface-card, var(--paper));
+  border-color: var(--accent);
+  outline: none;
 }
 
 .corpus-summary-badge {

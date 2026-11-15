@@ -85,6 +85,11 @@ export const FLOW: Record<string, string> = {
   "AI analysis completed ({0} proposals found)": "Análisis con IA completado ({0} propuestas encontradas)",
   "AI analysis unavailable (continuing with local extraction)": "Análisis con IA no disponible (continuando con extracción local)",
   "Duplicate file omitted: {0}": "Archivo duplicado omitido: {0}",
+  "Duplicate file(s) omitted (matching SHA-256): {0}": "Archivo(s) duplicado(s) omitido(s) (SHA-256 idéntico): {0}",
+  "All uploaded documents failed to process.": "Todos los documentos subidos fallaron al procesarse.",
+  "Please upload at least one valid document (PDF, CSV, TSV, JSON) or switch corpus scope to Demo to proceed.":
+    "Suba al menos un documento válido (PDF, CSV, TSV, JSON) o cambie el alcance del corpus a Demostración para continuar.",
+  "Edit label for {0}": "Editar etiqueta de {0}",
   rows: "filas",
   pages: "páginas",
   findings: "hallazgos",
@@ -99,6 +104,8 @@ export const FLOW: Record<string, string> = {
     "Describa cómo desea estructurar el panel o seleccione preajustes de enfoque abajo. Prometeo compila un diseño de interfaz adaptado a su corpus.",
   "{0} documents, {1} variables extracted": "{0} documentos, {1} variables extraídas",
   "Interface instructions": "Instrucciones de la interfaz",
+  "e.g. Highlight key parameters, compare studies, and prioritize gap analysis":
+    "ej. Resaltar parámetros clave, comparar estudios y priorizar el análisis de brechas",
   "e.g. Focus on flammability boundaries, highlight oxygen concentration and pressure, prioritize gap analysis":
     "ej. Enfocarse en límites de inflamabilidad, resaltar concentración de oxígeno y presión, priorizar análisis de brechas",
   "Quick focus presets": "Preajustes rápidos de enfoque",
