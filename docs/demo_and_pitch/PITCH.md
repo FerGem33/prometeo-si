@@ -84,9 +84,9 @@ Cada una tiene un número grande o una frase y una línea de contexto. Las notas
 | # | Diapositiva | Momento del guion |
 |---|---|---|
 | 1 | Portada: **Prometeo**, para investigadores | Mientras el equipo se prepara |
-| 2 | **24 investigaciones · 22 tablas · 1,986 registros** | 0:00 |
-| 3 | **0 de 268** pruebas con sólidos registran la presión (la diapositiva de acento) | 0:15 |
-| 4 | **22.2 %**: el O₂ máximo probado; la base lunar usa 30 %, con una figura del rango | 0:50 |
+| 2 | El reto en una línea (el fuego se comporta distinto en el espacio) y **24 investigaciones · 22 tablas · 1,986 experimentos y campañas** | 0:00 |
+| 3 | **0 de 268** experimentos con sólidos registran la presión; la base lunar opera a 10.2 psi, cerca del 70 % de la presión a nivel del mar (la diapositiva de acento) | 0:15 |
+| 4 | **22.2 %**: el O₂ máximo probado; la base lunar usa 30 % y el aire de la Tierra 21 %, con una figura del rango | 0:50 |
 | 5 | **1 clic** de cualquier número a su fuente | 1:05 |
 | 6 | **La IA no calcula**: traduce, calcula el motor, revisa un verificador | 1:20 |
 | 7 | **Versiones**: el conocimiento cambia con cada artículo | 1:50 |
@@ -94,7 +94,8 @@ Cada una tiene un número grande o una frase y una línea de contexto. Las notas
 | 9 | **Datos para modelos predictivos**: CSV y ficha de datos | 2:35, o en preguntas |
 | 10 | Cierre con la frase final, la URL y el QR | 2:45 y durante las preguntas |
 
-Diseño: el estilo del informe (papel `#FDFCF9`, tinta `#1D1C1A`, un solo acento `#A3271B`, EB Garamond y Fira Sans). Sin fondos espaciales: la identidad es la de un paper.
+Diseño: el estilo del informe (papel `#FDFCF9`, tinta `#1D1C1A`, un solo acento `#A3271B`, EB Garamond y Fira Sans). Sin fondos espaciales ni cursivas: la identidad es la de un paper.
+Cada diapositiva tiene que entenderse sin contexto del reto: un juez que la vea de reojo no sabe qué es BASS-II ni por qué importa la presión.
 
 ## 6. Preguntas probables (2 min)
 
@@ -163,6 +164,6 @@ Asignen quién responde cada bloque, para no pisarse. Si no saben algo, lo dicen
 
   | Paso | Depende de | Estado al 15-nov |
   |---|---|---|
-  | 1–4 | Web publicada | En línea (versión anterior). La nueva interfaz espera la revisión del §9.2 del plan |
+  | 1–4 | Web publicada | En línea con la interfaz nueva (publicada el 15-nov a las 9:04). Falta corregir lo del §9.2 del plan: la llama, los textos escritos a mano y el estilo |
   | 5, versiones | T37 y la pantalla de "qué cambió" (T24) | Lógica lista; falta la publicación de versiones |
   | 6, segundo dominio | T37 con el lote de ebullición | En curso |
