@@ -47,7 +47,7 @@ function StudyColumn({ study, variables, records }: { study: Study; variables: V
       <StudyText label="Conditions" value={study.summary.conditions} />
       <p><b>Subjects:</b> {study.summary.subjects.join(", ") || "Not stated in repository metadata"}</p>
       <p><b>Instruments:</b> {study.summary.instruments ?? "Not stated in repository metadata"}</p>
-      <p><RecordLinks records={records} /> · tests and campaign rows shown separately below</p>
+      <div className="study-record-links"><RecordLinks records={records} /><span> · tests and campaign rows shown separately below</span></div>
       <p className="tblnote">{tests.length} individual tests · {campaigns.length} campaign rows</p>
       <table className="study-values">
         <thead><tr><th>Variable · unit</th><th>Observed values in individual tests</th><th>Original columns · source units</th></tr></thead>
