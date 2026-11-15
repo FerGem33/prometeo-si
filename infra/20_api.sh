@@ -21,8 +21,8 @@ trap 'rm -rf "$TMP"' EXIT
 # Entorno de empaquetado aislado: wheels Linux, no dependencias nativas macOS.
 "$PYTHON" -m venv "$TMP/venv"
 "$TMP/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 --implementation cp --python-version 3.12 --target "$TMP/package" -r api/requirements.txt
-cp api/handler.py api/verify.py api/projects.py api/upload_tickets.py api/deletions.py api/schema_review.py "$TMP/package/"
-cp pipeline/ingest.py pipeline/review_extract.py "$TMP/package/"
+cp api/handler.py api/verify.py api/projects.py api/upload_tickets.py api/deletions.py api/schema_review.py api/evidence.py api/ingest_propose.py "$TMP/package/"
+cp pipeline/ingest.py pipeline/review_extract.py pipeline/publish_bundle.py pipeline/review_records.py "$TMP/package/"
 cp web/public/demo/pack.json "$TMP/package/pack.json"
 "$PYTHON" -I - "$TMP" <<'PY'
 from pathlib import Path

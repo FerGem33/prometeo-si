@@ -71,7 +71,7 @@ export type VariableProposal = {
   id: string; // stable slug proposed by the model, editable until approval
   label: string;
   type: "num" | "cat";
-  unit?: string; // num
+  unit?: string | null; // num; categorical units are null
   role?: "partition";
   sigma?: number; // num: scale used in distances; proposed from the spread of the data, editable
   range?: [number, number];
@@ -106,6 +106,7 @@ export type SchemaProposal = {
 
 /** Reviewer decisions, applied in order. The server validates each one and returns the new SchemaProposal. */
 export type SchemaEdit =
+  | { op: "add_variable"; variable: Omit<VariableProposal, "status" | "records" | "merged_from"> }
   | { op: "set_status"; target: "variable" | "column"; id: string; doc_id?: string; status: ReviewStatus; note?: string }
   | { op: "rename"; variable: string; label: string }
   | { op: "merge"; into: string; from: string[] }
@@ -128,6 +129,16 @@ export type RecordDraft = {
   /** set when a reviewer changed a value: the original value and its citation are kept */
   corrections?: Record<string, { from: [number, number] | string | null; by: string; at: string; reason: string }>;
 };
+
+/** Optional reviewed identities/lens sent with schema approval; server binds actor and hashes. */
+export type CorpusMetadata = {
+  id: string;
+  documents: Record<string, { sha256: string; study: string; title: string; doi: string;
+    kind: "test" | "campaign"; kind_note: string; kind_evidence: Citation; license?: string | null }>;
+  lens: Lens;
+  thresholds: Pack["schema"]["thresholds"];
+};
+export type SchemaApprovalRequest = { version: number; metadata?: CorpusMetadata; review_authority?: string };
 
 export type Conflict = {
   id: string;

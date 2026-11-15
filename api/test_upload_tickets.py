@@ -230,7 +230,14 @@ class CompleteRepository(Repository):
         self.parent['revision'] += 1
 
     def update_item(self, Key, **kwargs):
-        self.items[Key['PK'], Key['SK']]['dispatch_pending'] = False
+        if Key['PK'].startswith('U#'):
+            self.parent['status'] = 'processing'; self.parent['revision'] += 1
+        else:
+            item = self.items[Key['PK'], Key['SK']]
+            if ':queued' in kwargs['ExpressionAttributeValues']:
+                item.update(dispatch_pending=True, status='queued', worker_until=0)
+            else:
+                item['dispatch_pending'] = False
 
     def query(self, **kwargs):
         return {'Items': list(self.items.values())}

@@ -90,6 +90,44 @@ class Schemas:
     def metadata(self, pid, version):
         return self.table.get_item(Key={'PK': 'P#'+pid, 'SK': 'S#'+str(version)}, ConsistentRead=True).get('Item')
 
+    def diagnostics(self, uid, pid):
+        self.projects.get(uid, pid)
+        from boto3.dynamodb.conditions import Key
+        items, start = [], None
+        while True:
+            args = {'KeyConditionExpression': Key('PK').eq('P#'+pid) & Key('SK').begins_with('D#'), 'ConsistentRead': True}
+            if start: args['ExclusiveStartKey'] = start
+            response = self.table.query(**args)
+            items.extend(response.get('Items', [])); start = response.get('LastEvaluatedKey')
+            if not start: break
+        results = []
+        for item in items:
+            prefix = f'u/{uid}/p/{pid}/text/{item["id"]}/'
+            entry = {'doc_id': item['id'], 'name': item['name'], 'status': item['status'],
+                     'stage': item['stage'], 'reason': item.get('failure_reason'), 'responses': []}
+            listed = self.s3.list_objects_v2(Bucket=self.bucket, Prefix=prefix)
+            if listed.get('IsTruncated'): fail(409, 'conflict', 'Diagnostic listing exceeds expected call budget')
+            raw_keys = [o['Key'] for o in listed.get('Contents', []) if o['Key'].endswith('-raw.json')]
+            parsed_key = prefix+'parsed.json'
+            doc = self.load(parsed_key)['document'] if any(o['Key'] == parsed_key for o in listed.get('Contents', [])) else None
+            try:
+                from . import ingest_propose as adapter
+            except ImportError:
+                import ingest_propose as adapter
+            for key in raw_keys:
+                raw = self.load(key)
+                info = {'request': key.rsplit('/', 1)[-1], 'stop_reason': raw.get('stop_reason'), 'usage': raw.get('usage', {})}
+                if doc:
+                    try:
+                        payload = adapter.parse_response(''.join(b['text'] for b in raw['content'] if b['type'] == 'text'))
+                        review.ingest.validate_proposal(payload, {doc['id']: doc})
+                        info['validation'] = 'valid'
+                    except (ValueError, KeyError, TypeError) as exc:
+                        info['validation'] = type(exc).__name__+': '+str(exc)[:400]
+                entry['responses'].append(info)
+            results.append(entry)
+        return {'items': results, 'note': 'Owner-only processing diagnostics. No signed URLs or raw source/model text.'}
+
     def current(self, uid, pid):
         parent = self.projects.get(uid, pid)
         documents, proposals = self.corpus(uid, pid)
@@ -149,6 +187,14 @@ class Schemas:
         if data['version'] != schema['version']:
             fail(409, 'conflict', 'Stale schema version')
         try:
+            review.require(isinstance(data['edits'], list) and bool(data['edits']), 'Nonempty edits required')
+            for edit in data['edits']:
+                review.require(isinstance(edit, dict), 'Invalid edit')
+                if edit.get('op') == 'add_variable':
+                    variable = edit.get('variable')
+                    review.require(isinstance(variable, dict), 'Invalid reviewed variable')
+                    for citation in variable.get('evidence', []):
+                        review.require(review.ingest.verify_citation(citation, documents)['verified'], 'Reviewed variable citation rejected')
             edited = review.edit_schema(schema, data['edits'], data['version'])
         except ValueError as exc:
             fail(400, 'invalid_request', str(exc))
@@ -158,7 +204,7 @@ class Schemas:
         return edited
 
     def approve(self, uid, pid, data):
-        if (not isinstance(data, dict) or set(data)-{'version', 'review_authority'} or 'version' not in data
+        if (not isinstance(data, dict) or set(data)-{'version', 'review_authority', 'metadata'} or 'version' not in data
                 or type(data['version']) is not int):
             fail(400, 'invalid_request', 'Expected schema version')
         value, documents = self.current(uid, pid)
@@ -173,6 +219,20 @@ class Schemas:
         except ValueError as exc:
             fail(409, 'conflict', str(exc))
         approved['parsed_sha256'] = review.digest(documents)
+        if 'metadata' in data:
+            try:
+                try:
+                    from pipeline import publish_bundle as publisher
+                except ImportError:
+                    import publish_bundle as publisher
+                approved['corpus_metadata'] = publisher.approve_metadata(data['metadata'], documents, uid,
+                    approved['schema']['approved_at'], data.get('review_authority', 'Authenticated project owner'))
+                # Validate the prospective bundle now, before committing a metadata approval.
+                draft = review.extract_tables(approved, documents)
+                if draft['records'] and not draft['conflicts']:
+                    publisher.build(approved, documents, draft, approved['corpus_metadata'], 1, 1)
+            except (ValueError, KeyError, TypeError) as exc:
+                fail(400, 'invalid_request', 'Metadata review: '+str(exc))
         if 'review_authority' in data:
             note = data['review_authority']
             if not isinstance(note, str) or not 1 <= len(note) <= 1000:

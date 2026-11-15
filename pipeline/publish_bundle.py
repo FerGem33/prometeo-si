@@ -22,7 +22,24 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def build(approval, documents, extraction, metadata, pack_version, lens_version):
+def approve_metadata(value, documents, reviewer, at, authority):
+    require(isinstance(value, dict) and set(value) == {'id', 'documents', 'lens', 'thresholds'}, 'Expected corpus metadata, lens and thresholds')
+    result = copy.deepcopy(value)
+    require(isinstance(result['documents'], dict) and isinstance(result['lens'], dict)
+            and isinstance(result['thresholds'], dict) and isinstance(result['id'], str), 'Invalid corpus metadata types')
+    require(set(result['documents']) == set(documents), 'Review every source identity')
+    for did, entry in result['documents'].items():
+        require(isinstance(entry, dict) and entry.get('sha256') == documents[did]['sha256'] and entry.get('study') and entry.get('title')
+                and isinstance(entry.get('doi'), str) and re.fullmatch(r'10\.\d{4,9}/\S+', entry['doi']), 'Reviewed study/DOI/hash required')
+        require(entry.get('kind') in ('test', 'campaign') and entry.get('kind_note')
+                and review.ingest.verify_citation(entry.get('kind_evidence'), documents)['verified'], 'Reviewed record kind evidence required')
+    result['parsed_documents_sha256'] = review.digest(documents)
+    result['approval'] = {'metadata_sha256': review.digest(result), 'sources': review.snapshot(documents),
+                         'by': reviewer, 'at': at, 'authority': authority}
+    return result
+
+
+def build(approval, documents, extraction, metadata, pack_version, lens_version, reviewed_state=None):
     variables = review.checked_approval(approval, documents)
     require(type(pack_version) is int and pack_version > 0 and type(lens_version) is int and lens_version > 0,
             'Publication versions must be positive integers')
@@ -37,6 +54,14 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
     # is not evidence that the stored values came from those sources.
     expected = review.extract_tables(approval, documents)
     require(all(extraction.get(k) == v for k, v in expected.items()), 'Extraction differs from approved sources')
+    if reviewed_state is not None:
+        spec = importlib.util.spec_from_file_location('review_records', Path(__file__).with_name('review_records.py'))
+        edits = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(edits)
+        edits.checked(reviewed_state, documents)
+        require(reviewed_state['schema_sha256'] == approval['schema_sha256'], 'Record review belongs to another schema')
+        expected = {**expected, 'records': [r for r in reviewed_state['records'] if not r.get('excluded')],
+                    'conflicts': [c for c in reviewed_state['conflicts'] if c['status'] == 'open']}
     require(not expected['conflicts'], 'Resolve conflicts before publication')
     require(expected['records'], 'No verified table records to publish')
     entries = metadata['documents']
@@ -77,12 +102,15 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
                 'offset': (p.get('convert') or {}).get('offset'), 'constant': 'scope_rows' in p}
         used.update(item['values'])
         record = {'id': item['id'], 'study': entry['study'], 'label': f'{documents[item["doc_id"]]["name"]}, row {item["row"]}',
-            'kind': entry['kind'], 'values': item['values'], 'source': {'id': item['doc_id'], 'row': item['row']},
+            'kind': 'campaign' if item.get('alternative_of') else entry['kind'], 'values': item['values'], 'source': {'id': item['doc_id'], 'row': item['row']},
             'confidence': 'table', 'quote': None, 'orig': origins, 'citations': item['citations'],
             'flags': ['mapping_uncertain'] if item['flags'] else [], 'flag_notes': item['flags']}
+        for key in ('corrections', 'original_citations', 'correction_history', 'alternative_of', 'review_notes'):
+            if key in item:
+                record[key] = copy.deepcopy(item[key])
         records.append(record)
         studies[entry['study']]['counts']['records'] += 1
-        studies[entry['study']]['counts']['tests'] += int(entry['kind'] == 'test')
+        studies[entry['study']]['counts']['tests'] += int(record['kind'] == 'test')
         studies[entry['study']]['summary']['variables'] = sorted(set(studies[entry['study']]['summary']['variables']) | set(item['values']))
     schema_variables = []
     for key in sorted(used):
@@ -120,7 +148,8 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version)
             'tests': sum(r['kind'] == 'test' for r in records), 'campaigns': sum(r['kind'] == 'campaign' for r in records),
             'flagged': sum(bool(r['flags']) for r in records), 'publications': 0, 'documents': len(documents)}},
         'schema': {'variables': schema_variables, 'thresholds': thresholds}, 'sources': sources,
-        'studies': list(studies.values()), 'records': records, 'claims': []}
+        'studies': list(studies.values()), 'records': records,
+        'claims': copy.deepcopy(reviewed_state['claims']) if reviewed_state is not None else []}
     mapping = {'version': approval['schema']['version'], 'schema_sha256': approval['schema_sha256'],
         'approved_by': approval['schema']['approved_by'], 'approved_at': approval['schema']['approved_at'],
         'tables': [{'source': did, 'columns': [copy.deepcopy(c) for c in approval['schema']['columns'] if c['doc_id'] == did],

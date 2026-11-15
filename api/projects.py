@@ -12,6 +12,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from functools import lru_cache
+from urllib.parse import unquote
 
 
 class ApiError(Exception):
@@ -197,6 +198,39 @@ def handle(event):
                 headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
                 return 201, store().create(uid, body(event), headers.get('idempotency-key'))
         else:
+            diagnostic_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/diagnostics', path)
+            if diagnostic_path and method == 'GET':
+                try:
+                    from .schema_review import service as schema_service
+                except ImportError:
+                    from schema_review import service as schema_service
+                return 200, schema_service(store()).diagnostics(uid, diagnostic_path[1])
+            evidence_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/(records|conflicts|publish|pack|synthesis)(?:/([^/]+)(/resolve)?)?', path)
+            if evidence_path:
+                try:
+                    from .evidence import service as evidence_service
+                except ImportError:
+                    from evidence import service as evidence_service
+                evidence = evidence_service(store())
+                pid, kind, identifier, resolution = evidence_path.groups()
+                identifier = unquote(identifier) if identifier else None
+                query = event.get('queryStringParameters') or {}
+                if kind == 'records' and method == 'GET' and not identifier:
+                    return 200, evidence.list_records(uid, pid, query)
+                if kind == 'records' and identifier and method in ('PATCH', 'DELETE'):
+                    result = evidence.change(uid, pid, identifier, body(event), exclude=method == 'DELETE')
+                    return (204, {}) if method == 'DELETE' else (200, result)
+                if kind == 'conflicts' and method == 'GET' and not identifier:
+                    return 200, evidence.conflicts(uid, pid, query)
+                if kind == 'conflicts' and identifier and resolution and method == 'POST':
+                    return 200, evidence.resolve(uid, pid, identifier, body(event))
+                if kind == 'publish' and method == 'POST' and not identifier:
+                    return 200, evidence.publish(uid, pid, body(event) if event.get('body') else {})
+                if kind == 'pack' and method == 'GET' and not identifier:
+                    return 200, evidence.files(uid, pid)
+                if kind == 'synthesis' and method == 'POST' and not identifier:
+                    return 200, evidence.synthesis(uid, pid, body(event))
+                fail(405, 'method_not_allowed', 'Evidence method not available')
             schema_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/schema(/approve)?', path)
             if schema_path:
                 try:
@@ -235,7 +269,7 @@ def handle(event):
                 if jobs and method == 'GET':
                     return 200, uploads.jobs(uid, pid)
                 if resume and method == 'POST':
-                    return 202, uploads.resume(uid, pid)
+                    return 202, uploads.resume(uid, pid, body(event) if event.get('body') else {})
                 if completed and method == 'POST':
                     return 200, uploads.complete(uid, pid, completed[2], body(event))
                 if documents and method == 'POST':

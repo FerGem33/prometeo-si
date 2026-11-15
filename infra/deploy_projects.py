@@ -48,10 +48,13 @@ def configure(root, env, call=aws):
         raise ValueError('Lambda role differs from outputs')
     upload_env = documents['projects-env-merge.json']
     if upload_env.get('UPLOADS_ENABLED') == 'true':
+        rules = [{'AllowedOrigins': [env['CF_URL']], 'AllowedMethods': ['PUT'],
+                  'AllowedHeaders': ['content-type', 'if-none-match', 'x-amz-checksum-sha256', 'x-amz-server-side-encryption'],
+                  'MaxAgeSeconds': 300}]
+        if any(r['RouteKey'] == 'GET /projects/{id}/pack' for r in documents['projects-routes.json']):
+            rules.append({'AllowedOrigins': [env['CF_URL']], 'AllowedMethods': ['GET'], 'MaxAgeSeconds': 300})
         call('s3api', 'put-bucket-cors', '--bucket', upload_env['CORPUS_BUCKET'],
-             '--cors-configuration', json.dumps({'CORSRules': [{'AllowedOrigins': [env['CF_URL']],
-                 'AllowedMethods': ['PUT'], 'AllowedHeaders': ['content-type', 'if-none-match',
-                 'x-amz-checksum-sha256', 'x-amz-server-side-encryption'], 'MaxAgeSeconds': 300}]}))
+             '--cors-configuration', json.dumps({'CORSRules': rules}))
     integrations = call('apigatewayv2', 'get-integrations', '--api-id', api_id).get('Items', [])
     matches = [i for i in integrations if i.get('IntegrationUri') == function and i.get('PayloadFormatVersion') == '2.0']
     if len(matches) != 1:
@@ -133,10 +136,12 @@ def main():
     parser.add_argument('--uploads', action='store_true', help='Enable upload/complete stage after D3 approval')
     parser.add_argument('--schema', action='store_true', help='Configure versioned schema review and approval')
     parser.add_argument('--originals', action='store_true', help='Configure short-lived original document URLs')
+    parser.add_argument('--evidence', action='store_true', help='Configure persistent record reviews and publication')
     args = parser.parse_args()
     subprocess.run([sys.executable, '-I', str(Path(__file__).with_name('prepare_projects.py')),
                     '--output-dir', args.output_dir, *(['--uploads'] if args.uploads else []),
-                    *(['--schema'] if args.schema else []), *(['--originals'] if args.originals else [])], check=True)
+                    *(['--schema'] if args.schema else []), *(['--originals'] if args.originals else []),
+                    *(['--evidence'] if args.evidence else [])], check=True)
     if not args.apply:
         print('Prepare only: no AWS calls. Review artifacts and T30 before --apply.')
         return

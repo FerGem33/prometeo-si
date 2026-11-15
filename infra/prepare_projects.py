@@ -12,11 +12,14 @@ def main():
     parser.add_argument('--uploads', action='store_true', help='Include approved D3 upload routes/configuration')
     parser.add_argument('--schema', action='store_true', help='Include T35 schema review routes (requires --uploads)')
     parser.add_argument('--originals', action='store_true', help='Include T36 short-lived original document URLs (requires --uploads)')
+    parser.add_argument('--evidence', action='store_true', help='Include persistent records and publication (requires --schema)')
     args = parser.parse_args()
     if args.schema and not args.uploads:
         parser.error('--schema requires --uploads')
     if args.originals and not args.uploads:
         parser.error('--originals requires --uploads')
+    if args.evidence and not args.schema:
+        parser.error('--evidence requires --schema')
     table = os.environ['DATA_TABLE_ARN']
     pool = os.environ['USER_POOL_ID']
     client = os.environ['USER_POOL_CLIENT_ID']
@@ -68,6 +71,16 @@ def main():
             'GET /projects/{id}/schema', 'PATCH /projects/{id}/schema', 'POST /projects/{id}/schema/approve'))
     if args.originals:
         documents['projects-routes.json'].append({'RouteKey': 'POST /projects/{id}/documents/{doc_id}/url', 'AuthorizationType': 'JWT'})
+    if args.evidence:
+        documents['projects-routes.json'].append({'RouteKey': 'GET /projects/{id}/diagnostics', 'AuthorizationType': 'JWT'})
+        documents['projects-policy.json']['Statement'].append({'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:PutObject'],
+            'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/pack/*'})
+        documents['projects-policy.json']['Statement'].append({'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:PutObject'],
+            'Resource': f'arn:aws:s3:::{bucket}/u/*/p/*/text/reviews/*'})
+        documents['projects-routes.json'].extend({'RouteKey': key, 'AuthorizationType': 'JWT'} for key in (
+            'GET /projects/{id}/records', 'PATCH /projects/{id}/records/{rid}', 'DELETE /projects/{id}/records/{rid}',
+            'GET /projects/{id}/conflicts', 'POST /projects/{id}/conflicts/{cid}/resolve',
+            'POST /projects/{id}/publish', 'GET /projects/{id}/pack', 'POST /projects/{id}/synthesis'))
     for filename, value in documents.items():
         path = output / filename
         encoded = json.dumps(value, indent=2) + '\n'

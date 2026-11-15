@@ -144,6 +144,19 @@ def test_changed_parsed_values_invalidate_review_even_with_unchanged_source_hash
     assert exc.value.status == 409
 
 
+def test_manual_variable_requires_a_real_source_citation():
+    service = Memory()
+    schema = Schemas.get(service, 'owner', PID)
+    variable = {'id': 'manual_value', 'label': 'Reviewed value', 'type': 'num', 'unit': 'm', 'sigma': 1,
+                'evidence': [{'kind': 'table', 'doc_id': DID, 'row': 2, 'column': 'value', 'text': 'invented'}]}
+    with pytest.raises(ApiError) as exc:
+        service.patch('owner', PID, {'version': schema['version'], 'edits': [{'op': 'add_variable', 'variable': variable}]})
+    assert exc.value.status == 400
+    variable['evidence'][0]['text'] = '1'
+    result = service.patch('owner', PID, {'version': schema['version'], 'edits': [{'op': 'add_variable', 'variable': variable}]})
+    assert result['variables'][-1]['status'] == 'proposed'
+
+
 def test_conversion_required_and_constants_with_unreviewed_scope_fail():
     service = Memory()
     changed = prepare(service)

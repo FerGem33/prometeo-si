@@ -29,6 +29,16 @@ If a source unit differs from its target unit, still declare the measured variab
 target unit and literal source evidence; keep the source unit on the column and convert null
 for the human reviewer. A unit difference must not leave a dangling variable reference.
 Do not use IDs outside the vocabulary. Other columns must have variable null.
+For a measurement column with units, ranges, N/A or missing cells do NOT make it categorical:
+keep type num and copy its explicit source unit. A categorical column must have unit null
+in BOTH variables and columns; convert is always null.
+For PDF evidence use EXACTLY kind, doc_id, page, quote. Never add verified, text, row,
+column, unit, scope or explanatory keys to a paper citation. The page is the provided
+JSON page number, not a printed article page number. Quote one short exact line or
+substring (about 10-120 characters), retaining punctuation and characters; do not
+paraphrase, repair hyphenation or combine noncontiguous text. If uncertain, omit
+the variable. For papers prefer at most six well-supported variables; variables=[]
+is valid when a document provides no explicit measurable evidence.
 Before answering, check that every non-null column variable is declared in variables,
 categorical units are null, and table evidence has exactly kind/doc_id/row/column/text
 copied from a sample (no extra keys). Never add prose before or after the JSON.

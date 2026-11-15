@@ -31,8 +31,9 @@ async function main() {
     uploadOptions.every(option => ['--cleanup', '--originals'].includes(option)) && new Set(uploadOptions).size === uploadOptions.length;
   // batch <folder> [check_batch_live.py options]: one session (user A) uploads a whole folder (T34/T37).
   const batch = mode === 'batch' && process.argv.length >= 4;
-  if (!['register', 'confirm', 'login', 'ab', 'uploads', 'batch'].includes(mode)
-      || (mode === 'uploads' ? !validUploads : process.argv.length !== 3 && !batch)) {
+  const evidence = mode === 'evidence';
+  if (!['register', 'confirm', 'login', 'ab', 'uploads', 'batch', 'evidence'].includes(mode)
+      || (mode === 'uploads' ? !validUploads : process.argv.length !== 3 && !batch && !evidence)) {
     throw new Error('Usage: node tools/cognito/cli.mjs register|confirm|login|ab|uploads <source> [--cleanup] [--originals]|batch <folder> [--corrupt] [--limit N]');
   }
   const config = {poolId: process.env.USER_POOL_ID, clientId: process.env.USER_POOL_CLIENT_ID};
@@ -61,17 +62,18 @@ async function main() {
       console.log('SRP login succeeded. Token kept only in memory and discarded.');
     } else {
       const tokens = [];
-      for (const label of batch ? ['A'] : ['A', 'B']) {
+      for (const label of batch || evidence ? ['A'] : ['A', 'B']) {
         const c = make();
         const email = (await prompt(`User ${label} email: `)).trim();
         let password = await prompt(`User ${label} password (hidden): `, true);
         tokens.push(await c.login(email, password));
         password = '';
       }
-      const script = fileURLToPath(new URL({uploads: '../../api/check_uploads_live.py', batch: '../../api/check_batch_live.py'}[mode]
+      const script = fileURLToPath(new URL({uploads: '../../api/check_uploads_live.py', batch: '../../api/check_batch_live.py', evidence: '../../api/check_evidence_live.py'}[mode]
         ?? '../../api/check_projects_live.py', import.meta.url));
       const checks = mode === 'uploads' ? ['--source', process.argv[3], ...uploadOptions]
         : batch ? ['--dir', process.argv[3], ...process.argv.slice(4)]
+        : evidence ? process.argv.slice(3)
         : ['--output', '/tmp/prometeo-t33-ab.json'];
       const status = await new Promise((resolve, reject) => {
         const child = spawn(process.env.T33_PYTHON || 'python3.12', ['-I', script, ...checks], {

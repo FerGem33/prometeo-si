@@ -118,6 +118,13 @@ def test_hash_mismatch_fails_before_model(worker):
     assert worker.table.items['P#'+PID, 'D#'+DID]['sha256'] is None
 
 
+def test_deleted_project_message_is_acknowledged_without_model_or_dlq_retry(worker):
+    worker.table.items.pop(('U#owner', 'P#'+PID))
+    worker.table.items.pop(('P#'+PID, 'D#'+DID))
+    worker.process(message(), 'retired-project')
+    assert worker.client.calls == 0
+
+
 def test_resume_successful_model_after_checkpoint_failure(worker, monkeypatch):
     original = worker.update
     def fail_last(key, fields, lease=None):
