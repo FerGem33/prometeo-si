@@ -12,3 +12,6 @@ __pycache__
 tools/psi/data/datos_psi/*
 tools/psi/data/datos_psi
 
+
+## Corpus de PSI descargados (D9: fuera de git)
+tools/psi/data/

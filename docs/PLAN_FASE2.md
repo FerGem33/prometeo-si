@@ -75,15 +75,15 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 | # | Decisión | Recomendación | Bloquea |
 |---|---|---|---|
 | D1 | ¿Se levanta la restricción de `AGENTS.md` §8 sobre Cognito, SQS y DynamoDB? | **Decidido (15-nov): sí.** `AGENTS.md` §8 actualizado: solo por scripts idempotentes de `infra/` y con permisos acotados. | — |
-| D2 | ¿Scripts de AWS CLI o plantilla SAM? | Mantener los scripts: ya funcionan y el equipo los conoce. | Bloque C |
+| D2 | ¿Scripts de AWS CLI o plantilla SAM? | **Decidido (15-nov): scripts de AWS CLI.** Ya funcionan de T08 a T34 (`DECISIONES_CIERRE.md` §7). | — |
 | D3 | Límites del corpus: MB por archivo, páginas por PDF, documentos por lote. | **Decidido por el dueño (15-nov):** 20 MB (20.000.000 bytes) por archivo, 60 páginas por PDF y 30 documentos por proyecto. Revisó el escenario orientativo de costo en `T33_CARGAS_PREPARACION.md`; no es tope de gasto ni tarifa efectiva comprobada. Implementación/enforcement y medición del worker siguen pendientes. | — |
-| D4 | Clases destino y umbrales de la ficha de ML (CU-24). | Los tres veredictos del caso de uso con umbrales visibles y editables en `lens`. | T27 |
-| D5 | ¿Entran "respaldado" y "refutado" en el motor? Exigen una variable de resultado con sentido definido. | No por ahora: las tablas de BASS y BASS-II no traen resultado y 12 investigaciones lo traen en formatos distintos. Mantener los cuatro niveles de cobertura. | — |
+| D4 | Clases destino y umbrales de la ficha de ML (CU-24). | **Decidido (15-nov):** cuatro veredictos (ready / usable with cleaning / insufficient / external only) con umbrales de partida en `lens.ml_thresholds`, visibles y editables; división por estudio (`DECISIONES_CIERRE.md` §2). | — |
+| D5 | ¿Entran "respaldado" y "refutado" en el motor? Exigen una variable de resultado con sentido definido. | **Decidido (15-nov): no por ahora.** Las tablas de BASS y BASS-II no traen resultado y 12 investigaciones lo traen en formatos distintos. Se mantienen los cuatro niveles de cobertura. | — |
 | D6 | ¿Se migra a Haiku 5.5? | **Decidido por el dueño (15-nov): no.** Conservar `us.anthropic.claude-haiku-4-5-20251001-v1:0` y SDK 2.8.0; Haiku 4.5 cumple las comprobaciones y tiene acceso en esta cuenta. | — |
 | D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | **Decidido por el dueño (15-nov):** Daniel Sun aprobó `docs/D7_DECISIONES.md` sin cambios. Se mantiene el mapping vigente en las 79 filas: las 18 diferencias de variable son errores del modelo y las 61 de unidad no afectan la asignación. El pack no cambia. | — |
-| D8 | ¿Qué se hace con `nasa2genui`? | Comparar en una sesión y traer a `main` solo piezas concretas (figuras), no la migración a Next.js. | — |
+| D8 | ¿Qué se hace con `nasa2genui`? | **Decidido (15-nov):** traer solo piezas concretas (figuras), sin migrar a Next.js. Lo ejecuta el equipo de interfaz. | — |
 | D9 | ¿`data/psi` vuelve al repo? | **Decidido (15-nov): no.** Los datos se quedan fuera de git. El pack versionado (`web/public/demo/`) es la fuente para la web y la API; para regenerarlo hace falta una descarga local de PSI (T18). | — |
-| D10 | ¿Segundo dominio para la prueba agnóstica y quién consigue su corpus? | Uno con tablas públicas y pocas variables. | T37 |
+| D10 | ¿Segundo dominio para la prueba agnóstica y quién consigue su corpus? | **Decidido (15-nov):** ebullición y cambio de fase en microgravedad (PSI, Fluid Physics). `tools/psi/corpus_dominio.py` genera un lote de 23 documentos (10 tablas, 13 PDF) que cumple D3; manifiesto en `docs/t37/manifest_ebullicion.csv`. Responsable del corpus: Daniel Sun (`DECISIONES_CIERRE.md` §3). | — |
 | D11 | ¿En qué rama se trabaja? | **Decidido (14-nov):** motor, API, infra y contratos en `main`; la interfaz en `frontend`, que su equipo fusiona cuando quiera. Reparto en `CONTRATOS_FASE2.md` §1. | — |
 
 ## 5. Tareas
@@ -171,7 +171,7 @@ No toca AWS. Todo el estado nuevo vive en el navegador y se presenta como local.
 
 Es la parte que vuelve a Prometeo agnóstico de verdad. Sigue la arquitectura de `docs/Prometeo — Arquitectura final del sistema MVP.md` con scripts de AWS CLI. El pack que produce cumple el mismo contrato `prometeo.pack/1` y entra a la misma interfaz y al mismo motor.
 
-**T30 — Contratos y decisiones.** Propuesta escrita: `CONTRATOS_FASE2.md` §5, tipos en `web/src/contracts/backend.ts` y ejemplos en `docs/fixtures/fase2/`. Falta que una persona la apruebe y cierre D1–D3. *Verificación:* aprobación anotada en `PROGRESS.md`.
+**T30 — Contratos y decisiones.** · **hecha (15-nov)**. `CONTRATOS_FASE2.md` §5 aprobado por el dueño junto con §5.10 (exportación para ML); D1–D3 cerrados. *Verificación:* aprobación anotada en `PROGRESS.md` y en `docs/DECISIONES_CIERRE.md`.
 
 **T31 — Infra de datos.** · script escrito; falta ejecutarlo con perfil `prometeo`
 - `infra/30_data.sh` crea lo que falta y nunca borra: tabla DynamoDB `prometeo-hack-data` (PK/SK de `CONTRATOS_FASE2.md` §5.9, bajo demanda), bucket privado `prometeo-hack-corpus-<cuenta>` (cifrado, bloqueo público, CORS solo `PUT` desde la web, limpieza de subidas incompletas), cola `prometeo-hack-ingest` con DLQ tras 3 intentos y visibilidad de 960 s, y Cognito `prometeo-hack-users` con cliente público `prometeo-hack-web` (correo, SRP, sin secreto).
@@ -190,6 +190,10 @@ Es la parte que vuelve a Prometeo agnóstico de verdad. Sigue la arquitectura de
 **T36 — Correcciones, conflictos y relaciones declaradas (CU-08, CU-18, CU-13).** Corregir un valor conservando la cita original; resolver conflictos entre fuentes; relaciones y huecos afirmados por autores como `claims[]` con cita; abrir el PDF en la página de la cita. *Verificación:* un valor corregido muestra el original y quién lo cambió; un hueco declarado aparece junto a la variable.
 
 **T37 — Publicar y probar otro dominio (CU-12).** Generar pack y lens del proyecto, abrirlo en la interfaz existente y sintetizar documentos seleccionados con cita. Repetir con el segundo dominio (D10). *Verificación:* el mismo motor, sin cambios, produce el informe del segundo corpus; `check_agnostic.sh` en verde.
+
+**T38 — Exportación para entrenar modelos (CU-25)** · motor + interfaz · contrato §5.10
+- Extiende el CSV armonizado: unidad en la cabecera, `doi`, `group_id` por estudio, valor original y corregido, y `datacard.json` con versiones, conversiones y la ficha D4. Sin ruta de servidor.
+- *Verificación:* Vitest con el pack real: cabeceras con unidad, un `group_id` por estudio, DOI en cada fila y `datacard.json` válido; el mismo código con el pack de T37.
 
 ### Posterior
 

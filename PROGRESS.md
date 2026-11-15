@@ -58,7 +58,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T19 | Análisis con más contenido | fase 2 · A | hecha | Claude · ferlr | `3720861`, `07231c3`, `0813d37` | `/analysis` real devuelve `mode: ai` y tres oraciones citadas para el preset lunar. |
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
-| T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y cerrar D3 (límites/costos). D1/D2 decididas |
+| T30 | Contratos del bloque C | fase 2 · C | hecha | Claude · ferlr; Claude · Daniel | esta entrega | Dueño aprobó §5 completo el 15-nov y se añadió §5.10 (exportación para ML → T38). D1–D5, D7, D8 y D10 cerradas; ver `docs/DECISIONES_CIERRE.md` |
 | T31 | Infra de datos del bloque C | fase 2 · C | hecha | stringbuilder | este commit | Dos corridas reales con rol SSO `Prometeo-T31`: primera completó Cognito y outputs; segunda marcó todo existente. `infra/outputs.env` contiene tabla, bucket, colas/DLQ y Cognito; sin secretos |
 | T32 | Extracción fuera de línea | fase 2 · C | en curso | laptop AWS · stringbuilder | esta entrega | Revisión/aprobación local, extracción y 56 llamadas reales. Final: 22/22 propuestas válidas; acuerdo 209/227, unidad conjunta 148/227. PDF: 15 candidatos verificados textualmente, 8 rechazados, 1 sin texto. D7 y soporte semántico pendientes; no se declara meta 85 % ni tarea hecha. `docs/T32_EVALUACION.md` |
 | T33 | Cuenta y proyectos | fase 2 · C | en curso | stringbuilder | `4268b90` + esta entrega | 14 checks A/B reales de drafts pasan (verificación del plan cumplida). Cargas/complete/jobs/resume desplegados con CORS S3 confirmado. Smoke de archivo real listo (`tools/cognito/run_uploads_smoke.ps1`), pendiente de que el dueño lo ejecute; falta gestión completa (DELETE/lente) |
@@ -96,6 +96,28 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Claude · laptop Daniel (Windows) · cierre de decisiones y corpus del segundo dominio
+- **Decisiones (autorizadas por el dueño en la conversación):** `docs/DECISIONES_CIERRE.md`.
+  - T30 aprobado; se añadió §5.10 (exportación para ML, nueva tarea T38).
+  - D4: umbrales de la ficha ML.
+  - D10: ebullición y cambio de fase.
+  - Aprobado `s3:ListBucket` del worker.
+  - Tope operativo de USD 30 en Bedrock y reglas de reintento.
+  - CORS con solo CloudFront por defecto.
+  - D2, D5 y D8 ratificadas.
+  - Solo queda humana la revisión semántica de los PDF de T32 (en la laptop AWS).
+- **Exportación para ML:** el contrato no la cubría. La web ya exporta un CSV armonizado con procedencia desde cualquier pack. T38 completa unidad en cabecera, DOI, `group_id` por estudio, valor original y `datacard.json`.
+- **D10:** `tools/psi/corpus_dominio.py`, basado en los legacy, solo librería estándar y `pypdf` opcional.
+  - Corrida real: 10 investigaciones de Fluid Physics, ninguna en el pack de la demo.
+  - Lote de 23 documentos (10 tablas con 1 001 filas y 13 PDF con 258 páginas), todos dentro de D3.
+  - 9 excluidos con motivo.
+  - Manifiesto con DOI y SHA-256 en `docs/t37/manifest_ebullicion.csv`; los datos en `tools/psi/data/`, ignorado.
+  - Trampas encontradas:
+    - nombres de PSI de más de 200 caracteres rebasan `MAX_PATH` de Windows (corregido acortando el nombre local);
+    - PSI responde 400 a un nombre con apóstrofo tipográfico (queda excluido);
+    - sin `pypdf`, un PDF no da páginas y se excluye por prudencia.
+- **CORS:** `20_api.sh` ya no añade localhost por defecto. Para desarrollo: `EXTRA_ORIGINS=http://localhost:5173,... bash infra/20_api.sh`.
 
 ### 2026-11-15 · D7 cerrada por el dueño
 - Daniel Sun aprobó `docs/D7_DECISIONES.md` sin cambios: 18 filas críticas, regla D (O₂ `mole fraction` ×100) y regla A (55 columnas rechazadas). El mapping vigente se conserva y el pack no cambia; no hay que redesplegar.

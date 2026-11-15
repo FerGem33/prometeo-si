@@ -276,9 +276,9 @@ Base: `VITE_API_URL`. Sin autenticación; CORS solo para el origen del sitio. L�
 - Códigos con oración: `never_measured`, `above_tested`, `below_tested`, `within_tested`, `category_tested`, `full_coverage` y, en el código nuevo, `tested_elsewhere`.
 - `api/events/analysis_lunar.json` es la petición real del preset lunar (la genera `web/src/report/events.test.ts`).
 
-## 5. Backend del bloque C (propuesta para aprobar)
+## 5. Backend del bloque C (aprobado por el dueño el 15-nov)
 
-Objetivo: que una persona suba su corpus y obtenga un pack `prometeo.pack/1` propio que entra a la misma interfaz y al mismo motor. Tipos completos en `web/src/contracts/backend.ts`; respuestas de ejemplo en `docs/fixtures/fase2/`. Nada de esto está desplegado y depende de las decisiones D1–D3 de `PLAN_FASE2.md`.
+Objetivo: que una persona suba su corpus y obtenga un pack `prometeo.pack/1` propio que entra a la misma interfaz y al mismo motor. Tipos completos en `web/src/contracts/backend.ts`; respuestas de ejemplo en `docs/fixtures/fase2/`. Aprobado: drafts y D3 primero, el resto el 15-nov junto con §5.10 (`docs/DECISIONES_CIERRE.md` §1). Desplegado hasta hoy: §5.3 sin DELETE y §5.4 sin DELETE ni `url`; el resto está pendiente (ver `PROGRESS.md`).
 
 ### 5.1 Reglas comunes
 
@@ -347,7 +347,7 @@ Etapas por documento (`stage`): `upload → parse → profile → propose → ex
 - Un duplicado (mismo `sha256` en el proyecto) queda `skipped` con `error_code: "duplicate"`.
 - `error_code` de documento: `unreadable`, `no_text_layer` (PDF escaneado), `too_large`, `too_many_pages`, `duplicate`, `model_unavailable`, `internal`.
 - **Progreso:** la interfaz consulta `GET …/jobs` cada 3 s mientras `project_status` sea `processing`. No hay websockets.
-- **Límites (pendientes de D3; propuesta):** 20 MB por archivo, 60 páginas por PDF, 30 documentos por proyecto. El servidor los devuelve en `details` para que la interfaz no los escriba a mano.
+- **Límites (D3, decididos el 15-nov):** 20 MB (20 000 000 bytes) por archivo, 60 páginas por PDF, 30 documentos por proyecto. El servidor los devuelve en `details` para que la interfaz no los escriba a mano.
 
 ### 5.5 Revisión del esquema (CU-07)
 
@@ -429,6 +429,28 @@ DynamoDB, una tabla, clave `PK` + `SK`:
 | Propuesta | `P#<project_id>` | `V#<proposal_id>` |
 
 S3 privado: `u/<uid>/p/<project_id>/raw/<doc_id>` (originales), `…/text/<doc_id>.json` (texto por página), `…/pack/v<n>/{pack,lens,mapping}.json`. Toda ruta que recibe `project_id` comprueba primero que el proyecto es del `uid` del token.
+
+### 5.10 Exportación de datos para modelos (CU-24, CU-25)
+
+No hay ruta nueva en el servidor. La exportación se calcula **en el navegador desde el pack publicado**, demo o proyecto, de forma determinista y sin IA. Para uso programático, `GET /projects/{id}/pack` y `GET /projects/{id}/records` ya entregan los mismos datos con procedencia.
+
+**Base existente:** `harmonizedCsv` (web, `DossierModal`) produce un registro por fila con:
+- `*_min` y `*_max` en unidad canónica para cada variable numérica;
+- las categóricas y la confianza;
+- archivo, fila y página de origen;
+- cita literal y banderas.
+
+**Lo que completa T38** para que sirva como conjunto de entrenamiento:
+
+1. Cabecera con unidad canónica (`p_min [atm]`) y columna `doi` por fila.
+2. `group_id` = estudio, para dividir entrenamiento y prueba por estudio y evitar fuga de datos.
+3. Si hubo corrección (§5.6), el valor corregido y el original en columnas separadas. Los registros excluidos y las citas `verified: false` nunca se exportan (el pack ya no los contiene).
+4. `datacard.json` junto al CSV, con:
+   - versiones de pack y mapping;
+   - conversiones aplicadas y columnas rechazadas;
+   - ficha de aptitud con sus umbrales (D4, `lens.ml_thresholds`);
+   - DOI y licencia de cada fuente.
+5. Textos de interfaz solo descriptivos ("dataset export"). Nunca prometen capacidad predictiva.
 
 ## 6. Qué puede empezar hoy el equipo de interfaz
 

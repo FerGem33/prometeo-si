@@ -7,8 +7,9 @@ source infra/config.env
 source infra/outputs.env
 : "${MODEL_ID:?Primero verificar MODEL_ID con 00_check.sh}"
 : "${CF_URL:?Primero desplegar T08}"
-# Orígenes extra para pruebas locales (coma). Vacío = solo CF_URL: EXTRA_ORIGINS= bash infra/20_api.sh
-EXTRA_ORIGINS=${EXTRA_ORIGINS-http://localhost:5173,http://127.0.0.1:5173}
+# Orígenes extra (coma), solo para desarrollo y de forma explícita (DECISIONES_CIERRE §6). Por defecto: solo CF_URL.
+# Ej.: EXTRA_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 bash infra/20_api.sh
+EXTRA_ORIGINS=${EXTRA_ORIGINS-}
 PYTHON=${PYTHON:-api/.venv/bin/python}
 "$PYTHON" -c 'import sys; assert sys.version_info[:2] == (3,12), "Se requiere Python 3.12"'
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
