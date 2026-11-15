@@ -8,7 +8,7 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | **T35–T37 · integración.** Backend desplegado: 24 rutas JWT; recorrido real con dos tablas y pack privado v2. T34 comprobó lote y control en DLQ; ventana cerrada y mapping Disabled confirmado. |
+| Tarea en curso | **T35–T37 · cierre backend, laptop AWS.** Autorizado implementar y desplegar pendientes: PDF revisable, claims/variantes, intención/lente, ask/analysis por proyecto y síntesis. Base:24 rutas JWT y pack privado v2; worker Disabled hasta ventana controlada. |
 | Último commit verificado | Backend `8bcf568` + ajustes de esta entrega; API real: aprobación/extracción/corrección/publicación pasan. 155 pruebas API; web 104 pasan/2 omitidas y motor adicional con pack AWS pasa; validate_pack/check_agnostic pasan. T38 publicada desde `d0308e9`. |
 | Siguiente paso exacto | Conectar pantallas a docs/T35_T37_RELEVO_API.md. Pendientes explícitos: extracción PDF integrada, claims/variantes en servidor, edición de intención/lente y revisión del resto del corpus. Síntesis real fue template; no se declara IA verificada. No desplegar web hasta revisión humana de §9.2/§9.3. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
@@ -104,6 +104,10 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · Inicio de cierre completo del backend autorizado
+- Dueño autoriza completar pendientes del backend y acciones AWS necesarias. `git pull --rebase`:sin cambios; perfil prometeo/STS cuenta352818909129 correcto;155pruebas API pasan antes de editar.
+- Se conservan modelo D6, corpus fuera de Git, demo intacta, presupuesto y revisión explícita de evidencia. Ningún cambio de frontend ni deploy web. Implementación por etapas con contratos/pruebas y comprobaciones AWS; no se convierten automáticamente PDF rechazados en datos publicados.
 
 ### 2026-11-15 · Ruta corta comprobada en AWS: lote/DLQ y pack privado v2
 - `8bcf568` subido tras rebase con los documentos de pitch de Daniel; no se tocó frontend. API v3 desplegada sobre Lambda existente, 24 rutas JWT. Worker reutiliza rol, Lambda y mapping `01099ec2-85e7-4271-9a74-9ac80f6289fe`.
