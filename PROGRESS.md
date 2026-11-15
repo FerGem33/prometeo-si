@@ -77,6 +77,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 
 Una entrada por sesión de agente, la más reciente arriba.
 
+### 2026-11-15 · rama frontend · informe más gráfico y por capas
+- Hecho (rama `frontend`): "Graphical abstract" sin número al inicio del informe (franja por variable con el rango probado y el valor del escenario, radar de cercanía por variable, las investigaciones por nota con ficha al seleccionar una); panel lateral fijo con escenario actual, preguntas y análisis; tablas y métodos plegados, que se imprimen siempre completos. También: variables propias del usuario ("Not in this corpus", no se comparan), lista de unidades con buscador, modal para guardar en el workspace, y el formulario en orden Documents → Question → Setting → Variables. Se quitó el panel "Parts".
+- Verificado: tsc, 60 tests web, build y `check_agnostic.sh`; recorrido en Chrome headless a 1440, 1100 y 420 px sin errores de consola. La página del informe pasó de unos 15 000 a unos 7 100 px de alto. En emulación de impresión las secciones plegadas se muestran; no se generó ni revisó el PDF.
+- Ojo: el radar necesita 3 o más variables activas; con menos se dibujan barras. Una variable no registrada es un radio punteado, no un cero. Un enlace a `#ref-…` ya no devuelve a la portada.
+
 ### 2026-11-14 · rama frontend · fases 1-3 del MVP local
 - Hecho (rama `frontend`, no en `main`): grafo de evidencia (Fig. 4, aristas calculadas por el motor, no extraídas de los textos), tabla "Sources ranked" con valores reales y orden por columna, resumen de cambios de nivel, variantes guardables y comparables, partes con nombre, y Workspace local (proyectos en `localStorage`, solo este navegador, sin cuentas; la subida de papers aparece deshabilitada).
 - Verificado: tsc, 60 tests web, build Vite y `check_agnostic.sh`. NO se probó en navegador: diseño, foco de teclado y vista de impresión sin revisar.
