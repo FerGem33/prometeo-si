@@ -25,9 +25,9 @@ export const TOUR_STEPS: TourStep[] = lazy([
     id: 2,
     stage: "scenario",
     badge: tx("Stop 2 of 5 · Intent & GenUI"),
-    title: tx("Mission Scenario & Habitat Selection"),
+    title: tx("Document Corpus & Generative Interface"),
     pitch:
-      tx("Engineers formulate specific environmental conditions (Lunar Base 24% O₂ / 0.70 atm or ISS 21% O₂ / 1.0 atm). The generative interface dynamically binds variables to live telemetry."),
+      tx("Upload research documents or inspect reference data. The generative interface dynamically synthesizes the workspace, compiles the evidence blueprint, and binds extracted variables."),
     takeaway: tx("Instant adaptation to mission requirements without hardcoded interfaces."),
   },
   {

@@ -1083,4 +1083,334 @@ body:has(.screen) { background: var(--paper); }
   color: var(--ink, #1D1C1A);
 }
 
+/* ── New Evaluation 3-step & GenUI Redesign Styles ─────────────────── */
+.wiz,
+.screen-foot {
+  padding-bottom: 84px;
+}
+
+.dropzone-wrap {
+  margin-top: 18px;
+}
+
+.doc-list {
+  list-style: none;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px;
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.doc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.doc-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.doc-kind-badge {
+  font-family: var(--sans-c);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--surface-control, var(--paper));
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
+
+.doc-name {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-size {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-left: 4px;
+}
+
+.doc-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.doc-chip {
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--surface-control, var(--paper));
+  border: 1px solid var(--rule-2, var(--rule));
+  color: var(--ink-2);
+}
+
+.doc-chip-hash {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.doc-chip-error {
+  background: var(--accent-wash, rgba(163, 39, 27, 0.15));
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.doc-chip-success {
+  border-color: var(--grade-a, #78C29C);
+  color: var(--grade-a, #78C29C);
+}
+
+.doc-notice {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--accent-wash, rgba(163, 39, 27, 0.12));
+  border: 1px dashed var(--accent);
+  padding: 8px 14px;
+  border-radius: 2px;
+  margin-top: 10px;
+}
+
+.scope-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 16px 20px;
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.scope-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scope-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+
+.scope-option input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.ai-propose-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 12px 18px;
+  background: var(--surface-control, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  flex-wrap: wrap;
+}
+
+.ai-status {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.ai-status-success {
+  color: var(--grade-a, #78C29C);
+  font-weight: 500;
+}
+
+.ai-status-error {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+/* GenUI Blueprint Preview */
+.genui-preview {
+  margin-top: 26px;
+  padding: 20px 24px;
+  background: var(--surface-card, var(--paper));
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+}
+
+.genui-preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 10px;
+}
+
+.genui-preview-head h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+}
+
+.genui-preview-head small {
+  font-family: var(--sans-c);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.genui-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.genui-pill {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  padding: 4px 10px;
+  background: var(--surface-control, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink-2);
+}
+
+.genui-pill b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.blueprint-rationale {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Variable layouts and citation badges */
+.vlayout-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.vgroup-section {
+  border-top: 2px solid var(--ink);
+  padding-top: 14px;
+}
+
+.vgroup-title {
+  font-family: var(--sans-c);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.vlayout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  list-style: none;
+}
+
+.vlayout-grid .vrow {
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  padding: 16px;
+  border-radius: 2px;
+}
+
+.vlayout-list {
+  list-style: none;
+  border-top: 2px solid var(--ink);
+}
+
+.citation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  background: var(--surface-control, var(--paper));
+  border: 1px solid var(--rule-2, var(--rule));
+  border-radius: 2px;
+  padding: 2px 8px;
+  color: var(--ink-2);
+}
+
+.citation-quote {
+  display: block;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--rule);
+  line-height: 1.4;
+}
+
+.vrow-excluded {
+  opacity: 0.55;
+}
+
+.corpus-summary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--surface-card, var(--paper));
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 4px 12px;
+  margin-bottom: 16px;
+}
+
 @media print { .screen { display: none; } }
