@@ -125,3 +125,12 @@ figure.fig.wide { margin: 18px 0 8px; }
   .prov { right: 8px; bottom: 8px; }
   footer.end { flex-direction: column; gap: 6px; }
 }
+
+.assistant-panel { border-top: 1px solid currentColor; padding: 1rem 0; }
+.assistant-panel label { display: block; margin-bottom: .5rem; }
+.question-row { display: flex; gap: .5rem; margin-bottom: .75rem; }
+.question-row input { flex: 1; min-width: 0; font: inherit; background: transparent; color: inherit; border: 1px solid currentColor; padding: .4rem; border-radius: 2px; }
+.analysis-sources { display: inline-flex; flex-wrap: wrap; gap: .4rem; }
+.assistant-panel .presets { flex-wrap: wrap; }
+.assistant-panel li { margin-bottom: .75rem; }
+@media (max-width: 600px) { .question-row { flex-direction: column; } }

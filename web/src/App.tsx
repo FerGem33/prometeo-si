@@ -3,6 +3,7 @@ import { closeness, evidence, evidenceLevels, findings, gaps, partitionOf, pool,
 import type { Lens, Pack, Scenario } from "./engine";
 import { DataCtx, ProvCtx } from "./components/ctx";
 import type { Data, Mapping } from "./components/ctx";
+import { AssistantPanel } from "./components/AssistantPanel";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { MapFigure } from "./components/MapFigure";
 import { FindingsList, GapFigure, HeatTable, KeyFindings, RankingTable, SourcesTable } from "./components/Tables";
@@ -99,6 +100,8 @@ function Report({ data }: { data: Data }) {
         </p>
 
         <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} />
+
+        <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
 
         <KeyFindings findings={r.finds} />
 

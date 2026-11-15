@@ -7,7 +7,8 @@ Web: https://dursf4nho4zl6.cloudfront.net
 El 2026-11-14 se comprobó CloudFront `Deployed` y HTTPS HTTP 200.
 Está publicado el informe de T05–T07. Falta verificar visualmente la página:
 la herramienta de navegador del agente no estuvo disponible. T08 sigue en
-curso hasta completar esa verificación. API y Bedrock no están desplegados.
+curso hasta completar esa verificación. La API ya está desplegada y Bedrock verificado; la integración UI T11 está
+implementada en el repo, pendiente de deploy final por el dueño.
 
 ## Qué se comparte y qué se configura por persona
 
@@ -15,7 +16,7 @@ Los archivos necesarios ya están versionados; no hace falta otro `.env`:
 
 | Archivo | Contenido | Tratamiento |
 |---|---|---|
-| `infra/config.env` | Región us-east-1, prefijo prometeo-hack, MODEL_ID | Compartido en Git; MODEL_ID pendiente de validación |
+| `infra/config.env` | Región us-east-1, prefijo prometeo-hack, MODEL_ID | Compartido en Git; MODEL_ID confirmado con invocaciones reales |
 | `infra/outputs.env` | WEB_BUCKET, CF_ID y CF_URL reales | Compartido en Git; lo actualiza 10_web.sh |
 | Perfil AWS `prometeo` | Sesión y credenciales de cada persona | Solo local, fuera del repositorio |
 
@@ -50,7 +51,8 @@ python3.12 -I pipeline/validate_pack.py
 
 Si se cambia el pipeline, regenerar y validar el pack según el plan. Cuando
 existan la API y sus dependencias, ejecutar también `python3.12 -m pytest api/`.
-Actualmente no hay implementación API; no presentar esa suite como aprobada.
+La API ya tiene pruebas: instalar api/requirements-dev.txt y ejecutar
+`api/.venv/bin/python -m pytest api/ -q`.
 
 Actualizar PROGRESS.md con tarea, resultados reales, bloqueos y siguiente paso.
 Revisar y añadir únicamente los archivos de esa tarea:
@@ -156,10 +158,28 @@ HTTP 200 por sí solo no verifica React ni esas interacciones.
 
 Anotar en PROGRESS.md el commit desplegado, fecha, URL, resultados y cualquier
 pendiente; commit y push de esa evidencia. No marcar T15 completa sin todas sus
-comprobaciones. La publicación final con IA requiere terminar T09–T11, validar
-MODEL_ID con `infra/00_check.sh`, implementar y ejecutar `infra/20_api.sh`, guardar
-API_URL y verificar /ask, /analysis y el fallback. Esos pasos aún no están
-implementados y no forman parte del despliegue web actual.
+comprobaciones. La API T09/T10 ya está desplegada. La UI T11 está implementada y pendiente de
+publicación/verificación visual. Si el equipo cambia API o pack, publicar
+primero `bash infra/20_api.sh` y probar los eventos. Después publicar la web con
+`bash infra/deploy_web.sh`: el script exporta VITE_API_URL desde API_URL de
+outputs.env antes de compilar. Esa URL es pública, no una credencial.
+
+Para desarrollo o build local con API:
+
+```bash
+source infra/outputs.env
+export VITE_API_URL="$API_URL"
+npm run dev --prefix web
+```
+
+CORS de producción admite solo CF_URL; desde localhost las llamadas pueden
+ser bloqueadas por el navegador y se verá la plantilla. No ampliar CORS de
+producción para una prueba local. El build final sí usará el origen permitido.
+
+Verificación T11 tras el deploy final: usar la sugerencia de 25% O₂, 0.5 atm
+y Nomex; comprobar escenario actualizado, chips editables, frases con fuentes
+y fallback al bloquear la API. Esperar al menos 20 s para comprobar timeout.
+El texto por plantilla está identificado, nunca se presenta como IA en vivo.
 
 ## Problemas conocidos
 
