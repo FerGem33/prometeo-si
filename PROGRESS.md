@@ -8,16 +8,16 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T14 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
-| Último commit verificado | T10: 2bda497; T11 pruebas locales en este commit |
-| Siguiente paso exacto | T14: inducir propuesta de mapeo desde encabezados y muestras reales, comparar contra mapping aprobado y documentar resultados en `docs/agnostic_proof.md`. Mantener pendiente el deploy web del dueño y revisión visual pública para cerrar T08/T11/T15. |
+| Tarea en curso | T15 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
+| Último commit verificado | T14 y T15 local: commit a crear; paquete web, API y agnostic checks en verde |
+| Siguiente paso exacto | T15: preparar README para jueces, ejecutar verificaciones completas y revisar URL pública. Dejar pendientes los puntos de aceptación que requieren que el dueño despliegue la UI final y pruebe en otra laptop/móvil. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
 
 ## Bloqueos
 
-- Sesión actual: perfil `prometeo` operativo (STS), identidad root; operaciones de despliegue S3/CloudFront verificadas; Bedrock todavía no verificado. El bloqueo de ferlr siguiente es histórico y no aplica a esta laptop.
+- Sesión actual: perfil `prometeo` operativo (STS), identidad root; T14 confirmó invocaciones Converse reales de Bedrock en `us-east-1` (22 tablas). Operaciones de despliegue S3/CloudFront verificadas; no se desplegó la UI final. El bloqueo de ferlr siguiente es histórico y no aplica a esta laptop.
 
 - [18:20] La laptop ferlr no tiene el perfil AWS `prometeo` (solo `default` y `road2tech`). Bloquea `infra/00_check.sh`, T08 y T10 — dueño de la cuenta AWS: `aws configure --profile prometeo`.
 
@@ -26,7 +26,7 @@
 ## Prerrequisitos humanos
 
 - [ ] Acceso AWS por persona y perfil `prometeo` en cada laptop
-- [ ] Invocación real de Claude en Bedrock (`us-east-1`)
+- [x] Invocación real de Claude en Bedrock (`us-east-1`), confirmada en T14 (22 llamadas)
 - [ ] Acceso de push al repo para todo el equipo
 - [x] `construir_corpus.py` del compañero en `pipeline/legacy/` (junto con `nasa_fuego_todo.py`, el descargador)
 
@@ -50,8 +50,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
 | T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | (este commit) | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
 | T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | (este commit) | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Captura `docs/screens/t13_study_compare.png`. |
-| T14 | Prueba agnóstica | P3 | en curso | Codex · stringbuilder | (inicio en este commit) | Propuesta Bedrock contra el mapping humano; falta ejecutar una vez y escribir evidencia con aciertos reales. |
-| T15 | Aceptación y entrega | P0 | pendiente | | | |
+| T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | (este commit) | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
+| T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | (inicio en este commit) | README para jueces y revisión local; URL pública final, pruebas en ventana privada/móvil y deploy quedan pendientes del dueño. |
 
 ## Aceptación final (T15)
 
@@ -68,6 +68,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 20:28 CST · Codex · T14 y comienzo T15
+- Hecho: `pipeline/induce_schema.py` ejecutó una propuesta Bedrock por cada una de las 22 tablas del pack, con cinco filas como máximo (103 filas disponibles). Se compararon 227 columnas de 21 tablas con referencia humana; la tabla resumen PSI-142 no tiene mapping aprobado y no entra al porcentaje.
+- Resultado real: 148/227 asignaciones exactas (65.2%); 174/227 unidades exactas (76.7%); 107/227 coincidencias conjuntas (47.1%). La salida con discrepancias por encabezado queda en `docs/agnostic_proof.md`; es evidencia exploratoria, no aprobación del mapping.
+- Reproducción: `export AWS_PROFILE=prometeo && source infra/config.env && python3.12 -I pipeline/induce_schema.py --tables-dir tools/datos_psi/tablas`. 22 llamadas Converse con `MODEL_ID` configurado; 15,949 tokens de entrada y 9,313 de salida.
+- Límite de checkout: los CSV no están presentes en `data/psi/tables`; la corrida usó `tools/datos_psi/tablas`, que ya estaba local y permanece fuera del commit. Un clon limpio necesita recibir/cargar la copia fuente antes de reproducir T14.
+- Verificación T15 local: web 35/35, API 26/26 en `api/.venv` (Python 3.12.13), build Vite/TS, `check_agnostic.sh`, sintaxis Python de T14 y `git diff --check` OK. `python3.12 -m pytest` del sistema falla por `No module named pytest`; se usó el entorno versionado local `api/.venv`.
+- URL actual: CloudFront responde HTTP 200 por HEAD, pero esa respuesta no comprueba el render ni contiene la UI final de este checkout. No se hizo deploy. GET al root de API responde 404, esperado porque no existe ruta raíz; los endpoints `/ask` y `/analysis` están previamente verificados en T10.
+- Siguiente paso exacto: revisar y subir el README de jueces y este estado T15. El dueño debe desplegar la UI integrada y revisar en navegador privado/móvil los ítems restantes de T08/T11/T15.
 
 ### 2026-11-14 20:18 CST · Codex · T13 y comienzo T14
 - Hecho: T13 permite comparar dos estudios elegidos. Presenta título, objetivo/condiciones (expandibles cuando son extensos), subjects, instrumentos, DOI, valores de variables en unidades normalizadas, columnas/unidades originales y registros de test/campaña por separado con acceso a provenance.
