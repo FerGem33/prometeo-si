@@ -1,9 +1,11 @@
 # D7 — Decisiones sobre las 79 discrepancias de mapping
 
-**Estado: PROPUESTA PRECARGADA, no aprobada.** Las recomendaciones las preparó un agente revisando los CSV
-originales (`tools/psi/data/datos_psi/tablas/`) y el mapping vigente (`web/public/demo/mapping.json`,
-aprobado por humano el 2026-11-14). Una persona debe confirmarlas o corregirlas. Hasta entonces el mapping
-vigente sigue siendo la referencia y no se modifica nada.
+**Estado: APROBADA por Daniel Sun el 2026-11-15, sin cambios.** Se aceptan las 18 recomendaciones críticas y
+las reglas D y A. Resultado: el mapping vigente (`web/public/demo/mapping.json`, aprobado el 2026-11-14) se conserva
+en las 79 filas y el pack no cambia.
+
+Las recomendaciones las preparó un agente revisando los CSV originales (`tools/psi/data/datos_psi/tablas/`).
+La decisión es humana.
 
 Origen de la lista: `docs/T32_EVALUACION.md` § "Lista concreta para D7", corrida final de T32 con Haiku 4.5.
 
@@ -43,24 +45,24 @@ son columnas rechazadas por ambos (55) o pérdidas del factor ×100 del O₂ (6)
 
 | # | Clase | Fuente | Columna | Mapping vigente | Propuesta del modelo | Evidencia en el CSV | Recomendación | Revisor |
 |---|---|---|---|---|---|---|---|---|
-| 1 | B | s1 · PSI-10 · Flame Design_Inverse Flame | `pfinal (atm)` | `None/None` | `p/atm` | Presión al final de la prueba. La condición de ensayo es `pinit (atm)`, ya aprobada como `p`. Usar dos presiones por fila duplicaría o sesgaría el nivel. | Mantener mapping | [ ] |
-| 2 | B | s1 · PSI-10 · Flame Design_Inverse Flame | `pmean (atm)` | `None/None` | `p/atm` | Promedio durante la prueba. Misma razón: `pinit` ya representa la condición inicial. | Mantener mapping | [ ] |
-| 3 | B | s2 · PSI-10 · Flame Design_Normal Flame | `XO2 (final)` | `None/None` | `o2/None` | Valores 0.20–0.21 tras viciación. La condición es `XO2 (init)`, ya aprobada como `o2` con ×100. | Mantener mapping | [ ] |
-| 4 | B | s2 · PSI-10 · Flame Design_Normal Flame | `pfinal (atm)` | `None/None` | `p/atm` | Igual que s1: `pinit (atm)` ya aprobada. | Mantener mapping | [ ] |
-| 5 | B | s2 · PSI-10 · Flame Design_Normal Flame | `pmean (atm)` | `None/None` | `p/atm` | Igual que s1: `pinit (atm)` ya aprobada. | Mantener mapping | [ ] |
-| 6 | B | s6 · PSI-23 · ACME s-Flame | `Notes` | `None/None` | `p/atm` | Es texto libre (3 notas al pie, 15 vacías). La nota "~1 atm" ya se usa como constante `p = 1.0` con bandera `mapping_uncertain`. No hay presión por fila. | Mantener mapping | [ ] |
-| 7 | B | s7 · PSI-25 · BASS-II | `Calibrated final O2 % by vol` | `None/None` | `o2/%` | O₂ al final del ensayo (viciación). El mapping la usa como `quality_check`. La condición es `Calibrated initial O2`, que da el máximo de 22.2 %. | Mantener mapping | [ ] |
-| 8 | C | s2 · PSI-10 · Flame Design_Normal Flame | `Fuel` | `material/None` | `phase/None` | Valores `C2H4` y `C3H8`: son combustibles, es decir `material`. La fase ya es constante `gas`. | Mantener mapping | [ ] |
-| 9 | C | s4 · PSI-21 · CLD Flame | `Fuel Bottle` | `material/None` | `None/None` | "40% CH4", etc.: único dato de combustible de la tabla. Sin él, la tabla queda sin material. | Mantener mapping | [ ] |
-| 10 | C | s5 · PSI-22 · ACME E-FIELD Flames | `Fuel Bottle` | `material/None` | `None/None` | "100% CH4", "30% C2H4" (11 vacías): único dato de combustible. | Mantener mapping | [ ] |
-| 11 | C | s6 · PSI-23 · ACME s-Flame | `Fuel Bottle` | `material/None` | `phase/None` | Mezclas como "50% C2H4 with N2" o "100% H2": material. La fase ya es constante `gas`. | Mantener mapping | [ ] |
-| 12 | C | s7 · PSI-25 · BASS-II | `Fan display` | `flow/None` | `None/None` | Ajuste del ventilador (62, "0.9 1.3 2.75"), no cm/s. Ya está `flagged` con `unit_unconverted` y no entra en ninguna distancia, así que en la práctica ya equivale a "sin variable". | Mantener mapping | [ ] |
-| 13 | C | s9 · PSI-39 · CFI | `Fuel ` | `material/None` | `None/None` | `C12H26` y mezclas con iso-dodecano: material. | Mantener mapping | [ ] |
-| 14 | C | s12 · PSI-69 · FLEX | `Fuel` | `material/None` | `phase/None` | `Methanol` y `Heptane`: material. La fase ya es constante `liquid`. | Mantener mapping | [ ] |
-| 15 | C | s18 · PSI-106 · Slice | `Fuel Type` | `material/None` | `None/None` | "100% CH4", "40% CH4 (balance N2)…": material. Algunas celdas traen comentarios largos; se conservan como valor original. | Mantener mapping | [ ] |
-| 16 | C | s19 · PSI-107 · Spice | `Fuel` | `material/None` | `phase/None` | `Ethylene`, `Propane` y `Propylene`: material. La fase ya es constante `gas`. | Mantener mapping | [ ] |
-| 17 | E | s21 · PSI-159 · CFI-G_Inverse Flames | `Flame Type` | `None/None` | `phase/None` | Valores `Inverse`/`inverse` (861 vacías): geometría de la llama, no fase. La fase ya es constante `gas`. | Mantener mapping | [ ] |
-| 18 | E | s22 · PSI-159 · CFI-G_Normal Flames | `Flame Type` | `None/None` | `phase/None` | Valor único `Normal`: geometría, no fase. La fase ya es constante `gas`. | Mantener mapping | [ ] |
+| 1 | B | s1 · PSI-10 · Flame Design_Inverse Flame | `pfinal (atm)` | `None/None` | `p/atm` | Presión al final de la prueba. La condición de ensayo es `pinit (atm)`, ya aprobada como `p`. Usar dos presiones por fila duplicaría o sesgaría el nivel. | Mantener mapping | [x] |
+| 2 | B | s1 · PSI-10 · Flame Design_Inverse Flame | `pmean (atm)` | `None/None` | `p/atm` | Promedio durante la prueba. Misma razón: `pinit` ya representa la condición inicial. | Mantener mapping | [x] |
+| 3 | B | s2 · PSI-10 · Flame Design_Normal Flame | `XO2 (final)` | `None/None` | `o2/None` | Valores 0.20–0.21 tras viciación. La condición es `XO2 (init)`, ya aprobada como `o2` con ×100. | Mantener mapping | [x] |
+| 4 | B | s2 · PSI-10 · Flame Design_Normal Flame | `pfinal (atm)` | `None/None` | `p/atm` | Igual que s1: `pinit (atm)` ya aprobada. | Mantener mapping | [x] |
+| 5 | B | s2 · PSI-10 · Flame Design_Normal Flame | `pmean (atm)` | `None/None` | `p/atm` | Igual que s1: `pinit (atm)` ya aprobada. | Mantener mapping | [x] |
+| 6 | B | s6 · PSI-23 · ACME s-Flame | `Notes` | `None/None` | `p/atm` | Es texto libre (3 notas al pie, 15 vacías). La nota "~1 atm" ya se usa como constante `p = 1.0` con bandera `mapping_uncertain`. No hay presión por fila. | Mantener mapping | [x] |
+| 7 | B | s7 · PSI-25 · BASS-II | `Calibrated final O2 % by vol` | `None/None` | `o2/%` | O₂ al final del ensayo (viciación). El mapping la usa como `quality_check`. La condición es `Calibrated initial O2`, que da el máximo de 22.2 %. | Mantener mapping | [x] |
+| 8 | C | s2 · PSI-10 · Flame Design_Normal Flame | `Fuel` | `material/None` | `phase/None` | Valores `C2H4` y `C3H8`: son combustibles, es decir `material`. La fase ya es constante `gas`. | Mantener mapping | [x] |
+| 9 | C | s4 · PSI-21 · CLD Flame | `Fuel Bottle` | `material/None` | `None/None` | "40% CH4", etc.: único dato de combustible de la tabla. Sin él, la tabla queda sin material. | Mantener mapping | [x] |
+| 10 | C | s5 · PSI-22 · ACME E-FIELD Flames | `Fuel Bottle` | `material/None` | `None/None` | "100% CH4", "30% C2H4" (11 vacías): único dato de combustible. | Mantener mapping | [x] |
+| 11 | C | s6 · PSI-23 · ACME s-Flame | `Fuel Bottle` | `material/None` | `phase/None` | Mezclas como "50% C2H4 with N2" o "100% H2": material. La fase ya es constante `gas`. | Mantener mapping | [x] |
+| 12 | C | s7 · PSI-25 · BASS-II | `Fan display` | `flow/None` | `None/None` | Ajuste del ventilador (62, "0.9 1.3 2.75"), no cm/s. Ya está `flagged` con `unit_unconverted` y no entra en ninguna distancia, así que en la práctica ya equivale a "sin variable". | Mantener mapping | [x] |
+| 13 | C | s9 · PSI-39 · CFI | `Fuel ` | `material/None` | `None/None` | `C12H26` y mezclas con iso-dodecano: material. | Mantener mapping | [x] |
+| 14 | C | s12 · PSI-69 · FLEX | `Fuel` | `material/None` | `phase/None` | `Methanol` y `Heptane`: material. La fase ya es constante `liquid`. | Mantener mapping | [x] |
+| 15 | C | s18 · PSI-106 · Slice | `Fuel Type` | `material/None` | `None/None` | "100% CH4", "40% CH4 (balance N2)…": material. Algunas celdas traen comentarios largos; se conservan como valor original. | Mantener mapping | [x] |
+| 16 | C | s19 · PSI-107 · Spice | `Fuel` | `material/None` | `phase/None` | `Ethylene`, `Propane` y `Propylene`: material. La fase ya es constante `gas`. | Mantener mapping | [x] |
+| 17 | E | s21 · PSI-159 · CFI-G_Inverse Flames | `Flame Type` | `None/None` | `phase/None` | Valores `Inverse`/`inverse` (861 vacías): geometría de la llama, no fase. La fase ya es constante `gas`. | Mantener mapping | [x] |
+| 18 | E | s22 · PSI-159 · CFI-G_Normal Flames | `Flame Type` | `None/None` | `phase/None` | Valor único `Normal`: geometría, no fase. La fase ya es constante `gas`. | Mantener mapping | [x] |
 
 ## 2. Unidad del O₂ (6) — una decisión de grupo
 
@@ -76,7 +78,7 @@ El mapping guarda la fracción molar con conversión ×100 a %. La propuesta dej
 | 23 | s21 · PSI-159 · CFI-G_Inverse Flames | `XO2` | `o2/mole fraction` | `o2/fraction` |
 | 24 | s22 · PSI-159 · CFI-G_Normal Flames | ` XO2 before test` | `o2/mole fraction` | `o2/None` |
 
-- [ ] **Regla D:** mantener `o2 / mole fraction` con conversión ×100 en las 6 filas.
+- [x] **Regla D:** mantener `o2 / mole fraction` con conversión ×100 en las 6 filas.
 
 ## 3. Solo unidad en columnas descartadas (55) — una decisión de grupo
 
@@ -142,7 +144,7 @@ al pack ni al motor.
 | 78 | s22 · PSI-159 · CFI-G_Normal Flames | `burn time (sec)` | `sec` |
 | 79 | s22 · PSI-159 · CFI-G_Normal Flames | `Peak burner T (C )` | `C` |
 
-- [ ] **Regla A:** mantener las 55 columnas como `rejected` y tratar la unidad propuesta como informativa (no cuenta como discrepancia de asignación).
+- [x] **Regla A:** mantener las 55 columnas como `rejected` y tratar la unidad propuesta como informativa (no cuenta como discrepancia de asignación).
 
 ## 4. Decisiones abiertas que esta tabla no cubre
 
@@ -154,7 +156,7 @@ ampliación del lens (variables nuevas), no una corrección de D7. Queda fuera d
 
 | Campo | Valor |
 |---|---|
-| Revisor (nombre) | |
-| Fecha | |
-| Decisión global | [ ] Aprobar recomendaciones tal cual · [ ] Aprobar con cambios (ver columna Revisor) · [ ] Rechazar |
+| Revisor (nombre) | Daniel Sun |
+| Fecha | 2026-11-15 |
+| Decisión global | [x] Aprobar recomendaciones tal cual · [ ] Aprobar con cambios (ver columna Revisor) · [ ] Rechazar |
 | Comentario | |

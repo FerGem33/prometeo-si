@@ -80,7 +80,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 | D4 | Clases destino y umbrales de la ficha de ML (CU-24). | Los tres veredictos del caso de uso con umbrales visibles y editables en `lens`. | T27 |
 | D5 | ¿Entran "respaldado" y "refutado" en el motor? Exigen una variable de resultado con sentido definido. | No por ahora: las tablas de BASS y BASS-II no traen resultado y 12 investigaciones lo traen en formatos distintos. Mantener los cuatro niveles de cobertura. | — |
 | D6 | ¿Se migra a Haiku 5.5? | **Decidido por el dueño (15-nov): no.** Conservar `us.anthropic.claude-haiku-4-5-20251001-v1:0` y SDK 2.8.0; Haiku 4.5 cumple las comprobaciones y tiene acceso en esta cuenta. | — |
-| D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | Quien conoce las tablas (autor de `construir_corpus.py`). | T32 (sirve de conjunto de prueba) |
+| D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | **Decidido por el dueño (15-nov):** Daniel Sun aprobó `docs/D7_DECISIONES.md` sin cambios. Se mantiene el mapping vigente en las 79 filas: las 18 diferencias de variable son errores del modelo y las 61 de unidad no afectan la asignación. El pack no cambia. | — |
 | D8 | ¿Qué se hace con `nasa2genui`? | Comparar en una sesión y traer a `main` solo piezas concretas (figuras), no la migración a Next.js. | — |
 | D9 | ¿`data/psi` vuelve al repo? | **Decidido (15-nov): no.** Los datos se quedan fuera de git. El pack versionado (`web/public/demo/`) es la fuente para la web y la API; para regenerarlo hace falta una descarga local de PSI (T18). | — |
 | D10 | ¿Segundo dominio para la prueba agnóstica y quién consigue su corpus? | Uno con tablas públicas y pocas variables. | T37 |

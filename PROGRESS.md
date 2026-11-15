@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T33 API de cargas/complete/progreso desplegada; CORS S3 actualizado y preflight real 200. Falta smoke de archivo/confirmación. T34 worker local hasta propuesta, sin deploy/consumidor. Drafts A/B comprobados; T31 hecha. |
 | Último commit verificado | T33 usuarios/A-B `cff2671`; reservas locales `6c1a144` (85 API/98 web); despliegue API `4268b90`; T31 `56e42d5`. |
-| Siguiente paso exacto | (1) Dueño: firmar `docs/D7_DECISIONES.md`. (2) Dueño en Windows/PowerShell: `tools\cognito\run_uploads_smoke.ps1` (smoke de archivo real T33 con cuentas A/B). (3) Admin: añadir `infra/t34-deployer-policy.json` al permission set y aprobar `s3:ListBucket` del worker. (4) Laptop AWS: guion de `docs/T34_WORKER_PREPARACION.md` §Despliegue (dos corridas `--apply`, luego `--enable`) y lote real de 10 + corrupto/DLQ. |
+| Siguiente paso exacto | (1) ~~Firmar D7~~ hecho 15-nov. (2) Dueño en Windows/PowerShell: `tools\cognito\run_uploads_smoke.ps1` (smoke de archivo real T33 con cuentas A/B). (3) Admin: añadir `infra/t34-deployer-policy.json` al permission set y aprobar `s3:ListBucket` del worker. (4) Laptop AWS: guion de `docs/T34_WORKER_PREPARACION.md` §Despliegue (dos corridas `--apply`, luego `--enable`) y lote real de 10 + corrupto/DLQ. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -96,6 +96,11 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · D7 cerrada por el dueño
+- Daniel Sun aprobó `docs/D7_DECISIONES.md` sin cambios: 18 filas críticas, regla D (O₂ `mole fraction` ×100) y regla A (55 columnas rechazadas). El mapping vigente se conserva y el pack no cambia; no hay que redesplegar.
+- T32 sigue en curso solo por la revisión semántica de los 15 candidatos PDF y el PDF sin texto (`20120015928`). Sus citas y respuestas están en `/tmp/prometeo-t32/papers-real/` de la laptop AWS, fuera de git; esa tabla se prepara allí.
+- Pendiente opcional de T32: recalcular la métrica variable + unidad sin las 55 columnas rechazadas por ambos, desde las respuestas guardadas (también en la laptop AWS).
 
 ### 2026-11-15 · Claude · laptop Daniel (Windows) · tabla D7 y despliegue T34 preparado
 - **Git:** `pull --rebase` chocó en `infra/20_api.sh` con el commit local `669268a` (CORS localhost, 14-nov) que ya estaba integrado en el merge `fdbe373` sin push. Se abortó el rebase y se conservó el merge. Ese commit sube con esta entrega: hace que `20_api.sh` añada `localhost:5173` al CORS de producción por defecto. Hay que quitarlo antes del cierre (`EXTRA_ORIGINS= bash infra/20_api.sh`, ya documentado en `infra/README.md`). No se redesplegó la API.
