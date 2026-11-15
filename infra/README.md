@@ -217,3 +217,7 @@ Verificado el 2026-11-14: /ask HTTP 200 en 7.876 s; /analysis HTTP 200 en
 0.904 s, mode=ai y fuentes reales. Falta T11 en la web pública. El primer
 intento de T10 se interrumpió al leer una política vacía; se corrigió y la
 reejecución reutilizó los recursos creados sin duplicación.
+
+## Bloque C: recursos de datos
+
+`infra/30_data.sh` crea, si faltan, la tabla DynamoDB, el bucket privado del corpus, la cola de procesamiento con su DLQ y el user pool de Cognito con su cliente web. Es idempotente y nunca borra ni reemplaza. No modifica la Lambda ni su rol. Guion y verificación: `docs/PLAN_FASE2.md` §8.

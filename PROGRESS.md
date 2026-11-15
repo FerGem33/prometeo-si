@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | Ninguna. Bloque A cerrado salvo T18 (espera D9). D6 (Haiku 5.5) espera acceso al modelo en la cuenta AWS. |
 | Último commit verificado | `0813d37` en `main`; API/web publicadas y documentación actualizada |
-| Siguiente paso exacto | Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: decisiones D1–D3 y D9 de `docs/PLAN_FASE2.md` §4; habilitar Haiku 5.5 en Bedrock si se quiere cerrar D6. |
+| Siguiente paso exacto | Con perfil `prometeo`: `docs/PLAN_FASE2.md` §8 (`infra/30_data.sh`). Interfaz: T21–T29 con `docs/CONTRATOS_FASE2.md` §6. Personas: D3 y D9. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado | `us.anthropic.claude-haiku-4-5-20251001-v1:0` (operativo con SDK 2.8.0); Haiku 5.5 devolvió 403 en esta cuenta |
@@ -60,7 +60,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T20 | Motor del bloque B (grafo, partes, explicación, diferencias) | fase 2 · B | hecha | Claude · ferlr | este commit | 15 vectores; contrato en `docs/CONTRATOS_FASE2.md` §2 |
 | T21–T29 | Pantallas del bloque B | fase 2 · B | pendiente | equipo de interfaz | | Motor y lógica local listos |
 | T30 | Contratos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | Propuesta escrita; falta aprobación humana y D1–D3 |
-| T31–T37 | Backend y pantallas del bloque C | fase 2 · C | bloqueada | | | Esperan D1–D3 |
+| T31 | Infra de datos del bloque C | fase 2 · C | en curso | Claude · ferlr | este commit | `infra/30_data.sh` escrito y probado con simulador; falta ejecutarlo con perfil `prometeo` |
+| T32–T37 | Backend y pantallas del bloque C | fase 2 · C | pendiente | | | D1 decidido; D3 sigue abierta (límites del corpus) |
 
 ## Aceptación final (T15)
 
@@ -84,6 +85,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 00:40 CST · Claude · ferlr · se levanta la restricción del bloque C; T31 escrita
+- **Decisión del dueño (D1):** se retira la prohibición de Cognito, SQS y DynamoDB. `AGENTS.md` §8 ahora exige que cada recurso esté en un script aprobado de `infra/` y con permisos acotados.
+- **T31:** `infra/30_data.sh` (tabla, bucket de corpus, cola con DLQ, Cognito). **No se ha ejecutado:** esta laptop no tiene perfil `prometeo`. Probado con un simulador del CLI: 6 recursos en la primera corrida, 0 en la segunda, `outputs.env` sin duplicados y con las salidas anteriores intactas.
+- **D9 (`data/psi`):** comprobado que los 22 CSV borrados en `df713ec` son idénticos a la descarga local (`pipeline/tools/datos_psi/tablas`, que además trae 5 tablas de otras áreas) y que el pack generado con ellos es idéntico byte a byte al publicado. Restaurarlos no cambia el producto. Sigue pendiente de decisión; no se restauraron.
+- **Siguiente paso exacto:** en la laptop con perfil, `docs/PLAN_FASE2.md` §8 (dos corridas de `infra/30_data.sh`). Después T32 (extracción fuera de línea; necesita Bedrock) y T33.
 
 ### 2026-11-15 00:15 CST · Claude · ferlr · revisión independiente del relevo de Codex
 - **Comprobado contra la URL pública (sin perfil AWS):** `/ask` con `"30% oxygen, 10.2 psi, PMMA"` → 200, `p: 0.6941`; con `"…PMMA at 0.17 g"` → 200 con `g: 0.17`; las cuatro sugerencias de `lens.questions` → 200 con todas sus variables; pregunta de ignición → `unsupported`. Con `version: 2`: `"70.3 kPa, cotton fabric"` → `p: 0.6938` y nota `unknown_category`; `"900 cm/s flow"` → nota `out_of_range`. `/analysis` con `analysis_lunar.json` → `mode: ai`, 3 oraciones con fuente, `dropped: 0`.

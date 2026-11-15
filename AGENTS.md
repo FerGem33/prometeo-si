@@ -94,7 +94,8 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 - **Permisos:**
   - la Lambda usa un rol con `AWSLambdaBasicExecutionRole` (logs permitidos) + `bedrock:InvokeModel` acotado;
   - sin `AdministratorAccess` ni comodines.
-- No crees recursos fuera del alcance de `docs/PLAN.md`: ni Cognito, ni SQS, ni DynamoDB en estas 8 h.
+- Solo se crean los recursos que nombra un script de `infra/` aprobado en `docs/PLAN_FASE2.md`. Desde el 15-nov el equipo autorizó Cognito, SQS, DynamoDB y el bucket de corpus del bloque C (`infra/30_data.sh`). Cualquier otro servicio nuevo necesita que una persona lo apruebe antes.
+- Los permisos nuevos se agregan acotados al recurso concreto (ARN de la tabla, de la cola, del bucket con prefijo); nunca `*`.
 - Antes de borrar o reemplazar un recurso, confirma con una persona.
 
 ## 9. Comandos
@@ -107,6 +108,7 @@ Prometeo (NASA Space Apps 2026, reto *Flame in Freefall*) es un informe interact
 | Comprobar AWS | `infra/00_check.sh` |
 | Desplegar web | `infra/deploy_web.sh` |
 | Desplegar API | `infra/20_api.sh` |
+| Recursos de datos del bloque C | `infra/30_data.sh` |
 
 ## 10. Documentos
 

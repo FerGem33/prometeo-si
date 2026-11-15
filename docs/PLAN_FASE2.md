@@ -74,7 +74,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 
 | # | Decisión | Recomendación | Bloquea |
 |---|---|---|---|
-| D1 | ¿Se levanta la restricción de `AGENTS.md` §8 sobre Cognito, SQS y DynamoDB? | Sí, solo para el bloque C y solo por scripts idempotentes. | Bloque C |
+| D1 | ¿Se levanta la restricción de `AGENTS.md` §8 sobre Cognito, SQS y DynamoDB? | **Decidido (15-nov): sí.** `AGENTS.md` §8 actualizado: solo por scripts idempotentes de `infra/` y con permisos acotados. | — |
 | D2 | ¿Scripts de AWS CLI o plantilla SAM? | Mantener los scripts: ya funcionan y el equipo los conoce. | Bloque C |
 | D3 | Límites del corpus: MB por archivo, páginas por PDF, documentos por lote. | 20 MB, 60 páginas, 30 documentos (el escenario del §11 de los casos de uso). Medir costo en T31 antes de fijarlo. | T30–T36 |
 | D4 | Clases destino y umbrales de la ficha de ML (CU-24). | Los tres veredictos del caso de uso con umbrales visibles y editables en `lens`. | T27 |
@@ -82,7 +82,7 @@ Las tareas marcadas con una decisión no empiezan hasta que alguien la cierre y 
 | D6 | ¿Se migra a Haiku 5.5? | El SDK ya es el actual (2.8.0). Haiku 5.5 da 403 en esta cuenta: hay que pedir acceso al modelo en Bedrock. No urge; Haiku 4.5 cumple todas las comprobaciones. | — |
 | D7 | ¿Quién revisa las 79 diferencias de mapeo de `docs/agnostic_proof.md`? | Quien conoce las tablas (autor de `construir_corpus.py`). | T32 (sirve de conjunto de prueba) |
 | D8 | ¿Qué se hace con `nasa2genui`? | Comparar en una sesión y traer a `main` solo piezas concretas (figuras), no la migración a Next.js. | — |
-| D9 | ¿`data/psi` vuelve al repo? | Sí (632 KB, CC0). | T18 |
+| D9 | ¿`data/psi` vuelve al repo? | Sí (632 KB, CC0). Comprobado el 15-nov: sus 22 CSV son idénticos byte a byte a la descarga local y el pack que se genera con ellos es idéntico al publicado. No cambia el producto; solo permite regenerar el pack desde un clon limpio. | T18, P14 |
 | D10 | ¿Segundo dominio para la prueba agnóstica y quién consigue su corpus? | Uno con tablas públicas y pocas variables. | T37 |
 | D11 | ¿En qué rama se trabaja? | **Decidido (14-nov):** motor, API, infra y contratos en `main`; la interfaz en `frontend`, que su equipo fusiona cuando quiera. Reparto en `CONTRATOS_FASE2.md` §1. | — |
 
@@ -172,7 +172,11 @@ Es la parte que vuelve a Prometeo agnóstico de verdad. Sigue la arquitectura de
 
 **T30 — Contratos y decisiones.** Propuesta escrita: `CONTRATOS_FASE2.md` §5, tipos en `web/src/contracts/backend.ts` y ejemplos en `docs/fixtures/fase2/`. Falta que una persona la apruebe y cierre D1–D3. *Verificación:* aprobación anotada en `PROGRESS.md`.
 
-**T31 — Infra de datos.** `infra/30_data.sh` idempotente: tabla DynamoDB (una sola, por `uid` y proyecto), bucket S3 privado con cifrado y bloqueo público, cola SQS con DLQ, Cognito (user pool y cliente). Permisos acotados por recurso. *Verificación:* reejecutar no duplica nada; `outputs.env` sin secretos.
+**T31 — Infra de datos.** · script escrito; falta ejecutarlo con perfil `prometeo`
+- `infra/30_data.sh` crea lo que falta y nunca borra: tabla DynamoDB `prometeo-hack-data` (PK/SK de `CONTRATOS_FASE2.md` §5.9, bajo demanda), bucket privado `prometeo-hack-corpus-<cuenta>` (cifrado, bloqueo público, CORS solo `PUT` desde la web, limpieza de subidas incompletas), cola `prometeo-hack-ingest` con DLQ tras 3 intentos y visibilidad de 960 s, y Cognito `prometeo-hack-users` con cliente público `prometeo-hack-web` (correo, SRP, sin secreto).
+- No toca la Lambda ni su rol: los permisos sobre estos recursos se agregan, acotados, en T33 y T34.
+- Probado sin AWS con un simulador del CLI: la primera corrida crea los 6 recursos, la segunda no crea ninguno y `outputs.env` no se duplica.
+- *Verificación:* en la laptop con perfil, dos corridas seguidas; la segunda dice "ya existe" en todo. `outputs.env` sin secretos.
 
 **T32 — Extracción fuera de línea primero.** Antes del worker, `pipeline/ingest.py` hace el recorrido completo sobre una carpeta local: leer tablas y PDF, perfilar, proponer esquema y mapeo (Bedrock), extraer registros con cita literal y verificar que la cita aparece en el texto. Conjunto de prueba: las 22 tablas de PSI contra el mapeo aprobado (T14 dio 65.2 %; meta ≥ 85 % tras revisar D7) y 5 PDF de BASS-II y FLEX para la presión que las tablas no traen. *Verificación:* informe con aciertos y con las citas rechazadas.
 
@@ -225,3 +229,17 @@ curl -s -m 30 -X POST "$API_URL/analysis" -H 'content-type: application/json' -d
 ```
 
 Si el paso 3 devuelve `unsupported` donde debería haber condiciones, el modelo no está siguiendo el formato nuevo: revisar `ASK_SYSTEM` en `api/handler.py` con `api/.venv/bin/python -m api.smoke`. Anotar el resultado en `PROGRESS.md` y marcar el punto 9 de la aceptación.
+
+## 8. Guion del bloque C para la laptop con perfil `prometeo`
+
+D1 está decidido. D2 (scripts o SAM) se queda en scripts mientras nadie diga lo contrario. D3 (límites del corpus) sigue abierta, pero no bloquea T31.
+
+```bash
+git pull --rebase
+export AWS_PROFILE=prometeo && source infra/config.env && source infra/outputs.env
+bash infra/30_data.sh        # primera corrida: crea 6 recursos
+bash infra/30_data.sh        # segunda: todo "ya existe"
+git diff infra/outputs.env   # solo IDs, ARNs y URLs nuevos
+```
+
+Costo esperado mientras no haya uso: casi nulo (DynamoDB bajo demanda, SQS y Cognito dentro de la capa gratuita, S3 vacío). Anotar en `PROGRESS.md` los IDs creados y marcar T31.
