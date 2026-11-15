@@ -173,12 +173,24 @@ export type PaperCandidate = {
   proposed_scope?: string;
   status: "awaiting_semantic_review" | "contextual" | "rejected";
   origin?: "manual";
-  review?: { by: string; at: string; reason: string; scope: string; supports_value: boolean;
+  review?: { by: string; at: string; reason: string; scope: string | null; supports_value: boolean;
     use_in_records: false; propagate_to_tables: false };
 };
 
+export type PaperCandidateInput = Pick<PaperCandidate, "variable" | "value" | "unit" | "scope"> & {
+  citation: Omit<Extract<Citation, { kind: "paper" }>, "verified">;
+};
+export type PaperReviewDecision =
+  | { status: "contextual"; reason: string; scope: string; supports_value: true }
+  | { status: "rejected"; reason: string };
+export type PaperExtractionProof = {
+  doc_id: string; selection: number[]; pages: number[] | null; artifact_sha256: string | null;
+  status: "pending" | "done" | "failed";
+  failure_review?: { by: string; at: string; reason: string; doc_id: string };
+};
+
 /** PDF context is separate from records; it never contributes to comparison levels. */
-export type PublicationPack = Pack & { contextual_evidence?: PaperCandidate[] };
+export type PublicationPack = Pack & { contextual_evidence?: PaperCandidate[]; paper_extractions?: PaperExtractionProof[] };
 export type PublishedFiles = { pack: PublicationPack; lens: Lens };
 
 export type Proposal = { id: string; name: string; scenario: Scenario; created_at: string; updated_at: string;

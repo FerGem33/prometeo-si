@@ -1,5 +1,10 @@
 # T36 — Correcciones auditables y originales desplegados
 
+Actualización de cierre: APIs de correcciones, conflictos y claims persistentes
+desplegadas; hueco literal publicado y PDF original/página11 cotejados con SHA
+y verificador compartido. Falta la pantalla. Estado y contrato vigentes:
+[integración final](BACKEND_INTEGRACION_FINAL.md). Lo siguiente conserva el corte inicial.
+
 Estado al 15-nov: **en curso**. CLI y API persistente de registros/conflictos
 implementadas; confirmación del mismo valor y nueva versión del pack verificadas
 en AWS. Originales CSV también comprobados. Claims en servidor/PDF/pantallas

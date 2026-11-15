@@ -11,6 +11,18 @@ from pathlib import Path
 import subprocess
 import sys
 import re
+from urllib.parse import urlsplit
+
+
+def allowed_origins(env):
+    origins = list(dict.fromkeys([env['CF_URL']] + [o.strip().rstrip('/') for o in env.get('EXTRA_ORIGINS', '').split(',') if o.strip()]))
+    for origin in origins:
+        parts = urlsplit(origin)
+        if ('*' in origin or not parts.hostname or parts.username or parts.password or parts.path or parts.query or parts.fragment
+                or not (parts.scheme == 'https' or parts.scheme == 'http' and parts.hostname in ('localhost', '127.0.0.1'))):
+            raise ValueError('Expected explicit HTTPS origins or HTTP localhost origins; no wildcard or URL paths')
+        _ = parts.port  # Reject malformed ports before changing AWS.
+    return origins
 
 
 def aws(*args):
@@ -26,6 +38,7 @@ def aws(*args):
 
 def configure(root, env, call=aws):
     """Apply only to known resources; caller has explicitly approved apply."""
+    origins = allowed_origins(env)
     documents = {name: json.loads((root / name).read_text()) for name in (
         'projects-policy.json', 'projects-authorizer.json', 'projects-env-merge.json', 'projects-routes.json')}
     account = call('sts', 'get-caller-identity')
@@ -48,11 +61,11 @@ def configure(root, env, call=aws):
         raise ValueError('Lambda role differs from outputs')
     upload_env = documents['projects-env-merge.json']
     if upload_env.get('UPLOADS_ENABLED') == 'true':
-        rules = [{'AllowedOrigins': [env['CF_URL']], 'AllowedMethods': ['PUT'],
+        rules = [{'AllowedOrigins': origins, 'AllowedMethods': ['PUT'],
                   'AllowedHeaders': ['content-type', 'if-none-match', 'x-amz-checksum-sha256', 'x-amz-server-side-encryption'],
                   'MaxAgeSeconds': 300}]
         if any(r['RouteKey'] == 'GET /projects/{id}/pack' for r in documents['projects-routes.json']):
-            rules.append({'AllowedOrigins': [env['CF_URL']], 'AllowedMethods': ['GET'], 'MaxAgeSeconds': 300})
+            rules.append({'AllowedOrigins': origins, 'AllowedMethods': ['GET'], 'MaxAgeSeconds': 300})
         call('s3api', 'put-bucket-cors', '--bucket', upload_env['CORPUS_BUCKET'],
              '--cors-configuration', json.dumps({'CORSRules': rules}))
     integrations = call('apigatewayv2', 'get-integrations', '--api-id', api_id).get('Items', [])
@@ -119,12 +132,13 @@ def configure(root, env, call=aws):
          '--policy-name', 'prometeo-hack-projects', '--policy-document', json.dumps(documents['projects-policy.json']))
     variables = config.get('Environment', {}).get('Variables', {})
     variables.update(documents['projects-env-merge.json'])
+    variables['EXTRA_ORIGINS'] = ','.join(origins[1:])
     call('lambda', 'wait', 'function-updated', '--function-name', function)
     call('lambda', 'update-function-configuration', '--function-name', function,
          '--environment', json.dumps({'Variables': variables}), '--revision-id', config['RevisionId'])
     call('lambda', 'wait', 'function-updated', '--function-name', function)
     call('apigatewayv2', 'update-api', '--api-id', api_id, '--cors-configuration', json.dumps({
-        'AllowOrigins': [env['CF_URL']], 'AllowMethods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        'AllowOrigins': origins, 'AllowMethods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         'AllowHeaders': ['content-type', 'authorization', 'idempotency-key'], 'MaxAge': 300}))
 
 

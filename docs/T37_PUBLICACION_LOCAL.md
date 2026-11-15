@@ -1,5 +1,9 @@
 # T37 — Publicación local versionada y segundo dominio
 
+Actualización de cierre: publicación AWS con dos tablas y un PDF, variantes
+persistentes, intención/lente y síntesis IA comprobadas. Ver [integración final](BACKEND_INTEGRACION_FINAL.md).
+La reproducción local siguiente se conserva; el resto del corpus requiere revisión.
+
 Estado al 15-nov: fundamento local y publicación AWS privada v1/v2 comprobados con
 dos tablas. Síntesis real HTTP200/template; no selección IA verificada. **T37
 sigue en curso** por corpus completo/lente/variantes/pantallas. Evidencia y
@@ -82,9 +86,9 @@ son desconocidas; no se hereda una licencia global de NASA o de otro pack.
 
 ## Qué queda para cerrar T37
 
-Integrar publicación autenticada (`publish`, `pack`), versiones en servidor,
-regeneración de lente al cambiar intención, propuestas guardadas y síntesis
-verificada. Revisar las demás fuentes del lote (unidades, prosa, duplicados,
-simulación/propiedades y PDF) y medir la ejecución real de T34. Conectar la
-selección del pack de proyecto en la interfaz. El constructor local no demuestra
-ninguno de esos pasos ni cierra la aceptación de T35/T37.
+Conectar la selección del pack de proyecto y las pantallas de revisión/síntesis
+en la interfaz. Revisar las demás fuentes del lote (unidades, prosa, duplicados,
+simulación/propiedades y PDF) antes de declarar aceptado el corpus completo.
+Las APIs, versiones, intención/lente, variantes, síntesis y worker ya cuentan
+con evidencia AWS en la guía final y PROGRESS.md; el constructor local por sí
+solo no sustituye esos recibos ni la aceptación visual de T35/T37.

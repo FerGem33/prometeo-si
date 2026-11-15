@@ -42,3 +42,13 @@ def test_manual_recovery_validates_citations_preserves_rejection_and_owner():
     assert artifact['rejected_model_reason'] == 'rejected model citation' and artifact['by'] == 'owner'
     assert artifact['schemas'][0]['status'] == 'proposed' and not service.sent
     assert service.manual('owner', PID, DID, {'proposal': proposal, 'reason': 'Explicit fixture exclusion of uncertain columns'}) == result
+
+
+def test_raw_response_requires_owner_and_exact_document_local_filename():
+    service = Memory(); service.table = Table(service)
+    name = 'paper-'+'a'*64+'-raw.json'
+    service.optional = lambda key: {'content': [{'type': 'text', 'text': 'Synthetic response'}], 'usage': {}, 'stop_reason': 'end_turn'}
+    assert service.diagnostics('owner', PID, {'doc_id': DID, 'response': name})['text'] == 'Synthetic response'
+    with pytest.raises(ApiError) as exc: service.diagnostics('intruder', PID, {'doc_id': DID, 'response': name})
+    assert exc.value.status == 404
+    with pytest.raises(ApiError): service.diagnostics('owner', PID, {'doc_id': DID, 'response': '../raw.json'})

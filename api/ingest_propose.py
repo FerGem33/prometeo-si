@@ -85,7 +85,7 @@ def parse_response(text):
     return json.loads(fenced.group(1) if fenced else text)
 
 
-def propose(client, model, content, raw_output=None, system=SYSTEM):
+def propose(client, model, content, raw_output=None, system=SYSTEM, response_parser=parse_response):
     response = client.messages.create(model=model, max_tokens=6000, system=system,
                                      messages=[{'role': 'user', 'content': content}])
     # Persist the SDK response (including usage) before parsing or rejecting it.
@@ -96,7 +96,7 @@ def propose(client, model, content, raw_output=None, system=SYSTEM):
     if response.stop_reason != 'end_turn':
         raise ValueError('incomplete model response: ' + str(response.stop_reason))
     text = ''.join(b.text for b in response.content if b.type == 'text')
-    return parse_response(text)
+    return response_parser(text)
 
 
 def main():

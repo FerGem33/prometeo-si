@@ -184,3 +184,9 @@ def test_upload_configuration_reuses_jwt_and_limits_permissions(config, monkeypa
                 'POST /projects/{id}/paper-candidates/{cid}/review', 'PUT /projects/{id}/lens'} <= {r['RouteKey'] for r in aws.routes}
         assert any(s['Resource'].endswith('/text/reviews/*') for s in policy['Statement'])
         assert any(s['Resource'].endswith('/pack/*') for s in policy['Statement'])
+def test_development_origins_are_explicit_and_default_remains_closed():
+    assert deploy_projects.allowed_origins({'CF_URL': 'https://web.test'}) == ['https://web.test']
+    assert deploy_projects.allowed_origins({'CF_URL': 'https://web.test', 'EXTRA_ORIGINS': 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5173'}) == [
+        'https://web.test', 'http://localhost:5173', 'http://127.0.0.1:5173']
+    for value in ('*', 'https://*.example.com', 'http://outside.test', 'https://outside.test/path', 'https://user:secret@outside.test'):
+        with pytest.raises(ValueError): deploy_projects.allowed_origins({'CF_URL': 'https://web.test', 'EXTRA_ORIGINS': value})

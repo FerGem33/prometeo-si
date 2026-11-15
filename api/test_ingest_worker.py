@@ -98,6 +98,16 @@ def message(did=DID):
     return {'version': 1, 'uid': 'owner', 'project_id': PID, 'doc_id': did}
 
 
+def test_old_proposal_message_acknowledges_only_source_bound_manual_recovery(worker):
+    item = worker.table.items['P#'+PID, 'D#'+DID]
+    item.update(status='done', proposal_origin='manual', sha256=item['expected_sha256'],
+                proposal_key=f'u/owner/p/{PID}/text/{DID}/manual-'+('c'*64)+'.json')
+    worker.process(message(), 'old-rejected-proposal')
+    assert worker.client.calls == 0
+    item['proposal_key'] = 'u/another-owner/manual.json'
+    with pytest.raises(DocumentFailure): worker.process(message(), 'tampered')
+
+
 def test_success_reaches_review_never_approval_and_retry_reuses(worker):
     worker.process(message(), 'lease1')
     item = worker.table.items['P#'+PID, 'D#'+DID]

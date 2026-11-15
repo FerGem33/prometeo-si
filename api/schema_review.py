@@ -182,8 +182,21 @@ class Schemas:
         return {'doc_id': did, 'origin': 'manual', 'status': 'proposed',
                 'note': 'Model rejection retained. Manual proposal still requires explicit schema approval.'}
 
-    def diagnostics(self, uid, pid):
+    def diagnostics(self, uid, pid, query=None):
         self.projects.get(uid, pid)
+        if query:
+            did, name = query.get('doc_id'), query.get('response')
+            if (set(query) != {'doc_id', 'response'} or not isinstance(did, str) or not re.fullmatch(r'doc_[a-f0-9]{32,64}', did)
+                    or not isinstance(name, str) or not re.fullmatch(r'(?:paper-)?[a-f0-9]{64}-raw\.json', name)):
+                fail(400, 'invalid_request', 'Expected doc_id and a response filename from diagnostics')
+            item = self.table.get_item(Key={'PK': 'P#'+pid, 'SK': 'D#'+did}, ConsistentRead=True).get('Item')
+            if not item: fail(404, 'not_found', 'Document not found')
+            raw = self.optional(f'u/{uid}/p/{pid}/text/{did}/{name}')
+            if raw is None: fail(404, 'not_found', 'Model response not found')
+            text = ''.join(b.get('text', '') for b in raw.get('content', []) if b.get('type') == 'text')
+            return {'doc_id': did, 'response': name, 'text': text[:48000], 'truncated': len(text) > 48000,
+                    'stop_reason': raw.get('stop_reason'), 'usage': raw.get('usage', {}),
+                    'note': 'Explicit owner-only response inspection; source text is private. No approval is granted.'}
         from boto3.dynamodb.conditions import Key
         items, start = [], None
         while True:
@@ -209,11 +222,21 @@ class Schemas:
             for key in raw_keys:
                 raw = self.load(key)
                 info = {'request': key.rsplit('/', 1)[-1], 'stop_reason': raw.get('stop_reason'), 'usage': raw.get('usage', {})}
+                info['operation'] = 'paper_extract' if info['request'].startswith('paper-') else 'propose'
                 if doc:
                     try:
-                        payload = adapter.parse_response(''.join(b['text'] for b in raw['content'] if b['type'] == 'text'))
-                        review.ingest.validate_proposal(payload, {doc['id']: doc})
-                        info['validation'] = 'valid'
+                        if info['operation'] == 'paper_extract':
+                            try:
+                                from .paper_worker import parse_candidates
+                            except ImportError:
+                                from paper_worker import parse_candidates
+                            payload = parse_candidates(''.join(b['text'] for b in raw['content'] if b['type'] == 'text'))
+                            review.require(isinstance(payload, dict) and set(payload) == {'candidates'} and isinstance(payload['candidates'], list), 'Invalid PDF candidate envelope')
+                            info['validation'] = 'JSON envelope only; see paper-candidates for citation and unit validation'
+                        else:
+                            payload = adapter.parse_response(''.join(b['text'] for b in raw['content'] if b['type'] == 'text'))
+                            review.ingest.validate_proposal(payload, {doc['id']: doc})
+                            info['validation'] = 'valid'
                     except (ValueError, KeyError, TypeError) as exc:
                         info['validation'] = type(exc).__name__+': '+str(exc)[:400]
                 entry['responses'].append(info)
@@ -302,7 +325,10 @@ class Schemas:
         value, documents = self.current(uid, pid)
         schema = value['schema']
         if schema['status'] == 'approved' and data['version'] in (schema['version'], value['previous']['base_version']):
-            self.dispatch(uid, pid, value)
+            metadata = self.metadata(pid, schema['version'])
+            retry = metadata.get('extract_state') == 'failed' or (metadata.get('extract_state') == 'running'
+                and int(metadata.get('extract_until', 0)) < int(time.time()))
+            self.dispatch(uid, pid, value, force=retry)
             return schema
         if schema['version'] != data['version']:
             fail(409, 'conflict', 'Stale schema version')
@@ -334,9 +360,9 @@ class Schemas:
         self.dispatch(uid, pid, approved)
         return approved['schema']
 
-    def dispatch(self, uid, pid, approval):
+    def dispatch(self, uid, pid, approval, force=False):
         parent = self.projects.get(uid, pid)
-        if not parent.get('extraction_dispatch_pending'):
+        if not parent.get('extraction_dispatch_pending') and not force:
             return
         self.sqs.send_message(QueueUrl=self.queue, MessageBody=json.dumps({'version': 1, 'action': 'extract',
             'uid': uid, 'project_id': pid, 'schema_version': approval['schema']['version'],

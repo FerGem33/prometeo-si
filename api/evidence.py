@@ -128,8 +128,8 @@ class Evidence(Workspace, PaperReview):
     def publish(self, uid, pid, data):
         if data: fail(400, 'invalid_request', 'Publication takes the server-reviewed state')
         parent, approval, documents, extraction, metadata, state = self.context(uid, pid)
-        contextual = self.reviewed_papers(uid, pid) if any(d['kind'] == 'paper' for d in documents.values()) else []
-        state = {**state, 'contextual_evidence': contextual}
+        paper_state = self.reviewed_papers(uid, pid, details=True) if any(d['kind'] == 'paper' for d in documents.values()) else {'contextual_evidence': [], 'paper_extractions': []}
+        state = {**state, **paper_state}
         records_review.seal(state)
         base_signature = review.digest([approval['schema_sha256'], state['review_sha256'], metadata['approval']['metadata_sha256']])
         signature = review.digest([base_signature, parent['lens_override_key']]) if parent.get('lens_override_key') else base_signature

@@ -10,10 +10,10 @@ Referencia: https://github.com/anthropics/anthropic-sdk-python/tree/v2.8.0
 
 ## Contratos
 
-Bloque C desplegado (24 rutas JWT): revisión de esquema, extracción tabular,
-correcciones/conflictos persistentes, publicación privada versionada y síntesis
-extractiva. Comandos, evidencia real y pendientes:
-[T35–T37 relevo API](../docs/T35_T37_RELEVO_API.md).
+Bloque C desplegado (42 rutas JWT): revisión/extracción tabular y PDF contextual,
+correcciones/conflictos/claims persistentes, variantes, intención/lente, publicación
+privada versionada y ask/analysis/síntesis sobre el pack del proyecto. Configuración,
+comandos, evidencia real y contrato: [integración final](../docs/BACKEND_INTEGRACION_FINAL.md).
 
 - POST /ask: `{question, schema}`. El schema debe coincidir con el pack desplegado
   (se admiten categorías enriquecidas). Retorna `{values, active, filters:{}}`

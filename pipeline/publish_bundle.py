@@ -98,9 +98,12 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
                 'counts': {'records': 0, 'tests': 0, 'publications': 0, 'documents': 0}}
         sources.append({'id': did, 'kind': 'table' if document['kind'] == 'table' else 'paper',
             'name': document['name'], 'study': sid, 'sha256': document['sha256'],
-            'license': entry.get('license'), 'used': document['kind'] == 'table' or any(c['citation']['doc_id'] == did for c in contextual)})
+            'license': entry.get('license'), 'used': document['kind'] == 'table' or any(c['citation']['doc_id'] == did for c in contextual)
+                or bool(reviewed_state and any(c['citation']['doc_id'] == did for c in reviewed_state.get('claims', [])))})
         studies[sid]['counts']['documents'] += 1
     used = {c['variable'] for c in contextual}
+    if reviewed_state:
+        used.update(key for claim in reviewed_state.get('claims', []) for key in claim['variables'])
     for item in expected['records']:
         entry = entries[item['doc_id']]
         origins = {}
@@ -132,6 +135,11 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
                     'Explicit reviewed positive sigma required: '+key)
             bounds = [x for r in records if key in r['values'] for x in r['values'][key]]
             bounds += [x for c in contextual if c['variable'] == key for x in c['value']]
+            if not bounds:
+                require(isinstance(v.get('range'), list) and len(v['range']) == 2
+                        and all(type(x) in (int, float) and math.isfinite(x) for x in v['range'])
+                        and v['range'][0] <= v['range'][1], 'Unmeasured numeric claim variable needs an explicitly reviewed control range')
+                bounds = v['range']
             value['range'] = [min(bounds), max(bounds)]  # Observed envelope, not a physical limit.
         schema_variables.append(value)
     lens = copy.deepcopy(metadata['lens'])
@@ -162,7 +170,8 @@ def build(approval, documents, extraction, metadata, pack_version, lens_version,
         'schema': {'variables': schema_variables, 'thresholds': thresholds}, 'sources': sources,
         'studies': list(studies.values()), 'records': records,
         'claims': copy.deepcopy(reviewed_state['claims']) if reviewed_state is not None else [],
-        'contextual_evidence': contextual}
+        'contextual_evidence': contextual,
+        'paper_extractions': copy.deepcopy(reviewed_state.get('paper_extractions', [])) if reviewed_state else []}
     mapping = {'version': approval['schema']['version'], 'schema_sha256': approval['schema_sha256'],
         'approved_by': approval['schema']['approved_by'], 'approved_at': approval['schema']['approved_at'],
         'tables': [{'source': did, 'columns': [copy.deepcopy(c) for c in approval['schema']['columns'] if c['doc_id'] == did],

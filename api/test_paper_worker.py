@@ -4,6 +4,7 @@ import io
 import json
 
 import pytest
+from botocore.exceptions import ClientError
 
 from api import paper_worker
 from api.schema_review import Schemas, review
@@ -20,9 +21,12 @@ class Storage:
 
 
 class Table:
-    def __init__(self, version): self.parent = {'status': 'processing', 'schema_version': version}; self.calls = []
+    def __init__(self, version): self.parent = {'status': 'processing', 'schema_version': version}; self.calls = []; self.expired = False
     def get_item(self, **kw): return {'Item': copy.deepcopy(self.parent)} if kw['Key']['PK'] == 'U#owner' else {}
-    def update_item(self, **kw): self.calls.append(kw)
+    def update_item(self, **kw):
+        self.calls.append(kw)
+        if self.expired and 'worker_until > :now' in kw.get('ConditionExpression', ''):
+            raise ClientError({'Error': {'Code': 'ConditionalCheckFailedException'}}, 'UpdateItem')
 
 
 def service():
@@ -43,7 +47,7 @@ def service():
 def test_false_quote_is_retained_as_rejection_and_success_checkpoint_does_not_repeat_sdk(monkeypatch):
     schemas, message, approval, docs = service()
     calls = []
-    def model(client, model, content, raw_output, system):
+    def model(client, model, content, raw_output, system, response_parser):
         calls.append(content)
         payload = {'candidates': [{'variable': 'quantity', 'value': [1, 1], 'unit': 'm', 'scope': 'Fixture only',
             'citation': {'kind': 'paper', 'doc_id': DID, 'page': 1, 'quote': 'A fabricated quote'}}]}
@@ -74,3 +78,28 @@ def test_paper_message_stale_or_foreign_owner_cannot_call_model():
     docs[DID]['sha256'] = 'd'*64
     with pytest.raises(ValueError): paper_worker.process(message, 'lease', schemas, None, 'fixture-model')
     assert not schemas.table.calls
+
+
+def test_single_json_fence_with_commentary_keeps_schema_validation_and_rejects_ambiguity():
+    assert paper_worker.parse_candidates('```json\n{"candidates": []}\n```\nNo explicit measurements.') == {'candidates': []}
+    for text in ('No JSON', '{} {}', '```json\n{}\n```\n{"candidates": []}',
+                 '```json\n{}\n```\n```json\n{}\n```'):
+        with pytest.raises(ValueError): paper_worker.parse_candidates(text)
+
+
+def test_expired_lease_never_publishes_and_resume_reuses_paid_raw_response(monkeypatch):
+    schemas, message, approval, docs = service()
+    calls = []
+    def model(client, model, content, raw_output, **kw):
+        calls.append(content)
+        raw_output.write_text(json.dumps({'content': [{'type': 'text', 'text': '{"candidates": []}'}],
+                                         'usage': {}, 'stop_reason': 'end_turn'}))
+        return {'candidates': []}
+    monkeypatch.setattr(paper_worker.adapter, 'propose', model)
+    schemas.table.expired = True
+    with pytest.raises(ClientError): paper_worker.process(message, 'expired', schemas, None, 'fixture-model')
+    key = paper_worker.artifact_key(UID, PID, DID, approval, 'fixture-model')
+    assert key not in schemas.s3.data
+    schemas.table.expired = False
+    paper_worker.process(message, 'fresh', schemas, None, 'fixture-model')
+    assert key in schemas.s3.data and len(calls) == 1

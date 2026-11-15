@@ -1,5 +1,13 @@
 # Qué falta para cerrar la parte AWS y backend
 
+**Cierre posterior del 15-nov: backend del MVP implementado y comprobado en AWS.**
+42 rutas JWT; worker, revisión/extracción PDF contextual, claims/variantes,
+intención/lente e inferencia de proyectos funcionan. Evidencia real con dos
+usuarios, tres fuentes y pack privado: [guía final](BACKEND_INTEGRACION_FINAL.md)
+y `backend-smoke-2026-11-15.json`. Restan pantallas, revisión de las demás fuentes
+y dominio/DNS cuando se identifique el hostname. Lo siguiente es el registro
+histórico del relevo, no una lista vigente de bloqueos.
+
 **Actualización del relevo 15-nov:** T32 cerrada con D7 y aprobación delegada PDF;
 T33 cargas/DELETE verificadas con19checks reales. T35 tiene API de revisión local,
 T37 constructor y subset de ebullición verificados, T38 exportación local terminada,

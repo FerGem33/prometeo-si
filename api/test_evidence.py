@@ -44,6 +44,8 @@ class Table:
                 published_signature=v[':signature'], published_base_signature=v[':base'], status='published')
         elif ':hash' in v and ':schema' not in v:
             self.parent.update(lens_override_key=v[':key'], lens_request_sha256=v[':hash'], status='ready_to_publish')
+        elif ':selections' in v:
+            self.parent['paper_page_sets'] = copy.deepcopy(v[':selections'])
         else:
             self.parent.update(review_key=v[':key'], review_sha256=v[':hash'], review_schema=v[':schema'], status='ready_to_publish')
         self.parent['revision'] += 1
@@ -213,12 +215,14 @@ def test_reviewed_lens_can_update_sourced_preset_after_correction_without_changi
     assert evidence.schemas.load(evidence.table.parent['published_files']['lens'])['presets'][0]['values']['value'] == 3
 
 
-def with_paper(evidence):
+def with_paper(evidence, unmeasured=False):
     docs = copy.deepcopy(evidence.schemas.docs)
     did = 'doc_'+'e'*32
     docs[did] = {'id': did, 'kind': 'paper', 'status': 'done', 'name': 'fixture.pdf', 'sha256': 'e'*64,
                  'pages': [{'page': 1, 'text': 'The fixture reports a value of 1 m. Further measurements are needed.'}]}
-    schema = evidence.schemas.approval['schema']
+    schema = copy.deepcopy(evidence.schemas.approval['schema'])
+    if unmeasured:
+        schema['variables'].append({'id': 'unmeasured', 'label': 'Unmeasured fixture phenomenon', 'type': 'cat', 'unit': None, 'status': 'approved'})
     approval = review.approve(review.review_request(schema, docs), schema, docs, schema['version'], 'owner')
     meta = {k: copy.deepcopy(evidence.schemas.approval['corpus_metadata'][k]) for k in ('id', 'documents', 'lens', 'thresholds')}
     meta['documents'][did] = {'sha256': docs[did]['sha256'], 'study': 'fixture-paper', 'title': 'Fixture paper', 'doi': '10.1234/fixture-paper',
@@ -247,7 +251,8 @@ def test_pdf_review_and_claims_never_propagate_measurements_to_tables(evidence):
     evidence.s3.data[artifact_key('owner', 'project', did, approval)] = raw
     claim = {'id': 'fixture-gap', 'kind': 'gap', 'variables': ['value'], 'statement': 'Further measurements are needed.',
         'study': 'fixture-paper', 'citation': {'kind': 'paper', 'doc_id': did, 'page': 1, 'quote': 'Further measurements are needed.'}}
-    evidence.claims('owner', 'project', {'claim': claim, 'reason': 'Fixture author statement reviewed'})
+    first_claim = evidence.claims('owner', 'project', {'claim': claim, 'reason': 'Fixture author statement reviewed'})
+    assert evidence.claims('owner', 'project', {'claim': claim, 'reason': 'Fixture author statement reviewed'}) == first_claim
     evidence.publish('owner', 'project', {})
     pack = evidence.schemas.load(evidence.table.parent['published_files']['pack'])
     assert len(pack['records']) == 2 and all(r['source']['id'] != did for r in pack['records'])
@@ -256,3 +261,56 @@ def test_pdf_review_and_claims_never_propagate_measurements_to_tables(evidence):
     assert pack['claims'][0]['statement'] == claim['statement']
     evidence.claims('owner', 'project', {'reason': 'Fixture withdrawal'}, claim['id'])
     assert evidence.claims('owner', 'project')['items'] == []
+
+
+def test_pdf_page_selection_is_durable_bounded_and_repeated_without_replacing_prior_batches(evidence):
+    from types import SimpleNamespace
+    evidence, did = with_paper(evidence)
+    sent = []
+    evidence.schemas.sqs = SimpleNamespace(send_message=lambda **kw: sent.append(json.loads(kw['MessageBody'])))
+    evidence.schemas.queue = 'fixture-queue'
+    for pages in ([True], [0], [2], [1, 1], [1, 2, 3, 4, 5]):
+        with pytest.raises(ApiError): evidence.extract_paper('owner', 'project', did, {'pages': pages})
+    assert not sent
+    evidence.extract_paper('owner', 'project', did, {'pages': [1]})
+    evidence.extract_paper('owner', 'project', did, {'pages': [1]})
+    assert evidence.table.parent['paper_page_sets'][did] == [[], [1]]
+    assert sent[0] == sent[1] and sent[0]['selection_sha256'] == review.digest([sent[0]['schema_sha256'], did, [1]])
+
+
+def test_failed_pdf_batch_acknowledgment_never_approves_a_later_failed_batch(evidence):
+    from api.paper_worker import artifact_key
+    evidence, did = with_paper(evidence)
+    approval = evidence.schemas.approval
+    def failed(selection):
+        value = {'doc_id': did, 'source_sha256': 'e'*64, 'schema_sha256': approval['schema_sha256'],
+                 'pages': [1], 'selection': selection, 'candidates': [], 'rejected': [], 'failure': 'Synthetic invalid response'}
+        value['artifact_sha256'] = review.digest(value)
+        evidence.s3.data[artifact_key('owner', 'project', did, approval, pages=selection)] = value
+        return value['artifact_sha256']
+    first = failed([])
+    evidence.papers('owner', 'project', {'status': 'manual', 'artifact_sha256': first, 'reason': 'Fixture first failed batch reviewed'}, exclude_doc=did)
+    evidence.publish('owner', 'project', {})
+    evidence.table.parent['paper_page_sets'] = {did: [[], [1]]}
+    second = failed([1])
+    with pytest.raises(ApiError) as exc: evidence.publish('owner', 'project', {})
+    assert exc.value.status == 409
+    evidence.papers('owner', 'project', {'status': 'manual', 'artifact_sha256': second, 'reason': 'Fixture second failed batch reviewed'}, exclude_doc=did)
+    evidence.publish('owner', 'project', {})
+
+
+def test_claim_only_source_and_unmeasured_variable_are_published_without_imputed_records(evidence):
+    from api.paper_worker import artifact_key
+    evidence, did = with_paper(evidence, unmeasured=True)
+    approval = evidence.schemas.approval
+    raw = {'schema_sha256': approval['schema_sha256'], 'source_sha256': 'e'*64, 'doc_id': did, 'candidates': [], 'rejected': []}
+    raw['artifact_sha256'] = review.digest(raw)
+    evidence.s3.data[artifact_key('owner', 'project', did, approval)] = raw
+    claim = {'id': 'fixture-gap', 'kind': 'gap', 'variables': ['unmeasured'], 'statement': 'Further measurements are needed.',
+        'study': 'fixture-paper', 'citation': {'kind': 'paper', 'doc_id': did, 'page': 1, 'quote': 'Further measurements are needed.'}}
+    evidence.claims('owner', 'project', {'claim': claim, 'reason': 'Explicit fixture author statement'})
+    evidence.publish('owner', 'project', {})
+    pack = evidence.schemas.load(evidence.table.parent['published_files']['pack'])
+    assert next(s for s in pack['sources'] if s['id'] == did)['used'] is True
+    assert any(v['id'] == 'unmeasured' for v in pack['schema']['variables'])
+    assert len(pack['records']) == 2 and all('unmeasured' not in r['values'] for r in pack['records'])

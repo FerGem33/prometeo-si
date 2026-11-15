@@ -146,6 +146,12 @@ class Worker:
         if not item.get('expected_sha256'):
             raise DocumentFailure('invalid_document')
         if item['status'] in ('done', 'skipped'):
+            if item.get('proposal_origin') == 'manual':
+                expected = f'u/{uid}/p/{pid}/text/{did}/manual-'
+                if (item.get('sha256') != item['expected_sha256']
+                        or not re.fullmatch(re.escape(expected)+r'[a-f0-9]{64}\.json', item.get('proposal_key', ''))):
+                    raise DocumentFailure('completed_document_requires_review')
+                return  # Source-bound manual recovery supersedes the rejected proposal job.
             if item.get('worker_version') != VERSION or item.get('sha256') != item['expected_sha256']:
                 raise DocumentFailure('completed_document_requires_review')
             return

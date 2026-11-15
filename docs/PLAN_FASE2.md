@@ -256,16 +256,21 @@ Lo publicado sigue siendo `index-Ben2isQ8.js` (T16): **nada de la interfaz nueva
 
 ### 9.1 Cuánto falta
 
-Quedan cerca del 40 % del alcance de fase 2. Las estimaciones son gruesas.
+Actualización tras el cierre del backend del 15-nov: la estimación anterior del 40 %
+ya no describe el backend. Se conserva la revisión visual pendiente; estado vivo
+en PROGRESS.md y contrato desplegado en [la guía final](BACKEND_INTEGRACION_FINAL.md).
 
 | Bloque | Hecho | Falta | Esfuerzo |
 |---|---|---|---|
 | A | T16–T19 | Nada | — |
 | B, pantallas | La interfaz de alexteori14 trae grafo, variantes, qué cambió, espacio de trabajo, ficha ML y comparación | Revisión del §9.2 y unificación con el motor (§9.3) | 0.5–1 día de interfaz |
-| C, backend | T30–T33; T38 en local; T34–T37 con código y pruebas locales | T34 desplegado con lote y DLQ (1–2 h). T35 rutas activas y probadas en AWS, con PDF integrado (1–2 h). T36 APIs persistentes y página real del PDF (2–3 h). T37 lote completo de ebullición, publicación autenticada y síntesis (3–4 h). T38 deploy | 6–10 h de agente, **después de los permisos de IAM** |
+| C, backend | T30–T34 operativos; 42 rutas JWT con revisión/PDF, correcciones/claims, variantes, intención/lente e inferencia de proyectos comprobadas en AWS; T38 publicada | Aceptación científica de las demás fuentes del corpus; integración/aceptación visual completa de T35–T37 | Backend del MVP listo para integrar; revisión de datos separada |
 | C, pantallas | Nada | Sesión y proyectos; carga con progreso; revisión del esquema; correcciones y conflictos; publicar y abrir el pack. Contratos en `CONTRATOS_FASE2.md` §5, ejemplos en `docs/fixtures/fase2/` | 1.5–3 días de interfaz |
 
-El bloqueo principal es de IAM: hay que aplicar `infra/prometeo-deployer-policy.json` según `docs/PERMISOS_RELEVO_AWS.md`, y solo puede hacerlo un administrador.
+Las políticas ya permiten desplegar/ejecutar el backend existente y las pruebas
+reales pasaron. La simulación administrativa del mapping fue omitida por
+instrucción del dueño y no se marca aprobada; no es un bloqueo de ejecución.
+No se vuelve a desplegar la web hasta cumplir §9.2/§9.3.
 
 ### 9.2 Revisar la interfaz nueva antes de publicar la web
 

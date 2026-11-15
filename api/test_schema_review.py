@@ -54,8 +54,8 @@ class Memory(Schemas):
         self.parent.update(schema_version=version, revision=parent['revision']+1,
                            extraction_dispatch_pending=dispatch, status='processing' if dispatch else 'awaiting_review')
 
-    def dispatch(self, uid, pid, value):
-        if self.parent.get('extraction_dispatch_pending'):
+    def dispatch(self, uid, pid, value, force=False):
+        if self.parent.get('extraction_dispatch_pending') or force:
             self.sent.append(copy.deepcopy(value))
             self.parent['extraction_dispatch_pending'] = False
 
@@ -110,6 +110,9 @@ def test_explicit_approval_delegation_and_replay():
     assert review.extract_tables(service.sent[0], service.docs)['records'][0]['values']
     assert service.approve('owner', PID, {'version': changed['version']}) == result
     assert len(service.sent) == 1
+    service.versions[result['version']]['extract_state'] = 'failed'
+    assert service.approve('owner', PID, {'version': result['version']}) == result
+    assert len(service.sent) == 2 and len(service.versions) == 3
 
 
 def test_source_or_stored_schema_tampering_invalidates_approval():

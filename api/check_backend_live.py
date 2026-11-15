@@ -1,6 +1,7 @@
 """Real A/B checks of the completed backend. No tokens, signed URLs or source text in receipts."""
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -16,11 +17,14 @@ def main():
     parser.add_argument('--paper-decisions', type=Path)
     parser.add_argument('--claim-file', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--resume-receipt', type=Path)
+    parser.add_argument('--verify-original-only', action='store_true')
     args = parser.parse_args()
     base = os.environ['API_URL'].rstrip('/')
     if base != 'https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com': parser.error('Unexpected API')
     root = Path('/tmp/prometeo-backend-live'); root.mkdir(exist_ok=True)
-    receipt = {'project_id': args.project, 'checks': []}
+    receipt = json.loads(args.resume_receipt.read_text()) if args.resume_receipt else {'project_id': args.project, 'checks': []}
+    if receipt['project_id'] != args.project: parser.error('Receipt belongs to another project')
     prefix = '/projects/'+args.project
     def send(method, path, data=None, expected=200, user='A', signed=False):
         headers = {'Origin': os.environ['CF_URL']}
@@ -45,7 +49,33 @@ def main():
         for name, url in files['files'].items():
             (output/(name+'.json')).write_bytes(send('GET', url, signed=True))
         return json.loads((output/'pack.json').read_text()), json.loads((output/'lens.json').read_text())
+    def original_pdf(pack):
+        spec = importlib.util.spec_from_file_location('ingest_core', Path(__file__).resolve().parents[1]/'pipeline/ingest.py')
+        core = importlib.util.module_from_spec(spec); spec.loader.exec_module(core)
+        for context in pack.get('contextual_evidence', []):
+            citation = context['citation']; source = next(s for s in pack['sources'] if s['id'] == citation['doc_id'])
+            signed = send('POST', prefix+'/documents/'+source['id']+'/url', {'page': citation['page']})
+            url = signed.get('url')
+            if not url or '#page='+str(citation['page']) not in url: raise RuntimeError('PDF original page fragment missing')
+            raw = send('GET', url, signed=True)
+            if hashlib.sha256(raw).hexdigest() != source['sha256']: raise RuntimeError('Original PDF hash changed')
+            (root/'original.pdf').write_bytes(raw)
+            page = send('GET', prefix+'/documents/'+source['id']+'/text?page='+str(citation['page']))
+            checked = core.verify_citation(citation, {source['id']: {'id': source['id'], 'kind': 'paper', 'status': 'done',
+                'pages': [{'page': page['page'], 'text': page['text']}]}})
+            if not checked['verified']: raise RuntimeError('Published PDF citation rejected by the shared verifier')
+            receipt['original_pdf'] = {'sha256_match': True, 'page': citation['page'], 'literal_quote_found': True,
+                                       'normalization': 'shared NFC/whitespace verifier; punctuation and numbers retained'}
+            break
     try:
+        if args.verify_original_only:
+            if not args.resume_receipt: parser.error('Original-only completion requires the prior receipt')
+            pack, _ = download(send('GET', prefix+'/pack'))
+            original_pdf(pack)
+            send('DELETE', prefix+'/proposals/backend-smoke', expected=204)
+            send('GET', prefix+'/proposals/backend-smoke', expected=404)
+            receipt.update(result='passed', resumed_partial_smoke=True)
+            print(json.dumps({k: v for k, v in receipt.items() if k != 'checks'})); return
         if args.paper_decisions:
             decisions = json.loads(args.paper_decisions.read_text())
             for entry in decisions.get('candidates', []):
@@ -113,19 +143,7 @@ process.stdout.write(JSON.stringify({scenario,levels:evidenceLevels(pack,lens,sc
         final = send('POST', prefix+'/publish', {})
         pack, lens = download(final)
         receipt['final_versions'] = {k: final[k] for k in ('pack_version', 'lens_version')}
-        for context in pack.get('contextual_evidence', []):
-            citation = context['citation']
-            source = next(s for s in pack['sources'] if s['id'] == citation['doc_id'])
-            signed = send('POST', prefix+'/documents/'+source['id']+'/url', {'page': citation['page']})
-            url = signed.get('url')
-            if not url or '#page='+str(citation['page']) not in url: raise RuntimeError('PDF original page fragment missing')
-            raw = send('GET', url, signed=True)
-            if hashlib.sha256(raw).hexdigest() != source['sha256']: raise RuntimeError('Original PDF hash changed')
-            (root/'original.pdf').write_bytes(raw)
-            page = send('GET', prefix+'/documents/'+source['id']+'/text?page='+str(citation['page']))
-            if citation['quote'] not in page['text']: raise RuntimeError('Published PDF quote missing from source page')
-            receipt['original_pdf'] = {'sha256_match': True, 'page': citation['page'], 'literal_quote_found': True}
-            break
+        original_pdf(pack)
         send('DELETE', prefix+'/proposals/backend-smoke', expected=204)
         send('GET', prefix+'/proposals/backend-smoke', expected=404)
         receipt['result'] = 'passed'

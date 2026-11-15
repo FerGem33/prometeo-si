@@ -23,12 +23,17 @@ def main():
     action.add_argument('--diagnostics-project')
     action.add_argument('--workflow-dir', type=Path)
     action.add_argument('--retry-project')
+    action.add_argument('--paper-project')
     parser.add_argument('--retry-docs', nargs='+')
+    parser.add_argument('--paper-doc')
+    parser.add_argument('--pages', nargs='+', type=int)
     parser.add_argument('--resume-receipt', type=Path)
     parser.add_argument('--inspect-project')
     parser.add_argument('--paper', type=Path, help='Include one reviewed-manifest PDF as contextual evidence')
     parser.add_argument('--stop-after-extract', action='store_true', help='Save candidates for explicit semantic decisions before publishing')
     parser.add_argument('--manual-recovery', action='store_true', help='Explicitly use the delegated reference mapping after an invalid AI proposal')
+    parser.add_argument('--inspect-paper-responses', action='store_true', help='Owner-only opt-in raw response inspection; output must remain private')
+    parser.add_argument('--schema-additions', type=Path, help='Explicit source-bound reviewed variable additions, kept outside Git')
     parser.add_argument('--output', default='/tmp/prometeo-evidence-diagnostics.json')
     args = parser.parse_args()
     if args.workflow_dir and args.retry_docs and not args.resume_receipt:
@@ -65,6 +70,13 @@ def main():
             'responses': len(d['responses'])} for d in diagnosis['items']]}), flush=True)
     if args.diagnostics_project:
         value = send('GET', '/projects/'+args.diagnostics_project+'/diagnostics')
+        if args.inspect_paper_responses:
+            responses = []
+            for item in value['items']:
+                for response in item['responses']:
+                    if response['request'].startswith('paper-'):
+                        responses.append(send('GET', '/projects/'+args.diagnostics_project+'/diagnostics?doc_id='+item['doc_id']+'&response='+response['request']))
+            value['paper_responses'] = responses
         Path(args.output).write_text(json.dumps(value, indent=2)+'\n'); print(json.dumps(value, indent=2)); return
     if args.retry_project:
         if not args.retry_docs: parser.error('Retry requires --retry-docs (never replay DLQ automatically)')
@@ -73,6 +85,17 @@ def main():
         diagnostic = send('GET', '/projects/'+args.retry_project+'/diagnostics')
         Path(args.output).write_text(json.dumps({'jobs': value, 'diagnostics': diagnostic}, indent=2)+'\n')
         print(json.dumps({'result': value['totals'], 'selected': len(args.retry_docs)})); return
+    if args.paper_project:
+        if not args.paper_doc: parser.error('--paper-project requires --paper-doc')
+        endpoint = '/projects/'+args.paper_project
+        send('POST', endpoint+'/papers/'+args.paper_doc+'/extract', {'pages': args.pages or []}, 202)
+        for _ in range(90):
+            value = send('GET', endpoint+'/paper-candidates')
+            if all(d['status'] != 'pending' for d in value['documents']): break
+            time.sleep(3)
+        else: raise RuntimeError('PDF extraction pending; repeat the same selection without uploading again')
+        Path(args.output).write_text(json.dumps(value, indent=2)+'\n')
+        print(json.dumps({'project_id': args.paper_project, 'documents': [{'doc_id': d['doc_id'], 'status': d['status'], 'pages': d.get('pages')} for d in value['documents']], 'candidates': len(value['items'])})); return
     config = json.loads((ROOT/'docs/t37/revision_local.json').read_text())
     receipt = json.loads(args.resume_receipt.read_text()) if args.resume_receipt else {'checks': checks, 'sources': []}
     if args.resume_receipt:
@@ -136,7 +159,7 @@ def main():
                     page = send('GET', endpoint+'/documents/'+source['doc_id']+'/text?page=1')
                     with (ROOT/'docs/t37/manifest_ebullicion.csv').open(encoding='utf-8-sig', newline='') as f:
                         item = next(m for m in csv.DictReader(f) if m['sha256'] == source['sha256'] and m['incluido'] == 'True')
-                    quote_text = next(line.strip() for line in page['text'].splitlines() if line.strip())
+                    quote_text = next(line.strip() for line in page['text'].splitlines() if len(line.strip()) > 15 and any(c.isalpha() for c in line))
                     metadata_docs[source['doc_id']] = {'sha256': source['sha256'], 'study': source['study'], 'doi': item['doi'],
                         'title': item['investigacion'], 'kind': 'campaign', 'kind_note': 'Reviewed article identity; contextual PDF evidence only, no table-wide attribution.',
                         'license': None, 'kind_evidence': {'kind': 'paper', 'doc_id': source['doc_id'], 'page': 1, 'quote': quote_text}}
@@ -174,6 +197,15 @@ def main():
                     'kind_evidence': {'kind': 'table', 'doc_id': doc['id'], 'row': first['row'], 'column': reference['kind_column'],
                                       'text': first['values'][doc['headers'].index(reference['kind_column'])]}}
                 prepared[source['study']] = doc
+            if args.schema_additions:
+                additions = json.loads(args.schema_additions.read_text())
+                for entry in additions['variables']:
+                    source = next(s for s in receipt['sources'] if s['sha256'] == entry['source_sha256'])
+                    variable = entry['variable']
+                    for citation in variable['evidence']: citation['doc_id'] = source['doc_id']
+                    edits.extend([{'op': 'add_variable', 'variable': variable},
+                                  {'op': 'set_status', 'target': 'variable', 'id': variable['id'], 'status': 'approved'}])
+                receipt['schema_additions_sha256'] = hashlib.sha256(args.schema_additions.read_bytes()).hexdigest(); save()
             schema = send('PATCH', endpoint+'/schema', {'version': schema['version'], 'edits': edits})
             doc = prepared['PSI-87']; first = doc['rows'][0]
             reference = next(d for d in config['documents'] if d['study'] == 'PSI-87')
@@ -186,7 +218,8 @@ def main():
                     'default_axes': ['human_heat_flux', 'human_subcooling'], 'evidence': {'min_studies': 2},
                     'ml_thresholds': json.loads((ROOT/'web/src/contracts/ml-thresholds.json').read_text())}}
             approved = send('POST', endpoint+'/schema/approve', {'version': schema['version'], 'metadata': metadata,
-                'review_authority': config['authority']+'; reference config SHA256 '+review.digest(config)})
+                'review_authority': config['authority']+'; reference config SHA256 '+review.digest(config)
+                    + ('; explicit source-bound additions SHA256 '+receipt['schema_additions_sha256'] if args.schema_additions else '')})
             receipt['approved'] = {'version': approved['version'], 'authority': config['authority']}; save()
         wait(pid)
         for _ in range(90):

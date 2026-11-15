@@ -219,7 +219,7 @@ def handle(event):
                     from .schema_review import service as schema_service
                 except ImportError:
                     from schema_review import service as schema_service
-                return 200, schema_service(store()).diagnostics(uid, diagnostic_path[1])
+                return 200, schema_service(store()).diagnostics(uid, diagnostic_path[1], event.get('queryStringParameters') or {})
             evidence_path = re.fullmatch(r'/projects/(prj_[a-f0-9]{32,64})/(records|conflicts|publish|pack|synthesis|proposals|claims|ask|analysis|paper-candidates|papers|lens)(?:/([^/]+)(/resolve|/review|/extract)?)?', path)
             if evidence_path:
                 repository = store()

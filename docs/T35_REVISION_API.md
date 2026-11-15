@@ -1,5 +1,9 @@
 # T35 — Revisión versionada del esquema (implementación local)
 
+Actualización de cierre: revisión tabular y candidatos PDF integrados y
+comprobados en AWS; falta la pantalla. Este documento conserva el fundamento
+inicial. Contrato/estado vigente: [integración final](BACKEND_INTEGRACION_FINAL.md).
+
 Estado al 15-nov: backend desplegado y recorrido tabular real comprobado hasta el pack
 privado v2. T35 sigue en curso por pantalla/extracción PDF integrada. Evidencia,
 extensiones del contrato y comandos vigentes: [relevo API](T35_T37_RELEVO_API.md).

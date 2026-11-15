@@ -1,5 +1,10 @@
 # T35–T37: integración del recorrido esencial desplegado
 
+**Registro del primer corte.** El backend se amplió y comprobó después:
+[guía final de integración](BACKEND_INTEGRACION_FINAL.md). Los pendientes de
+backend enumerados al final de este registro ya tienen implementación; la guía
+final y PROGRESS.md indican el estado vigente y lo que queda a interfaz/datos.
+
 Estado comprobado el15-nov-2026: API y worker en AWS, pack privado de dos
 tablas reales publicado. Las tareas completas siguen en curso; las pantallas
 del bloque C no se implementaron aquí. No se reemplazó la demo de combustión.
@@ -34,7 +39,7 @@ Ver recibo `t34-t37-smoke-2026-11-15.json` y bitácora de PROGRESS.
 ## Contrato para el equipo de interfaz
 
 Base: `API_URL` de `infra/outputs.env`. Todas estas rutas requieren
-`Authorization: Bearer <access token Cognito>` y propiedad del proyecto.
+`Authorization: Bearer <ID token Cognito>` y propiedad del proyecto.
 Proyecto ajeno:404. Errores409 requieren recargar versiones/estado; no repetir
 una edición vieja automáticamente. No guardar tokens ni URLs firmadas en git.
 

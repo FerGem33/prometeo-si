@@ -128,6 +128,15 @@ class Workspace:
         try:
             if cid is None:
                 if not isinstance(data, dict) or set(data) != {'claim', 'reason'}: raise ValueError('Expected claim and reason')
+                if not isinstance(data['claim'], dict): raise ValueError('Expected claim object')
+                incoming = copy.deepcopy(data['claim'])
+                identifier(incoming.get('id'))
+                previous = next((c for c in state['claims'] if c['id'] == incoming['id']), None)
+                if previous:
+                    if isinstance(incoming.get('citation'), dict): incoming['citation']['verified'] = True
+                    if ({k: v for k, v in previous.items() if k != 'review'} == incoming
+                            and previous['review']['reason'] == data['reason']): return previous
+                    fail(409, 'conflict', 'Claim ID already used; withdraw it before saving a different statement')
                 updated = self.record_review.apply(state, documents, [{'op': 'claim', **data}], state['version'], uid)
             else:
                 if not isinstance(data, dict) or set(data) != {'reason'}: raise ValueError('Expected exclusion reason')
@@ -206,6 +215,9 @@ class Workspace:
         if parent.get('lens_request_sha256') == request_hash:
             return {'lens_version': int(parent.get('lens_version') or 0)+1, 'draft': True}
         value['intent_review'] = {'by': uid, 'at': stamp(), 'reason': data['reason'].strip()}
+        if any(d['kind'] == 'paper' for d in documents.values()):
+            state = {**state, **self.reviewed_papers(uid, pid, details=True)}
+            self.record_review.seal(state)
         try:
             effective = self.publisher.approve_metadata({k: (value if k == 'lens' else metadata[k])
                 for k in ('id', 'documents', 'lens', 'thresholds')}, documents, uid, value['intent_review']['at'], data['reason'].strip())
