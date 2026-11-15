@@ -10,7 +10,7 @@ import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
 import { BASELINE_PROFILES, computeWhatIfDelta } from "../report/whatif";
 import { t } from "../i18n";
-import { NasaApparatus, type NasaInfo } from "./NasaApparatus";
+import { ReferenceScenarios, type NasaInfo } from "./NasaApparatus";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
   const l = LEVELS[level];
@@ -141,7 +141,7 @@ export function ScenarioPanel({
 
       {isCustomCorpus && nasa && (
         <div className="scn-design-stage noprint">
-          <NasaApparatus {...nasa} compact />
+          {nasa.scenarios && <ReferenceScenarios scenarios={nasa.scenarios} />}
         </div>
       )}
 

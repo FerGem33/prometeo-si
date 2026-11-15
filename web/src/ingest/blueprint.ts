@@ -7,14 +7,15 @@
  */
 
 import type { Lens, Pack, Preset } from "../engine/types";
-import { compileModules, validateModules } from "./modules";
 import type {
+  CorpusScope,
   DesignPresetFlag,
   ExtractedVariable,
   ReportSectionId,
   UiBlueprint,
   UploadedDoc,
 } from "./types";
+import { generateModules, validateModules } from "./modules";
 
 // ============================================================================
 // Constants & Allowlists
@@ -477,7 +478,9 @@ export function compileUiBlueprint(
   // --------------------------------------------------------------------------
   const title =
     (typeof remoteBlueprint?.title === "string" && remoteBlueprint.title.trim()) ||
-    (docs.length > 0
+    (docs.length > 1
+      ? `Evidence Synthesis of ${docs.length} Uploaded Documents`
+      : docs.length === 1
       ? `${docs[0].name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ")} Evidence Synthesis`
       : "Evidence Synthesis & Scenario Assessment");
 
@@ -512,13 +515,17 @@ export function compileUiBlueprint(
       .slice(0, 2)
       .join(" & ")} with ${density} density based on directives.`;
 
-  const localModules = compileModules(instr.trim(), vars, presetFlags.includes("compare"));
-  const validated = validateModules(remoteBlueprint?.modules ?? localModules, vars.filter(v => v.include).map(v => v.id));
+  // H. Purpose-driven modules: /design may propose them; each one is validated and invalid ones are dropped.
+  const included = vars.filter((v) => v.include);
+  const includedIds = new Set(included.map((v) => v.id));
+  const remoteModules = remoteBlueprint?.modules !== undefined ? validateModules(remoteBlueprint.modules, includedIds) : null;
+  if (remoteModules?.rejected.length) console.warn("Prometeo: /design modules rejected", remoteModules.rejected);
+  const modules = remoteModules?.modules.length ? remoteModules.modules : generateModules(instr, included);
+
   return {
     purpose: instr.trim(),
-    modules: validated.modules.length ? validated.modules : localModules,
-    discardedModules: [...validated.discarded, ...(Array.isArray(remoteBlueprint?.discardedModules)
-      ? remoteBlueprint.discardedModules.filter((x): x is string => typeof x === "string").map(x => x.slice(0, 200)) : [])],
+    modules,
+    rejectedModules: remoteModules?.rejected ?? [],
     title,
     kicker,
     variablesLayout,
@@ -547,8 +554,11 @@ export function buildLensFromBlueprint(
   blueprint: UiBlueprint,
   pack: Pack,
   _vars: ExtractedVariable[],
-  baseLens?: Lens
+  baseLens?: Lens,
+  scope?: CorpusScope
 ): Lens {
+  // Words about the reference corpus (subject, disclaimer, gaps, groups) do not describe an upload-only corpus.
+  const corpus = scope === "uploaded" ? undefined : baseLens;
   const packVarMap = new Map(pack.schema.variables.map((v) => [v.id, v]));
   const packNumericVars = pack.schema.variables
     .filter((v) => v.type === "num")
@@ -660,13 +670,13 @@ export function buildLensFromBlueprint(
   return {
     title,
     kicker,
-    subject: baseLens?.subject || "studies",
+    subject: corpus?.subject || "studies",
     unit_of_study: baseLens?.unit_of_study || "investigation",
     byline,
     disclaimer:
-      baseLens?.disclaimer ||
+      corpus?.disclaimer ||
       "Prometeo compares conditions across evidence records; it does not replace domain experimentation.",
-    footer: baseLens?.footer || "Prometeo · Evidence Synthesis Engine",
+    footer: corpus?.footer || "Prometeo · Evidence Synthesis Engine",
     presets: validPresets,
     default_preset,
     default_axes,
@@ -686,11 +696,11 @@ export function buildLensFromBlueprint(
         "category_tested",
         "full_coverage",
       ],
-    known_gaps: baseLens?.known_gaps ?? [],
-    groups: baseLens?.groups ?? [],
-    partition_labels: baseLens?.partition_labels,
-    outcome_columns_note: baseLens?.outcome_columns_note,
+    known_gaps: corpus?.known_gaps ?? [],
+    groups: corpus?.groups ?? [],
+    partition_labels: corpus?.partition_labels,
+    outcome_columns_note: corpus?.outcome_columns_note,
     parts,
-    graph: baseLens?.graph ?? { attributes: [] },
+    graph: corpus?.graph ?? { attributes: [] },
   };
 }

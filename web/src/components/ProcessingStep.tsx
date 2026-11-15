@@ -4,6 +4,7 @@ import { ChamberFigure } from "./ChamberFigure";
 import { Prefs } from "./Prefs";
 import { t, tx, many, lazy } from "../i18n";
 import type { EvaluationDraft } from "./ScenarioStep";
+import { detectNasaCorpus } from "../ingest/nasaDetect";
 
 export const PROCESSING_STEPS = lazy([
   tx("Reading documents and source tables"),
@@ -31,6 +32,8 @@ export function ProcessingStep({
   const [currentStep, setCurrentStep] = useState(0);
   const s = pack.meta.stats;
   const effectiveFileCount = draft?.docs?.length ?? fileCount ?? 0;
+  // The isometric chamber belongs to the reference corpus; an uploaded corpus gets it only if its documents are space research.
+  const showChamber = !draft?.isCustomCorpus || detectNasaCorpus(draft.docs, draft.variables).isNasa;
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -64,7 +67,7 @@ export function ProcessingStep({
 
       <main className="step-main proc-main">
         <section className="step-panel proc-panel" role="status" aria-live="polite">
-          <p className="cover-kicker">{t("Isometric Chamber · Evidence Harmonization")}</p>
+          <p className="cover-kicker">{showChamber ? t("Isometric Chamber · Evidence Harmonization") : t("Evidence Harmonization")}</p>
           <h1>{t("Preparing your evidence report")}</h1>
           <p className="step-lede">
             {effectiveFileCount > 0 ? t("{0} staged document(s) and ", effectiveFileCount) : ""}
@@ -72,7 +75,7 @@ export function ProcessingStep({
           </p>
 
           <div className="proc-grid">
-            <ChamberFigure step={currentStep} progressPct={progressPct} />
+            {showChamber && <ChamberFigure step={currentStep} progressPct={progressPct} />}
 
             <div className="proc-status-col">
               <ol className="psteps" aria-label={t("Harmonization steps")}>

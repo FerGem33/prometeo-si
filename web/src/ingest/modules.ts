@@ -1,47 +1,117 @@
-import type { ExtractedVariable, ModuleSpec, ModuleType } from "./types";
+/**
+ * Purpose-driven interface modules (GenUI). A module is data, validated against a per-type schema;
+ * the report draws it with a generic renderer registered for its type (components/modules/).
+ * Adding a module type = one entry in MODULE_SCHEMAS + one renderer. The engine is not touched.
+ */
 
-/** Shared schema registry; rendering is registered separately from all engine logic. */
-export const MODULE_SCHEMAS: Record<ModuleType, { title: string; description: string }> = {
-  scenario_input: { title: "Describe your case", description: "Enter conditions for the selected variables. These are user inputs, not measurements from a source." },
-  classification: { title: "Evidence coverage of your case", description: "Coverage describes the evidence in this corpus, never safety or a physical prediction." },
-  key_papers: { title: "Relevant sources", description: "Source relevance is ordered by the comparison engine; summaries are cited templates." },
-  case_notes: { title: "Case description", description: "Describe your case. Review every interpreted condition before applying it." },
-  free_chat: { title: "Ask the corpus", description: "Answers use only this corpus, with source citations. Local answers are labeled explicitly." },
-};
+export type ModuleType = "scenario_input" | "classification" | "key_papers" | "case_notes" | "free_chat";
 
-const object = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
-
-/** Reject unknown types, fields, IDs and references. A bad module never disables the base report. */
-export function validateModules(raw: unknown, variables: string[]): { modules: ModuleSpec[]; discarded: string[] } {
-  const modules: ModuleSpec[] = [];
-  const discarded: string[] = [];
-  if (!Array.isArray(raw)) return { modules, discarded: ["Modules must be an array."] };
-  const ids = new Set<string>();
-  for (const [index, candidate] of raw.entries()) {
-    if (!object(candidate) || Object.keys(candidate).some(k => !["id", "type", "title", "description", "variables"].includes(k)) ||
-      typeof candidate.id !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(candidate.id) || ids.has(candidate.id) ||
-      typeof candidate.type !== "string" || !Object.hasOwn(MODULE_SCHEMAS, candidate.type) ||
-      typeof candidate.title !== "string" || !candidate.title.trim() || candidate.title.length > 200 ||
-      typeof candidate.description !== "string" || candidate.description.length > 1000 ||
-      !Array.isArray(candidate.variables) || !candidate.variables.every(v => typeof v === "string" && variables.includes(v)) ||
-      (["scenario_input", "classification", "case_notes"].includes(candidate.type) && candidate.variables.length === 0) ||
-      new Set(candidate.variables).size !== candidate.variables.length) {
-      discarded.push(`Module ${index + 1} discarded: invalid schema, duplicate ID or unknown variable.`);
-      continue;
-    }
-    ids.add(candidate.id);
-    modules.push({ id: candidate.id, type: candidate.type as ModuleType, title: candidate.title.trim(),
-      description: candidate.description, variables: candidate.variables as string[] });
-  }
-  return { modules, discarded };
+export interface ModuleSpec {
+  id: string;
+  type: ModuleType;
+  title: string;
+  description: string;
+  /** Variable ids the module works on (must exist in the evaluation). */
+  variables: string[];
+  /** key_papers: how many papers to list. */
+  limit?: number;
 }
 
-/** Intent rules contain no corpus-specific variable names or scientific thresholds. */
-export function compileModules(purpose: string, variables: ExtractedVariable[], compare = false): ModuleSpec[] {
-  const selected = variables.filter(v => v.include).map(v => v.id);
-  const caseIntent = compare || /\b(case|scenario|compar\w*|assess\w*|decis\w*|decid\w*|evalu\w*|safety|segur\w*|caso)\b/iu.test(purpose);
-  const types: ModuleType[] = caseIntent && selected.length
-    ? ["scenario_input", "case_notes", "classification", "key_papers", "free_chat"]
-    : ["key_papers", "free_chat"];
-  return types.map(type => ({ id: type, type, ...MODULE_SCHEMAS[type], variables: selected }));
+type Check = (m: ModuleSpec) => string | null;
+
+const needsVariables: Check = (m) => (m.variables.length ? null : "needs at least one variable");
+
+/** One validator per type; an unknown type has no schema and is rejected. */
+export const MODULE_SCHEMAS: Record<ModuleType, Check> = {
+  scenario_input: needsVariables,
+  classification: needsVariables,
+  case_notes: needsVariables,
+  key_papers: (m) => (m.limit === undefined || (Number.isInteger(m.limit) && m.limit >= 1 && m.limit <= 20) ? null : "limit must be an integer 1–20"),
+  free_chat: () => null,
+};
+
+const text = (x: unknown, max: number) => (typeof x === "string" && x.trim() && x.length <= max ? x.trim() : null);
+
+/** Validates untrusted module specs (local or /design). Invalid ones are dropped and reported, never thrown. */
+export function validateModules(raw: unknown, variableIds: ReadonlySet<string>): { modules: ModuleSpec[]; rejected: string[] } {
+  const modules: ModuleSpec[] = [];
+  const rejected: string[] = [];
+  if (!Array.isArray(raw)) return { modules, rejected: raw === undefined ? [] : ["modules is not a list"] };
+  const seen = new Set<string>();
+  raw.forEach((item, i) => {
+    const o = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const type = o.type as ModuleType;
+    const where = `module ${i + 1}${typeof o.type === "string" ? ` (${o.type})` : ""}`;
+    if (!(typeof type === "string" && type in MODULE_SCHEMAS)) return void rejected.push(`${where}: unknown type`);
+    const id = text(o.id, 60) ?? `${type}-${i + 1}`;
+    const title = text(o.title, 120);
+    const description = text(o.description, 600) ?? "";
+    if (!title) return void rejected.push(`${where}: missing title`);
+    if (seen.has(id)) return void rejected.push(`${where}: duplicate id`);
+    const vars = Array.isArray(o.variables) ? o.variables.filter((v): v is string => typeof v === "string" && variableIds.has(v)) : [];
+    const spec: ModuleSpec = { id, type, title, description, variables: [...new Set(vars)] };
+    if (o.limit !== undefined) spec.limit = o.limit as number;
+    const err = MODULE_SCHEMAS[type](spec);
+    if (err) return void rejected.push(`${where}: ${err}`);
+    seen.add(id);
+    modules.push(spec);
+  });
+  return { modules, rejected };
+}
+
+// A purpose about one's own case (decide, assess, design…) gets the case modules; a survey-like purpose does not.
+const CASE_CUES = /\b(my|our|own|decid\w*|decision\w*|assess\w*|evaluat\w*|design\w*|classif\w*|plan\w*|choos\w*|select\w*|safety|case|mi|mis|nuestr\w*|decidir|decisiones|evaluar|diseñ\w*|clasificar|caso|seguridad)\b/i;
+const SURVEY_CUES = /\b(review|survey|overview|literature|state of the art|summar\w*|what is known|gaps?|revisi[oó]n|estado del arte|resum\w*|huecos?)\b/i;
+
+/**
+ * Deterministic module plan from the purpose and the selected variables (already ordered by score).
+ * Texts are data of the blueprint, not of the components.
+ */
+export function generateModules(purpose: string, selected: { id: string; label: string }[]): ModuleSpec[] {
+  const p = purpose.trim();
+  const ids = selected.map((v) => v.id);
+  const quoted = p ? `“${p.length > 160 ? p.slice(0, 157) + "…" : p}”` : "";
+  const caseLike = !p || CASE_CUES.test(p) || !SURVEY_CUES.test(p);
+  const out: ModuleSpec[] = [];
+  if (caseLike && ids.length) {
+    out.push({
+      id: "case-input",
+      type: "scenario_input",
+      title: "Describe your case",
+      description: `Conditions of the case behind the purpose ${quoted}. Only the variables selected in the wizard are offered; each field checks the unit and the range found in the documents.`.replace("purpose . ", "purpose. "),
+      variables: ids,
+    });
+    out.push({
+      id: "case-notes",
+      type: "case_notes",
+      title: "Describe the case in your own words",
+      description: "Variables and values mentioned in the text are proposed for confirmation; nothing is applied until you confirm it.",
+      variables: ids,
+    });
+    out.push({
+      id: "case-class",
+      type: "classification",
+      title: "Classification of your case against the evidence",
+      description: "Coverage of each variable by the documents, from A (studied) to D (not studied). The letter describes evidence coverage, not risk or a physical outcome.",
+      variables: ids,
+    });
+  }
+  out.push({
+    id: "key-papers",
+    type: "key_papers",
+    title: caseLike ? "Key papers for your case" : "Key papers for the purpose",
+    description: caseLike
+      ? "Papers closest to the case, ordered by the engine, with the variables they share with it."
+      : `Papers closest to the selected conditions for ${quoted || "the purpose"}, ordered by the engine.`,
+    variables: ids,
+    limit: 5,
+  });
+  out.push({
+    id: "free-chat",
+    type: "free_chat",
+    title: "Ask the corpus",
+    description: "Open questions about the uploaded documents and your case. Every figure comes from the records and cites its source.",
+    variables: ids,
+  });
+  return out;
 }

@@ -92,6 +92,7 @@ export interface VariableCitation {
   column?: string;
   quote: string;
   doi?: string;
+  /** "approved_pack": a normalized pack record, not a literal quotation of the source. */
   basis?: "approved_pack";
   recordId?: string;
   variableId?: string;
@@ -111,19 +112,10 @@ export interface ExtractedVariable {
   include: boolean;
   citations: VariableCitation[];
   groupId?: string;
+  /** Deterministic relevance score (ingest/variableScore.ts) and its readable components. */
   score?: number;
   reasons?: string[];
-  scoreComponents?: Record<"frequency" | "coverage" | "position" | "purpose" | "measurability", number>;
 }
-
-export type ModuleType = "scenario_input" | "classification" | "key_papers" | "case_notes" | "free_chat";
-export type ModuleSpec = {
-  id: string;
-  type: ModuleType;
-  title: string;
-  description: string;
-  variables: string[];
-};
 
 export interface VariableProposalRemote {
   id?: string;
@@ -167,10 +159,6 @@ export type ReportSectionId =
 export type DesignPresetFlag = "gaps" | "compare" | "graph" | "compact";
 
 export interface UiBlueprint {
-  /** Optional only for browser saves written before the purpose workflow. New compiles always set these. */
-  purpose?: string;
-  modules?: ModuleSpec[];
-  discardedModules?: string[];
   title: string;
   kicker: string;
   variablesLayout: "grouped" | "list" | "grid";
@@ -184,6 +172,12 @@ export interface UiBlueprint {
   hideMlCard?: boolean;
   hideStudyCompare?: boolean;
   rationale: string;
+  /** What the user wants the paper for; drives the generated modules. */
+  purpose?: string;
+  /** Declarative interface modules generated from the purpose (ingest/modules.ts). */
+  modules?: import("./modules").ModuleSpec[];
+  /** Modules proposed by /design that failed validation and were dropped. */
+  rejectedModules?: string[];
 }
 
 export interface DocStoreEntry {

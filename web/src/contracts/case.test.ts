@@ -25,13 +25,18 @@ describe("confirmed case inputs", () => {
     expect(result.scenario.values.p).toBeCloseTo(Number(preset.values.p), 5);
     expect(result.scenario.values.material).toBeUndefined();
   });
-  it("rejects incompatible units, nonfinite, hexadecimal and out-of-schema values", () => {
-    for (const field of [{ value: String(preset.values.o2), unit: "invalid-unit" },
-      { value: "Infinity" }, { value: "0x21" },
-      { value: String((pack.schema.variables.find(v => v.id === "o2") as { range: number[] }).range[1] + 1) }]) {
+  it("rejects incompatible units, nonfinite and hexadecimal values", () => {
+    for (const field of [{ value: String(preset.values.o2), unit: "invalid-unit" }, { value: "Infinity" }, { value: "0x21" }]) {
       const result = caseFromFields(pack, ["o2"], { o2: field });
       expect(result.scenario.active).toEqual([]);
       expect(result.errors.o2).toBeDefined();
     }
+  });
+  it("accepts a case outside the recorded range with a warning, so the engine can classify it as not covered", () => {
+    const above = (pack.schema.variables.find(v => v.id === "o2") as { range: number[] }).range[1] + 1;
+    const result = caseFromFields(pack, ["o2"], { o2: { value: String(above) } });
+    expect(result.errors).toEqual({});
+    expect(result.scenario.values.o2).toBe(above);
+    expect(result.warnings.o2).toBeDefined();
   });
 });

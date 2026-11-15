@@ -11,14 +11,15 @@ export const EXTRA_BASIS = tx("No source table in this corpus records this varia
 export function ExtraTag() {
   return (
     <span className="level level-extra" title={t(EXTRA_BASIS)}>
-      <span aria-hidden="true">–</span> {t("Not in this corpus")}
+      <span aria-hidden="true">–</span> {t("User-defined")}
     </span>
   );
 }
 
 /** Adds a user-defined variable. A name that matches a corpus variable switches that one on instead. */
-export function AddExtra({ known, onKnown, onAdd }: { known: { id: string; label: string }[]; onKnown: (id: string) => void; onAdd: (e: Extra) => void }) {
+export function AddExtra({ known, onKnown, onAdd, define = false }: { known: { id: string; label: string }[]; onKnown: (id: string) => void; onAdd: (e: Extra) => void; /** name, type and unit only; the value is given later, in the case module */ define?: boolean }) {
   const [name, setName] = useState("");
+  const [type, setType] = useState<"numeric" | "categorical">("numeric");
   const [value, setValue] = useState("");
   const [unit, setUnit] = useState("");
   const [note, setNote] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export function AddExtra({ known, onKnown, onAdd }: { known: { id: string; label
       onKnown(hit.id);
       setNote(t("“{0}” is already a variable of this corpus. It was switched on and is compared.", hit.label));
     } else {
-      onAdd({ id: newId("extra"), name: n, value: value.trim(), unit: unit.trim() });
+      onAdd({ id: newId("extra"), name: n, value: define ? "" : value.trim(), unit: define && type === "categorical" ? "" : unit.trim(), ...(define ? { type } : {}) });
       setNote(null);
     }
     setName("");
@@ -55,7 +56,14 @@ export function AddExtra({ known, onKnown, onAdd }: { known: { id: string; label
     >
       <span className="addextra-lbl">{t("Add your own variable")}</span>
       <input aria-label={t("Variable name")} placeholder={t("Name")} maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
-      <input aria-label={t("Value")} placeholder={t("Value")} maxLength={40} value={value} onChange={(e) => setValue(e.target.value)} />
+      {define ? (
+        <select aria-label={t("Variable type")} value={type} onChange={(e) => setType(e.target.value as "numeric" | "categorical")}>
+          <option value="numeric">{t("Numeric")}</option>
+          <option value="categorical">{t("Categorical")}</option>
+        </select>
+      ) : (
+        <input aria-label={t("Value")} placeholder={t("Value")} maxLength={40} value={value} onChange={(e) => setValue(e.target.value)} />
+      )}
       <input aria-label={t("Unit, optional: type to search the list or enter your own")} placeholder={t("Unit: search or type")} maxLength={20} list={listId} autoComplete="off" value={unit} onChange={(e) => setUnit(e.target.value)} />
       <datalist id={listId}>
         {units.map((u) => (

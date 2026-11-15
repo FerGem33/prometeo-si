@@ -146,6 +146,8 @@ export function levelBasis(pack: Pack, lens: Lens, e: VariableEvidence): string 
   }
 }
 
+const ABSTRACT_VARS = 6;
+
 export function abstractText(pack: Pack, lens: Lens, scenario: Scenario, overall: OverallEvidence, fs: Finding[]): string {
   const st = pack.meta.stats;
   const part = partitionOf(pack, scenario);
@@ -153,8 +155,10 @@ export function abstractText(pack: Pack, lens: Lens, scenario: Scenario, overall
   const parts = scenario.active
     .filter((id) => scenario.values[id] !== undefined && scenario.values[id] !== "")
       .map((id) => `${lc(varOf(pack, id).label)} ${scenarioValueText(pack, id, scenario.values[id])}`);
+  // Large uploaded corpora activate dozens of variables; the abstract names the first few, the rail lists all.
+  const listed = parts.length > ABSTRACT_VARS ? t("{0}; and {1} more variables", parts.slice(0, ABSTRACT_VARS).join("; "), parts.length - ABSTRACT_VARS) : parts.join("; ");
   const pv = part ? varOf(pack, part.variable) : null;
-  const s1 = t("This report places a proposed scenario ({0}) against {1} and {2} from {3} ({4}).", parts.join("; "), plural(st.tests ?? 0, "individual test"), plural(st.campaigns ?? 0, "campaign row"), plural(st.studies ?? 0, unitWord(lens)), pack.meta.source_note);
+  const s1 = t("This report places a proposed scenario ({0}) against {1} and {2} from {3} ({4}).", listed, plural(st.tests ?? 0, "individual test"), plural(st.campaigns ?? 0, "campaign row"), plural(st.studies ?? 0, unitWord(lens)), pack.meta.source_note);
   const s2 = part
     ? t(" Records with a different {0} are never compared with each other: the scenario falls in “{1}”{2}, which leaves {3} comparable {4}.", lc(pv!.label), part.value, part.via !== part.variable ? t(" (implied by its {0})", lc(varOf(pack, part.via).label)) : "", n.toLocaleString("en-US"), partitionPhrase(pack, lens, part.value))
     : t(" No partition could be inferred from the scenario, so all {0} individual tests are compared.", n.toLocaleString("en-US"));

@@ -125,6 +125,8 @@ export type Lens = {
   ml_thresholds?: import("./dataset").DatasetThresholds;
   title: string;
   kicker?: string;
+  /** example of a purpose for this corpus, shown as a placeholder */
+  purpose_example?: string;
   subject?: string;
   unit_of_study?: string;
   byline?: string;

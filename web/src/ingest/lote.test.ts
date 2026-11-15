@@ -6,7 +6,6 @@ import { extractPdfPages, parsePaperPages } from "./pdf";
 import { extractVariablesFromDocs, buildPackFromDocs } from "./buildPack";
 import { compileUiBlueprint, buildLensFromBlueprint } from "./blueprint";
 import { sha256Hex, detectMediaType } from "./storage";
-import { scoreVariables, verifiedVariableCitation } from "./relevance";
 import type { UploadedDoc } from "./types";
 import { evidenceLevels, rank, findings, gaps, graph } from "../engine";
 
@@ -68,10 +67,6 @@ describe("Real dataset validation: /home/alexteori/Descargas/lote", () => {
 
     // 2. Extract variables
     const vars = extractVariablesFromDocs(uploadedDocs);
-    const scored = scoreVariables(vars, uploadedDocs, "Compare conditions and evidence across the uploaded studies");
-    expect(scored.length).toBeGreaterThan(0);
-    expect(scored).toEqual(scoreVariables([...vars].reverse(), uploadedDocs, "Compare conditions and evidence across the uploaded studies"));
-    expect(scored.every(v => v.reasons?.length && v.citations.every(c => verifiedVariableCitation(c, uploadedDocs)))).toBe(true);
     expect(vars.length).toBeGreaterThan(10);
     const numVars = vars.filter((v) => v.type === "numeric");
     expect(numVars.length).toBeGreaterThan(2);

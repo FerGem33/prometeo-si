@@ -375,27 +375,20 @@ def test_propose_accepts_batch_of_30_and_rejects_31():
         h.validate_propose_request({'documents': [doc(i) for i in range(31)]})
 
 
-def test_purpose_modules_are_declarative_and_invalid_modules_are_discarded():
-    variables = [{'id': 'o2', 'type': 'numeric'}, {'id': 'p', 'type': 'numeric'}]
-    valid = {'id': 'case', 'type': 'scenario_input', 'title': 'Describe your case',
-             'description': 'User inputs only.', 'variables': ['o2', 'p']}
-    invalid = [dict(valid, id='script', type='script'),
-               dict(valid, id='unknown', variables=['missing']),
-               dict(valid, id='execute', code='alert(1)'),
-               dict(valid)]
-    result = h.sanitize_design_blueprint({'purpose': 'untrusted rewrite', 'modules': [valid, *invalid]},
-                                         variables, 'Compare documented conditions')
-    assert result['purpose'] == 'Compare documented conditions'
-    assert result['modules'] == [valid]
-    assert len(result['discardedModules']) == len(invalid)
-    assert result['sectionOrder']
-
-
-def test_malformed_modules_preserve_the_base_blueprint():
-    result = h.sanitize_design_blueprint({'modules': 'not-an-array'}, [])
-    assert result['modules'] == []
-    assert result['discardedModules']
-    assert result['sectionOrder']
+def test_design_modules_are_sanitized():
+    variables = [{'id': 'o2', 'type': 'numeric'}, {'id': 'material', 'type': 'categorical'}]
+    out = h.sanitize_design_blueprint({'modules': [
+        {'id': 'c', 'type': 'scenario_input', 'title': 'Your case', 'variables': ['o2', 'ghost']},
+        {'type': 'unknown', 'title': 'x'},
+        {'type': 'key_papers', 'title': 'Papers', 'limit': 50},
+        {'type': 'free_chat', 'title': ' '},
+        'not a dict',
+    ]}, variables)
+    assert out['modules'] == [
+        {'id': 'c', 'type': 'scenario_input', 'title': 'Your case', 'description': '', 'variables': ['o2']},
+        {'id': 'key_papers-3', 'type': 'key_papers', 'title': 'Papers', 'description': '', 'variables': []},
+    ]
+    assert h.sanitize_design_blueprint({}, variables)['modules'] == []
 
 
 def test_private_preflight_keeps_localhost_authorization_headers(monkeypatch):

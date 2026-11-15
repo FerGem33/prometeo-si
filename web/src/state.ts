@@ -71,6 +71,5 @@ export function cleanExtras(raw: unknown): Extra[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((e): e is Extra => !!e && typeof e === "object" && typeof (e as Extra).id === "string" && typeof (e as Extra).name === "string")
-    .map((e) => ({ id: e.id, name: e.name, unit: typeof e.unit === "string" ? e.unit : "", value: typeof e.value === "string" ? e.value : "",
-      ...(e.type === "numeric" || e.type === "categorical" ? { type: e.type } : {}) }));
+    .map((e) => ({ id: e.id, name: e.name, unit: typeof e.unit === "string" ? e.unit : "", value: typeof e.value === "string" ? e.value : "", ...(e.type === "numeric" || e.type === "categorical" ? { type: e.type } : {}) }));
 }

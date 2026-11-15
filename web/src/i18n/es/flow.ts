@@ -210,6 +210,7 @@ export const FLOW: Record<string, string> = {
   "· Harmonizing evidence": "· Armonizando la evidencia",
   "Back to scenario": "Volver al escenario",
   "Isometric Chamber · Evidence Harmonization": "Cámara isométrica · Armonización de la evidencia",
+  "Evidence Harmonization": "Armonización de la evidencia",
   "Preparing your evidence report": "Preparando su informe de evidencia",
   "{0} staged document(s) and ": "{0} documento(s) preparado(s) y ",
   "Harmonization steps": "Pasos de armonización",
@@ -310,4 +311,15 @@ export const FLOW: Record<string, string> = {
   "# NASA FLIGHT DIRECTOR BRIEF · {0}\n**System:** {1}\n**Corpus:** {2}\n\n## 1. Mission Intent & Target Parameters\n{3}\n### Operating Point\n{4}\n\n## 2. Empirical Verification Verdict\n- **Overall Evidence Level:** {5}\n- **Study Grades Distribution:** Grade A: {6} | Grade B: {7} | Grade C: {8} | Grade D: {9}\n\n## 3. Nearest Empirical Studies (NASA PSI Database)\n{10}\n\n## 4. Key Synthesized Findings & Rules\n{11}\n\n---\n*Disclaimer: {12}*\n":
     "# INFORME PARA DIRECCIÓN DE VUELO · {0}\n**Sistema:** {1}\n**Corpus:** {2}\n\n## 1. Intención de la misión y parámetros objetivo\n{3}\n### Punto de operación\n{4}\n\n## 2. Veredicto de verificación empírica\n- **Nivel de evidencia global:** {5}\n- **Distribución de notas de los estudios:** Nota A: {6} | Nota B: {7} | Nota C: {8} | Nota D: {9}\n\n## 3. Estudios empíricos más cercanos (base de datos NASA PSI)\n{10}\n\n## 4. Hallazgos clave sintetizados y reglas\n{11}\n\n---\n*Aviso: {12}*\n",
   "**Goal / Question:** {0}\n": "**Objetivo / Pregunta:** {0}\n",
+  "Relevance score, 0–100 (computed locally, see Methods)": "Puntuación de relevancia, 0–100 (calculada localmente)",
+  "Score {0}": "Puntuación {0}",
+  "+{0} more": "+{0} más",
+  "What is this paper for?": "¿Para qué es este artículo?",
+  "State the purpose of the paper. From the purpose and your documents, Prometeo proposes the relevant variables and generates the interface modules of the report. Focus presets below are secondary adjustments.": "Escribe el propósito del artículo. A partir del propósito y de tus documentos, Prometeo propone las variables relevantes y genera los módulos de interfaz del informe. Los enfoques de abajo son ajustes secundarios.",
+  "Purpose": "Propósito",
+  "(required)": "(obligatorio)",
+  "Write the purpose to continue.": "Escribe el propósito para continuar.",
+  "Select the variables": "Selecciona las variables",
+  "Variables are ordered by a deterministic relevance score computed from your documents and your purpose; the reasons are shown under each one. Select the ones to include. No value is set here: you describe your case in the report.": "Las variables se ordenan con una puntuación de relevancia determinista calculada con tus documentos y tu propósito; los motivos aparecen bajo cada una. Selecciona las que quieras incluir. Aquí no se fija ningún valor: tu caso se describe en el informe.",
+  "Approved pack record (normalized, not a literal source quotation):": "Registro normalizado del pack aprobado (no es una cita literal de la fuente):",
 };

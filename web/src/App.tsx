@@ -15,11 +15,11 @@ import { Provenance } from "./components/Provenance";
 import { Cover } from "./components/Cover";
 import { Workspace, SaveExploration } from "./components/Workspace";
 import { ScenarioStep } from "./components/ScenarioStep";
-import { PurposeModules } from "./components/PurposeModules";
 import type { EvaluationDraft } from "./components/ScenarioStep";
 import { ProcessingStep } from "./components/ProcessingStep";
 import { ChamberFigure } from "./components/ChamberFigure";
 import { NasaApparatus } from "./components/NasaApparatus";
+import { allHabitatPresets } from "./components/HabitatFigure";
 import { detectNasaCorpus } from "./ingest/nasaDetect";
 import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
@@ -43,6 +43,8 @@ import type { Lang } from "./i18n";
 import { loadLocale, localizeData } from "./i18n/localize";
 import type { CorpusLocale } from "./i18n/localize";
 import { Prefs } from "./components/Prefs";
+import { CaseModules } from "./components/CaseModules";
+import { DocSummaries } from "./components/DocSummaries";
 
 const STAGE_HASHES = ["", "#scenario", "#processing", "#report", "#workspace"];
 
@@ -114,6 +116,8 @@ function Flow({ data }: { data: Data }) {
   const initial = useMemo(() => readUrl(pack, lens, window.location.search), [pack, lens]);
   const [activeCustomDraft, setActiveCustomDraft] = useState<EvaluationDraft | null>(null);
   const [pendingDraft, setPendingDraft] = useState<EvaluationDraft | null>(null);
+  // Purpose and modules of a wizard run on the reference pack (custom corpora carry them in their draft).
+  const [demoBlueprint, setDemoBlueprint] = useState<UiBlueprint | null>(null);
   const [scenario, setScenario] = useState<Scenario>(initial.scenario);
   const [axes, setAxes] = useState<Axes>(initial.axes);
   const [goal, setGoal] = useState("");
@@ -162,7 +166,7 @@ function Flow({ data }: { data: Data }) {
   };
 
   const reportData = useMemo<Data>(() => {
-    if (activeCustomDraft) {
+    if (activeCustomDraft && activeCustomDraft.isCustomCorpus) {
       return {
         pack: activeCustomDraft.pack,
         lens: activeCustomDraft.lens,
@@ -179,6 +183,7 @@ function Flow({ data }: { data: Data }) {
         onStart={(presetScenario) => {
           if (presetScenario) {
             setActiveCustomDraft(null);
+            setDemoBlueprint(null);
             setPendingDraft(null);
             setScenario(presetScenario);
             setAxes(defaultAxesFrom(pack, lens));
@@ -189,6 +194,7 @@ function Flow({ data }: { data: Data }) {
         }}
         onDemo={() => {
           setActiveCustomDraft(null);
+          setDemoBlueprint(null);
           setPendingDraft(null);
           const initialDemo = readUrl(pack, lens, "");
           setScenario(initialDemo.scenario);
@@ -206,7 +212,7 @@ function Flow({ data }: { data: Data }) {
         onOpen={(p, e, draft) => {
           setGoal(p.intent);
           setPendingDraft(null);
-          setActiveCustomDraft(draft ?? null);
+          setActiveCustomDraft(draft?.isCustomCorpus ? draft : null);
           if (e) {
             setScenario(e.scenario);
             setAxes(e.axes);
@@ -233,8 +239,18 @@ function Flow({ data }: { data: Data }) {
           go("processing");
         }}
         onSubmitDraft={(draft) => {
-          setPendingDraft(draft);
-          go("processing");
+          if (draft.isCustomCorpus) {
+            setPendingDraft(draft);
+            go("processing");
+          } else {
+            setActiveCustomDraft(null);
+            setPendingDraft(null);
+            setDemoBlueprint(draft.blueprint);
+            if (draft.instruction) setGoal(draft.instruction);
+            setScenario(draft.scenario);
+            setExtras(draft.extras ?? []);
+            go("processing");
+          }
         }}
       />
     );
@@ -246,7 +262,7 @@ function Flow({ data }: { data: Data }) {
         onBack={() => go("scenario")}
         onComplete={(finalDraft) => {
           const resolved = finalDraft ?? pendingDraft;
-          if (resolved) {
+          if (resolved?.isCustomCorpus) {
             setActiveCustomDraft(resolved);
             setScenario(resolved.scenario);
             setExtras(resolved.extras ?? []);
@@ -279,6 +295,8 @@ function Flow({ data }: { data: Data }) {
           blueprint={activeCustomDraft?.blueprint}
           isCustomCorpus={Boolean(activeCustomDraft?.isCustomCorpus)}
           customDraft={activeCustomDraft?.isCustomCorpus ? activeCustomDraft : null}
+          referenceLens={lens}
+          caseBlueprint={activeCustomDraft?.isCustomCorpus ? activeCustomDraft.blueprint : demoBlueprint}
           scenario={scenario}
           setScenario={setScenario}
           extras={extras}
@@ -289,6 +307,7 @@ function Flow({ data }: { data: Data }) {
           projectId={projectId}
           onHome={() => {
             setActiveCustomDraft(null);
+            setDemoBlueprint(null);
             setPendingDraft(null);
             const resetDemo = readUrl(pack, lens, "");
             setScenario(resetDemo.scenario);
@@ -326,6 +345,8 @@ function Report({
   blueprint,
   isCustomCorpus,
   customDraft,
+  referenceLens,
+  caseBlueprint,
   scenario,
   setScenario,
   extras,
@@ -344,6 +365,8 @@ function Report({
   blueprint?: UiBlueprint;
   isCustomCorpus?: boolean;
   customDraft?: EvaluationDraft | null;
+  referenceLens?: Lens;
+  caseBlueprint?: UiBlueprint | null;
   scenario: Scenario;
   setScenario: (s: Scenario | ((s: Scenario) => Scenario)) => void;
   extras: Extra[];
@@ -408,8 +431,9 @@ function Report({
   const nasa = useMemo(() => {
     if (!customDraft) return undefined;
     const d = detectNasaCorpus(customDraft.docs, customDraft.variables);
-    return d.isNasa && d.apparatus ? { apparatus: d.apparatus, matched: d.matched } : undefined;
-  }, [customDraft]);
+    if (!d.isNasa || !d.apparatus) return undefined;
+    return { apparatus: d.apparatus, matched: d.matched, scenarios: referenceLens ? allHabitatPresets(referenceLens) : undefined };
+  }, [customDraft, referenceLens]);
 
   const unit = lens.unit_of_study ?? "study";
   const where = partitionPhrase(pack, lens, r.part?.value);
@@ -502,7 +526,23 @@ function Report({
             <KeyFindings findings={r.finds} />
           </div>
 
-          {blueprint && <PurposeModules blueprint={blueprint} scenario={scenario} onChange={setScenario} />}
+          {caseBlueprint?.modules?.length ? (
+            <CaseModules
+              modules={caseBlueprint.modules}
+              purpose={caseBlueprint.purpose}
+              scenario={scenario}
+              setScenario={setScenario}
+              extras={extras}
+              setExtras={setExtras}
+              levels={r.levels}
+              ranking={r.ranking}
+              isCustomCorpus={isCustomCorpus}
+            />
+          ) : null}
+
+          <Fold title={t("Summaries by document")} hint={t("{0} documents · template text with sources", pack.studies.length)}>
+            <DocSummaries />
+          </Fold>
 
           <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
             <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} isCustomCorpus={isCustomCorpus} nasa={nasa} />
@@ -540,7 +580,7 @@ function Report({
                 {t("Change values")}
               </button>
             </section>
-            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} isCustomCorpus={isCustomCorpus || Boolean(blueprint)} />
+            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} isCustomCorpus={isCustomCorpus} />
           </aside>
 
           <Fold title={t("Save or compare variants of this scenario")} hint={t("kept in this browser only")}>

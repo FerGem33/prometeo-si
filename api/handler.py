@@ -109,10 +109,12 @@ DESIGN_SYSTEM = (
     '"highlightedVariables": ["var_id_1"], '
     '"variableGroups": [{"id": "grp1", "label": "Group Label", "variables": ["var_id_1"]}], '
     '"defaultAxes": ["numeric_var_x", "numeric_var_y"], '
-    '"modules": [{"id":"module_id","type":"scenario_input","title":"Title","description":"Description","variables":["var_id_1"]}], '
-    '"hideMlCard": false, "rationale": "Explanation for choices"}. '
-    'The instruction is the research purpose. Modules may only be scenario_input, classification, key_papers, case_notes, free_chat. '
-    'Modules are declarative data, never executable code or scientific conclusions. '
+    '"hideMlCard": false, "rationale": "Explanation for choices", '
+    '"modules": [{"id": "case-input", "type": "scenario_input", "title": "Module title", '
+    '"description": "What the module does for the purpose", "variables": ["var_id_1"], "limit": 5}]}. '
+    'The instruction is the purpose of the paper; choose modules that serve it. '
+    'Module types: scenario_input, classification, key_papers, case_notes, free_chat. '
+    'Modules never state values, risks or predictions. '
     'Only use section IDs from: graphical_abstract, map, heat, gaps, graph, data_methods. '
     'Only use variable IDs that exist in the submitted variables. defaultAxes must contain 0 to 2 numeric variable IDs.'
 )
@@ -120,6 +122,31 @@ DESIGN_SYSTEM = (
 ALLOWED_SECTIONS = ('graphical_abstract', 'map', 'heat', 'gaps', 'graph', 'data_methods')
 ALLOWED_LAYOUTS = ('grouped', 'list', 'grid')
 ALLOWED_DENSITIES = ('editorial', 'compact')
+ALLOWED_MODULES = ('scenario_input', 'classification', 'key_papers', 'case_notes', 'free_chat')
+
+
+def sanitize_modules(raw, valid_var_ids):
+    """Keeps well-formed modules of known types; the web client validates them again against its schemas."""
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for i, m in enumerate(raw[:8]):
+        if not isinstance(m, dict) or m.get('type') not in ALLOWED_MODULES:
+            continue
+        title = m.get('title')
+        if not isinstance(title, str) or not title.strip():
+            continue
+        item = {
+            'id': str(m.get('id') or f"{m['type']}-{i + 1}")[:60],
+            'type': m['type'],
+            'title': title.strip()[:120],
+            'description': str(m.get('description', ''))[:600].strip(),
+            'variables': [v for v in m.get('variables', []) if isinstance(v, str) and v in valid_var_ids] if isinstance(m.get('variables'), list) else [],
+        }
+        if isinstance(m.get('limit'), int) and not isinstance(m.get('limit'), bool) and 1 <= m['limit'] <= 20:
+            item['limit'] = m['limit']
+        out.append(item)
+    return out
 
 
 def validate_propose_request(data):
@@ -283,7 +310,7 @@ def validate_design_request(data):
         raise ValueError('Invalid stats')
 
 
-def sanitize_design_blueprint(output, submitted_variables, purpose=''):
+def sanitize_design_blueprint(output, submitted_variables):
     if not isinstance(output, dict):
         output = {}
 
@@ -339,31 +366,7 @@ def sanitize_design_blueprint(output, submitted_variables, purpose=''):
     hide_ml = bool(output.get('hideMlCard', False))
     rationale = str(output.get('rationale', ''))[:2000].strip()
 
-    modules, discarded, module_ids = [], [], set()
-    raw_modules = output.get('modules', [])
-    if not isinstance(raw_modules, list):
-        raw_modules = []
-        discarded.append('Modules must be an array.')
-    for index, module in enumerate(raw_modules):
-        if (not isinstance(module, dict) or set(module) != {'id', 'type', 'title', 'description', 'variables'}
-                or not isinstance(module.get('id'), str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', module['id'])
-                or module['id'] in module_ids
-                or module.get('type') not in ('scenario_input', 'classification', 'key_papers', 'case_notes', 'free_chat')
-                or not isinstance(module.get('title'), str) or not 1 <= len(module['title'].strip()) <= 200
-                or not isinstance(module.get('description'), str) or len(module['description']) > 1000
-                or not isinstance(module.get('variables'), list)
-                or any(not isinstance(v, str) or v not in valid_var_ids for v in module['variables'])
-                or (module['type'] in ('scenario_input', 'classification', 'case_notes') and not module['variables'])
-                or len(set(module['variables'])) != len(module['variables'])):
-            discarded.append(f'Module {index+1} discarded: invalid schema, duplicate ID or unknown variable.')
-            continue
-        module_ids.add(module['id'])
-        modules.append({**module, 'title': module['title'].strip()})
-
     return {
-        'purpose': purpose.strip(),
-        'modules': modules,
-        'discardedModules': discarded,
         'title': title,
         'kicker': kicker,
         'density': density,
@@ -374,6 +377,7 @@ def sanitize_design_blueprint(output, submitted_variables, purpose=''):
         'defaultAxes': default_axes,
         'hideMlCard': hide_ml,
         'rationale': rationale,
+        'modules': sanitize_modules(output.get('modules'), valid_var_ids),
     }
 
 
@@ -498,7 +502,6 @@ def handler(event, context=None, source_pack=None):
         active_pack = pack() if source_pack is None else source_pack
         definitions = schema(active_pack)
         if path == '/ask':
-            definitions = schema(active_pack)
             if not {'question', 'schema'} <= set(data) or set(data) - {'question', 'schema', 'version'} or not isinstance(data['question'], str) or not 1 <= len(data['question'].strip()) <= 2000:
                 raise ValueError('Invalid question')
             if data.get('version', 1) not in (1, 2):
@@ -506,7 +509,6 @@ def handler(event, context=None, source_pack=None):
             if data['schema'] not in (active_pack['schema'], definitions):
                 raise ValueError('Schema does not match deployed pack')
         elif path == '/analysis':
-            definitions = schema(active_pack)
             if set(data) != {'scenario', 'levels', 'findings'}:
                 raise ValueError('Invalid analysis case')
             scenario(data['scenario'], definitions)
@@ -574,7 +576,7 @@ def handler(event, context=None, source_pack=None):
                 'variables': data['variables'],
                 'stats': data.get('stats', {}),
             })
-            blueprint = sanitize_design_blueprint(output, data['variables'], data['instruction'])
+            blueprint = sanitize_design_blueprint(output, data['variables'])
             return reply(200, blueprint, origin)
     except Exception:
         # No provider errors, user text or credentials in public responses/logs.

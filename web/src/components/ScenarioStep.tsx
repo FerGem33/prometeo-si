@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { Lens, Pack, Scenario } from "../engine";
 import {
   compileUiBlueprint,
   buildLensFromBlueprint,
   suggestDesignPrompts,
 } from "../ingest/blueprint";
-import { buildPackFromDocs, extractVariablesFromDocs } from "../ingest/buildPack";
+import { buildPackFromDocs, extractVariablesFromDocs, variablesFromPack } from "../ingest/buildPack";
 import { parseTabularDocument } from "../ingest/csv";
 import { extractPdfPages, parsePaperPages, PdfDocError } from "../ingest/pdf";
 import { requestRemoteDesign, requestRemoteProposals } from "../ingest/remote";
 import { filesFromDrop } from "../ingest/folderDrop";
-import { groupVariables } from "../ingest/variableView";
-import { scoreVariables, variablesFromPack } from "../ingest/relevance";
+import { compatibleUnits, groupVariables } from "../ingest/variableView";
+import { scoreVariables } from "../ingest/variableScore";
+import { applyConversion, getConversion } from "../ingest/buildPack";
 import {
   createDocStore,
   detectMediaType,
@@ -32,7 +33,7 @@ import type {
 } from "../ingest/types";
 import { newId } from "../report/storage";
 import type { Extra } from "../state";
-import { ManualVariable } from "./ManualVariable";
+import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { Prefs } from "./Prefs";
 import { useData, type Mapping } from "./ctx";
 import { t } from "../i18n";
@@ -150,7 +151,8 @@ export function ScenarioStep({
     let active = true;
     docStore.list().then((list) => {
       if (active && list.length > 0) {
-        setDocs(list);
+        // Merge, do not overwrite: files added before hydration finished must not be lost or duplicated.
+        setDocs((prev) => mergeUploadedDocs([], [...list, ...prev]).docs);
         setScope("uploaded");
       }
     }).catch(() => {});
@@ -166,7 +168,7 @@ export function ScenarioStep({
   const [aiProposalsCount, setAiProposalsCount] = useState(0);
 
   // GenUI design step state
-  const [instruction, setInstruction] = useState(() => initialDraft?.blueprint?.purpose ?? initialDraft?.instruction ?? goal ?? "");
+  const [instruction, setInstruction] = useState(() => initialDraft?.instruction ?? goal ?? "");
   const [presetFlags, setPresetFlags] = useState<DesignPresetFlag[]>(() => initialDraft?.presetFlags ?? []);
   const instructionRef = useRef<HTMLTextAreaElement>(null);
   // Manual section order from the reorder list; overrides the compiled order when set.
@@ -177,12 +179,37 @@ export function ScenarioStep({
 
   // Variables step: search and display units (display only; stored values keep the source unit)
   const [varQuery, setVarQuery] = useState("");
-  const [varDoc, setVarDoc] = useState("");
+  const [displayUnits, setDisplayUnits] = useState<Record<string, string>>({});
 
-  // Reference proposals carry actual original rows or explicitly labeled normalized pack records.
-  const demoVariables = useMemo<ExtractedVariable[]>(() => variablesFromPack(pack).map(v => ({
-    ...v, include: scenario.active.includes(v.id),
-  })), [pack, scenario.active]);
+  // Categories helper from reference pack
+  const cats = useMemo(() => {
+    const out: Record<string, { value: string; n: number }[]> = {};
+    for (const v of pack.schema.variables) {
+      if (v.type !== "cat") continue;
+      const c = new Map<string, number>();
+      for (const r of pack.records) {
+        const x = r.values[v.id];
+        if (typeof x === "string" && r.kind === "test") c.set(x, (c.get(x) ?? 0) + 1);
+      }
+      out[v.id] = [...c]
+        .map(([value, n]) => ({ value, n }))
+        .sort((a, b) => b.n - a.n || a.value.localeCompare(b.value));
+    }
+    return out;
+  }, [pack]);
+
+  // Reference-pack candidates, cited to real source rows (or labelled as normalized pack records).
+  const packVariables = useMemo(() => variablesFromPack(pack), [pack]);
+  const demoVariables = useMemo<ExtractedVariable[]>(
+    () =>
+      packVariables.map((v) => ({
+        ...v,
+        // Most frequent category first, as before.
+        mode: v.type === "categorical" ? (cats[v.id]?.[0]?.value ?? v.mode) : undefined,
+        include: scenario.active.includes(v.id),
+      })),
+    [packVariables, cats, scenario.active],
+  );
 
   // Variables extracted from uploaded documents
   const uploadedVariables = useMemo(() => {
@@ -217,18 +244,23 @@ export function ScenarioStep({
   });
 
   const variables = useMemo(() => {
-    const edited = baseVariables.map((bv) => {
+    return baseVariables.map((bv) => {
       const override = customVarState[bv.id];
       return override ? { ...bv, ...override } : bv;
     });
-    return scoreVariables(edited, scope === "demo" ? [] : docs, instruction,
-      scope === "uploaded" && docs.length ? undefined : pack);
-  }, [baseVariables, customVarState, docs, instruction, scope, pack]);
+  }, [baseVariables, customVarState]);
 
-  // Live compiled UI blueprint
+  // Deterministic relevance score (spec §3.2): ordered with reasons; a variable without provenance is dropped.
+  const deferredPurpose = useDeferredValue(instruction);
+  const scoredVariables = useMemo(
+    () => scoreVariables(variables, { docs: scope === "demo" ? [] : docs, purpose: deferredPurpose, pack }),
+    [variables, docs, scope, deferredPurpose, pack],
+  );
+
+  // Live compiled UI blueprint (purpose -> modules)
   const compiledBlueprint = useMemo(() => {
-    return compileUiBlueprint(instruction, docs, variables, presetFlags, remoteDesign);
-  }, [instruction, docs, variables, presetFlags, remoteDesign]);
+    return compileUiBlueprint(deferredPurpose, docs, scoredVariables, presetFlags, remoteDesign);
+  }, [deferredPurpose, docs, scoredVariables, presetFlags, remoteDesign]);
   const blueprint = useMemo<UiBlueprint>(() => {
     if (!sectionOverride) return compiledBlueprint;
     const known = new Set(compiledBlueprint.sectionOrder);
@@ -247,6 +279,7 @@ export function ScenarioStep({
     const incomingFiles = Array.from(list);
     setIsParsing(true);
     const newDocs: UploadedDoc[] = [];
+    const skipped: string[] = [];
     const rows: FileProgress[] = incomingFiles.map((f) => ({ name: f.name, stage: "Reading" }));
     setProgress(rows);
     const mark = (i: number, stage: FileProgress["stage"]) => {
@@ -281,6 +314,10 @@ export function ScenarioStep({
         const bytes = new Uint8Array(arrayBuffer);
         mark(index, "Hashing");
         const sha256 = await sha256Hex(bytes);
+        if (docs.some((d) => d.sha256 === sha256) || newDocs.some((d) => d.sha256 === sha256)) {
+          skipped.push(file.name);
+          continue;
+        }
         mark(index, "Parsing");
 
         if (mediaType === "application/pdf") {
@@ -369,10 +406,10 @@ export function ScenarioStep({
     }
 
     const { docs: merged, duplicates, overflow } = mergeUploadedDocs(docs, newDocs);
-    setDocs(merged);
+    setDocs((prev) => mergeUploadedDocs(prev, newDocs).docs);
     setProgress([]);
-    if (duplicates.length > 0) {
-      setDuplicateNotices((prev) => [...prev, ...duplicates]);
+    if (duplicates.length + skipped.length > 0) {
+      setDuplicateNotices((prev) => [...prev, ...skipped, ...duplicates]);
     }
     if (overflow.length > 0) {
       setOverflowNotices((prev) => [...prev, ...overflow]);
@@ -488,8 +525,22 @@ export function ScenarioStep({
       ? Array.from(new Set([...scenario.active, id]))
       : scenario.active.filter((a) => a !== id);
 
-    // Selection only: no median, range midpoint or category is assigned as a case value.
-    onChange({ ...scenario, active: nextActive });
+    const nextValues = { ...scenario.values };
+    if (nextInclude && nextValues[id] === undefined) {
+      if (currentVar.type === "numeric") {
+        const min = currentVar.min ?? 0;
+        const max = currentVar.max ?? min + 100;
+        nextValues[id] = currentVar.median ?? (min + max) / 2;
+      } else {
+        nextValues[id] = currentVar.mode ?? currentVar.categories?.[0] ?? "";
+      }
+    }
+
+    onChange({
+      ...scenario,
+      active: nextActive,
+      values: nextValues,
+    });
   };
 
   const setVariableLabel = (id: string, newLabel: string) => {
@@ -504,15 +555,26 @@ export function ScenarioStep({
 
   // Draft submission
   const handleSubmit = () => {
-    const activeVars = variables.filter((v) => v.include);
+    const activeVars = scoredVariables.filter((v) => v.include);
     const activeVarIds = new Set(activeVars.map((v) => v.id));
     const isCustom = scope !== "demo" && readyDocs.length > 0;
 
-    if (!instruction.trim()) { setStep(1); instructionRef.current?.focus(); return; }
-    // Existing user case inputs survive edits; a new paper starts without an invented case.
-    const finalValues = initialDraft ? Object.fromEntries(Object.entries(scenario.values)
-      .filter(([id]) => activeVarIds.has(id))) : {};
-    const finalActive = activeVars.map(v => v.id).filter(id => finalValues[id] !== undefined && finalValues[id] !== "");
+    const finalActive = isCustom
+      ? activeVars.map((v) => v.id)
+      : scenario.active.filter((id) => activeVarIds.has(id));
+
+    const finalValues = { ...scenario.values };
+    for (const v of activeVars) {
+      if (finalValues[v.id] === undefined) {
+        if (v.type === "numeric") {
+          const min = v.min ?? 0;
+          const max = v.max ?? min + 100;
+          finalValues[v.id] = v.median ?? (min + max) / 2;
+        } else {
+          finalValues[v.id] = v.mode ?? v.categories?.[0] ?? "";
+        }
+      }
+    }
 
     const built = buildPackFromDocs(
       scope === "demo" ? [] : docs,
@@ -530,7 +592,7 @@ export function ScenarioStep({
       schema: {
         ...built.pack.schema,
         variables: built.pack.schema.variables
-          .filter((pv) => activeVarIds.has(pv.id) || (pv.type === "cat" && pv.role === "partition"))
+          .filter((pv) => activeVarIds.has(pv.id))
           .map((pv) => {
             const match = activeVars.find((v) => v.id === pv.id);
             return match ? { ...pv, label: match.label, long: match.label } : pv;
@@ -538,7 +600,7 @@ export function ScenarioStep({
       },
     };
 
-    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens);
+    const compiledLens = buildLensFromBlueprint(blueprint, finalPack, activeVars, lens, scope);
 
     const draft: EvaluationDraft = {
       docs,
@@ -568,28 +630,89 @@ export function ScenarioStep({
   const includedCount = variables.filter((v) => v.include).length + extras.length;
   const last = step === SCENARIO_STEPS.length - 1;
 
-  // Selection and explanation only. Values are entered in the generated case module.
-  const renderVarRow = (v: ExtractedVariable) => (
-    <li key={v.id} className={`vrow ${!v.include ? "vrow-excluded" : ""}`}>
-      <div className="vrow-head">
-        <label><input type="checkbox" checked={v.include} onChange={() => toggleVariableInclude(v.id)} aria-label={`Include ${v.label}`} /> Include</label>
-        <input type="text" className="vlabel-input" value={v.label} aria-label={`Edit label for ${v.id}`} onChange={e => setVariableLabel(v.id, e.target.value)} />
-        {v.unit && <small>{v.unit}</small>}
-        <b>Relevance score: {v.score}</b>
-      </div>
-      <p className="hint">Prioritization for this purpose, not an evidence level. No case value is assigned here.</p>
-      <ul>{v.reasons?.map(reason => <li key={reason}>{reason}</li>)}</ul>
-      <details><summary>Score components and sources</summary>
-        <ul>{Object.entries(v.scoreComponents ?? {}).map(([key, value]) => <li key={key}>{key}: {value}</li>)}</ul>
-        <ul>{v.citations.slice(0, 12).map((c, i) => <li key={`${c.docId}-${i}`}>
-          {c.docName} · {c.page !== undefined ? `Page ${c.page}` : `Row ${c.row}`} {c.column ? `· ${c.column}` : ""}
-          {c.doi && <> · DOI: {c.doi}</>}
-          <blockquote>{c.basis === "approved_pack" ? "Approved pack record (normalized, not a literal source quotation): " : ""}{c.quote}</blockquote>
-        </li>)}</ul>
-        {v.citations.length > 12 && <p>{v.citations.length - 12} additional row citations retained in this evaluation.</p>}
-      </details>
-    </li>
-  );
+  // Render variable row helper: selection only, with the score and its reasons (no values in this step).
+  const renderVarRow = (v: ExtractedVariable) => {
+    const citation = v.citations?.[0];
+    const isIncluded = v.include;
+    const docsCited = new Set(v.citations.map((c) => c.docId)).size;
+
+    return (
+      <li key={v.id} className={`vrow ${!isIncluded ? "vrow-excluded" : ""}`}>
+        <div className="vrow-head">
+          <label className="vtoggle-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={isIncluded}
+              onChange={() => toggleVariableInclude(v.id)}
+              aria-label={t("Include {0}", v.label)}
+            />
+          </label>
+          <input
+            type="text"
+            className="vlabel-input"
+            value={v.label}
+            aria-label={t("Edit label for {0}", v.id)}
+            onChange={(e) => setVariableLabel(v.id, e.target.value)}
+          />
+          {v.unit && <small>{v.unit}</small>}
+          {v.score !== undefined && (
+            <span className="vscore" title={t("Relevance score, 0–100 (computed locally, see Methods)")}>
+              {t("Score {0}", v.score)}
+            </span>
+          )}
+          {citation && (
+            <span className="citation-badge" title={citation.quote}>
+              {citation.docName}
+              {citation.page ? ` · ${t("Page {0}", citation.page)}` : citation.row ? ` · ${t("Row {0}", citation.row)}` : ""}
+              {docsCited > 1 ? ` · ${t("+{0} more", docsCited - 1)}` : ""}
+            </span>
+          )}
+          <button
+            type="button"
+            className="rm"
+            onClick={() => toggleVariableInclude(v.id)}
+          >
+            {isIncluded ? t("Exclude") : t("Include")}
+          </button>
+        </div>
+
+        {v.reasons && v.reasons.length > 0 && <p className="vreasons">{v.reasons.join(" · ")}</p>}
+        {v.type === "numeric" && v.min !== undefined && v.max !== undefined && (
+          <div className="cond-ctl">
+            <span className="alt">
+              {t("Range in the documents: {0}–{1}", Number(v.min.toPrecision(4)), Number(v.max.toPrecision(4)))} {v.unit ?? ""}
+            </span>
+            {v.unit && compatibleUnits(v.unit).length > 0 && (
+              <span className="unit-view">
+                <select
+                  aria-label={t("Display unit for {0}", v.label)}
+                  value={displayUnits[v.id] ?? ""}
+                  onChange={(e) => setDisplayUnits((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                >
+                  <option value="">{t("Show in…")}</option>
+                  {compatibleUnits(v.unit).map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+                {displayUnits[v.id] && (
+                  <output>
+                    = {[v.min, v.max].map((x) => Number(applyConversion(x, getConversion(v.unit, displayUnits[v.id])).toPrecision(4))).join("–")} {displayUnits[v.id]}
+                  </output>
+                )}
+              </span>
+            )}
+          </div>
+        )}
+        {citation?.quote && (
+          <span className="citation-quote">
+            {citation.basis === "approved_pack" ? `${t("Approved pack record (normalized, not a literal source quotation):")} ` : ""}“{citation.quote}”
+          </span>
+        )}
+      </li>
+    );
+  };
 
   return (
     <div className="screen step">
@@ -615,7 +738,7 @@ export function ScenarioStep({
             >
               <button
                 type="button"
-                disabled={(hasOnlyFailedDocs && i > 0) || (i > 1 && !instruction.trim())}
+                disabled={hasOnlyFailedDocs && i > 0}
                 onClick={() => {
                   if (!hasOnlyFailedDocs || i === 0) setStep(i);
                 }}
@@ -861,17 +984,17 @@ export function ScenarioStep({
         {/* STEP 2: INTERFACE DESIGN */}
         {SCENARIO_STEPS[step] === "Interface design" && (
           <section className="step-panel">
-            <h1>{t("Purpose of this paper")}</h1>
+            <h1>{t("What is this paper for?")}</h1>
             <p className="step-lede">
-              {t("Explain what you want to understand or decide from the documents. The purpose determines proposed variables and modules; focus presets remain secondary adjustments.")}
+              {t("State the purpose of the paper. From the purpose and your documents, Prometeo proposes the relevant variables and generates the interface modules of the report. Focus presets below are secondary adjustments.")}
             </p>
 
             <div className="corpus-summary-badge">
-              {t("{0} documents, {1} variables extracted", scope === "demo" ? pack.sources.length : docs.length, variables.length)}
+              {t("{0} documents, {1} variables extracted", docs.length, variables.length)}
             </div>
 
             <label htmlFor="instruction" className="fieldlbl">
-              {t("Purpose")}
+              {t("Purpose")} <small>{t("(required)")}</small>
             </label>
             <textarea
               ref={instructionRef}
@@ -880,14 +1003,12 @@ export function ScenarioStep({
               rows={4}
               maxLength={4000}
               value={instruction}
-              onChange={(e) => { handleInstructionChange(e.target.value); setRemoteDesign(undefined); }}
+              onChange={(e) => handleInstructionChange(e.target.value)}
+              placeholder={lens.purpose_example ?? ""}
               required
-              aria-describedby="purpose-required"
-              placeholder={suggestions[0] ?? lens.title}
+              aria-required="true"
             />
-            <p id="purpose-required" role="status">{instruction.trim() ? "Purpose recorded. Review proposed variables next." : "A purpose is required before continuing."}</p>
-            <ul aria-label="Generated modules">{blueprint.modules?.map(m => <li key={m.id}>{m.title}</li>)}</ul>
-            {!!blueprint.discardedModules?.length && <p role="status">Invalid module proposals were discarded; the local report remains available.</p>}
+            {!instruction.trim() && <p className="hint">{t("Write the purpose to continue.")}</p>}
 
             {/* Variables that can be inserted into the instruction */}
             {variables.length > 0 && (
@@ -1040,9 +1161,9 @@ export function ScenarioStep({
         {/* STEP 3: VARIABLES */}
         {SCENARIO_STEPS[step] === "Variables" && (
           <section className="step-panel">
-            <h1>{t("Review and adjust extracted variables")}</h1>
+            <h1>{t("Select the variables")}</h1>
             <p className="step-lede">
-              {t("Select variables to include and inspect their relevance scores and source citations. Enter values later, when describing your case in the paper.")}
+              {t("Variables are ordered by a deterministic relevance score computed from your documents and your purpose; the reasons are shown under each one. Select the ones to include. No value is set here: you describe your case in the report.")}
             </p>
 
             {variables.length === 0 && extras.length === 0 && (
@@ -1059,13 +1180,8 @@ export function ScenarioStep({
               placeholder={t("Filter variables by name or unit")}
               aria-label={t("Filter variables by name or unit")}
             />
-            <label>Source document<select value={varDoc} onChange={event => setVarDoc(event.target.value)}>
-              <option value="">All documents</option>
-              {[...new Map(variables.flatMap(v => v.citations.map(c => [c.docId, c.docName] as const))).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-            </select></label>
             {(() => {
-              const shown = varDoc ? variables.filter(v => v.citations.some(c => c.docId === varDoc)) : variables;
-              const groups = groupVariables(shown, blueprint, varQuery, t("Other variables"));
+              const groups = groupVariables(scoredVariables, blueprint, varQuery, t("Other variables"));
               const listClass = blueprint.variablesLayout === "grid" ? "vlayout-grid" : "vlist";
               if (varQuery.trim() && groups.length === 0) return <p className="empty">{t("No variable matches “{0}”.", varQuery.trim())}</p>;
               return (
@@ -1082,14 +1198,44 @@ export function ScenarioStep({
               );
             })()}
 
-            {extras.length > 0 && <ul className="vlist">{extras.map(e => <li key={e.id} className="vrow">
-              <b>{e.name}</b> · {e.type ?? "categorical"} {e.unit && `· ${e.unit}`}
-              <span className="level">User-defined · no source evidence</span>
-              <button type="button" className="rm" onClick={() => onExtras(extras.filter(x => x.id !== e.id))}>Remove</button>
-            </li>)}</ul>}
-            <ManualVariable known={variables.map(v => ({ id: v.id, label: v.label }))}
-              onKnown={id => { if (!variables.find(v => v.id === id)?.include) toggleVariableInclude(id); }}
-              onAdd={extra => onExtras([...extras, extra])} />
+            {/* Extras (Manual Variables) */}
+            {extras.length > 0 && (
+              <ul className="vlist" style={{ marginTop: "18px" }}>
+                {extras.map((e) => (
+                  <li key={e.id} className="vrow">
+                    <div className="vrow-head">
+                      <b>{e.name}</b>
+                      {e.unit && <small>{e.unit}</small>}
+                      <ExtraTag />
+                      <button
+                        type="button"
+                        className="rm"
+                        onClick={() => onExtras(extras.filter((o) => o.id !== e.id))}
+                        aria-label={t("Remove {0}", e.name)}
+                      >
+                        {t("Remove")}
+                      </button>
+                    </div>
+                    <div className="cond-ctl">
+                      <span className="alt">{e.type === "categorical" ? t("Categorical") : t("Numeric")} · {t(EXTRA_BASIS)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Add Extra Variable UI */}
+            <div className="addvars" style={{ marginTop: "24px" }}>
+              <AddExtra
+                known={variables.map((v) => ({ id: v.id, label: v.label }))}
+                onKnown={(id) => {
+                  const v = variables.find((x) => x.id === id);
+                  if (v && !v.include) toggleVariableInclude(id);
+                }}
+                onAdd={(e) => onExtras([...extras, e])}
+                define
+              />
+            </div>
           </section>
         )}
 
@@ -1107,7 +1253,7 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
-              disabled={(step === 0 && hasOnlyFailedDocs) || (step === 1 && !instruction.trim())}
+              disabled={(step === 0 && hasOnlyFailedDocs) || (SCENARIO_STEPS[step] === "Interface design" && !instruction.trim())}
               onClick={() => setStep(step + 1)}
             >
               {t("Continue")}
@@ -1116,7 +1262,7 @@ export function ScenarioStep({
             <button
               type="button"
               className="cta"
-              disabled={includedCount === 0 || hasOnlyFailedDocs || !instruction.trim()}
+              disabled={includedCount === 0 || hasOnlyFailedDocs}
               onClick={handleSubmit}
             >
               {t("Compare against the evidence")}

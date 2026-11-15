@@ -539,6 +539,14 @@ export function parseTabularDocument(
     rows = res.rows;
   }
 
+  // A first data row of bracketed units, e.g. "(atm)" or "[°C]", belongs to the header. Row numbers are kept.
+  const first = rows[0]?.values.map((v) => v.trim()) ?? [];
+  const filled = first.filter((v) => v !== "");
+  if (filled.length > 0 && filled.filter((v) => /^[(\[][^()\[\]]+[)\]]$/.test(v)).length >= filled.length / 2 && !filled.some((v) => !isNaN(Number(v)))) {
+    headers = headers.map((h, i) => (/^[(\[].*[)\]]$/.test(first[i] ?? "") ? `${h} ${first[i]}` : h));
+    rows = rows.slice(1);
+  }
+
   const columns = profileColumns(headers, rows);
 
   return {

@@ -354,6 +354,8 @@ def test_full_batch_of_30_documents_then_limit():
     with pytest.raises(ApiError) as e:
         service.reserve('owner', 'prj_test', {**DATA, 'name': 'doc30.csv'})
     assert e.value.status == 422 and e.value.details['limit'] == 30 and repo.parent['counts']['documents'] == 30
+
+
 def test_selected_resume_keeps_pending_durable_when_sqs_fails(completed_upload):
     service, repo, queue, did = completed_upload
     service.complete('owner', 'prj_test', did, {'sha256': 'a'*64})
