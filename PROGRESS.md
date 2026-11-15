@@ -9,7 +9,7 @@
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | T15 (Codex · stringbuilder); T08/T11 pendientes de revisión final |
-| Último commit verificado | T15 (este commit): pruebas locales en verde; aceptación pública pendiente |
+| Último commit verificado | `2e40fb6` T13: nesting corregido, captura revisada y pruebas locales en verde; aceptación pública pendiente |
 | Siguiente paso exacto | Dueño: integrar cambios finales, publicar con `infra/deploy_web.sh`, revisar URL en privado/móvil, completar aceptación y confirmar T08/T11/T15. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
@@ -49,7 +49,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
 | T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Implementada; 32 tests web y build OK. Falta deploy final del dueño y verificación pública visual |
 | T12 | Ficha de datos para ML | P2 | hecha | Codex · stringbuilder | `b4f8ced` | Tabla descriptiva por estudio/archivo/columna/tipo; valores y unidades sin normalizar ni combinar; candidatos duplicados exactos quedan retenidos. Idoneidad ML pendiente de umbrales/definición humana; frecuencias no son clases validadas. |
-| T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Captura `docs/screens/t13_study_compare.png`. |
+| T13 | Comparar 2 estudios | P2 | hecha | Codex · stringbuilder | `db5386e`, `2e40fb6` | Selectores para dos estudios; columnas con metadatos, DOI, valores test/campaña separados, etiquetas, unidades fuente y enlaces a registros. Se corrigió el anidamiento HTML inválido en enlaces expandibles y se regeneró `docs/screens/t13_study_compare.png`. |
 | T14 | Prueba agnóstica | P3 | hecha | Codex · stringbuilder | `bea99e1` | 22 tablas, 22 llamadas Bedrock, 103 filas reales; 21 tablas puntuadas: 148/227 asignaciones exactas (65.2%), 107/227 con unidad exacta (47.1%). Varias diferencias; el modelo no aprueba/reemplaza el mapping humano. `docs/agnostic_proof.md`. CSV originales no están versionados en `data/psi/tables`; se leyó la copia local sin incluirla. |
 | T15 | Aceptación y entrega | P0 | en curso | Codex · stringbuilder | (este commit) | README para jueces y revisión local; URL pública final, pruebas en ventana privada/móvil y deploy quedan pendientes del dueño. |
 
@@ -76,6 +76,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 20:34 CST · Codex · corrección final de T13
+- Hecho: los enlaces expandibles de registros (`details/summary`) salieron de un `<p>` que provocaba anidamiento HTML inválido; se envolvieron en un `<div>` y se conservó su alineación con CSS. Captura regenerada y revisada: muestra ACME/Flame Design y BASS-II en dos columnas con DOI, valores, etiquetas y procedencia.
+- Commit de código/captura: `2e40fb6` (`T13: fix invalid disclosure nesting`).
+- Verificado después del cambio: `npm test` (35/35), `npm run build`, `api/.venv/bin/python -m pytest api/` (26/26), `scripts/check_agnostic.sh`, captura visual y `git diff --check` OK. La salida de Chrome contenía avisos del display link de macOS, sin evidencia de error de React; la captura se inspeccionó.
+- Siguiente paso exacto: publicar este commit y el registro de esta entrada; luego el dueño despliega la UI integrada y completa la revisión privada/móvil de T08/T11/T15. No se hizo deploy.
 
 ### 2026-11-14 20:28 CST · Codex · T14 y comienzo T15
 - Hecho: `pipeline/induce_schema.py` ejecutó una propuesta Bedrock por cada una de las 22 tablas del pack, con cinco filas como máximo (103 filas disponibles). Se compararon 227 columnas de 21 tablas con referencia humana; la tabla resumen PSI-142 no tiene mapping aprobado y no entra al porcentaje.
