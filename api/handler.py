@@ -185,9 +185,10 @@ def verify_proposal_quote(doc_entry, quote, page=None):
     clean = quote.strip()
     if not clean:
         return False
-    if page is not None and page in doc_entry['pages_map']:
-        if clean in doc_entry['pages_map'][page]:
-            return True
+    if page is not None:
+        if page in doc_entry['pages_map']:
+            return clean in doc_entry['pages_map'][page]
+        return False
     return clean in doc_entry['full_text']
 
 

@@ -166,6 +166,69 @@ def test_propose_rejects_unverified_table_evidence(monkeypatch):
     assert proposals[0]['id'] == 'temp'
 
 
+def test_propose_rejects_quote_misattributed_to_wrong_page(monkeypatch):
+    doc_payload = {
+        'documents': [
+            {
+                'id': 'p1',
+                'name': 'paper.pdf',
+                'kind': 'paper',
+                'pages': [
+                    {'page': 1, 'text': 'Introductory text without any numbers.'},
+                    {'page': 2, 'text': 'Burn velocity reached 4.2 mm/s in pure oxygen.'},
+                ],
+            }
+        ]
+    }
+
+    def mock_model(system, user):
+        return {
+            'proposals': [
+                # The text is genuinely on page 2, but the model falsely claims it is on page 1
+                {
+                    'id': 'burn_velocity_wrong_page',
+                    'label': 'Burn Velocity',
+                    'type': 'numeric',
+                    'unit': 'mm/s',
+                    'docId': 'p1',
+                    'page': 1,
+                    'quote': 'Burn velocity reached 4.2 mm/s',
+                },
+                # When claiming page 99 which does not exist in pages
+                {
+                    'id': 'burn_velocity_nonexistent_page',
+                    'label': 'Burn Velocity 99',
+                    'type': 'numeric',
+                    'unit': 'mm/s',
+                    'docId': 'p1',
+                    'page': 99,
+                    'quote': 'Burn velocity reached 4.2 mm/s',
+                },
+                # Correctly citing page 2: must be accepted!
+                {
+                    'id': 'burn_velocity_correct_page',
+                    'label': 'Burn Velocity OK',
+                    'type': 'numeric',
+                    'unit': 'mm/s',
+                    'docId': 'p1',
+                    'page': 2,
+                    'quote': 'Burn velocity reached 4.2 mm/s',
+                },
+            ]
+        }
+
+    monkeypatch.setattr(h, 'model_json', mock_model)
+    res = call('/propose', doc_payload)
+    assert res['statusCode'] == 200
+    body = json.loads(res['body'])
+    proposals = body['proposals']
+    ids = [p['id'] for p in proposals]
+    assert 'burn_velocity_wrong_page' not in ids
+    assert 'burn_velocity_nonexistent_page' not in ids
+    assert 'burn_velocity_correct_page' in ids
+    assert len(proposals) == 1
+
+
 def test_propose_oversized_payload_returns_400():
     large_text = 'A' * 135000
     res = call('/propose', raw_body=json.dumps({'documents': [{'id': 'd1', 'kind': 'paper', 'text': large_text}]}))
