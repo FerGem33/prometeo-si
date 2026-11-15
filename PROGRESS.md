@@ -8,11 +8,11 @@
 | Campo | Valor |
 |---|---|
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
-| Tarea en curso | T10 (Codex · stringbuilder); T08 pendiente de revisión visual |
+| Tarea en curso | T11 (Codex · stringbuilder); T08 pendiente de revisión visual |
 | Último commit verificado | T07 |
 | Siguiente paso exacto | T08: abrir y verificar visualmente https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200 confirmados); equipo integra cambios, dueño publica al final siguiendo infra/README.md |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (Deployed y HTTP 200; revisión visual pendiente) |
-| API (`API_URL`) | _sin desplegar_ |
+| API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` confirmado | us.anthropic.claude-haiku-4-5-20251001-v1:0 (Converse y SDK real OK) |
 
 ## Bloqueos
@@ -46,8 +46,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T07 | Procedencia, PDF y URL | P0 | hecha | Claude · ferlr | (este commit) | Panel de procedencia (archivo, fila, valor original, conversión, DOI, SHA-256), Export PDF (9 páginas A4, docs/screens/t07_export.pdf), escenario en la URL. Sin desbordes a 400 px |
 | T08 | Infra web (CloudFront) | P0 | en curso | Codex · stringbuilder | este commit | Scripts y despliegue ejecutados; repetición reutiliza IDs; CloudFront Deployed y HTTP 200; revisión visual pendiente |
 | T09 | Lambda `/ask` y `/analysis` | P1 | hecha | Codex · stringbuilder | este commit | 26 tests y ambos eventos locales con SDK real OK; contrato en api/README.md |
-| T10 | Infra API | P1 | en curso | Codex · stringbuilder | este commit | Preparar empaquetado Linux, rol acotado, Lambda y Gateway |
-| T11 | UI de preguntas y análisis | P1 | pendiente | | | |
+| T10 | Infra API | P1 | hecha | Codex · stringbuilder | este commit | Lambda/Gateway con rol acotado, /ask 200 en 7.876 s; /analysis 200 |
+| T11 | UI de preguntas y análisis | P1 | en curso | Codex · stringbuilder | este commit | Integración local; deploy final web reservado al dueño |
 | T12 | Ficha de datos para ML | P2 | pendiente | | | |
 | T13 | Comparar 2 estudios | P2 | pendiente | | | |
 | T14 | Prueba agnóstica | P3 | pendiente | | | |
@@ -68,6 +68,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-14 · Codex · T10
+- Hecho: infra/20_api.sh, Lambda Python3.12 arm64, Gateway HTTP, CORS CF_URL y throttle 5/10; outputs versionados sin secretos.
+- Verificado: shell sintaxis y llamadas públicas /ask HTTP 200 7.876238 s; /analysis HTTP 200 0.903628 s, mode=ai y fuentes. SDK/pack incluidos para Linux.
+- Incidencia corregida: serialización de política vacía en primera ejecución; segunda ejecución reutilizó función/API/rol y completó.
+- Siguiente paso: T11, integrar UI; conservar publicación final web para dueño. T08 revisión visual aún pendiente.
+
 
 ### 2026-11-14 19:33 CST · Codex · T09
 - Hecho: handler /ask y /analysis, verificador, eventos de datos reales, documentación, dependencias fijadas y smoke. Inicio 7b67e86; se inicia T10.

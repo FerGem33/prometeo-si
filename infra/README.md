@@ -171,3 +171,29 @@ implementados y no forman parte del despliegue web actual.
   Nunca usar --no-verify-ssl. Si ocurre en otro endpoint, revisar la red/DNS.
 - Si la nueva web falla, identificar un commit conocido y desplegar su build
   desde un checkout separado; no hacer reset destructivo del trabajo del equipo.
+
+## T10 disponible: desplegar o actualizar API
+
+T10 ya está implementada. Preparar Python 3.12 y api/.venv como indica
+api/README.md; luego ejecutar `bash infra/20_api.sh`. Se empaquetan wheels Linux
+arm64, handler, verificador y pack. El script reutiliza rol, Lambda y Gateway,
+actualiza código/configuración y guarda API_ID, API_URL, FUNCTION_ARN y
+API_ROLE_ARN en outputs.env. No publica la web.
+
+Permisos de ejecución Lambda: AWSLambdaBasicExecutionRole y bedrock:InvokeModel
+sobre el perfil confirmado y sus ARNs de modelos destino, sin wildcard en esa
+política. Gateway tiene CORS solo CF_URL y throttle 5 rps / ráfaga 10.
+El usuario que ejecuta el script necesita administrar esos recursos y PassRole
+sobre el rol concreto. No compartir las credenciales de esa persona.
+
+```bash
+bash infra/20_api.sh
+source infra/outputs.env
+curl -sS "$API_URL/ask" -H 'content-type: application/json' -d @api/events/ask.json
+curl -sS "$API_URL/analysis" -H 'content-type: application/json' -d @api/events/analysis.json
+```
+
+Verificado el 2026-11-14: /ask HTTP 200 en 7.876 s; /analysis HTTP 200 en
+0.904 s, mode=ai y fuentes reales. Falta T11 en la web pública. El primer
+intento de T10 se interrumpió al leer una política vacía; se corrigió y la
+reejecución reutilizó los recursos creados sin duplicación.
