@@ -4,7 +4,7 @@ import type { Lens, Pack, Scenario } from "./engine";
 import { DataCtx, ProvCtx } from "./components/ctx";
 import type { Data, Mapping } from "./components/ctx";
 import { AssistantPanel } from "./components/AssistantPanel";
-import { ScenarioPanel } from "./components/ScenarioPanel";
+import { LevelTag, ScenarioPanel } from "./components/ScenarioPanel";
 import { VariantsPanel } from "./components/VariantsPanel";
 import { MapFigure } from "./components/MapFigure";
 import { SourcesRanked } from "./components/SourcesRanked";
@@ -20,13 +20,25 @@ import { DossierModal } from "./components/DossierModal";
 import { MLCard } from "./components/MLCard";
 import { StudyCompare } from "./components/StudyCompare";
 import { KnowledgeGraph } from "./components/KnowledgeGraph";
+import { GraphicalAbstract } from "./components/GraphicalAbstract";
+import { Fold } from "./components/Fold";
+import { EvidenceCard } from "./components/EvidenceCard";
+import { ReadingGuide } from "./components/ReadingGuide";
+import { ExtraTag } from "./components/ExtraVars";
 import { JudgeTour } from "./components/JudgeTour";
 import "./styles/tour.css";
-import { abstractText, OVERALL } from "./report/text";
+import { abstractText, overallText } from "./report/text";
 import { partitionName, partitionPhrase, scenarioValueText, studyShort, varOf } from "./report/format";
 import { readUrl, stageFromUrl, writeUrl } from "./state";
 import type { Stage } from "./state";
 import type { Axes, Extra } from "./state";
+import { t, many, useLang } from "./i18n";
+import type { Lang } from "./i18n";
+import { loadLocale, localizeData } from "./i18n/localize";
+import type { CorpusLocale } from "./i18n/localize";
+import { Prefs } from "./components/Prefs";
+
+const STAGE_HASHES = ["", "#scenario", "#processing", "#report", "#workspace"];
 
 async function load(): Promise<Data> {
   const get = async (name: string) => {
@@ -41,24 +53,35 @@ async function load(): Promise<Data> {
 export function App() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lang = useLang();
+  const [locale, setLocale] = useState<{ lang: Lang; file: CorpusLocale | null }>({ lang: "en", file: null });
   useEffect(() => {
     load().then(setData, (e) => setError(String(e)));
   }, []);
+  // The words of the corpus in the language of the interface; English needs no file.
+  useEffect(() => {
+    let live = true;
+    loadLocale("./demo/", lang).then((file) => live && setLocale({ lang, file }));
+    return () => {
+      live = false;
+    };
+  }, [lang]);
+  const view = useMemo(() => (data ? localizeData(data, locale.lang === lang ? locale.file : null) : null), [data, lang, locale]);
   if (error)
     return (
       <article className="page">
-        <p className="abstract">The evidence pack could not be loaded ({error}).</p>
+        <p className="abstract">{t("The evidence pack could not be loaded (")}{error}).</p>
       </article>
     );
-  if (!data)
+  if (!view)
     return (
       <article className="page">
-        <p className="abstract">Loading the evidence pack…</p>
+        <p className="abstract">{t("Loading the evidence pack…")}</p>
       </article>
     );
   return (
-    <DataCtx.Provider value={data}>
-      <Flow data={data} />
+    <DataCtx.Provider value={view}>
+      <Flow data={view} />
     </DataCtx.Provider>
   );
 }
@@ -78,6 +101,8 @@ function Flow({ data }: { data: Data }) {
 
   useEffect(() => {
     const onHash = () => {
+      // A link to an anchor inside the report (a reference, for instance) is not a change of stage.
+      if (!STAGE_HASHES.includes(window.location.hash)) return;
       setStage(stageFromUrl(window.location.hash, ""));
       window.scrollTo(0, 0);
     };
@@ -208,6 +233,7 @@ function Report({
 }) {
   const { pack, lens } = data;
   const [prov, setProv] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [dossierOpen, setDossierOpen] = useState(false);
   const openProv = useCallback((id: string) => setProv(id), []);
 
@@ -248,193 +274,207 @@ function Report({
         <header className="mast">
           <span className="brand">
             <img src="/logo-mark-float-512.png" alt="" width={135} height={135} />
-            <b>Prometeo</b> · Evidence report
+            <b>{t("Prometeo")}</b> {t("· Evidence report")}
           </span>
           <span>{pack.meta.created_at}</span>
           <span>{lens.byline}</span>
+          <Prefs />
         </header>
 
         <div className="kicker">
-          <span>{lens.kicker ?? "Scenario assessment"}</span>
+          <span>{lens.kicker ?? t("Scenario assessment")}</span>
           <span className="verify">{summary}</span>
           <span className="sep" />
-          <SaveExploration
-            packId={pack.meta.id}
-            scenario={scenario}
-            axes={axes}
-            extras={extras}
-            goal={goal}
-            projectId={projectId}
-            summary={summary}
-          />
-          <button type="button" className="chip noprint" onClick={onEdit}>
-            Edit scenario
-          </button>
-          <button type="button" className="chip noprint" onClick={onWorkspace}>
-            Workspace
-          </button>
-          <button type="button" className="chip noprint" onClick={onHome}>
-            Start
-          </button>
-          <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
-            Dossier &amp; export
-          </button>
-          <button type="button" className="chip noprint" onClick={() => window.print()}>
-            Export PDF
-          </button>
+          <div className="kicker-actions noprint">
+            <SaveExploration
+              packId={pack.meta.id}
+              scenario={scenario}
+              axes={axes}
+              extras={extras}
+              goal={goal}
+              projectId={projectId}
+              summary={summary}
+            />
+            <button type="button" className="chip noprint" onClick={onEdit}>
+              {t("Edit scenario")}
+            </button>
+            <button type="button" className="chip noprint" onClick={onWorkspace}>
+              {t("Workspace")}
+            </button>
+            <button type="button" className="chip noprint" onClick={onHome}>
+              {t("Start")}
+            </button>
+            <button type="button" className="chip noprint" onClick={() => setDossierOpen(true)}>
+              {t("Dossier & export")}
+            </button>
+            <button type="button" className="chip noprint" onClick={() => window.print()}>
+              {t("Export PDF")}
+            </button>
+          </div>
         </div>
         <h1>{lens.title}</h1>
         <p className="byline">
           <span>{pack.meta.source_note}</span>
-          <span>every value links to its source row and DOI</span>
+          <span>{t("every value links to its source row and DOI")}</span>
         </p>
 
         {goal.trim() && (
           <p className="goalline">
-            <b>Question.</b> {goal.trim()}
+            <b>{t("Question.")}</b> {goal.trim()}
           </p>
         )}
 
-        <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
+        {/* Main column, with a side rail that stays in view while the page scrolls. */}
+        <div className="cols">
+          <section className="abstract-card" aria-label={t("Abstract")}>
+            <div className="abstract-head">
+              <b className="lbl">{t("Abstract")}</b>
+              <ReadingGuide />
+            </div>
+            <p className="abstract">{abstractText(pack, lens, scenario, r.overall, r.finds)}</p>
+          </section>
 
-        <VariantsPanel scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} />
-
-        <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
-
-        <KeyFindings findings={r.finds} />
-
-        <div className="row">
-          <p className="abstract">
-            <b className="lbl">Abstract. </b>
-            {abstractText(pack, lens, scenario, r.overall, r.finds)}
-          </p>
-          <aside className="side">
-            <p>
-              <b>How to read this report.</b> Every recorded test is placed in the space of experimental conditions and compared with the scenario above. Change a value and every figure, table and sentence is recomputed in the browser. Underlined values open their source: file, row, original text, conversion and dataset DOI.
-            </p>
-            <p>
-              <b>Grades.</b> A: a comparable record lies within one σ-distance and nothing is missing. B: inside the tested range, with missing variables or a larger distance. C: outside the tested range. D: no comparable record.
-            </p>
-            <p>{lens.disclaimer}</p>
-          </aside>
-        </div>
-
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">1 · Where the tests sit relative to the scenario</h2>
-            <p>
-              Of the {pack.meta.stats.tests?.toLocaleString("en-US")} individual tests in the corpus,{" "}
-              {r.n.toLocaleString("en-US")} are comparable with the scenario{r.part ? ` (${where})` : ""}. Figure 1 places every test on two variables of choice; tests that do not record the vertical variable are kept in a separate strip instead of being dropped or assigned a value. Table 1 ranks the {pack.studies.length} {unit}s: {r.overall.counts.A} graded A, {r.overall.counts.B} B, {r.overall.counts.C} C and {r.overall.counts.D} D, so the overall evidence is {OVERALL[r.overall.level].replace(/study/g, unit)}.
-              {best ? ` The closest ${unit} is ${studyShort(pack, best.study)} (grade ${best.grade}, d = ${best.distance}).` : ""}
-            </p>
+          <div className="top">
+            <EvidenceCard overall={r.overall} ranking={r.ranking} levels={r.levels} comparable={r.n} />
+            <KeyFindings findings={r.finds} />
           </div>
-          <aside className="side">
-            <p>
-              <b>Partitions.</b>{" "}
-              {r.part
-                ? `The scenario falls in “${partitionName(lens, r.part.value)}”. Tests of other partitions are drawn hollow and never enter a grade, a level or a distance.`
-                : "No partition could be inferred from the scenario; all tests are compared."}
-            </p>
+
+          <Fold id="scenario-controls" controlled open={editing} onOpenChange={setEditing} title={t("Scenario values")} hint={t("sliders, presets and your own variables")}>
+            <ScenarioPanel scenario={scenario} onChange={setScenario} levels={r.levels} extras={extras} onExtras={setExtras} />
+          </Fold>
+
+          <aside className="rail" aria-label={t("Scenario summary, questions and analysis")}>
+            <section className="rail-scn noprint" aria-label={t("Current scenario")}>
+              <h2>{t("Current scenario")}</h2>
+              <ul>
+                {r.levels.map((lv) => (
+                  <li key={lv.variable}>
+                    <span>
+                      {varOf(pack, lv.variable).label} <b>{scenarioValueText(pack, lv.variable, lv.value)}</b>
+                    </span>
+                    <LevelTag level={lv.level} />
+                  </li>
+                ))}
+                {extras.map((e) => (
+                  <li key={e.id}>
+                    <span>
+                      {e.name}{" "}
+                      <b>
+                        {e.value} {e.unit}
+                      </b>
+                    </span>
+                    <ExtraTag />
+                  </li>
+                ))}
+              </ul>
+              {r.levels.length === 0 && extras.length === 0 && <p className="hint">{t("No variable is part of the scenario.")}</p>}
+              <button type="button" className="chip" onClick={() => {
+                  setEditing(true);
+                  setTimeout(() => document.getElementById("scenario-controls")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }}>
+                {t("Change values")}
+              </button>
+            </section>
+            <AssistantPanel scenario={scenario} levels={r.levels} findings={r.finds} onChange={setScenario} />
           </aside>
-        </div>
-        <MapFigure
-          figure={1}
-          scenario={scenario}
-          partition={r.part}
-          axes={axes}
-          onAxes={setAxes}
-          onPick={(v) =>
-            setScenario((s) => ({
-              ...s,
-              values: { ...s.values, ...v },
-              active: pack.schema.variables.map((x) => x.id).filter((id) => s.active.includes(id) || id in v),
-            }))
-          }
-        />
-        <div className="row">
-          <div className="wide">
+
+          <Fold title={t("Save or compare variants of this scenario")} hint={t("kept in this browser only")}>
+            <VariantsPanel scenario={scenario} onChange={setScenario} extras={extras} onExtras={setExtras} />
+          </Fold>
+
+          <GraphicalAbstract scenario={scenario} onChange={setScenario} ranking={r.ranking} close={r.close} levels={r.levels} overall={r.overall} comparable={r.n} />
+
+          <div className="row">
+            <div className="body">
+              <h2 className="sec">{t("1 · Where the tests sit relative to the scenario")}</h2>
+              <p>
+                {t("Of the")} {pack.meta.stats.tests?.toLocaleString("en-US")} {t("individual tests in the corpus,")} {r.n.toLocaleString("en-US")} {t("are comparable with the scenario")}{r.part ? ` (${where})` : ""}{t(". Figure 1 places every test on two variables of choice; tests that do not record the vertical variable are kept in a separate strip instead of being dropped or assigned a value. Table 1 ranks the")} {pack.studies.length} {many(unit)}: {r.overall.counts.A} {t("graded A,")} {r.overall.counts.B} B, {r.overall.counts.C} {t("C and")} {r.overall.counts.D} {t("D, so the overall evidence is")} {overallText(r.overall.level, unit)}.
+                {best ? t(" The closest {0} is {1} (grade {2}, d = {3}).", unit, studyShort(pack, best.study), best.grade, best.distance) : ""}
+              </p>
+            </div>
+            <aside className="side">
+              <p>
+                <b>{t("Partitions.")}</b> {r.part ? t("The scenario falls in “{0}”. Tests of other partitions are drawn hollow and never enter a grade, a level or a distance.", partitionName(lens, r.part.value)) : t("No partition could be inferred from the scenario; all tests are compared.")}
+              </p>
+            </aside>
+          </div>
+          <MapFigure figure={1} scenario={scenario} partition={r.part} axes={axes} onAxes={setAxes} onPick={(v) => setScenario((s) => ({ ...s, values: { ...s.values, ...v }, active: pack.schema.variables.map((x) => x.id).filter((id) => s.active.includes(id) || id in v) }))} />
+          <Fold title={t("Table 1 · Ranking of the {0} {1}", pack.studies.length, many(unit))} hint={t("grade, distance, nearest record, reason and DOI")}>
             <RankingTable results={r.ranking} scenario={scenario} />
-          </div>
-        </div>
+          </Fold>
 
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">2 · How close each {unit} comes, variable by variable</h2>
-            <p>
-              A single distance hides which variable is responsible. Figure 2 separates it: for each {unit} with comparable records, how close its nearest record comes to the scenario on each active variable, and which variables it does not record at all.
-            </p>
+          <div className="row">
+            <div className="body">
+              <h2 className="sec">{t("2 · How close each")} {unit} {t("comes, variable by variable")}</h2>
+              <p>
+                {t("A single distance hides which variable is responsible. Panel b of the graphical abstract shows it for one")} {unit} {t("at a time; Figure 2 gives the same closeness for every")} {unit} {t("with comparable records, and which variables each one does not record at all.")}
+              </p>
+            </div>
+            <aside className="side">
+              <p>
+                <b>{t("Missing is not zero.")}</b> {t("A variable that a table does not record is shown as a dash and listed as missing in Table 1. It lowers the grade from A to B; it is never treated as a measured value.")}
+              </p>
+            </aside>
           </div>
-          <aside className="side">
-            <p>
-              <b>Missing is not zero.</b> A variable that a table does not record is shown as a dash and listed as missing in Table 1. It lowers the grade from A to B; it is never treated as a measured value.
-            </p>
-          </aside>
-        </div>
-        <HeatTable figure={2} results={r.ranking} closeness={r.close} scenario={scenario} />
+          <Fold title={t("Figure 2 · Closeness of every {0}, variable by variable", unit)} hint={t("sortable table with the nearest values")}>
+            <HeatTable figure={2} results={r.ranking} closeness={r.close} scenario={scenario} />
+          </Fold>
 
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">3 · Coverage and gaps</h2>
-            <p>
-              Figure 3 counts the comparable tests in each region of the two variables selected in Figure 1, next to the tests of other partitions in the same region. Table 2 lists every finding the rules produce for the scenario, with the records or {unit}s that back each one.
-            </p>
+          <div className="row">
+            <div className="body">
+              <h2 className="sec">{t("3 · Coverage and gaps")}</h2>
+              <p>
+                {t("Figure 3 counts the comparable tests in each region of the two variables selected in Figure 1, next to the tests of other partitions in the same region. Table 2 lists every finding the rules produce for the scenario, with the records or")} {many(unit)} {t("that back each one.")}
+              </p>
+            </div>
+            <aside className="side">
+              <p>
+                <b>{t("What a gap means.")}</b> {t("An empty cell states that no comparable test was recorded there. It does not state what would happen under those conditions.")}
+              </p>
+            </aside>
           </div>
-          <aside className="side">
-            <p>
-              <b>What a gap means.</b> An empty cell states that no comparable test was recorded there. It does not state what would happen under those conditions.
-            </p>
-          </aside>
-        </div>
-        <GapFigure figure={3} grid={r.grid} scenario={scenario} />
-        <div className="row">
-          <div className="wide">
+          <GapFigure figure={3} grid={r.grid} scenario={scenario} axes={axes} onAxes={setAxes} onPick={(v) => setScenario((s) => ({ ...s, values: { ...s.values, ...v }, active: pack.schema.variables.map((x) => x.id).filter((id) => s.active.includes(id) || id in v) }))} />
+          <Fold title={t("Table 2 · All findings for the scenario")} hint={t("{0} findings with their sources", r.finds.length)}>
             <FindingsList findings={r.finds} />
-          </div>
-        </div>
+          </Fold>
 
-        <div className="row">
-          <div className="wide">
-            <KnowledgeGraph figure={4} scenario={scenario} />
-          </div>
-        </div>
+          <KnowledgeGraph figure={4} scenario={scenario} />
 
-        <MLCard />
-        <StudyCompare />
-
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">6 · Sources</h2>
-          </div>
-        </div>
-        <div className="row">
-          <div className="wide">
+          <h2 className="sec more">{t("Data, sources and methods")}</h2>
+          <Fold title={t("Outcome data description")} hint={t("Table 5 · what the corpus records as results")}>
+            <MLCard />
+          </Fold>
+          <Fold title={t("Compare two {0} side by side", many(unit))} hint={t("objective, conditions, values and source columns")}>
+            <StudyCompare />
+          </Fold>
+          <Fold title={t("Sources")} hint={t("Tables 3 and 4 · the {0} source tables and the ranking explained", pack.sources.length)}>
             <SourcesTable n={3} />
             <SourcesRanked n={4} ranking={r.ranking} closeness={r.close} scenario={scenario} />
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">7 · Methods &amp; experimental apparatus</h2>
-            <Methods tableN={6} />
-            <details className="noprint">
-              <summary>Isometric apparatus diagram · ISS CIR / BASS Microgravity Combustion Chamber</summary>
-              <div className="methods-chamber-wrap">
-                <ChamberFigure interactive />
+          </Fold>
+          <Fold title={t("Methods")} hint={t("Table 6 · partitions, distance, grades, levels and unit conversions")}>
+            <div className="row">
+              <div className="body">
+                <Methods tableN={6} />
+                <details className="noprint">
+                  <summary>{t("Isometric apparatus diagram · ISS CIR / BASS Microgravity Combustion Chamber")}</summary>
+                  <div className="methods-chamber-wrap">
+                    <ChamberFigure interactive />
+                  </div>
+                </details>
               </div>
-            </details>
-          </div>
-          <aside className="side">
-            <p>
-              <b>Reproducibility.</b> All numbers on this page are computed in the browser from one evidence pack ({pack.contract}) generated offline from the source tables; each table is identified by its SHA-256. The engine that computes grades, levels and findings contains no vocabulary of this corpus and is covered by test vectors on these data.
-            </p>
-          </aside>
-        </div>
+              <aside className="side">
+                <p>
+                  <b>{t("Reproducibility.")}</b> {t("All numbers on this page are computed in the browser from one evidence pack (")}{pack.contract}{t(") generated offline from the source tables; each table is identified by its SHA-256. The engine that computes grades, levels and findings contains no vocabulary of this corpus and is covered by test vectors on these data.")}
+                </p>
+              </aside>
+            </div>
+          </Fold>
 
-        <div className="row">
-          <div className="body">
-            <h2 className="sec">References</h2>
-            <References />
+          <div className="row">
+            <div className="body">
+              <h2 className="sec">{t("References")}</h2>
+              <References />
+            </div>
           </div>
         </div>
 

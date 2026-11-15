@@ -2,6 +2,7 @@ import type { Scenario } from "../engine";
 import { loadJson, newId, saveJson } from "./storage";
 import { cleanExtras } from "../state";
 import type { Axes, Extra } from "../state";
+import { t } from "../i18n";
 
 /** Browser-local projects. No accounts, no server: everything lives in this browser's storage. */
 export type SavedExploration = { id: string; savedAt: string; scenario: Scenario; axes: Axes; extras?: Extra[] };
@@ -73,8 +74,8 @@ function commit(next: Project[], project?: Project): Result {
 const stamp = (now?: Date) => (now ?? new Date()).toISOString();
 
 export function createProject(name: string, intent: string, packId: string, now?: Date): Result {
-  const t = stamp(now);
-  const p: Project = { id: newId("proj"), name: name.trim() || "Untitled project", intent: intent.trim(), packId, explorations: [], createdAt: t, modifiedAt: t };
+  const at = stamp(now);
+  const p: Project = { id: newId("proj"), name: name.trim() || t("Untitled project"), intent: intent.trim(), packId, explorations: [], createdAt: at, modifiedAt: at };
   return commit([...all(), p], p);
 }
 
@@ -95,15 +96,15 @@ export function duplicateProject(id: string, intent: string, now?: Date): Result
   const list = all();
   const src = list.find((p) => p.id === id);
   if (!src) return { ok: false, projects: sortByModified(list) };
-  const t = stamp(now);
+  const at = stamp(now);
   const copy: Project = {
     ...src,
     id: newId("proj"),
-    name: `${src.name} (copy)`,
+    name: t("{0} (copy)", src.name),
     intent: intent.trim(),
     explorations: src.explorations.map((e) => ({ ...e, id: newId("exp") })),
-    createdAt: t,
-    modifiedAt: t,
+    createdAt: at,
+    modifiedAt: at,
   };
   return commit([...list, copy], copy);
 }
@@ -120,5 +121,5 @@ export function saveExploration(id: string, scenario: Scenario, axes: Axes, now?
 
 export function formatDate(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "unknown date" : d.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+  return Number.isNaN(d.getTime()) ? t("unknown date") : d.toISOString().slice(0, 16).replace("T", " ") + " UTC";
 }

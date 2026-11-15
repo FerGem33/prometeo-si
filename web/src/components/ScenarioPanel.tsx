@@ -4,10 +4,12 @@ import { useData, Src } from "./ctx";
 import { LEVELS, levelBasis } from "../report/text";
 import { num, scenarioValueText } from "../report/format";
 import { ChangeSummary } from "./ChangeSummary";
+import { NumField } from "./NumField";
 import type { Extra } from "../state";
 import { AddExtra, EXTRA_BASIS, ExtraTag } from "./ExtraVars";
 import { allHabitatPresets, HabitatFigure, habitatScenario, matchingHabitatPreset } from "./HabitatFigure";
 import { BASELINE_PROFILES, computeWhatIfDelta } from "../report/whatif";
+import { t } from "../i18n";
 
 export function LevelTag({ level }: { level: VariableEvidence["level"] }) {
   const l = LEVELS[level];
@@ -29,7 +31,7 @@ function CoverageStrip({ v, lv, value }: { v: NumVariable; lv?: VariableEvidence
   const t1 = hasTested ? clampPct(lv!.tested![1]) : 0;
 
   return (
-    <span className="cov-strip noprint" aria-hidden="true" title={hasTested ? `Tested range: ${num(lv!.tested![0])}–${num(lv!.tested![1])} ${v.unit}` : "No comparable tested range"}>
+    <span className="cov-strip noprint" aria-hidden="true" title={hasTested ? t("Tested range: {0}–{1} {2}", num(lv!.tested![0]), num(lv!.tested![1]), v.unit) : t("No comparable tested range")}>
       {hasTested && (
         <span
           className="cov-band"
@@ -111,17 +113,17 @@ export function ScenarioPanel({
   };
 
   return (
-    <section className="scenario" aria-label="Proposed scenario">
+    <section className="scenario" aria-label={t("Proposed scenario")}>
       <div className="scn-head">
-        <h2>Proposed scenario</h2>
-        <div className="presets" role="group" aria-label="Preset scenarios">
+        <h2>{t("Proposed scenario")}</h2>
+        <div className="presets" role="group" aria-label={t("Preset scenarios")}>
           {presets.map((p) => (
             <button
               key={p.id}
               type="button"
               className="chip"
               aria-pressed={preset === p.id}
-              title={`${p.blurb} Source: ${p.source}.`}
+              title={t("{0} Source: {1}.", p.blurb, p.source)}
               onClick={() => onChange(habitatScenario(lens, p.id))}
             >
               {p.label}
@@ -131,17 +133,17 @@ export function ScenarioPanel({
       </div>
 
       {/* Large Selected-Design Interactive Animation Stage on the Final Report Interface */}
-      <aside className="design-hero-stage scn-design-stage noprint" aria-label="Selected scenario isometric architecture">
+      <aside className="design-hero-stage scn-design-stage noprint" aria-label={t("Selected scenario isometric architecture")}>
         <div className="design-hero-visual">
           <HabitatFigure name={preset || "custom"} size="xl" />
         </div>
         <div className="design-hero-info">
-          <span className="design-hero-kicker">Active Scenario Architecture · Interactive Isometric Model</span>
-          <h3>{activePresetObj ? activePresetObj.label : "Custom Operating Scenario"}</h3>
+          <span className="design-hero-kicker">{t("Active Scenario Architecture · Interactive Isometric Model")}</span>
+          <h3>{activePresetObj ? activePresetObj.label : t("Custom Operating Scenario")}</h3>
           <p>
             {activePresetObj
               ? activePresetObj.blurb
-              : "Custom experimental conditions defined via scenario sliders. Select any reference habitat above or adjust sliders below to see the architecture respond in real time."}
+              : t("Custom experimental conditions defined via scenario sliders. Select any reference habitat above or adjust sliders below to see the architecture respond in real time.")}
           </p>
           <div className="design-hero-pills">
             {scenario.active.map((id) => (
@@ -151,19 +153,19 @@ export function ScenarioPanel({
               </span>
             ))}
           </div>
-          {activePresetObj?.source && <small className="design-hero-src">Reference: {activePresetObj.source}</small>}
+          {activePresetObj?.source && <small className="design-hero-src">{t("Reference:")} {activePresetObj.source}</small>}
         </div>
       </aside>
 
       {/* Real-time What-If Delta Simulation against baseline */}
-      <div className="whatif-panel noprint" role="region" aria-label="What-if baseline comparison">
+      <div className="whatif-panel noprint" role="region" aria-label={t("What-if baseline comparison")}>
         <div className="whatif-head">
           <div className="whatif-title-group">
-            <span className="whatif-kicker">NASA Comparative Flammability Engine</span>
-            <h4>What-If Simulator vs. Baseline Atmosphere</h4>
+            <span className="whatif-kicker">{t("NASA Comparative Flammability Engine")}</span>
+            <h4>{t("What-If Simulator vs. Baseline Atmosphere")}</h4>
           </div>
           <div className="whatif-selector">
-            <label htmlFor="whatif-base-select">Compare against:</label>
+            <label htmlFor="whatif-base-select">{t("Compare against:")}</label>
             <select
               id="whatif-base-select"
               value={selectedBaseline}
@@ -180,19 +182,19 @@ export function ScenarioPanel({
 
         <div className="whatif-cards">
           <div className="whatif-card">
-            <span className="whatif-label">Δ O₂ Concentration</span>
+            <span className="whatif-label">{t("Δ O₂ Concentration")}</span>
             <span className={`whatif-val ${delta.o2Delta > 0 ? "whatif-up" : delta.o2Delta < 0 ? "whatif-down" : ""}`}>
               {delta.o2Delta > 0 ? `+${delta.o2Delta.toFixed(1)}%` : `${delta.o2Delta.toFixed(1)}%`}
             </span>
           </div>
           <div className="whatif-card">
-            <span className="whatif-label">Δ Cabin Pressure</span>
+            <span className="whatif-label">{t("Δ Cabin Pressure")}</span>
             <span className={`whatif-val ${delta.pDelta > 0 ? "whatif-up" : delta.pDelta < 0 ? "whatif-down" : ""}`}>
-              {delta.pDelta > 0 ? `+${delta.pDelta.toFixed(2)} atm` : `${delta.pDelta.toFixed(2)} atm`}
+              {delta.pDelta > 0 ? t("+{0} atm", delta.pDelta.toFixed(2)) : t("{0} atm", delta.pDelta.toFixed(2))}
             </span>
           </div>
           <div className="whatif-card">
-            <span className="whatif-label">Δ Flammability Index</span>
+            <span className="whatif-label">{t("Δ Flammability Index")}</span>
             <span className={`whatif-val ${delta.flammabilityIndexChangePct > 0 ? "whatif-risk-high" : "whatif-risk-low"}`}>
               {delta.flammabilityIndexChangePct > 0 ? `+${delta.flammabilityIndexChangePct}%` : `${delta.flammabilityIndexChangePct}%`}
             </span>
@@ -208,13 +210,13 @@ export function ScenarioPanel({
 
       <div className="scn-layout">
         <div className="scn-table-col">
-          <table className="scn" aria-label="Proposed scenario values and evidence">
+          <table className="scn" aria-label={t("Proposed scenario values and evidence")}>
             <thead>
               <tr>
-                <th scope="col">Variable</th>
-                <th scope="col">Proposed value</th>
-                <th scope="col">Evidence level</th>
-                <th scope="col">Basis (comparable tests)</th>
+                <th scope="col">{t("Variable")}</th>
+                <th scope="col">{t("Proposed value")}</th>
+                <th scope="col">{t("Evidence level")}</th>
+                <th scope="col">{t("Basis (comparable tests)")}</th>
               </tr>
             </thead>
             <tbody>
@@ -244,20 +246,7 @@ export function ScenarioPanel({
                             value={numVal}
                             onChange={(e) => set(v.id, Number(e.target.value))}
                           />
-                          <input
-                            type="number"
-                            aria-label={`${v.label} value`}
-                            disabled={!on}
-                            min={v.range[0]}
-                            max={v.range[1]}
-                            step={v.step ?? "any"}
-                            value={typeof x === "number" ? x : ""}
-                            onChange={(e) => {
-                              const n = Number(e.target.value);
-                              if (e.target.value !== "" && Number.isFinite(n))
-                                set(v.id, Math.min(v.range[1], Math.max(v.range[0], n)));
-                            }}
-                          />
+                          <NumField label={t("{0} value", v.label)} disabled={!on} min={v.range[0]} max={v.range[1]} step={v.step} value={typeof x === "number" ? x : undefined} onCommit={(n) => set(v.id, n)} />
                           {on && typeof x === "number" && v.display_units?.[0] && (
                             <span className="alt">
                               = {num(x * v.display_units[0].factor, 1)} {v.display_units[0].unit}
@@ -272,20 +261,20 @@ export function ScenarioPanel({
                           onChange={(e) => set(v.id, e.target.value)}
                         >
                           {typeof x === "string" && x !== "" && !catOptions[v.id].some((o) => o.value === x) && (
-                            <option value={x}>{x} · 0 tests</option>
+                            <option value={x}>{x} {t("· 0 tests")}</option>
                           )}
                           {catOptions[v.id].map((o) => (
                             <option key={o.value} value={o.value}>
-                              {o.value} · {o.n} tests
+                              {o.value} · {o.n} {t("tests")}
                             </option>
                           ))}
                         </select>
                       )}
                       <span className="print-only">
-                        {on && x !== undefined ? scenarioValueText(pack, v.id, x) : "not part of the scenario"}
+                        {on && x !== undefined ? scenarioValueText(pack, v.id, x) : t("not part of the scenario")}
                       </span>
                     </td>
-                    <td>{on && lv ? <LevelTag level={lv.level} /> : <span className="hint">not part of the scenario</span>}</td>
+                    <td>{on && lv ? <LevelTag level={lv.level} /> : <span className="hint">{t("not part of the scenario")}</span>}</td>
                     <td className="basis">
                       {on && lv && (
                         <>
@@ -307,7 +296,7 @@ export function ScenarioPanel({
                     <input
                       type="text"
                       className="xval"
-                      aria-label={`${e.name} value`}
+                      aria-label={t("{0} value", e.name)}
                       maxLength={40}
                       value={e.value}
                       onChange={(ev) =>
@@ -322,14 +311,14 @@ export function ScenarioPanel({
                     <ExtraTag />
                   </td>
                   <td className="basis">
-                    {EXTRA_BASIS}{" "}
+                    {t(EXTRA_BASIS)}{" "}
                     <button
                       type="button"
                       className="chip noprint"
                       onClick={() => onExtras(extras.filter((o) => o.id !== e.id))}
-                      aria-label={`Remove ${e.name}`}
+                      aria-label={t("Remove {0}", e.name)}
                     >
-                      Remove
+                      {t("Remove")}
                     </button>
                   </td>
                 </tr>
@@ -352,11 +341,11 @@ export function ScenarioPanel({
 
       <ChangeSummary levels={levels} />
       <p className="tblnote">
-        Levels are computed by rule on the comparable tests (Methods).{" "}
+        {t("Levels are computed by rule on the comparable tests (Methods).")}{" "}
         {Object.values(LEVELS)
           .map((l) => `${l.icon} ${l.label}`)
           .join(" · ")}
-        . Prometeo compares conditions; it does not predict outcomes.
+        {t(". Prometeo compares conditions; it does not predict outcomes.")}
       </p>
     </section>
   );

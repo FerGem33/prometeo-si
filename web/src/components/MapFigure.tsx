@@ -4,6 +4,7 @@ import { sigmaOf } from "../engine";
 import { useData, useProv } from "./ctx";
 import { num, partitionName, studyShort, valueText } from "../report/format";
 import type { Axes } from "../state";
+import { t } from "../i18n";
 
 const W = 1060;
 const L = 64;
@@ -107,11 +108,11 @@ export function MapFigure({
   const yOnly = visible.filter((r) => mid(r, vx.id) === null && mid(r, vy.id) !== null);
   const neither = visible.filter((r) => mid(r, vx.id) === null && mid(r, vy.id) === null);
   const title = (r: DataRecord) =>
-    `${studyShort(pack, r.study)} · test ${r.label}\n${vx.label}: ${valueText(r, vx)} · ${vy.label}: ${valueText(r, vy)}${pv ? `\n${partitionName(lens, r.values[pv.id] as string)}` : ""}\nClick for file, row and DOI`;
+    t("{0} · test {1}\n{2}: {3} · {4}: {5}{6}\nClick for file, row and DOI", studyShort(pack, r.study), r.label, vx.label, valueText(r, vx), vy.label, valueText(r, vy), pv ? `\n${partitionName(lens, r.values[pv.id] as string)}` : "");
 
   const tolX = pack.schema.thresholds.tolerance * sigmaOf(vx, scenario);
   const tolY = pack.schema.thresholds.tolerance * sigmaOf(vy, scenario);
-  const ownName = partition ? partitionName(lens, partition.value) : "all tests";
+  const ownName = partition ? partitionName(lens, partition.value) : t("all tests");
 
   const pick = (e: React.MouseEvent<SVGRectElement>) => {
     const svg = e.currentTarget.ownerSVGElement!;
@@ -131,7 +132,7 @@ export function MapFigure({
     <figure className="fig wide" id="fig-map">
       <div className="figctl">
         <label>
-          Horizontal
+          {t("Horizontal")}
           <select value={axes.x} onChange={(e) => onAxes({ ...axes, x: e.target.value })}>
             {nums.map((v) => (
               <option key={v.id} value={v.id} disabled={v.id === axes.y}>
@@ -141,7 +142,7 @@ export function MapFigure({
           </select>
         </label>
         <label>
-          Vertical
+          {t("Vertical")}
           <select value={axes.y} onChange={(e) => onAxes({ ...axes, y: e.target.value })}>
             {nums.map((v) => (
               <option key={v.id} value={v.id} disabled={v.id === axes.x}>
@@ -166,7 +167,7 @@ export function MapFigure({
           </button>
         ))}
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Tests by ${vx.label} and ${vy.label}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t("Tests by {0} and {1}", vx.label, vy.label)}>
         <g className="grid">
           {ticks(dx[0], dx[1]).map((t) => (
             <line key={`gx${t}`} x1={X(t)} x2={X(t)} y1={T} y2={T + PLOT_H} />
@@ -181,7 +182,7 @@ export function MapFigure({
         {sx !== null && sy !== null && <rect className="hood" x={X(sx - tolX)} y={Y(sy + tolY)} width={X(sx + tolX) - X(sx - tolX)} height={Y(sy - tolY) - Y(sy + tolY)} />}
         {sx !== null && <rect className="hood" x={X(sx - tolX)} y={stripTop + 22} width={X(sx + tolX) - X(sx - tolX)} height={STRIP_H - 22} />}
         <text className="lab strip-lab" x={L + 8} y={stripTop + 15}>
-          {vy.label} not recorded: {xOnly.length} tests, placed by {vx.label} only
+          {vy.label} {t("not recorded:")} {xOnly.length} {t("tests, placed by")} {vx.label} {t("only")}
         </text>
         <g>
           {both.map((r, i) => (
@@ -215,24 +216,24 @@ export function MapFigure({
         {sy !== null && <line className="scn" x1={L} x2={W - R} y1={Y(sy)} y2={Y(sy)} />}
         {sx !== null && (
           <text className="scn-txt" x={X(sx) + (X(sx) > W - 220 ? -6 : 6)} y={T + 12} textAnchor={X(sx) > W - 220 ? "end" : "start"}>
-            Scenario: {num(sx)} {vx.unit}
+            {t("Scenario:")} {num(sx)} {vx.unit}
             {sy !== null ? ` · ${num(sy)} ${vy.unit}` : ""}
           </text>
         )}
         {sx === null && sy !== null && (
           <text className="scn-txt" x={W - R - 6} y={Y(sy) - 5} textAnchor="end">
-            Scenario: {num(sy)} {vy.unit}
+            {t("Scenario:")} {num(sy)} {vy.unit}
           </text>
         )}
       </svg>
       <figcaption>
         <b>
-          Figure {figure} | Individual tests by {(vx.long ?? vx.label).toLowerCase()} and {(vy.long ?? vy.label).toLowerCase()}.
+          {t("Figure")} {figure} {t("| Individual tests by")} {(vx.long ?? vx.label).toLowerCase()} {t("and")} {(vy.long ?? vy.label).toLowerCase()}.
         </b>{" "}
-        Upper panel: the {both.length.toLocaleString("en-US")} tests that record both variables. Lower strip: the {xOnly.length.toLocaleString("en-US")} tests that record {vx.label} but not {vy.label}, placed by {vx.label} only.{" "}
-        {yOnly.length + neither.length > 0 && `Not drawn: ${yOnly.length} tests without ${vx.label} and ${neither.length} with neither variable. `}
-        Filled marks are comparable with the scenario ({ownName}); hollow marks belong to other partitions and are shown as context only. The red lines mark the scenario and the shaded box its tolerance (±{num(tolX)} {vx.unit}, ±{num(tolY)} {vy.unit}). Marks are jittered slightly so repeated conditions stay visible.{" "}
-        <span className="hint">Click a mark for its source row; click the upper panel to move the scenario there.</span>
+        {t("Upper panel: the")} {both.length.toLocaleString("en-US")} {t("tests that record both variables. Lower strip: the")} {xOnly.length.toLocaleString("en-US")} {t("tests that record")} {vx.label} {t("but not")} {vy.label}{t(", placed by")} {vx.label} {t("only.")}{" "}
+        {yOnly.length + neither.length > 0 && t("Not drawn: {0} tests without {1} and {2} with neither variable. ", yOnly.length, vx.label, neither.length)}
+        {t("Filled marks are comparable with the scenario (")}{ownName}{t("); hollow marks belong to other partitions and are shown as context only. The red lines mark the scenario and the shaded box its tolerance (±")}{num(tolX)} {vx.unit}, ±{num(tolY)} {vy.unit}{t("). Marks are jittered slightly so repeated conditions stay visible.")}{" "}
+        <span className="hint">{t("Click a mark for its source row; click the upper panel to move the scenario there.")}</span>
       </figcaption>
     </figure>
   );

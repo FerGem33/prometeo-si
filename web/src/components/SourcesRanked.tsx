@@ -6,6 +6,7 @@ import { doiOf, num, plural, scenarioValueText, studyShort, varOf } from "../rep
 import { explainAll, nextSort, sortKeyOf, sortStable, valueWithUnit } from "../report/ranking";
 import type { Dir, RankKey, StudyExplain, VarExplain } from "../report/ranking";
 import { whyText } from "../report/text";
+import { t, many } from "../i18n";
 
 function VarLine({ pack, v }: { pack: Pack; v: VarExplain }) {
   const def = varOf(pack, v.variable);
@@ -15,16 +16,16 @@ function VarLine({ pack, v }: { pack: Pack; v: VarExplain }) {
   const cite = rec ? (
     <>
       {" "}
-      (<Src id={rec.id}>{rec.label}, row {rec.source.row}</Src>)
+      (<Src id={rec.id}>{rec.label}{t(", row")} {rec.source.row}</Src>)
     </>
   ) : null;
   const head = <b>{def.label}: </b>;
-  if (v.status === "missing") return <li>{head}scenario {scn}; this source has no value to compare ({v.reason ? REASON[v.reason] : "not recorded"}). Counted as missing, not as zero.</li>;
+  if (v.status === "missing") return <li>{head}{t("scenario")} {scn}{t("; this source has no value to compare (")}{v.reason ? REASON[v.reason] : t("not recorded")}{t("). Counted as missing, not as zero.")}</li>;
   if (v.status === "tested" || v.status === "not_tested")
     return (
       <li>
-        {head}scenario {scn}; {v.status === "tested" ? "appears in the comparable records" : "does not appear in the comparable records"}
-        {cite}. Closeness {v.score}/100.
+        {head}{t("scenario")} {scn}; {v.status === "tested" ? t("appears in the comparable records") : t("does not appear in the comparable records")}
+        {cite}{t(". Closeness")} {v.score}/100.
       </li>
     );
   const near = valueWithUnit(v.nearestValue, unit);
@@ -32,10 +33,10 @@ function VarLine({ pack, v }: { pack: Pack; v: VarExplain }) {
   return (
     <li>
       {head}
-      <span className="nowrap">{scn} vs {near}</span>
+      <span className="nowrap">{scn} {t("vs")} {near}</span>
       {cite}
-      {v.status === "covered" ? ": a record covers the scenario value" : `: nearest record is ${num(v.gap ?? 0)} ${du} away`}
-      {v.tested ? `; tested range ${valueWithUnit(v.tested, unit)}` : ""}. Closeness {v.score}/100.
+      {v.status === "covered" ? t(": a record covers the scenario value") : t(": nearest record is {0} {1} away", num(v.gap ?? 0), du)}
+      {v.tested ? t("; tested range {0}", valueWithUnit(v.tested, unit)) : ""}{t(". Closeness")} {v.score}/100.
     </li>
   );
 }
@@ -52,7 +53,7 @@ export function SourcesRanked({ n, ranking, closeness, scenario }: { n: number; 
   return (
     <table id="tbl-sources-ranked" className="sranked">
       <caption>
-        <b>Table {n} |</b> Sources ranked for the scenario, with the values behind each position. Open a row to compare the scenario value with the nearest record of that source, variable by variable.
+        <b>{t("Table")} {n} |</b> {t("Sources ranked for the scenario, with the values behind each position. Open a row to compare the scenario value with the nearest record of that source, variable by variable.")}
       </caption>
       <thead>
         <tr>
@@ -60,11 +61,11 @@ export function SourcesRanked({ n, ranking, closeness, scenario }: { n: number; 
           {th("study", unit[0].toUpperCase() + unit.slice(1))}
           {th("grade", "Grade")}
           {th("distance", "d", "r")}
-          {th("reported", `Active variables reported (of ${total})`, "r")}
-          <th>Missing</th>
-          {th("overall", "Overall closeness", "r")}
-          <th>Why and values</th>
-          <th>Dataset DOI</th>
+          {th("reported", t("Active variables reported (of {0})", total), "r")}
+          <th>{t("Missing")}</th>
+          {th("overall", t("Overall closeness"), "r")}
+          <th>{t("Why and values")}</th>
+          <th>{t("Dataset DOI")}</th>
         </tr>
       </thead>
       <tbody>
@@ -82,7 +83,7 @@ export function SourcesRanked({ n, ranking, closeness, scenario }: { n: number; 
               </td>
               <td className="r">{e.result.distance === null ? "—" : num(e.result.distance)}</td>
               <td className="r">
-                {e.reported.length} of {e.vars.length}
+                {e.reported.length} {t("of")} {e.vars.length}
               </td>
               <td>{missingLabel(e)}</td>
               <td className="r">{e.overall === null ? "—" : num(e.overall, 1)}</td>
@@ -93,11 +94,11 @@ export function SourcesRanked({ n, ranking, closeness, scenario }: { n: number; 
                     {e.vars.map((v) => (
                       <VarLine key={v.variable} pack={pack} v={v} />
                     ))}
-                    {e.vars.length === 0 && <li>No active variable to compare.</li>}
+                    {e.vars.length === 0 && <li>{t("No active variable to compare.")}</li>}
                   </ul>
                   <div className="hint">
                     {plural(e.result.comparable, "comparable record")}
-                    {e.result.nearest ? "; d is measured at the single nearest comparable record" : ""}.
+                    {e.result.nearest ? t("; d is measured at the single nearest comparable record") : ""}.
                   </div>
                 </details>
               </td>
@@ -109,7 +110,7 @@ export function SourcesRanked({ n, ranking, closeness, scenario }: { n: number; 
       <tfoot>
         <tr>
           <td colSpan={9} className="hint">
-            Default order (as in Table 1), fixed by the engine: (1) grade A, B, C, D; (2) for grades A to C, fewer missing active variables first (grade D rows skip this step); (3) smaller normalised distance <i>d</i> of the nearest comparable record first, rows without a distance last; (4) order of the {unit}s in the corpus. The column buttons re-sort the table (stable; ties keep the default order; empty values last) without changing the engine ranking. Overall closeness is the mean closeness score (0–100) over the active variables the source records; unrecorded variables are excluded from the mean, not scored as zero. Closeness 0 means the nearest record is at least {pack.schema.thresholds.closeness_reach}σ from the scenario value. This compares conditions; it does not predict behaviour.
+            {t("Default order (as in Table 1), fixed by the engine: (1) grade A, B, C, D; (2) for grades A to C, fewer missing active variables first (grade D rows skip this step); (3) smaller normalised distance")} <i>d</i> {t("of the nearest comparable record first, rows without a distance last; (4) order of the")} {many(unit)} {t("in the corpus. The column buttons re-sort the table (stable; ties keep the default order; empty values last) without changing the engine ranking. Overall closeness is the mean closeness score (0–100) over the active variables the source records; unrecorded variables are excluded from the mean, not scored as zero. Closeness 0 means the nearest record is at least")} {pack.schema.thresholds.closeness_reach}{t("σ from the scenario value. This compares conditions; it does not predict behaviour.")}
           </td>
         </tr>
       </tfoot>

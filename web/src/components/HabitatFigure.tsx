@@ -6,6 +6,7 @@ import "../iso/iso.css";
 import "../iso/theme-prometeo.css";
 import { HABITAT_VECTORS, habitatSvg } from "../iso/habitats/build";
 import { useInView, useLoop } from "../iso/react/live";
+import { tx, lazy } from "../i18n";
 
 const { rise, slideX, slideY } = HABITAT_VECTORS;
 
@@ -170,24 +171,24 @@ export function flameIntensityForScenario(s?: Scenario): number {
   return Number(Math.max(0.75, Math.min(1.52, o2Factor * pFactor)).toFixed(2));
 }
 
-const SUPPLEMENTAL_HABITATS: Preset[] = [
+const SUPPLEMENTAL_HABITATS: Preset[] = lazy([
   {
     id: "spacecraft",
-    label: "Exploration vehicle",
-    blurb: "Crew transit capsule at reduced cabin pressure and elevated oxygen.",
-    source: "NASA exploration atmosphere (56 kPa / 34% O₂)",
+    label: tx("Exploration vehicle"),
+    blurb: tx("Crew transit capsule at reduced cabin pressure and elevated oxygen."),
+    source: tx("NASA exploration atmosphere (56 kPa / 34% O₂)"),
     values: { o2: 34, p: 0.56, flow: 10, g: 0, material: "PMMA" },
     active: ["o2", "p", "material"],
   },
   {
     id: "rover",
-    label: "Pressurized rover",
-    blurb: "Surface pressurized cabin for lunar or planetary traverses with cabin ventilation.",
-    source: "NASA lunar surface pressurized rover reference",
+    label: tx("Pressurized rover"),
+    blurb: tx("Surface pressurized cabin for lunar or planetary traverses with cabin ventilation."),
+    source: tx("NASA lunar surface pressurized rover reference"),
     values: { o2: 34, p: 0.56, flow: 12, g: 0.16, material: "Nomex" },
     active: ["o2", "p", "material"],
   },
-];
+]);
 
 /** Returns the lens presets plus supplemental isometric habitats so all 5 + Custom models are available. */
 export function allHabitatPresets(lens: Lens): Preset[] {

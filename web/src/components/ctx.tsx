@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { Lens, Pack } from "../engine";
+import { t } from "../i18n";
 
 export type Mapping = {
   tables: {
@@ -29,7 +30,7 @@ export function Src({ id, children, title }: { id: string | null | undefined; ch
   const open = useProv();
   if (!id) return <>{children}</>;
   return (
-    <button type="button" className="src" title={title ?? "Show source: file, row and DOI"} onClick={() => open(id)}>
+    <button type="button" className="src" title={title ?? t("Show source: file, row and DOI")} onClick={() => open(id)}>
       {children}
     </button>
   );

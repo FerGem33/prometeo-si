@@ -6,6 +6,15 @@
 <meta name="theme-color" content="#212120">
 <title>Prometeo · Evidence report</title>
 <meta name="description" content="Prometeo places a proposed scenario against the recorded experimental evidence and reports what has and has not been studied, with sources.">
+<script>
+  // Apply the saved theme and language before the first paint (same keys as src/i18n).
+  try {
+    var th = JSON.parse(localStorage.getItem("prometeo:v1:theme") || "null");
+    var lg = JSON.parse(localStorage.getItem("prometeo:v1:lang") || "null");
+    if (th === "light" || th === "dark") document.documentElement.dataset.theme = th;
+    if (lg === "en" || lg === "es") document.documentElement.lang = lg;
+  } catch (e) {}
+</script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

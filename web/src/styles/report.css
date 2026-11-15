@@ -24,7 +24,20 @@
   --main: 720px;
   --side: 290px;
   --gap: 52px;
+  /* derived tokens, so every surface follows the theme */
+  --wash: var(--surface-card);
+  --muted: var(--ink-3);
+  --rule-light: var(--rule-2);
 }
+/* Light theme: the journal paper of the article identity. Chosen in the interface; kept in this browser. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --paper: #FDFCF9; --desk: #F2F0EB; --surface-card: #F6F4EF; --surface-control: #ECE9E2;
+  --ink: #1D1C1A; --ink-2: #35332E; --ink-3: #5E5A52; --rule: #BEB9AE; --rule-2: #D2CEC4;
+  --accent: #A3271B; --accent-fill: #A3271B; --on-accent: #FDFCF9; --accent-soft: #E8CFC8; --accent-wash: #EFE3DF;
+  --grade-a: #2F6A4E; --grade-b: #9A6B0F;
+}
+:root[data-theme="light"] .brand img { filter: none; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { background: var(--desk); color: var(--ink); font-family: var(--serif); -webkit-font-smoothing: antialiased; }
@@ -43,12 +56,24 @@ sup.ref a { text-decoration: none; }
 .brand { display: inline-flex; align-items: center; gap: 7px; }
 .brand img { display: block; width: 135px; height: 135px; filter: brightness(1.75) saturate(.85); }
 .page-loading { display: flex; justify-content: center; align-items: center; min-height: 55vh; }
-.kicker { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 8px; font-family: var(--sans-c); font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
+.kicker { display: flex; align-items: center; gap: 10px; margin: 22px 0 8px; font-family: var(--sans-c); font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
 .kicker select { font: inherit; color: var(--ink); text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 13px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 2px 6px; cursor: pointer; }
 .kicker .verify { color: var(--grade-b); text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 12px; }
+/* The report actions share one height: when a label wraps to two lines, its neighbours grow with it. */
+.kicker-actions { display: flex; align-items: stretch; gap: 10px; }
+.kicker-actions .chip { justify-content: center; }
 h1 { font-weight: 500; font-size: 40px; line-height: 1.1; max-width: 960px; }
 .byline { font-style: italic; font-size: 17px; color: var(--ink-2); margin: 10px 0 22px; }
 .byline span + span::before { content: " · "; }
+
+/* interface preferences: language and theme. Pressed state carries a border and weight, not colour alone. */
+.prefs { display: inline-flex; gap: 8px; align-items: center; font-family: var(--sans); font-size: 11.5px; letter-spacing: 0; text-transform: none; }
+.prefs-set { display: inline-flex; border: 1px solid var(--rule); border-radius: 2px; }
+.prefs-set button { font: inherit; color: var(--ink-3); background: transparent; border: 0; padding: 2px 8px; cursor: pointer; line-height: 18px; }
+.prefs-set button + button { border-left: 1px solid var(--rule); }
+.prefs-set button:hover { color: var(--ink); }
+.prefs-set button[aria-pressed="true"] { color: var(--paper); background: var(--ink); font-weight: 600; }
+.prefs-set button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* layout */
 .row { display: grid; grid-template-columns: var(--main) var(--side); gap: 0 var(--gap); }
@@ -164,8 +189,8 @@ footer.end { margin-top: 30px; border-top: 2px solid var(--ink); padding-top: 8p
 /* tooltip */
 .tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--paper); font-family: var(--sans); font-size: 12px; line-height: 1.45; padding: 8px 11px; max-width: 320px; border-radius: 2px; }
 .tip .h { font-weight: 600; }
-.tip .s { color: #5A5751; font-size: 11px; margin-top: 3px; }
-.tip .w { color: #8C2A1F; font-size: 11px; margin-top: 3px; }
+.tip .s { color: var(--rule); font-size: 11px; margin-top: 3px; }
+.tip .w { color: var(--accent-soft); font-size: 11px; margin-top: 3px; }
 
 @media (max-width: 1180px) {
   .page { width: auto; margin: 0; padding: 24px; }

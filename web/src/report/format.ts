@@ -1,4 +1,5 @@
 import type { DataRecord, Lens, NumVariable, Pack, Range, Variable } from "../engine";
+import { count, t } from "../i18n";
 
 export const num = (x: number, digits = 2): string => {
   const r = Math.round(x * 10 ** digits) / 10 ** digits;
@@ -34,16 +35,17 @@ export const scenarioValueText = (pack: Pack, id: string, x: number | string): s
 
 /** "tests on solid fuels" or a generic fallback built from the schema. */
 export const partitionPhrase = (pack: Pack, lens: Lens, value: string | null | undefined): string => {
-  if (!value) return "tests";
+  if (!value) return t("tests");
   const label = lens.partition_labels?.[value];
-  if (label) return `tests on ${label}`;
+  if (label) return t("tests on {0}", label);
   const pv = pack.schema.variables.find((v) => v.type === "cat" && v.role === "partition");
-  return `tests with ${pv?.label.toLowerCase() ?? "partition"} “${value}”`;
+  return t("tests with {0} “{1}”", pv?.label.toLowerCase() ?? t("partition"), value);
 };
 
 export const partitionName = (lens: Lens, value: string): string => lens.partition_labels?.[value] ?? value;
 
-export const plural = (n: number, one: string, many = one + "s"): string => `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
+/** "1 test" / "12 tests", inflected in the language of the interface. */
+export const plural = count;
 
 export const studyShort = (pack: Pack, id: string): string => pack.studies.find((s) => s.id === id)?.short ?? id;
 

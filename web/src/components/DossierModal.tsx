@@ -3,11 +3,12 @@ import { pool } from "../engine";
 import type { DataRecord, Finding, OverallEvidence, Pack, Scenario, StudyResult } from "../engine";
 import { useData } from "./ctx";
 import type { Mapping } from "./ctx";
-import { FINDING_LEVEL, findingText, findingTitle, OVERALL, whyText } from "../report/text";
+import { FINDING_LEVEL, findingText, findingTitle, overallText, whyText } from "../report/text";
 import { matchingHabitatPreset, allHabitatPresets } from "./HabitatFigure";
 import { scenarioValueText, varOf } from "../report/format";
 import { generateDossierJson, generateExecutiveMarkdown } from "../report/dossier";
 import { datasetCsv, datasetExport } from "../report/dataset-export";
+import { t, many } from "../i18n";
 
 export type ExportScope = "all" | "comparable" | "graded";
 
@@ -92,7 +93,7 @@ export function DossierModal({
     const parts = scenario.active
       .filter((id) => scenario.values[id] !== undefined && scenario.values[id] !== "")
       .map((id) => `${varOf(pack, id).label}: ${scenarioValueText(pack, id, scenario.values[id])}`);
-    return `${presetObj ? presetObj.label : "Custom scenario"} (${parts.join(" · ") || "no active variables"})`;
+    return `${presetObj ? presetObj.label : t("Custom scenario")} (${parts.join(" · ") || t("no active variables")})`;
   }, [pack, presetObj, scenario]);
 
   const top6 = useMemo(() => ranking.slice(0, 6), [ranking]);
@@ -121,9 +122,9 @@ export function DossierModal({
       window.setTimeout(() => setToast(null), 2000);
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(() => notify("Executive Markdown copied to clipboard"));
+      navigator.clipboard.writeText(text).then(() => notify(t("Executive Markdown copied to clipboard")));
     } else {
-      notify("Clipboard unavailable");
+      notify(t("Clipboard unavailable"));
     }
   };
 
@@ -144,7 +145,7 @@ export function DossierModal({
       className="dossier-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Evidence dossier and data export"
+      aria-label={t("Evidence dossier and data export")}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -152,27 +153,27 @@ export function DossierModal({
       <div className="dossier-paper">
         <header className="dossier-head">
           <div>
-            <p className="dossier-kicker">Prometeo · Academic Dossier &amp; Export</p>
+            <p className="dossier-kicker">{t("Prometeo · Academic Dossier & Export")}</p>
             <h2>{lens.title}</h2>
             <p className="dossier-sub">
               {lens.byline} · {pack.meta.created_at}
             </p>
           </div>
           <div className="dossier-actions noprint">
-            <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title="Copy Executive Summary formatted for Flight Directors">
-              📋 Copy Markdown Brief
+            <button type="button" className="chip highlight" onClick={handleCopyMarkdown} title={t("Copy Executive Summary formatted for Flight Directors")}>
+              {t("📋 Copy Markdown Brief")}
             </button>
-            <button type="button" className="chip" onClick={handleDownloadMarkdown} title="Download Markdown Dossier">
-              💾 Download .md
+            <button type="button" className="chip" onClick={handleDownloadMarkdown} title={t("Download Markdown Dossier")}>
+              {t("💾 Download .md")}
             </button>
-            <button type="button" className="chip" onClick={handleDownloadJson} title="Export full JSON evidence pack">
-              📦 Export JSON
+            <button type="button" className="chip" onClick={handleDownloadJson} title={t("Export full JSON evidence pack")}>
+              {t("📦 Export JSON")}
             </button>
-            <button type="button" className="chip" onClick={() => window.print()} title="Print or save as official NASA PDF">
-              📄 Print / PDF
+            <button type="button" className="chip" onClick={() => window.print()} title={t("Print or save as official NASA PDF")}>
+              {t("📄 Print / PDF")}
             </button>
             <button type="button" className="chip" onClick={onClose}>
-              Close ✕
+              {t("Close ✕")}
             </button>
           </div>
         </header>
@@ -184,32 +185,32 @@ export function DossierModal({
         )}
 
         <section className="dossier-sec">
-          <h3>Scenario &amp; summary</h3>
+          <h3>{t("Scenario & summary")}</h3>
           <p>
-            <b>Proposed scenario:</b> {scenarioSummary}
+            <b>{t("Proposed scenario:")}</b> {scenarioSummary}
           </p>
           {goal.trim() && (
             <p>
-              <b>Question:</b> “{goal.trim()}”
+              <b>{t("Question:")}</b> “{goal.trim()}”
             </p>
           )}
           <p>
-            <b>Overall evidence:</b> {OVERALL[overall.level]}. Grades: <b>A {overall.counts.A}</b> ·{" "}
-            <b>B {overall.counts.B}</b> · <b>C {overall.counts.C}</b> · <b>D {overall.counts.D}</b> across{" "}
-            {pack.studies.length} {lens.unit_of_study ?? "study"}s ({comparable.length.toLocaleString("en-US")}{" "}
-            comparable tests).
+            <b>{t("Overall evidence:")}</b> {overallText(overall.level)}{t(". Grades:")} <b>A {overall.counts.A}</b> ·{" "}
+            <b>B {overall.counts.B}</b> · <b>C {overall.counts.C}</b> · <b>D {overall.counts.D}</b> {t("across")}{" "}
+            {pack.studies.length} {many(lens.unit_of_study ?? "study")} ({comparable.length.toLocaleString("en-US")}{" "}
+            {t("comparable tests).")}
           </p>
         </section>
 
         <section className="dossier-sec">
-          <h3>Nearest {lens.unit_of_study ?? "study"}s (top 6)</h3>
+          <h3>{t("Nearest")} {many(lens.unit_of_study ?? "study")} {t("(top 6)")}</h3>
           <table className="dossier-table">
             <thead>
               <tr>
-                <th>Grade</th>
-                <th>Study</th>
-                <th>Basis</th>
-                <th>Nearest record</th>
+                <th>{t("Grade")}</th>
+                <th>{t("Study")}</th>
+                <th>{t("Basis")}</th>
+                <th>{t("Nearest record")}</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +227,7 @@ export function DossierModal({
                     </td>
                     <td>{r.why.map((w) => whyText(pack, lens, w)).join(" · ")}</td>
                     <td className="mono">
-                      {rec ? `${rec.id} (row ${rec.source.row ?? "–"})` : "–"}
+                      {rec ? t("{0} (row {1})", rec.id, rec.source.row ?? "–") : "–"}
                     </td>
                   </tr>
                 );
@@ -236,7 +237,7 @@ export function DossierModal({
         </section>
 
         <section className="dossier-sec">
-          <h3>Key findings ({findings.length})</h3>
+          <h3>{t("Key findings (")}{findings.length})</h3>
           <ul className="dossier-list">
             {findings.slice(0, 6).map((f, i) => (
               <li key={i}>
@@ -250,14 +251,14 @@ export function DossierModal({
         </section>
 
         <section className="dossier-sec noprint">
-          <h3>Export harmonized datasets</h3>
+          <h3>{t("Export harmonized datasets")}</h3>
           <div className="dossier-export-bar">
             <label>
-              Scope:{" "}
+              {t("Scope:")}{" "}
               <select disabled={exporting} value={scope} onChange={(e) => setScope(e.target.value as ExportScope)}>
-                <option value="comparable">Comparable tests ({comparable.length})</option>
-                <option value="graded">Graded A–C studies</option>
-                <option value="all">Full corpus ({pack.records.length})</option>
+                <option value="comparable">{t("Comparable tests (")}{comparable.length})</option>
+                <option value="graded">{t("Graded A–C studies")}</option>
+                <option value="all">{t("Full corpus (")}{pack.records.length})</option>
               </select>
             </label>
             <button
@@ -271,7 +272,7 @@ export function DossierModal({
                 }
               }}
             >
-              Download records CSV ({scopedRecords.length})
+              {t("Download records CSV (")}{scopedRecords.length})
             </button>
             <button type="button" className="chip" disabled={exporting} onClick={handleDatacard}>
               {exporting ? "Preparing datacard…" : "Download datacard JSON"}
@@ -284,7 +285,7 @@ export function DossierModal({
                 downloadFile(`prometeo_${pack.meta.id}_ranking_${dateTag}.csv`, caseResultCsv(pack, ranking))
               }
             >
-              Download ranking CSV
+              {t("Download ranking CSV")}
             </button>
             <button
               type="button"
@@ -297,7 +298,7 @@ export function DossierModal({
                 )
               }
             >
-              Download dossier (.md)
+              {t("Download dossier (.md)")}
             </button>
           </div>
         </section>
