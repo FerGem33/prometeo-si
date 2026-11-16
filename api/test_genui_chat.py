@@ -108,6 +108,45 @@ def test_design_v2_caps_8(monkeypatch):
     assert len(json.loads(call('/design', V2)['body'])['modules']) == 8
 
 
+def test_design_v2_new_forms_and_layout(monkeypatch):
+    mods = [
+        {'id': 'k', 'type': 'key_figures', 'variables': ['a', 'b', 'a'], 'section': 'highlights'},
+        {'id': 'k2', 'type': 'key_figures', 'variables': ['c']},
+        {'id': 'cb', 'type': 'category_bars', 'variable': 'c', 'span': 'half', 'section': 'footer'},
+        {'id': 'cb2', 'type': 'category_bars', 'variable': 'a'},
+        {'id': 'gr', 'type': 'group_ranges', 'variable': 'a', 'by': 'c'},
+        {'id': 'gr2', 'type': 'group_ranges', 'variable': 'a'},
+        {'id': 'gr3', 'type': 'group_ranges', 'variable': 'a', 'by': 'b'},
+        {'id': 'bx', 'type': 'box_summary', 'variables': ['a', 'c']},
+        {'id': 'ct', 'type': 'cross_tab', 'row': 'c', 'column': 'a'},
+        {'id': 'ct2', 'type': 'cross_tab', 'row': 'c', 'column': 'c'},
+        {'id': 'cp', 'type': 'completeness', 'variables': ['a', 'c'], 'span': 'wide'},
+        {'id': 'rt', 'type': 'records_table', 'sort': 'a', 'order': 'desc', 'columns': ['b', 'c'], 'limit': 5},
+        {'id': 'rt2', 'type': 'records_table', 'sort': 'c', 'order': 'desc', 'limit': 5},
+        {'id': 'rt3', 'type': 'records_table', 'sort': 'a', 'order': 'down', 'limit': 5},
+    ]
+    monkeypatch.setattr(h, 'model_json', lambda s, d: {
+        'modules': mods, 'sections': ['coverage', 'ads', 'case', 'coverage', 7, 'patterns']})
+    body = json.loads(call('/design', {**V2, 'catalog': list(h.MODULE_TYPES)})['body'])
+    out = {m['id']: m for m in body['modules']}
+    assert list(out) == ['k', 'cb', 'gr', 'gr2', 'ct', 'cp', 'rt']
+    assert out['k']['variables'] == ['a', 'b'] and out['k']['section'] == 'highlights'
+    assert out['cb']['span'] == 'half' and 'section' not in out['cb']
+    assert out['gr']['by'] == 'c' and 'by' not in out['gr2']
+    assert 'span' not in out['cp']
+    assert out['rt']['columns'] == ['b', 'c'] and out['rt']['order'] == 'desc'
+    assert body['sections'] == ['coverage', 'case', 'patterns']
+
+
+def test_design_v2_old_catalog_keeps_old_types(monkeypatch):
+    old = ['answer_stat', 'answer_filter', 'distribution', 'scatter', 'coverage_matrix',
+           'key_papers', 'doc_summaries', 'variable_scores']
+    monkeypatch.setattr(h, 'model_json', lambda s, d: {'modules': [
+        {'id': 'k', 'type': 'key_figures', 'variables': ['a']}, {'id': 'd', 'type': 'distribution', 'variable': 'a'}]})
+    body = json.loads(call('/design', {**V2, 'catalog': old})['body'])
+    assert [m['id'] for m in body['modules']] == ['d'] and body['sections'] == []
+
+
 def test_design_v2_invalid_400():
     assert call('/design', {**V2, 'catalog': 'x'})['statusCode'] == 400
 

@@ -15,6 +15,9 @@ export const PROCESSING_STEPS = lazy([
   tx("Computing σ-distance, study grades (A–D) and findings"),
 ]);
 
+/** How long the report waits for the AI layout after the animation ends. */
+const LAYOUT_GRACE_MS = 4000;
+
 export function ProcessingStep({
   draft,
   fileCount,
@@ -38,13 +41,16 @@ export function ProcessingStep({
   const s = pack.meta.stats;
   // Optional AI layout (/design v2), requested while the animation runs; any failure keeps the local dashboard.
   const enrichedRef = useRef<EvaluationDraft | null>(null);
+  // Settles when the layout request ends, whatever its result; null when no request was made.
+  const layoutRef = useRef<Promise<void> | null>(null);
   useEffect(() => {
     enrichedRef.current = null;
+    layoutRef.current = null;
     if (!API_BASE || !draft?.dashboard || !draft.purpose || !draft.scores) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const { purpose, scores } = draft;
-    (async () => {
+    layoutRef.current = (async () => {
       try {
         const remote = await requestRemoteDashboard(purpose!, scores!, controller.signal);
         if (controller.signal.aborted || !remote) return;
@@ -70,9 +76,23 @@ export function ProcessingStep({
         setCurrentStep((prev) => prev + 1);
       }, stepDurationMs);
     } else if (!hold) {
+      // The report opens once the layout request has settled, or after a short grace period: a slow API never blocks it.
+      let cancelled = false;
+      const open = () => {
+        if (!cancelled) finish();
+      };
       timer = setTimeout(() => {
-        finish();
+        const layout = layoutRef.current;
+        if (!layout) return open();
+        const grace = new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, LAYOUT_GRACE_MS);
+        });
+        void Promise.race([layout, grace]).then(open);
       }, 380);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     }
     return () => clearTimeout(timer);
   }, [currentStep, stepDurationMs, onComplete, hold, draft]);

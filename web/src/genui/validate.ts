@@ -1,12 +1,17 @@
 /** Validation of module specs from any generator, local or AI. Pure: no DOM, no network. */
 import type { NumVariable, Pack } from "../engine";
+import { isSection, sectionOf, spanOf } from "./layout";
 import { MODULE_TYPES } from "./types";
 import type { DashboardSpec, ModuleSpec, ModuleType } from "./types";
 
 const MAX_TEXT = 160;
+const MAX_KEY_FIGURES = 4;
+const MAX_BOX_VARIABLES = 8;
+const MAX_COMPLETENESS_VARIABLES = 12;
+const MAX_TABLE_COLUMNS = 4;
 
-/** A module without the fields every module shares (id, title, caption, origin). */
-export type ModuleCore = ModuleSpec extends infer M ? (M extends ModuleSpec ? Omit<M, "id" | "title" | "caption" | "origin"> : never) : never;
+/** A module without the fields every module shares (id, title, caption, origin, section, span). */
+export type ModuleCore = ModuleSpec extends infer M ? (M extends ModuleSpec ? Omit<M, "id" | "title" | "caption" | "origin" | "section" | "span"> : never) : never;
 
 function varOf(pack: Pack, id: string) {
   return (pack.schema?.variables ?? []).find((v) => v.id === id);
@@ -53,6 +58,24 @@ export function moduleTitle(m: ModuleCore, pack: Pack): string {
       return "What each document reports";
     case "variable_scores":
       return "Variables ranked by relevance";
+    case "key_figures":
+      return "Key figures of the uploaded documents";
+    case "category_bars":
+      return `Records by ${labelOf(pack, m.variable)}`;
+    case "group_ranges": {
+      const u = unitOf(pack, m.variable);
+      return `${labelOf(pack, m.variable)}${u ? ` (${u})` : ""} by ${m.by ? labelOf(pack, m.by) : "document"}`;
+    }
+    case "box_summary":
+      return `Quartiles of ${m.variables.length === 1 ? labelOf(pack, m.variables[0]) : `${m.variables.length} numeric variables`}`;
+    case "cross_tab":
+      return `Records by ${labelOf(pack, m.row)} and ${labelOf(pack, m.column)}`;
+    case "completeness":
+      return `Share of the records that report each of ${m.variables.length} variables`;
+    case "records_table": {
+      const u = unitOf(pack, m.sort);
+      return `Records with the ${m.order === "desc" ? "highest" : "lowest"} ${labelOf(pack, m.sort)}${u ? ` (${u})` : ""}`;
+    }
   }
 }
 
@@ -74,6 +97,20 @@ export function moduleCaption(m: ModuleCore, pack: Pack): string {
       return "Template summary built from the text and the detected variables of each document";
     case "variable_scores":
       return "Score is a weighted sum of coverage, frequency, position, purpose match and measurability";
+    case "key_figures":
+      return "Lowest and highest tested value of each variable over the records of the uploaded documents; each value opens its record";
+    case "category_bars":
+      return `Counts of the ${recordCount(pack, m.variable)} records of the uploaded documents that report ${labelOf(pack, m.variable)}`;
+    case "group_ranges":
+      return `Line: lowest to highest tested value in the group; mark: median of the records. Computed from ${recordCount(pack, m.variable)} records`;
+    case "box_summary":
+      return "Minimum, quartiles and maximum of the record midpoints; each row has its own scale";
+    case "cross_tab":
+      return "Number of records in each combination of the two variables; the last column and row count the records that report only one";
+    case "completeness":
+      return `Records that give a value for the variable, out of the ${pack.records.length} records of the uploaded documents`;
+    case "records_table":
+      return `The ${m.limit} records at that end of the ${recordCount(pack, m.sort)} that report the variable; each row opens its source`;
   }
 }
 
@@ -103,6 +140,20 @@ function checkCore(r: Record<string, unknown>, pack: Pack): ModuleCore | string 
   const known = (id: unknown): string | null => {
     if (!isStr(id)) return "variable is missing";
     return varOf(pack, id) ? null : `variable "${id.slice(0, 40)}" is not in the pack`;
+  };
+  const cat = (id: unknown): string | null => {
+    const e = known(id);
+    if (e) return e;
+    return varOf(pack, id as string)?.type === "cat" ? null : `variable "${id as string}" is not categorical`;
+  };
+  /** A list of distinct variable ids that all pass `check`, cut to `max`; or the reason it is invalid. */
+  const list = (xs: unknown, check: (id: unknown) => string | null, max: number, allowEmpty = false): string[] | string => {
+    if (!Array.isArray(xs) || (!allowEmpty && xs.length === 0)) return "the module needs at least one variable";
+    for (const id of xs) {
+      const e = check(id);
+      if (e) return e;
+    }
+    return [...new Set(xs as string[])].slice(0, max);
   };
   switch (type as ModuleType) {
     case "answer_stat": {
@@ -149,6 +200,45 @@ function checkCore(r: Record<string, unknown>, pack: Pack): ModuleCore | string 
     }
     case "doc_summaries":
       return { type: "doc_summaries" };
+    case "key_figures": {
+      const vs = list(r.variables, num, MAX_KEY_FIGURES);
+      return typeof vs === "string" ? vs : { type: "key_figures", variables: vs };
+    }
+    case "category_bars": {
+      const e = cat(r.variable);
+      return e ?? { type: "category_bars", variable: r.variable as string };
+    }
+    case "group_ranges": {
+      const e = num(r.variable);
+      if (e) return e;
+      if (r.by === undefined || r.by === null || r.by === "") return { type: "group_ranges", variable: r.variable as string };
+      const eb = cat(r.by);
+      return eb ?? { type: "group_ranges", variable: r.variable as string, by: r.by as string };
+    }
+    case "box_summary": {
+      const vs = list(r.variables, num, MAX_BOX_VARIABLES);
+      return typeof vs === "string" ? vs : { type: "box_summary", variables: vs };
+    }
+    case "cross_tab": {
+      const e = known(r.row) ?? known(r.column);
+      if (e) return e;
+      if (r.row === r.column) return "cross_tab needs two different variables";
+      return { type: "cross_tab", row: r.row as string, column: r.column as string };
+    }
+    case "completeness": {
+      const vs = list(r.variables, known, MAX_COMPLETENESS_VARIABLES);
+      return typeof vs === "string" ? vs : { type: "completeness", variables: vs };
+    }
+    case "records_table": {
+      const e = num(r.sort);
+      if (e) return e;
+      if (r.order !== "asc" && r.order !== "desc") return "order must be asc or desc";
+      const l = r.limit;
+      if (typeof l !== "number" || !Number.isInteger(l) || l < 1 || l > 20) return "limit must be an integer from 1 to 20";
+      const cols = list(r.columns ?? [], known, MAX_TABLE_COLUMNS + 1, true);
+      if (typeof cols === "string") return cols;
+      return { type: "records_table", sort: r.sort as string, order: r.order, columns: cols.filter((c) => c !== r.sort).slice(0, MAX_TABLE_COLUMNS), limit: l };
+    }
   }
 }
 
@@ -180,7 +270,10 @@ export function validateModules(raw: unknown, pack: Pack): { modules: ModuleSpec
     const caption = text(m.caption, moduleCaption(core, pack));
     if (caption === undefined) return drop(m, `caption must be text of at most ${MAX_TEXT} characters`);
     seen.add(id);
-    modules.push({ ...core, id, title, caption, origin: "ai" } as ModuleSpec);
+    // Layout hints are enumerations: an unknown section or width falls back to the default of the type.
+    const section = sectionOf({ type: core.type, section: isSection(m.section) ? m.section : undefined });
+    const span = spanOf({ type: core.type, span: m.span === "full" || m.span === "half" ? m.span : undefined });
+    modules.push({ ...core, id, title, caption, origin: "ai", section, span } as ModuleSpec);
   });
   return { modules, dropped };
 }

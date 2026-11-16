@@ -5,7 +5,7 @@ import type { UploadedDoc } from "../ingest/types";
 import type { ExtractedVariable } from "../ingest/types";
 import { filterAnswer, statAnswer } from "../ingest/localAsk";
 import type { LocalAnswer } from "../ingest/localAsk";
-import { coverageMatrix, docSummaries, histogram, paperRelevance, scatterPoints } from "./stats";
+import { boxSummary, categoryCounts, completeness, coverageMatrix, crossTab, docSummaries, groupRanges, histogram, keyFigures, paperRelevance, recordsTable, scatterPoints } from "./stats";
 import type { ModuleSpec } from "./types";
 import { AnswerModule } from "../components/genui/AnswerModule";
 import { CoverageMatrixModule } from "../components/genui/CoverageMatrixModule";
@@ -13,6 +13,13 @@ import { DistributionModule } from "../components/genui/DistributionModule";
 import { DocSummariesModule } from "../components/genui/DocSummariesModule";
 import { KeyPapersModule } from "../components/genui/KeyPapersModule";
 import { ScatterModule } from "../components/genui/ScatterModule";
+import { BoxSummaryModule } from "../components/genui/BoxSummaryModule";
+import { CategoryBarsModule } from "../components/genui/CategoryBarsModule";
+import { CompletenessModule } from "../components/genui/CompletenessModule";
+import { CrossTabModule } from "../components/genui/CrossTabModule";
+import { GroupRangesModule } from "../components/genui/GroupRangesModule";
+import { KeyFiguresModule } from "../components/genui/KeyFiguresModule";
+import { RecordsTableModule } from "../components/genui/RecordsTableModule";
 
 export interface ModuleCtx {
   pack: Pack;
@@ -24,8 +31,26 @@ export interface ModuleCtx {
 }
 
 /** Figure or Table: which numbering a module consumes. */
+const TABLES: ReadonlySet<ModuleSpec["type"]> = new Set<ModuleSpec["type"]>([
+  "coverage_matrix",
+  "key_papers",
+  "doc_summaries",
+  "variable_scores",
+  "key_figures",
+  "box_summary",
+  "cross_tab",
+  "records_table",
+]);
+
 export function moduleKind(spec: ModuleSpec): "Figure" | "Table" {
-  return spec.type === "coverage_matrix" || spec.type === "key_papers" || spec.type === "doc_summaries" || spec.type === "variable_scores" ? "Table" : "Figure";
+  return TABLES.has(spec.type) ? "Table" : "Figure";
+}
+
+/** Numeric value the case gives to a variable, when the variable is active in it. */
+function caseNumber(scenario: Scenario | undefined, id: string): number | undefined {
+  if (!scenario || !scenario.active.includes(id)) return undefined;
+  const v = scenario.values[id];
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
 }
 
 function labelOf(pack: Pack, id: string): { label: string; unit: string | null } {
@@ -76,5 +101,28 @@ export function renderModule(spec: ModuleSpec, ctx: ModuleCtx, figure: number): 
       return <DocSummariesModule key={spec.id} spec={spec} summaries={docSummaries(ctx.docs, ctx.variables)} figure={figure} />;
     case "variable_scores":
       return null;
+    case "key_figures":
+      return <KeyFiguresModule key={spec.id} spec={spec} data={keyFigures(ctx.pack, spec.variables)} figure={figure} />;
+    case "category_bars":
+      return <CategoryBarsModule key={spec.id} spec={spec} counts={categoryCounts(ctx.pack, spec.variable)} figure={figure} />;
+    case "group_ranges":
+      return (
+        <GroupRangesModule
+          key={spec.id}
+          spec={spec}
+          ranges={groupRanges(ctx.pack, spec.variable, spec.by)}
+          label={withUnit(labelOf(ctx.pack, spec.variable))}
+          caseValue={caseNumber(ctx.caseScenario, spec.variable)}
+          figure={figure}
+        />
+      );
+    case "box_summary":
+      return <BoxSummaryModule key={spec.id} spec={spec} summary={boxSummary(ctx.pack, spec.variables)} figure={figure} />;
+    case "cross_tab":
+      return <CrossTabModule key={spec.id} spec={spec} tab={crossTab(ctx.pack, spec.row, spec.column)} figure={figure} />;
+    case "completeness":
+      return <CompletenessModule key={spec.id} spec={spec} rows={completeness(ctx.pack, spec.variables)} figure={figure} />;
+    case "records_table":
+      return <RecordsTableModule key={spec.id} spec={spec} table={recordsTable(ctx.pack, spec.sort, spec.order, spec.columns, spec.limit)} figure={figure} />;
   }
 }

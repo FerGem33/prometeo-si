@@ -10,7 +10,7 @@
 | Hora 0 (inicio del reloj) | 2026-11-14 18:16 CST |
 | Tarea en curso | **Integración frontend T35–T37. Backend del MVP implementado y comprobado en AWS:** 42 rutas JWT, PDF contextual, claims/variantes, intención/lente e inferencia por proyecto. Ventana de integración con worker habilitado. |
 | Último commit verificado | `08be856` + cierre de esta entrega. 172 pruebas API; web 104 pasan/2 omitidas,6 helper Cognito y motor con bundle AWS pasan; build/validate_pack/check_agnostic pasan. Recibos reales:38+57 comprobaciones HTTP. T38 web sigue en `d0308e9`; no se volvió a publicar. |
-| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. Formulario de `nasa2genui` integrado en `frontend` (carga real, 30 archivos): publicar `/propose` y `/design` con `infra/20_api.sh` tras confirmación humana. |
+| Siguiente paso exacto | Equipo de interfaz: docs/BACKEND_INTEGRACION_FINAL.md, cargar pack privado/claims/contexto PDF y conectar pantallas. El backend ya tiene los pendientes antes enumerados. Restan integración visual y revisión del resto del corpus de 23 fuentes; no declarar aceptado todo el corpus. Deploy web tras revisión humana de §9.2/§9.3. Formulario de `nasa2genui` integrado en `frontend` (carga real, 30 archivos): publicar `/propose` y `/design` con `infra/20_api.sh` tras confirmación humana. **T40:** ese mismo `infra/20_api.sh` publica el `/design` v2 que conoce los tipos nuevos y devuelve `sections`; hasta entonces el dashboard sale "Rule-based". Después, revisión humana del dashboard contra AGENTS §5–§7 antes de `infra/deploy_web.sh`. |
 | URL pública (CloudFront) | https://dursf4nho4zl6.cloudfront.net (HTTP 200; incógnito y viewport responsive 400 × 899 revisados el 2026-11-14) |
 | API (`API_URL`) | https://ve5oqmsyie.execute-api.us-east-1.amazonaws.com |
 | `MODEL_ID` desplegado y aprobado (D6) | `us.anthropic.claude-haiku-4-5-20251001-v1:0` con SDK 2.8.0; el dueño decidió conservar Haiku 4.5 el 15-nov |
@@ -71,7 +71,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 | T36 | Correcciones y relaciones declaradas | fase 2 · C | en curso (pantalla pendiente) | stringbuilder | `08be856` + esta entrega | Backend listo: correcciones/conflictos/claims auditados, gap literal publicado, original PDF SHA/página 11 cotejado y revisión delegada explícita. Cambio de valor preservado se prueba con fixture; la prueba real previa confirmó el mismo valor sin inventar una corrección. Falta pantalla. |
 | T38 | Exportación para entrenar modelos (CU-25) | fase 2 · B/C | hecha | stringbuilder | `777fb81` + esta entrega | Publicada en CloudFront tras policy consolidada; invalidación Completed y QA real desktop/móvil. CSV/datacard de 268 registros, SHA coincide, demo intacta y análisis IA200. Selector/editor de objetivo sigue en T27; docs/T38_DATASET_EXPORT.md |
 | T39 | Dashboard GenUI guiado por propósito: ranking determinista de variables, módulos por prompt, caso ≤10 variables, chat lateral (spec `docs/superpowers/specs/2026-11-15-genui-dashboard-por-proposito-design.md`) | fase 2 · C | hecha (local; Lambda sin publicar) | laptop Daniel (orquestador + agentes Sonnet/DeepSeek) | ver bitácora 15-nov | tsc limpio; web 283 pasan/4 omitidas; API 195 pasan (venv con boto3); check_agnostic ampliado a genui OK. `/chat` y `/design` v2 listos en `api/handler.py` pero NO desplegados: esta laptop no tiene perfil `prometeo` (default = otra cuenta). Sin API el chat y el layout se rotulan como locales. |
-| T40 | GenUI adaptable: esqueleto de secciones flexible (el orden sigue el propósito) y más formas de representación (cifras clave, barras por categoría, rangos por grupo, resumen de cuartiles, tabla cruzada, completitud, tabla de registros) | fase 2 · C | en curso | Claude · laptop jesus | | Pedido del dueño el 15-nov: el resultado generado se adapta a lo que se quiere, con estructura base no rígida |
+| T40 | GenUI adaptable: esqueleto de secciones flexible (el orden sigue el propósito) y más formas de representación (cifras clave, barras por categoría, rangos por grupo, resumen de cuartiles, tabla cruzada, completitud, tabla de registros) | fase 2 · C | hecha (local; Lambda sin publicar) | Claude · laptop jesus | (este commit) | tsc limpio; web 328 pasan/4 omitidas; API 197 pasan/1 omitida; build y `check_agnostic` OK; probado en Chrome sin interfaz con `tools/psi/seed/tests.csv` (escritorio y 400 px, sin errores de consola). El layout de IA con los tipos nuevos necesita publicar `api/handler.py` (`infra/20_api.sh`); mientras tanto la web usa el layout por reglas. Contrato en la spec de T39 §5.3 |
 
 ## Aceptación final (T15)
 
@@ -106,6 +106,27 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 ## Bitácora de relevos
 
 Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 23:05 CST · Claude · laptop jesus · T40 GenUI adaptable
+- Pedido del dueño: que el resultado generado se adapte a lo que se quiere, con más formas de representar la información y una estructura base que no sea rígida.
+- Hecho:
+  - **Estructura base flexible** (`web/src/genui/layout.ts`): bloques `highlights`, `answers`, `patterns`, `coverage`, `sources` y `case`. Las cifras clave y las respuestas van primero; un bloque que el propósito pide pasa adelante en el orden en que lo nombra; una sección sin módulos no se muestra; el caso solo se adelanta si el propósito habla de un caso. Hay una línea de contenido con los bloques de cada dashboard.
+  - **Siete tipos de módulo nuevos:** `key_figures`, `category_bars`, `group_ranges` (marca el valor del caso), `box_summary`, `cross_tab`, `completeness` y `records_table`. Estadísticas en `genui/stats.ts`, componentes en `components/genui/`, estilos en `styles/genui/forms.css`.
+  - **Compilador local:** cada intención da una forma principal y puede sumar una segunda forma de la misma evidencia; si la página se llena (`MAX_MODULES` pasó de 8 a 10) las segundas formas se quitan primero.
+  - **IA:** `/design` v2 acepta los tipos nuevos, `section` y `span` por módulo y `sections` (orden de bloques), todo como listas cerradas. Los módulos por reglas se conservan después de los de la IA sin repetirse.
+  - `ProcessingStep` espera el layout de IA hasta 4 s después de la animación (antes se descartaba si llegaba tarde).
+- Verificado:
+  - `npx tsc --noEmit`, `npm run build`, `scripts/check_agnostic.sh`: OK.
+  - Web: 328 pasan/4 omitidas (antes 283). API: 197 pasan/1 omitida (antes 195), con `uv run --python 3.12 --with-requirements api/requirements-dev.txt python -m pytest api/`.
+  - Vectores con datos reales en `stats.test.ts`: el O₂ máximo en sólidos es 22.2 % (BASS-II) y 0 de 268 pruebas de sólidos registran presión (la tabla cruzada conserva la fila de sólidos en ceros).
+  - Chrome sin interfaz contra el Vite local, subiendo `tools/psi/seed/tests.csv`, con tres propósitos distintos: el orden de las secciones cambió con cada uno, sin errores de consola y sin desborde horizontal a 400 px. Con el caso en `o2_max = 30` la figura de rangos dibuja la marca "Your case · 30".
+  - El camino de IA se probó en el navegador con una respuesta simulada con la forma del saneador nuevo (solo en el arnés de prueba, nada de eso está en el producto): salió "AI-chosen", dos módulos de medio ancho en una fila y sin duplicados.
+- Ojo con:
+  - **La Lambda publicada es anterior a T40.** Con el catálogo nuevo responde `{"modules": []}` (comprobado contra la API real), así que hoy el dashboard sale siempre "Rule-based". No es un error: el layout por reglas ya usa las formas nuevas. Para recuperar el layout de IA hay que publicar con `infra/20_api.sh`. Esta laptop no tiene `aws` instalado; no se desplegó nada.
+  - No se cambió la verificación de los títulos y pies que escribe la IA; sigue pendiente (entrada anterior).
+  - Se actualizaron pruebas de `compile.test.ts` porque el contrato cambió: ahora el primer módulo es `key_figures` y el conjunto sin intención es `key_figures`, `distribution`, `category_bars`, `coverage_matrix`, `key_papers`.
+  - El Vite que ya corría en 127.0.0.1:5173 es del dueño; se usó sin tocarlo.
+- Siguiente paso exacto: con el perfil `prometeo`, ejecutar `infra/20_api.sh` y repetir el `curl` de `/design` v2 de `docs/RELEVO_T39_LAMBDAS_EBULLICION.md` §3 con el catálogo largo; debe devolver `modules` y `sections`. Luego, revisión humana del dashboard contra AGENTS §5–§7.
 
 ### 2026-11-15 · `main` integra `feat-si` (T39) y prueba en navegador
 - Integración: `main` avanzó por fast-forward a `origin/feat-si` (`41c2d93`), sin conflictos. `nasa2genui` (11 commits fuera de `main`) no entra: choca con T39 en 9 archivos.

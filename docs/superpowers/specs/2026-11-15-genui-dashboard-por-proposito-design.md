@@ -213,6 +213,52 @@ export interface Snippet { docId: string; docName: string; page?: number; row?: 
 - Si no queda ninguno, o la API falla, se usa el compilador local con la etiqueta "Rule-based layout".
 - **La IA nunca entrega números.** Todos los valores los calculan `stats.ts`, `localAsk.ts` o el motor.
 
+### 5.3 Adenda T40: estructura base flexible y más formas de representación
+
+Pedido del dueño (15-nov): el resultado se adapta a lo que se quiere, usa más formas de representar la información y sigue una estructura base que no es rígida.
+
+**Estructura base (`web/src/genui/layout.ts`).** La página se arma con bloques. El orden base es:
+
+1. `highlights` — cifras clave;
+2. `answers` — respuestas directas;
+3. `patterns` — distribuciones y relaciones;
+4. `coverage` — cobertura y huecos;
+5. `sources` — documentos;
+6. `case` — el caso del usuario y su análisis.
+
+Reglas de orden (`blockOrder`, `arrange`):
+
+- `highlights` y `answers` siempre van primero.
+- Un bloque que el propósito pide pasa adelante, en el orden en que el propósito lo nombra (posición de la primera palabra clave).
+- El caso solo se adelanta si el propósito habla de un caso ("my case", "what if", "mi caso").
+- Una sección sin módulos no se muestra. El caso aparece una sola vez. `Methods` cierra la página.
+- Dentro de una sección, dos módulos de medio ancho consecutivos comparten fila; los tipos que necesitan toda la columna nunca se estrechan.
+- Las figuras y tablas se numeran en el orden en que se muestran.
+- Un dashboard guardado antes de T40 (sin `section`, `span` ni `order`) se dibuja con los valores por defecto de cada tipo.
+
+**Tipos de módulo nuevos** (`types.ts`, `stats.ts`, `components/genui/`):
+
+| Tipo | Qué muestra | Sección por defecto |
+|---|---|---|
+| `key_figures` | registros y rango probado (mín–máx) de hasta 4 variables numéricas; cada valor abre su registro | `highlights` |
+| `records_table` | los registros en un extremo de una variable, con otras columnas | `answers` |
+| `category_bars` | barras: registros por categoría | `patterns` |
+| `group_ranges` | rango y mediana por grupo (documento o categoría); marca el valor del caso si existe | `patterns` |
+| `box_summary` | cuartiles de varias variables numéricas con un diagrama de caja por fila | `patterns` |
+| `cross_tab` | tabla cruzada de dos variables; la última fila y columna cuentan los registros que no reportan la otra variable | `patterns` |
+| `completeness` | porción de registros y de documentos que reportan cada variable | `coverage` |
+
+- Una intención da una forma principal y puede sumar una segunda forma de la misma evidencia. Si la página se llena (`MAX_MODULES = 10`), las segundas formas se quitan primero.
+- **Vacíos visibles:** `cross_tab` construye los ejes con todos los registros, así que una categoría sin la otra variable conserva su fila de ceros. Vector: 0 de 268 pruebas de sólidos registran presión.
+- **Vectores con datos reales** (`stats.test.ts`): máximo de O₂ en sólidos 22.2 % (BASS-II) y 0 de 268 sólidos con presión.
+
+**IA (`/design` v2).**
+
+- El modelo puede proponer los tipos nuevos, `section` y `span` por módulo, y `sections` (orden de bloques). Son listas cerradas: un valor desconocido se ignora y vale el del tipo. No hay texto libre nuevo.
+- Los módulos que las reglas derivan del propósito se conservan después de los de la IA, sin repetir un módulo. Si el propósito no nombra ninguna intención, no se añade el conjunto general.
+- `ProcessingStep` espera la respuesta de `/design` hasta 4 s después de la animación; antes el layout de IA se descartaba si llegaba tarde. "Skip to report" sigue siendo inmediato.
+- Sigue pendiente verificar los títulos y pies que escribe la IA (§5 de `AGENTS.md`); T40 no cambió eso.
+
 ---
 
 ## 6. Caso del usuario e iteración (S2 lógica, S6 UI)

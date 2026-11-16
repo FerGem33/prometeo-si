@@ -113,6 +113,12 @@ curl -s -X POST "$API_URL/design" -H "content-type: application/json" -d '{
 
 Esperado: 200 con `{"modules":[...]}`. Solo aparecen tipos del catálogo y los ids enviados.
 
+**Desde T40 (15-nov)** la web envía un catálogo más largo y espera también el orden de los bloques:
+
+- Tipos nuevos en `catalog`: `key_figures`, `category_bars`, `group_ranges`, `box_summary`, `cross_tab`, `completeness`, `records_table`.
+- Respuesta esperada tras publicar `api/handler.py` de T40: `{"modules":[...],"sections":[...]}`. `sections` solo trae nombres de la lista `highlights`, `answers`, `patterns`, `coverage`, `sources`, `case`.
+- **La Lambda publicada antes de T40 no conoce los tipos nuevos.** Con el catálogo largo descarta lo que propone el modelo y devuelve `{"modules": []}` (comprobado el 15-nov); la web usa entonces el layout por reglas y lo rotula "Rule-based". Para que el layout de IA vuelva a aplicarse hay que ejecutar `infra/20_api.sh`.
+
 ## 4. Demo con el corpus de ebullición
 
 ### 4.1 El corpus (fuera de Git)

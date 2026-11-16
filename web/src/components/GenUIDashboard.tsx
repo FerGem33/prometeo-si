@@ -3,9 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { closeness, evidenceLevels, findings, gaps, partitionOf, pool, rank } from "../engine";
 import type { Scenario } from "../engine";
 import type { Axes } from "../state";
-import type { CaseState } from "../genui/types";
+import type { BlockId, CaseState } from "../genui/types";
 import { MAX_CASE_VARIABLES, SCORE_WEIGHTS } from "../genui/types";
 import { caseToScenario, setValue, toggleVariable } from "../genui/case";
+import { arrange } from "../genui/layout";
 import { moduleKind, renderModule } from "../genui/registry";
 import { DataCtx, ProvCtx } from "./ctx";
 import { Provenance } from "./Provenance";
@@ -17,7 +18,7 @@ import { ChatPanel } from "./ChatPanel";
 import { VariableScoresModule } from "./genui/VariableScoresModule";
 import { CaseInputsModule } from "./genui/CaseInputsModule";
 import { scenarioValueText, varOf } from "../report/format";
-import { t } from "../i18n";
+import { lazy, t, tx } from "../i18n";
 import type { EvaluationDraft } from "./ScenarioStep";
 import "../styles/dashboard.css";
 
@@ -39,6 +40,18 @@ const WEIGHT_LABELS: [keyof typeof SCORE_WEIGHTS, string][] = [
   ["purpose", "match with the purpose"],
   ["measurability", "measurability"],
 ];
+
+/** Headings of the blocks. The block ids and their order come from the layout; only the wording lives here. */
+const BLOCK_TITLES: Record<BlockId, string> = lazy({
+  highlights: tx("Key figures"),
+  answers: tx("Answers to your purpose"),
+  patterns: tx("Distributions and relations"),
+  coverage: tx("Evidence coverage and gaps"),
+  sources: tx("Documents"),
+  case: tx("Your case"),
+});
+
+const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdit, onWorkspace }: GenUIDashboardProps) {
   const { pack, lens } = draft;
@@ -129,19 +142,29 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
 
   if (!dashboard) return <article className="page">{purpose}</article>;
 
-  const modules = dashboard.modules.filter((m) => m.type !== "variable_scores");
+  // Figures and tables are numbered in the order the page shows them; the case only uses the numbers it draws.
   let fig = 0;
   let tab = 0;
   const next = (kind: "Figure" | "Table") => (kind === "Figure" ? ++fig : ++tab);
   const modCtx = { pack, docs: draft.docs, variables: draft.variables, purpose, caseScenario: caseScenario ?? undefined };
-  const answerNodes = modules.map((m) => renderModule(m, modCtx, next(moduleKind(m))));
-  const scoresTable = next("Table");
-  const rankTable = next("Table");
   const plots = Boolean(canPlot && r?.grid);
-  const mapFig = plots ? next("Figure") : 0;
-  const heatFig = next("Figure");
-  const gapFig = plots ? next("Figure") : 0;
-  const findingsTable = next("Table");
+  const analysed = Boolean(caseScenario && r);
+  const caseNo = { scores: 0, rank: 0, map: 0, heat: 0, gap: 0, findings: 0 };
+  const blocks = arrange(dashboard).map((b) => {
+    if (b.kind === "case") {
+      caseNo.scores = next("Table");
+      if (analysed) {
+        caseNo.rank = next("Table");
+        if (plots) caseNo.map = next("Figure");
+        caseNo.heat = next("Figure");
+        if (plots) caseNo.gap = next("Figure");
+        caseNo.findings = next("Table");
+      }
+      return b;
+    }
+    return { ...b, rows: b.rows.map((row) => row.map((m) => ({ id: m.id, node: renderModule(m, modCtx, next(moduleKind(m))) }))) };
+  });
+  const hasSections = blocks.some((b) => b.kind === "section");
 
   const summary = caseVars
     .filter((v) => caseState.values[v.id] !== undefined)
@@ -175,53 +198,80 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
 
           <div className="dash-cols">
             <div className="dash-main">
-              <h2 className="sec">{t("Answers to your purpose")}</h2>
-              {answerNodes.length ? answerNodes.map((node, i) => (
-                <div className="dash-scroll" key={i}>{node}</div>
-              )) : <p className="hint">{t("No module could be built from the corpus for this purpose.")}</p>}
+              {blocks.length > 1 && (
+                <nav className="dash-toc noprint" aria-label={t("Sections of this dashboard")}>
+                  {blocks.map((b) => {
+                    const id = b.kind === "case" ? "case" : b.id;
+                    return (
+                      <button key={id} type="button" className="linkbtn" onClick={() => goTo(`dash-${id}`)}>
+                        {BLOCK_TITLES[id]}
+                      </button>
+                    );
+                  })}
+                </nav>
+              )}
+              {!hasSections && <p className="hint">{t("No module could be built from the corpus for this purpose.")}</p>}
 
-              <h2 className="sec">{t("Your case")}</h2>
-              <VariableScoresModule
-                scores={draft.scores ?? []}
-                selected={caseState.selected}
-                onToggle={onToggle}
-                limitHit={limitHit}
-                limit={MAX_CASE_VARIABLES}
-                figure={scoresTable}
-                selectable
-              />
-              <CaseInputsModule variables={caseVars} values={caseState.values} onValue={onValue} categories={categories} />
-
-              <h2 className="sec">{t("Case analysis")}</h2>
-              {!caseScenario || !r ? (
-                <p className="hint">{t("Give at least one selected variable a value to compute evidence levels, the ranking and the gap figures.")}</p>
-              ) : (
-                <>
-                  <ul className="dash-levels">
-                    {r.levels.map((lv) => (
-                      <li key={lv.variable}>
-                        <span>
-                          {varOf(pack, lv.variable).label} <b>{scenarioValueText(pack, lv.variable, lv.value)}</b>
-                        </span>
-                        <LevelTag level={lv.level} />
-                      </li>
+              {blocks.map((b) =>
+                b.kind === "section" ? (
+                  <section key={b.id} id={`dash-${b.id}`} className="dash-block">
+                    <h2 className="sec">{BLOCK_TITLES[b.id]}</h2>
+                    {b.rows.map((row) => (
+                      <div key={row[0].id} className={row.length > 1 ? "dash-row dash-row-2" : "dash-row"}>
+                        {row.map((m) => (
+                          <div className="dash-scroll" key={m.id}>{m.node}</div>
+                        ))}
+                      </div>
                     ))}
-                  </ul>
-                  <div className="dash-scroll"><RankingTable table={rankTable} results={r.ranking} scenario={caseScenario} /></div>
-                  {plots && r.grid ? (
-                    <>
-                      <div className="dash-scroll"><MapFigure figure={mapFig} scenario={caseScenario} partition={r.part} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
-                      <div className="dash-scroll"><HeatTable figure={heatFig} rankingTable={rankTable} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
-                      <div className="dash-scroll"><GapFigure figure={gapFig} grid={r.grid} scenario={caseScenario} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="hint">{t("Select at least two numeric variables to draw the map and the gap figure.")}</p>
-                      <div className="dash-scroll"><HeatTable figure={heatFig} rankingTable={rankTable} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
-                    </>
-                  )}
-                  <div className="dash-scroll"><FindingsList table={findingsTable} findings={r.finds} /></div>
-                </>
+                  </section>
+                ) : (
+                  <section key="case" id="dash-case" className="dash-block">
+                    <h2 className="sec">{BLOCK_TITLES.case}</h2>
+                    <VariableScoresModule
+                      scores={draft.scores ?? []}
+                      selected={caseState.selected}
+                      onToggle={onToggle}
+                      limitHit={limitHit}
+                      limit={MAX_CASE_VARIABLES}
+                      figure={caseNo.scores}
+                      selectable
+                    />
+                    <CaseInputsModule variables={caseVars} values={caseState.values} onValue={onValue} categories={categories} />
+
+                    <h2 className="sec">{t("Case analysis")}</h2>
+                    {!caseScenario || !r ? (
+                      <p className="hint">{t("Give at least one selected variable a value to compute evidence levels, the ranking and the gap figures.")}</p>
+                    ) : (
+                      <>
+                        <ul className="dash-levels">
+                          {r.levels.map((lv) => (
+                            <li key={lv.variable}>
+                              <span>
+                                {varOf(pack, lv.variable).label} <b>{scenarioValueText(pack, lv.variable, lv.value)}</b>
+                              </span>
+                              <LevelTag level={lv.level} />
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="dash-scroll"><RankingTable table={caseNo.rank} results={r.ranking} scenario={caseScenario} /></div>
+                        {plots && r.grid ? (
+                          <>
+                            <div className="dash-scroll"><MapFigure figure={caseNo.map} scenario={caseScenario} partition={r.part} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
+                            <div className="dash-scroll"><HeatTable figure={caseNo.heat} rankingTable={caseNo.rank} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
+                            <div className="dash-scroll"><GapFigure figure={caseNo.gap} grid={r.grid} scenario={caseScenario} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="hint">{t("Select at least two numeric variables to draw the map and the gap figure.")}</p>
+                            <div className="dash-scroll"><HeatTable figure={caseNo.heat} rankingTable={caseNo.rank} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
+                          </>
+                        )}
+                        <div className="dash-scroll"><FindingsList table={caseNo.findings} findings={r.finds} /></div>
+                      </>
+                    )}
+
+                  </section>
+                ),
               )}
 
               <h2 className="sec more">{t("Methods")}</h2>
@@ -235,6 +285,10 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
                 <p>
                   <b>{t("How the modules are chosen.")}</b>{" "}
                   {t("The layout is picked by rules that match the purpose against intents (rule-based), or proposed by an AI layout that is validated against a schema before use. In both cases every value is computed locally; the AI never supplies numbers.")}
+                </p>
+                <p>
+                  <b>{t("How the page is ordered.")}</b>{" "}
+                  {t("The page keeps a base order: key figures, answers, distributions and relations, coverage, documents and your case. A block the purpose asks for moves ahead, in the order the purpose names it, and a section without modules is left out. The same evidence may be shown in more than one form; when the page is full, the second forms are dropped first. With an AI layout, the modules the rules derive from the purpose are kept after the ones it proposes, without repeating a module.")}
                 </p>
                 <p>
                   <b>{t("Evidence levels.")}</b>{" "}

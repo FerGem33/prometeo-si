@@ -1,18 +1,44 @@
 /** Purpose -> dashboard modules, deterministic. The local compiler always runs; a remote layout only replaces it when valid. */
 import type { Pack } from "../engine";
 import { aliasesOf, parseQueryParts } from "../ingest/localAsk";
+import { askedBlocks, blockOrder, sectionOf, spanOf } from "./layout";
 import { MAX_MODULES } from "./types";
-import type { DashboardSpec, ModuleSpec, VariableScore } from "./types";
+import type { BlockId, DashboardSpec, ModuleSpec, VariableScore } from "./types";
 import { moduleCaption, moduleTitle, validateModules } from "./validate";
 import type { ModuleCore } from "./validate";
 
 const INTENT = {
-  distribution: /\b(distribution|range|spread|histogram)\b|distribuci[oó]n|rango/i,
+  distribution: /\b(distribution|range|spread|histogram|quartiles?|median)\b|distribuci[oó]n|rango|cuartil(es)?|mediana/i,
   scatter: /\b(relation|relationship|correlat\w*|vs|versus|compare|comparison|relate)\b|relaci[oó]n|comparar|correlaci[oó]n/i,
-  coverage: /\b(gaps?|coverage|missing|not studied|scarce)\b|huecos|brechas|cobertura|faltan?/i,
+  breakdown: /\b(breakdown|categor(y|ies)|split|grouped|per group|by group)\b|desglose|categor[ií]as?|agrupad[oa]s?/i,
+  coverage: /\b(gaps?|coverage|missing|not studied|scarce|completeness|incomplete)\b|huecos|brechas|cobertura|faltan?|completitud/i,
   papers: /\b(papers?|studies|study|sources?|relevant|articles?)\b|estudios|art[ií]culos|clave/i,
   summary: /\b(summary|summaries|summari[sz]e|overview)\b|resumen|resumir/i,
+  list: /\b(list|top|rank(ed|ing)?|extremes?)\b|\blistar?\b|extremos/i,
+  lowest: /\b(lowest|smallest|least|bottom)\b|m[aá]s baj[oa]s?|menores/i,
+  case: /\b(my|our) (case|scenario|conditions?|design|setup)\b|\bwhat if\b|\bmi (caso|escenario|dise[ñn]o)\b|\bnuestro (caso|escenario)\b/i,
 };
+
+/** Block that each intent of the purpose asks for. The first mention of a block decides its place on the page. */
+const BLOCK_OF_INTENT: [keyof typeof INTENT, BlockId][] = [
+  ["distribution", "patterns"],
+  ["scatter", "patterns"],
+  ["breakdown", "patterns"],
+  ["coverage", "coverage"],
+  ["papers", "sources"],
+  ["summary", "sources"],
+  ["case", "case"],
+];
+
+/** Blocks the purpose asks for, in the order it names them. */
+function askedByPurpose(purpose: string): BlockId[] {
+  const positions: Partial<Record<BlockId, number>> = {};
+  for (const [intent, block] of BLOCK_OF_INTENT) {
+    const at = INTENT[intent].exec(purpose)?.index;
+    if (at !== undefined && (positions[block] === undefined || at < positions[block]!)) positions[block] = at;
+  }
+  return askedBlocks(positions);
+}
 
 const stripAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -71,82 +97,156 @@ function suggestedQuestions(known: Known[]): string[] {
   return qs;
 }
 
-function coreKey(m: ModuleCore): string {
-  return JSON.stringify(m);
+const PLACEMENT = new Set(["id", "title", "caption", "origin", "section", "span"]);
+
+/** The fields that make two modules the same, whoever built them and wherever they are placed. */
+function coreKey(m: object): string {
+  return JSON.stringify(Object.entries(m).filter(([k]) => !PLACEMENT.has(k)).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
-function localCores(purpose: string, pack: Pack, known: Known[]): ModuleCore[] {
+/** Items of `first`, then the items of `rest` that are not in it. */
+function merge(first: Known[], rest: Known[]): Known[] {
+  return [...first, ...rest.filter((k) => !first.some((m) => m.id === k.id))];
+}
+
+/** Numeric variables the key figures show: the ones the purpose names, or else the highest scored. */
+function figureVariables(purpose: string, pack: Pack, known: Known[]): string[] {
   const nums = known.filter((k) => k.numeric);
+  const named = mentionedVariables(purpose, pack, known).filter((k) => k.numeric);
+  return (named.length ? named : nums).slice(0, 4).map((k) => k.id);
+}
+
+interface Planned {
+  core: ModuleCore;
+  tier: 0 | 1;
+}
+
+/**
+ * Modules the purpose asks for. Every intent gives one main form (tier 0) and may add a second form of the same
+ * evidence (tier 1). `asked` is empty when the purpose names no intent; `fallback` is the overview shown then.
+ */
+function localPlan(purpose: string, pack: Pack, known: Known[]): { figures: ModuleCore | null; asked: Planned[]; fallback: ModuleCore[] } {
+  const nums = known.filter((k) => k.numeric);
+  const cats = known.filter((k) => !k.numeric);
   const mentioned = mentionedVariables(purpose, pack, known);
   const mentionedNums = mentioned.filter((k) => k.numeric);
-  const answers: ModuleCore[] = [];
-  const rest: ModuleCore[] = [];
+  const mentionedCats = mentioned.filter((k) => !k.numeric);
+  const plan: Planned[] = [];
+  const add = (core: ModuleCore, tier: 0 | 1 = 0) => {
+    const key = coreKey(core);
+    if (!plan.some((p) => coreKey(p.core) === key)) plan.push({ core, tier });
+  };
+  const columnsFor = (sort: string) => merge(mentioned, known).filter((k) => k.id !== sort).slice(0, 3).map((k) => k.id);
 
   const parts = parseQueryParts(purpose, pack);
   if (parts && known.some((k) => k.id === parts.variable)) {
-    answers.push("stat" in parts
-      ? { type: "answer_stat", variable: parts.variable, stat: parts.stat }
-      : { type: "answer_filter", variable: parts.variable, op: parts.op, bounds: parts.bounds });
+    if ("stat" in parts) {
+      add({ type: "answer_stat", variable: parts.variable, stat: parts.stat });
+      if (parts.stat === "max" || parts.stat === "min") {
+        add({ type: "records_table", sort: parts.variable, order: parts.stat === "max" ? "desc" : "asc", columns: columnsFor(parts.variable), limit: 8 }, 1);
+      }
+    } else {
+      add({ type: "answer_filter", variable: parts.variable, op: parts.op, bounds: parts.bounds });
+    }
+  }
+  if (INTENT.list.test(purpose)) {
+    const v = mentionedNums[0] ?? nums[0];
+    if (v && !plan.some((p) => p.core.type === "records_table")) {
+      add({ type: "records_table", sort: v.id, order: INTENT.lowest.test(purpose) ? "asc" : "desc", columns: columnsFor(v.id), limit: 8 });
+    }
   }
   if (INTENT.distribution.test(purpose)) {
-    for (const k of (mentionedNums.length ? mentionedNums : nums).slice(0, 2)) rest.push({ type: "distribution", variable: k.id });
+    (mentionedNums.length ? mentionedNums : nums).slice(0, 2).forEach((k, i) => add({ type: "distribution", variable: k.id }, i === 0 ? 0 : 1));
+    const box = merge(mentionedNums, nums).slice(0, 6);
+    if (box.length >= 2) add({ type: "box_summary", variables: box.map((k) => k.id) }, 1);
   }
   if (INTENT.scatter.test(purpose)) {
-    const pair = [...mentionedNums, ...nums.filter((k) => !mentionedNums.some((m) => m.id === k.id))].slice(0, 2);
-    if (pair.length === 2) rest.push({ type: "scatter", x: pair[0].id, y: pair[1].id });
+    const pair = merge(mentionedNums, nums).slice(0, 2);
+    if (pair.length === 2) add({ type: "scatter", x: pair[0].id, y: pair[1].id });
+    if (pair[0]) {
+      const by = mentionedCats[0]?.id;
+      add(by ? { type: "group_ranges", variable: pair[0].id, by } : { type: "group_ranges", variable: pair[0].id }, pair.length === 2 ? 1 : 0);
+    }
+  }
+  const split = mentionedCats.length ? mentionedCats : INTENT.breakdown.test(purpose) ? cats : [];
+  if (split.length) {
+    add({ type: "category_bars", variable: split[0].id });
+    const other = split[1] ?? mentionedNums[0] ?? (INTENT.breakdown.test(purpose) ? nums[0] : undefined);
+    if (other) add({ type: "cross_tab", row: split[0].id, column: other.id }, 1);
   }
   if (INTENT.coverage.test(purpose) && known.length) {
-    const ids = [...mentioned, ...known.filter((k) => !mentioned.some((m) => m.id === k.id))].slice(0, 8).map((k) => k.id);
-    rest.push({ type: "coverage_matrix", variables: ids });
+    const ids = merge(mentioned, known).slice(0, 8).map((k) => k.id);
+    // One source document makes a one-row matrix: there the share of records is the main form and goes first.
+    const matrix: ModuleCore = { type: "coverage_matrix", variables: ids };
+    const shares: ModuleCore = { type: "completeness", variables: ids };
+    const [main, second] = pack.studies.length < 2 ? [shares, matrix] : [matrix, shares];
+    add(main);
+    add(second, 1);
   }
-  if (INTENT.papers.test(purpose)) rest.push({ type: "key_papers", limit: 5 });
-  if (INTENT.summary.test(purpose)) rest.push({ type: "doc_summaries" });
+  if (INTENT.papers.test(purpose)) add({ type: "key_papers", limit: 5 });
+  if (INTENT.summary.test(purpose)) add({ type: "doc_summaries" });
 
-  if (!answers.length && !rest.length) {
-    rest.push({ type: "key_papers", limit: 5 });
-    if (known.length) rest.push({ type: "coverage_matrix", variables: known.slice(0, 8).map((k) => k.id) });
-    if (nums[0]) rest.push({ type: "distribution", variable: nums[0].id });
-  }
-  const seen = new Set<string>();
-  return [...answers, ...rest].filter((m) => {
-    const k = coreKey(m);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
+  const fallback: ModuleCore[] = [];
+  if (nums[0]) fallback.push({ type: "distribution", variable: nums[0].id });
+  if (cats[0]) fallback.push({ type: "category_bars", variable: cats[0].id });
+  if (known.length) fallback.push({ type: "coverage_matrix", variables: known.slice(0, 8).map((k) => k.id) });
+  fallback.push({ type: "key_papers", limit: 5 });
+
+  const figures = figureVariables(purpose, pack, known);
+  return { figures: figures.length ? { type: "key_figures", variables: figures } : null, asked: plan, fallback };
 }
 
-function finalize(cores: ModuleCore[], pack: Pack, origin: "local" | "ai"): ModuleSpec[] {
-  const withScores = [...cores.filter((m) => m.type !== "variable_scores").slice(0, MAX_MODULES - 1), { type: "variable_scores", limit: 20 } as ModuleCore];
-  return withScores.map((m, i) => ({ ...m, id: `m${i + 1}`, title: moduleTitle(m, pack), caption: moduleCaption(m, pack), origin }) as ModuleSpec);
+/** The planned modules that fit in `room`, in their planned order. The second forms are dropped first. */
+function fit(plan: Planned[], room: number): ModuleCore[] {
+  if (plan.length <= room) return plan.map((p) => p.core);
+  const keep = new Set([...plan].sort((a, b) => a.tier - b.tier).slice(0, Math.max(0, room)));
+  return plan.filter((p) => keep.has(p)).map((p) => p.core);
 }
+
+/** A module built by the local rules, with the template title and caption and the layout defaults of its type. */
+function localModule(core: ModuleCore, pack: Pack): Omit<ModuleSpec, "id"> {
+  return { ...core, title: moduleTitle(core, pack), caption: moduleCaption(core, pack), origin: "local", section: sectionOf(core), span: spanOf(core) } as Omit<ModuleSpec, "id">;
+}
+
+const SCORES: ModuleCore = { type: "variable_scores", limit: 20 };
+
+/** Types that summarise a list of variables or of documents: a second one on the page repeats the first. */
+const ONCE: ReadonlySet<ModuleSpec["type"]> = new Set<ModuleSpec["type"]>(["coverage_matrix", "completeness", "box_summary", "key_papers", "doc_summaries"]);
+
+const number = (modules: Omit<ModuleSpec, "id">[]): ModuleSpec[] => modules.map((m, i) => ({ ...m, id: `m${i + 1}` }) as ModuleSpec);
 
 /**
  * Builds the dashboard that answers the purpose. Local and deterministic; `remote` (the reply of /design v2)
  * is used only when at least one of its modules passes validation. Values are never taken from the reply.
+ * The page keeps a base structure in both cases: key figures first, the modules the rules derive from the purpose
+ * (after the ones of the reply, without repeating them), and the ranking of variables last.
  */
 export function compileDashboard(purpose: string, pack: Pack, scores: VariableScore[], remote?: unknown): DashboardSpec {
   const known = knownVariables(pack, scores);
   const base = { purpose, title: titleFrom(purpose), suggestedQuestions: suggestedQuestions(known) };
+  const plan = localPlan(purpose, pack, known);
+  const figures = plan.figures ? [localModule(plan.figures, pack)] : [];
   let dropped: DashboardSpec["dropped"] = [];
 
-  const rawModules = remote && typeof remote === "object" && !Array.isArray(remote) ? (remote as { modules?: unknown }).modules : undefined;
-  if (Array.isArray(rawModules)) {
-    const v = validateModules(rawModules, pack);
+  const reply = remote && typeof remote === "object" && !Array.isArray(remote) ? (remote as { modules?: unknown; sections?: unknown }) : undefined;
+  if (Array.isArray(reply?.modules)) {
+    const v = validateModules(reply.modules, pack);
     dropped = v.dropped;
     if (v.modules.length) {
-      const kept = v.modules.map((m) => m as ModuleSpec);
-      const scoresModule = kept.find((m) => m.type === "variable_scores");
-      const ordered = [...kept.filter((m) => m.type !== "variable_scores").slice(0, MAX_MODULES - 1), scoresModule ?? ({ type: "variable_scores", limit: 20 } as unknown as ModuleSpec)];
-      const modules = ordered.map((m, i) => {
-        const core = m as unknown as ModuleCore;
-        const isNew = m === ordered[ordered.length - 1] && !scoresModule;
-        return { ...m, id: `m${i + 1}`, title: isNew ? moduleTitle(core, pack) : m.title, caption: isNew ? moduleCaption(core, pack) : m.caption, origin: isNew ? "local" : "ai" } as ModuleSpec;
-      });
-      return { ...base, modules, dropped, origin: "ai" };
+      const scoresModule = v.modules.find((m) => m.type === "variable_scores");
+      const chosen: Omit<ModuleSpec, "id">[] = v.modules.filter((m) => m.type !== "variable_scores").slice(0, MAX_MODULES - 2);
+      const head = chosen.some((m) => m.type === "key_figures") ? [] : figures;
+      const taken = new Set(chosen.map(coreKey));
+      const types = new Set(chosen.map((m) => m.type));
+      const missing = plan.asked.filter((p) => !taken.has(coreKey(p.core)) && !(ONCE.has(p.core.type) && types.has(p.core.type)));
+      const rules = fit(missing, MAX_MODULES - 1 - head.length - chosen.length).map((core) => localModule(core, pack));
+      const order = Array.isArray(reply.sections) && reply.sections.length ? blockOrder(reply.sections) : blockOrder(askedByPurpose(purpose));
+      return { ...base, modules: number([...head, ...chosen, ...rules, scoresModule ?? localModule(SCORES, pack)]), dropped, origin: "ai", order };
     }
   }
-  return { ...base, modules: finalize(localCores(purpose, pack, known), pack, "local"), dropped, origin: "local" };
+  const cores = plan.asked.length ? fit(plan.asked, MAX_MODULES - 1 - figures.length) : plan.fallback;
+  const modules = number([...figures, ...cores.map((core) => localModule(core, pack)), localModule(SCORES, pack)]);
+  return { ...base, modules, dropped, origin: "local", order: blockOrder(askedByPurpose(purpose)) };
 }
 
 /** Four purposes the user can pick, built from the labels of the highest-scored variables. */
