@@ -61,12 +61,12 @@ function FindingSources({ f, lead = true }: { f: Finding; lead?: boolean }) {
   );
 }
 
-export function FindingsList({ findings }: { findings: Finding[] }) {
+export function FindingsList({ findings, table = 2 }: { findings: Finding[]; table?: number }) {
   const { pack, lens } = useData();
   return (
     <table className="findings">
       <caption>
-        <b>{t("Table 2 |")}</b> {t("All findings for the scenario, computed by rule (Methods). Levels: attention, caution, context, support.")}
+        <b>{t("Table")} {table} |</b> {t("All findings for the scenario, computed by rule (Methods). Levels: attention, caution, context, support.")}
       </caption>
       <thead>
         <tr>
@@ -123,7 +123,7 @@ export function SortTh({ label, active, dir, onSort, className = "" }: { label: 
   );
 }
 
-export function RankingTable({ results, scenario }: { results: StudyResult[]; scenario: Scenario }) {
+export function RankingTable({ results, scenario, table = 1 }: { results: StudyResult[]; scenario: Scenario; table?: number }) {
   const { pack, lens } = useData();
   const [sort, setSort] = useState<{ k: SortKey; dir: Dir }>({ k: "rank", dir: 1 });
   const rows = useMemo(() => {
@@ -137,7 +137,7 @@ export function RankingTable({ results, scenario }: { results: StudyResult[]; sc
   return (
     <table id="tbl-rank">
       <caption>
-        <b>{t("Table 1 |")}</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : t("Study")} {t("ranking for the scenario: grade A–D, then number of missing variables, then normalised distance")} <i>d</i> {t("of the nearest comparable record.")} <span className="hint">{t("Use the column buttons to sort (stable; ties keep the default order); click a test for its source row.")}</span>
+        <b>{t("Table")} {table} |</b> {lens.unit_of_study ? lens.unit_of_study[0].toUpperCase() + lens.unit_of_study.slice(1) : t("Study")} {t("ranking for the scenario: grade A–D, then number of missing variables, then normalised distance")} <i>d</i> {t("of the nearest comparable record.")} <span className="hint">{t("Use the column buttons to sort (stable; ties keep the default order); click a test for its source row.")}</span>
       </caption>
       <thead>
         <tr>
@@ -196,7 +196,7 @@ export const REASON: Record<string, string> = lazy({
   no_evidence: tx("no data"),
 });
 
-export function HeatTable({ results, closeness, scenario, figure }: { results: StudyResult[]; closeness: Record<string, Record<string, AxisScore>>; scenario: Scenario; figure: number }) {
+export function HeatTable({ results, closeness, scenario, figure, rankingTable = 1 }: { results: StudyResult[]; closeness: Record<string, Record<string, AxisScore>>; scenario: Scenario; figure: number; rankingTable?: number }) {
   const { pack, lens } = useData();
   const [all, setAll] = useState(false);
   const [sort, setSort] = useState<{ k: string; dir: Dir }>({ k: "default", dir: 1 });
@@ -282,7 +282,7 @@ export function HeatTable({ results, closeness, scenario, figure }: { results: S
         <b>
           {t("Figure")} {figure} {t("| Closeness of each")} {lens.unit_of_study ?? t("study")} {t("to the scenario, by variable.")}
         </b>{" "}
-        {t("Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table 1. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least")} {pack.schema.thresholds.closeness_reach}{t("σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.")}{" "}
+        {t("Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table {0}. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least", rankingTable)} {pack.schema.thresholds.closeness_reach}{t("σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.")}{" "}
         {rest.length > 0 && (
           <>
             {all ? t("All sources are shown. ") : t("{0} {1} without comparable records are not shown ({2}). ", rest.length, many(lens.unit_of_study ?? "study"), rest.map((r) => studyShort(pack, r.study)).join(", "))}

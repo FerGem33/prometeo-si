@@ -102,16 +102,31 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada` · `omitida (corte)
 - **T30/D3:** aprobados; cargas/DELETE y lote/DLQ real comprobados. Memoria/duración observadas en muestra de 19 REPORT; costo facturado no certificado. Tope USD 30 y revisión si lote>USD 5 se mantienen. Worker habilitado para integración, con límites documentados y cierre mediante `--disable` cuando termine la ventana.
 - **D10/T37:** dos tablas y un PDF publicados con aprobación delegada/contexto acotado, más un gap literal; síntesis IA real. Backend de lente/variantes listo. Faltan revisión de las otras fuentes y pantallas; no declarar completado científicamente el corpus de 23 fuentes.
 
-## Bitácora
+## Bitácora de relevos
+
+Una entrada por sesión de agente, la más reciente arriba.
+
+### 2026-11-15 · `main` integra `feat-si` (T39) y prueba en navegador
+- Integración: `main` avanzó por fast-forward a `origin/feat-si` (`41c2d93`), sin conflictos. `nasa2genui` (11 commits fuera de `main`) no entra: choca con T39 en 9 archivos.
+- Prueba en Chrome headless contra Vite `127.0.0.1:5173`, subiendo `tools/psi/seed/tests.csv` (1,986 registros): Documents → Purpose → dashboard → caso de la base lunar (30 % O₂, 0.69 atm) → chat. Sin errores de consola. La API real respondió 200 a `/chat` y `/design`: el chat citó la fila 2 (`o2_max` 37.0828) y el layout salió "AI-chosen". La nota de T39 que los da por no publicados quedó desactualizada.
+- Corregido:
+  - el contador del caso decía "/ 20", pero el tope real es 10 (`MAX_CASE_VARIABLES`); ahora el módulo recibe ese tope;
+  - numeración del dashboard: "Table 1" salía tres veces y las figuras empezaban en la 2. `moduleKind` coincide con lo que dibuja cada módulo, y `RankingTable`, `FindingsList` y `HeatTable` reciben su número (por defecto 1 y 2, así que el reporte de la demo no cambia: comparado antes y después en EN y ES).
+- Pendiente, sin tocar:
+  - los títulos y pies que propone `/design` afirman "lunar habitat cabin studies" sobre datos PSI; ese texto de IA debe pasar el verificador (§5);
+  - columnas de procedencia (`source_row`, `psi_id`, `test_id`, `source_file`, `date`) puntúan como variables;
+  - el propósito no mueve el ranking si no comparte palabras con los nombres de columna ("oxygen" frente a `o2_max`); lo mismo le pasa al chat local;
+  - un CSV cuenta como una sola investigación, así que todo sale "Scarce evidence" aunque `psi_id` distingue 19 estudios;
+  - unidades vacías (`o2_min ()`), "Row 806, row 806" repetido y la tabla de cobertura recortada a 1366 px;
+  - si `/design` tarda más que la animación de procesamiento, el layout de IA se descarta: la demo alterna entre "Rule-based" y "AI-chosen".
+- Pruebas: tsc limpio; web 283 pasan/4 omitidas; API 195 pasan/1 omitida (entorno `uv` con `api/requirements-dev.txt`); `check_agnostic` OK.
+- Siguiente paso exacto: decidir dónde verificar los títulos y pies de `/design` antes de la revisión humana de la interfaz y de `infra/deploy_web.sh`.
 
 ### 2026-11-15 · T39 dashboard GenUI por propósito (laptop Daniel)
 - Flujo nuevo: `Documents` (ranking determinista de variables con motivos y cita) → `Purpose` (prompt) → dashboard GenUI (módulos validados) → "Your case" (máx. 10 variables con valores) → niveles, ranking, mapa, cercanía y huecos del motor solo cuando hay valores. Chat lateral con historial, modos rotulados y citas por página/fila.
 - Código: `web/src/genui/` (score, stats, compile, validate, case, retrieve, chat, registry), `web/src/components/genui/*`, `GenUIDashboard.tsx`, `ChatPanel.tsx`; `api/handler.py` con `/chat` y `/design` v2 (+ `api/test_genui_chat.py`).
 - Trampas: (1) vitest falla en bloque ("reading 'config'") si se ejecuta desde `d:\` en minúscula; correr desde `D:\` (PowerShell `Set-Location D:\CODING\Prometeo\web`). (2) El Python del sistema no tiene boto3; las pruebas API completas corren en un venv. (3) `pack()` de la API ahora lee con utf-8 (en Windows fallaba).
 - Siguiente paso exacto: con credenciales del perfil `prometeo`, `infra/20_api.sh` para publicar `/chat` y `/design` v2; luego revisión humana de la interfaz del dashboard contra AGENTS §5–§7 antes de `infra/deploy_web.sh`.
- de relevos
-
-Una entrada por sesión de agente, la más reciente arriba.
 
 ### 2026-11-15 · CORS de integración local aplicado y comprobado
 - Dueño autoriza localhost:5173 para pruebas. Perfil `prometeo`, identidad SSO no-root en cuenta 352818909129 validada. Antes del cambio, API/Lambda/bucket permitían solo CloudFront.

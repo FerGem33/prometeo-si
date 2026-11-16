@@ -25,7 +25,7 @@ export interface ModuleCtx {
 
 /** Figure or Table: which numbering a module consumes. */
 export function moduleKind(spec: ModuleSpec): "Figure" | "Table" {
-  return spec.type === "scatter" || spec.type === "distribution" || spec.type === "coverage_matrix" ? "Figure" : "Table";
+  return spec.type === "coverage_matrix" || spec.type === "key_papers" || spec.type === "doc_summaries" || spec.type === "variable_scores" ? "Table" : "Figure";
 }
 
 function labelOf(pack: Pack, id: string): { label: string; unit: string | null } {

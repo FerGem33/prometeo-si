@@ -130,23 +130,24 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
   if (!dashboard) return <article className="page">{purpose}</article>;
 
   const modules = dashboard.modules.filter((m) => m.type !== "variable_scores");
-  const scoresSpec = dashboard.modules.find((m) => m.type === "variable_scores");
   let fig = 0;
   let tab = 0;
   const next = (kind: "Figure" | "Table") => (kind === "Figure" ? ++fig : ++tab);
   const modCtx = { pack, docs: draft.docs, variables: draft.variables, purpose, caseScenario: caseScenario ?? undefined };
   const answerNodes = modules.map((m) => renderModule(m, modCtx, next(moduleKind(m))));
   const scoresTable = next("Table");
-  const mapFig = next("Figure");
+  const rankTable = next("Table");
+  const plots = Boolean(canPlot && r?.grid);
+  const mapFig = plots ? next("Figure") : 0;
   const heatFig = next("Figure");
-  const gapFig = next("Figure");
+  const gapFig = plots ? next("Figure") : 0;
+  const findingsTable = next("Table");
 
   const summary = caseVars
     .filter((v) => caseState.values[v.id] !== undefined)
     .map((v) => `${v.label} ${scenarioValueText(pack, v.id, caseState.values[v.id])}`)
     .join(" · ");
   const nVars = draft.scores?.length ?? draft.variables.length;
-  const limit = scoresSpec?.type === "variable_scores" ? Math.max(scoresSpec.limit, MAX_CASE_VARIABLES) : MAX_CASE_VARIABLES;
 
   return (
     <ProvCtx.Provider value={openProv}>
@@ -185,7 +186,7 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
                 selected={caseState.selected}
                 onToggle={onToggle}
                 limitHit={limitHit}
-                limit={limit}
+                limit={MAX_CASE_VARIABLES}
                 figure={scoresTable}
                 selectable
               />
@@ -206,20 +207,20 @@ export function GenUIDashboard({ draft, axes, setAxes, onScenario, onHome, onEdi
                       </li>
                     ))}
                   </ul>
-                  <div className="dash-scroll"><RankingTable results={r.ranking} scenario={caseScenario} /></div>
-                  {canPlot && r.grid ? (
+                  <div className="dash-scroll"><RankingTable table={rankTable} results={r.ranking} scenario={caseScenario} /></div>
+                  {plots && r.grid ? (
                     <>
                       <div className="dash-scroll"><MapFigure figure={mapFig} scenario={caseScenario} partition={r.part} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
-                      <div className="dash-scroll"><HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
+                      <div className="dash-scroll"><HeatTable figure={heatFig} rankingTable={rankTable} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
                       <div className="dash-scroll"><GapFigure figure={gapFig} grid={r.grid} scenario={caseScenario} axes={useAxes} onAxes={setAxes} onPick={onPick} /></div>
                     </>
                   ) : (
                     <>
                       <p className="hint">{t("Select at least two numeric variables to draw the map and the gap figure.")}</p>
-                      <div className="dash-scroll"><HeatTable figure={heatFig} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
+                      <div className="dash-scroll"><HeatTable figure={heatFig} rankingTable={rankTable} results={r.ranking} closeness={r.close} scenario={caseScenario} /></div>
                     </>
                   )}
-                  <div className="dash-scroll"><FindingsList findings={r.finds} /></div>
+                  <div className="dash-scroll"><FindingsList table={findingsTable} findings={r.finds} /></div>
                 </>
               )}
 

@@ -473,7 +473,6 @@ export const REPORT: Record<string, string> = {
 
   // ---- tables
   "Key findings": "Hallazgos clave",
-  "Table 2 |": "Tabla 2 |",
   "All findings for the scenario, computed by rule (Methods). Levels: attention, caution, context, support.":
     "Todos los hallazgos del escenario, calculados por regla (Métodos). Niveles: atención, precaución, contexto, respaldo.",
   Level: "Nivel",
@@ -481,7 +480,6 @@ export const REPORT: Record<string, string> = {
   Metric: "Métrica",
   Statement: "Enunciado",
   " and {0} more": " y {0} más",
-  "Table 1 |": "Tabla 1 |",
   "ranking for the scenario: grade A–D, then number of missing variables, then normalised distance":
     "clasificación para el escenario: nota A–D, luego número de variables ausentes, luego distancia normalizada",
   "of the nearest comparable record.": "del registro comparable más cercano.",
@@ -502,8 +500,8 @@ export const REPORT: Record<string, string> = {
   "not tested": "no probado",
   "| Closeness of each": "| Cercanía de cada",
   "to the scenario, by variable.": "al escenario, por variable.",
-  "Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table 1. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least":
-    "Los botones de las columnas ordenan las filas (orden estable; los valores vacíos van al final); el orden por defecto es la clasificación de la Tabla 1. La cercanía global es la media de las puntuaciones de las celdas sobre las variables que la fuente registra; las variables no registradas quedan fuera de la media, no cuentan como cero. Cada celda da la puntuación de cercanía (0–100; 100 significa que un registro cubre el valor del escenario, 0 que el registro más cercano está al menos a",
+  "Column buttons sort the rows (stable; empty values last); the default order is the ranking of Table {0}. Overall closeness is the mean of the cell scores over the variables the source records; unrecorded variables are left out of the mean, not counted as zero. Each cell gives the closeness score (0–100; 100 means a record covers the scenario value, 0 means the nearest record is at least":
+    "Los botones de las columnas ordenan las filas (orden estable; los valores vacíos van al final); el orden por defecto es la clasificación de la Tabla {0}. La cercanía global es la media de las puntuaciones de las celdas sobre las variables que la fuente registra; las variables no registradas quedan fuera de la media, no cuentan como cero. Cada celda da la puntuación de cercanía (0–100; 100 significa que un registro cubre el valor del escenario, 0 que el registro más cercano está al menos a",
   "σ away) and, in small type, the value of the nearest record. A dash means the variable is not recorded: it is reported as missing, never as zero evidence.":
     "σ) y, en letra pequeña, el valor del registro más cercano. Una raya significa que la variable no está registrada: se informa como ausente, nunca como evidencia cero.",
   "All sources are shown. ": "Se muestran todas las fuentes. ",
